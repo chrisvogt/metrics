@@ -1,9 +1,8 @@
-const fetchAllStats = require('./fetchAllStats');
+const syncAllStats = require('./syncAllStats');
 const syncYesterdaysCodeSummary = require('./syncYesterdaysCodeSummary');
 
 const admin = require('firebase-admin');
 const functions = require('firebase-functions');
-const request = require('request-promise');
 
 const token = require('./token.json');
 
@@ -15,12 +14,9 @@ admin.initializeApp({
 const database = admin.firestore();
 const context = { config: functions.config(), database };
 
-exports.fetchAllStats = functions.https
-  .onRequest(async (req, res) => {
-    const stats = await fetchAllStats(req, res, context);
-    res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
-    res.send(stats);
-  });
+exports.syncAllStats = functions.pubsub
+  .schedule('every day 02:00')
+  .onRun(syncAllStats(context));
 
 exports.syncYesterdaysCodeSummary = functions.pubsub
   .schedule('every day 02:00')
