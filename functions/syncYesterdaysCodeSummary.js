@@ -13,7 +13,7 @@ const getYesterday = () => {
   return `${mm}${SEP}${dd}${SEP}${yyyy}`;
 };
 
-const syncYesterdaysCodeSummary = async context => {
+const syncYesterdaysCodeSummary = context => async () => {
   const { config, database } = context;
   const { wakatime: { username, access_token: accessToken } } = config;
 
