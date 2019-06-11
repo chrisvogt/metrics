@@ -1,9 +1,14 @@
-const getLatestRepositories = require('./getLatestRepositories');
-const syncAllStats = require('./syncAllStats');
-const syncYesterdaysCodeSummary = require('./syncYesterdaysCodeSummary');
+'use strict';
 
 const admin = require('firebase-admin');
 const functions = require('firebase-functions');
+const cors = require('cors')({
+  origin: true,
+});
+
+const getLatestRepositories = require('./getLatestRepositories');
+const syncAllStats = require('./syncAllStats');
+const syncYesterdaysCodeSummary = require('./syncYesterdaysCodeSummary');
 
 const token = require('./token.json');
 
@@ -25,7 +30,10 @@ exports.syncYesterdaysCodeSummary = functions.pubsub
 
 exports.getLatestRepositories = functions.https
   .onRequest(async (req, res) => {
-    const repositories = await getLatestRepositories(context);
-    res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
-    res.send(repositories);
+    return cors(req, res, async () => {
+      const repositories = await getLatestRepositories(context);
+      res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
+      res.set('Access-Control-Allow-Origin', '*');
+      res.status(200).send(repositories);
+    })
   });

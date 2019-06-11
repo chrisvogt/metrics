@@ -1,3 +1,5 @@
+'use strict';
+
 const graphqlGot = require('graphql-got');
 
 // TODO(cvogt): factor these out
