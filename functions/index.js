@@ -18,9 +18,10 @@ const context = { config: functions.config(), database };
 exports.fetchAllStats = functions.https
   .onRequest(async (req, res) => {
     const stats = await fetchAllStats(req, res, context);
+    res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
     res.send(stats);
   });
 
 exports.syncYesterdaysCodeSummary = functions.pubsub
   .schedule('every day 02:00')
-  .onRun(syncYesterdaysCodeSummary);
+  .onRun(syncYesterdaysCodeSummary(context));
