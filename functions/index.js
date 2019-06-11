@@ -1,3 +1,4 @@
+const getLatestRepositories = require('./getLatestRepositories');
 const syncAllStats = require('./syncAllStats');
 const syncYesterdaysCodeSummary = require('./syncYesterdaysCodeSummary');
 
@@ -21,3 +22,10 @@ exports.syncAllStats = functions.pubsub
 exports.syncYesterdaysCodeSummary = functions.pubsub
   .schedule('every day 02:00')
   .onRun(syncYesterdaysCodeSummary(context));
+
+exports.getLatestRepositories = functions.https
+  .onRequest(async (req, res) => {
+    const repositories = await getLatestRepositories(context);
+    res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
+    res.send(repositories);
+  });
