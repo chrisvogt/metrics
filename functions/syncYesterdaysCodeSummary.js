@@ -1,7 +1,6 @@
-const functions = require('firebase-functions');
 const request = require('request-promise');
 
-const getYesterday = () => {
+const getYesterdayAsString = () => {
   const date = new Date();
   date.setDate(date.getDate() - 1);
 
@@ -13,11 +12,10 @@ const getYesterday = () => {
   return `${mm}${SEP}${dd}${SEP}${yyyy}`;
 };
 
-const syncYesterdaysCodeSummary = context => async () => {
-  const { config, database } = context;
+const syncYesterdaysCodeSummary = ({ config, database }) => async () => {
   const { wakatime: { username, access_token: accessToken } } = config;
 
-  const yesterday = getYesterday();
+  const yesterday = getYesterdayAsString();
   const yesterdayFormatted = yesterday.replace(/\//g, '');
 
   const SUMMARIES_URL = `https://wakatime.com/api/v1/users/${ username }/summaries`;
