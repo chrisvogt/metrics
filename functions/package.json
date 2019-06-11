@@ -16,6 +16,7 @@
     "firebase-admin": "~7.0.0",
     "firebase-functions": "^2.3.0",
     "got": "^9.6.0",
+    "graphql-got": "^0.1.2",
     "request": "^2.88.0",
     "request-promise": "^4.2.4"
   },
