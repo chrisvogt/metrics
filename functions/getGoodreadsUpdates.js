@@ -8,7 +8,6 @@ const xml2js = require('xml2js');
 
 const transformUpdate = require('./lib/transform-update');
 
-const readFileAsync = util.promisify(fs.readFile);
 const parser = new xml2js.Parser({
   explicitArray: false,
   mergeAttrs: true,
