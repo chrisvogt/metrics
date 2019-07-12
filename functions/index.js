@@ -6,6 +6,7 @@ const cors = require('cors')({
   origin: true,
 });
 
+const getGoodreadsUpdates = require('./getGoodreadsUpdates');
 const getLatestRepositories = require('./getLatestRepositories');
 const syncAllStats = require('./syncAllStats');
 const syncYesterdaysCodeSummary = require('./syncYesterdaysCodeSummary');
@@ -35,5 +36,15 @@ exports.getLatestRepositories = functions.https
       res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
       res.set('Access-Control-Allow-Origin', '*');
       res.status(200).send(repositories);
+    })
+  });
+
+exports.getGoodreadsUpdates = functions.https
+  .onRequest(async (req, res) => {
+    return cors(req, res, async () => {
+      const updates = await getGoodreadsUpdates(context);
+      res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
+      res.set('Access-Control-Allow-Origin', '*');
+      res.status(200).send(updates);
     })
   });
