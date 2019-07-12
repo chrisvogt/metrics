@@ -45,7 +45,6 @@ const getAuthor = author => {
 };
 
 const getBook = book => {
-  console.log(book);
   const {
     authors: {
       author
