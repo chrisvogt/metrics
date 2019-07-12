@@ -18,8 +18,9 @@ admin.initializeApp({
   databaseURL: 'https://personal-stats-chrisvogt.firebaseio.com'
 });
 
+const config = functions.config();
 const database = admin.firestore();
-const context = { config: functions.config(), database };
+const context = { config, database };
 
 exports.syncAllStats = functions.pubsub
   .schedule('every day 02:00')
