@@ -1,0 +1,13 @@
+{
+  "firebase": {
+    "database_url": "FIREBASE_DATABASE_URL"
+  },
+  "goodreads": {
+    "access_token": "GOODREADS_ACCESS_TOKEN",
+    "user_id": "GOODREADS_USER_ID"
+  },
+  "wakatime": {
+    "access_token": "WAKATIME_ACCESS_TOKEN",
+    "username": "WAKATIME_USERNAME"
+  }
+}
