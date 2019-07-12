@@ -1,3 +1,5 @@
+'use strict';
+
 const getReview = require('./get-review');
 const getUserStatus = require('./get-user-status');
 

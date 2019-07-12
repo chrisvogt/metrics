@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const get = require('lodash').get;
 const got = require('got');
