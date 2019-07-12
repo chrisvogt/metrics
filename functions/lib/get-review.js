@@ -1,3 +1,5 @@
+'use strict';
+
 const getActor = actor => {
   const {
     imageURL,
