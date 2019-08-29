@@ -1,4 +1,9 @@
 {
+  "github": {
+    "access_token": "GITHUB_ACCESS_TOKEN",
+    "username": "GITHUB_USERNAME_FOR_QUERY",
+    "pinned_repository_max": 10
+  },
   "firebase": {
     "database_url": "FIREBASE_DATABASE_URL"
   },
