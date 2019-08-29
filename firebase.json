@@ -11,7 +11,7 @@
   "hosting": {
     "public": "public",
     "rewrites": [ {
-      "source": "/api/latest-repositories", "function": "getPinnedRepositories"
+      "source": "/api/pinned-repositories", "function": "getPinnedRepositories"
     }, {
       "source": "/api/goodreads-updates", "function": "getGoodreadsUpdates"
     } ]
