@@ -1,9 +1,7 @@
 'use strict';
 
-const fs = require('fs');
 const get = require('lodash').get;
 const got = require('got');
-const util = require('util');
 const xml2js = require('xml2js');
 
 const transformUpdate = require('./lib/transform-update');

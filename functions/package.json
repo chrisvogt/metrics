@@ -1,6 +1,7 @@
 {
   "name": "functions",
-  "description": "Cloud Functions for Firebase",
+  "version": "0.1.0",
+  "description": "Personal metrics. A life-tracking hobby project.",
   "scripts": {
     "lint": "eslint .",
     "serve": "firebase serve --only functions",
@@ -10,7 +11,7 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "8"
+    "node": "10"
   },
   "dependencies": {
     "cors": "^2.8.5",
