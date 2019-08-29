@@ -7,7 +7,7 @@ const cors = require('cors')({
 });
 
 const getGoodreadsUpdates = require('./getGoodreadsUpdates');
-const getLatestRepositories = require('./getLatestRepositories');
+const getPinnedRepositories = require('./getPinnedRepositories');
 const syncAllStats = require('./syncAllStats');
 const syncYesterdaysCodeSummary = require('./syncYesterdaysCodeSummary');
 
@@ -30,10 +30,10 @@ exports.syncYesterdaysCodeSummary = functions.pubsub
   .schedule('every day 02:00')
   .onRun(syncYesterdaysCodeSummary(context));
 
-exports.getLatestRepositories = functions.https
+exports.getPinnedRepositories = functions.https
   .onRequest(async (req, res) => {
     return cors(req, res, async () => {
-      const repositories = await getLatestRepositories(context);
+      const repositories = await getPinnedRepositories(context);
       res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
       res.set('Access-Control-Allow-Origin', '*');
       res.status(200).send(repositories);
