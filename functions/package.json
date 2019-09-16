@@ -1,6 +1,6 @@
 {
-  "name": "functions",
-  "version": "0.1.0",
+  "name": "personal-metrics",
+  "version": "0.2.0",
   "description": "Personal metrics. A life-tracking hobby project.",
   "scripts": {
     "lint": "eslint .",
@@ -23,6 +23,7 @@
     "q-i": "^2.0.1",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
+    "requestretry": "^4.0.0",
     "xml2js": "^0.4.19"
   },
   "devDependencies": {
