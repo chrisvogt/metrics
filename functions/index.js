@@ -9,6 +9,7 @@ const cors = require('cors')({
 const getGoodreadsUpdates = require('./getGoodreadsUpdates');
 const getPinnedRepositories = require('./getPinnedRepositories');
 const syncAllStats = require('./syncAllStats');
+const syncAllSummaries = require('./syncAllSummaries');
 const syncYesterdaysCodeSummary = require('./syncYesterdaysCodeSummary');
 
 const token = require('./token.json');
@@ -30,6 +31,10 @@ exports.syncYesterdaysCodeSummary = functions.pubsub
   .schedule('every day 02:00')
   .onRun(syncYesterdaysCodeSummary(context));
 
+exports.syncAllSummaries = functions.pubsub
+  .schedule('every day 02:00')
+  .onRun(syncAllSummaries(context));
+
 exports.getPinnedRepositories = functions.https
   .onRequest(async (req, res) => {
     return cors(req, res, async () => {
@@ -37,6 +42,18 @@ exports.getPinnedRepositories = functions.https
       res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
       res.set('Access-Control-Allow-Origin', '*');
       res.status(200).send(repositories);
+    })
+  });
+
+exports.getSummaries = functions.https
+  .onRequest(async (req, res) => {
+    return cors(req, res, async () => {
+      const summariesRef = database.collection('summaries').doc('last_30_days');
+      const doc = await summariesRef.get();
+      const data = doc.data();
+      res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
+      res.set('Access-Control-Allow-Origin', '*');
+      res.status(200).send(data);
     })
   });
 
