@@ -4,9 +4,7 @@ const request = require('requestretry');
 
 const statsList = [
   'last_7_days',
-  'last_30_days',
-  'last_6_months',
-  'last_year'
+  'last_30_days'
 ];
 
 const syncAllStats = ({ config, database }) => async () => {
@@ -47,7 +45,7 @@ const syncAllStats = ({ config, database }) => async () => {
         timestamp: Date.now(),
         data: value
       });
-  })
+  });
 
   return resultList;
 };

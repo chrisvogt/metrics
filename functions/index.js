@@ -9,6 +9,7 @@ const cors = require('cors')({
 const getGoodreadsUpdates = require('./getGoodreadsUpdates');
 const getPinnedRepositories = require('./getPinnedRepositories');
 const syncAllStats = require('./syncAllStats');
+const syncAllSummaries = require('./syncAllSummaries');
 const syncYesterdaysCodeSummary = require('./syncYesterdaysCodeSummary');
 
 const token = require('./token.json');
@@ -29,6 +30,10 @@ exports.syncAllStats = functions.pubsub
 exports.syncYesterdaysCodeSummary = functions.pubsub
   .schedule('every day 02:00')
   .onRun(syncYesterdaysCodeSummary(context));
+
+exports.syncAllSummaries = functions.pubsub
+  .schedule('every day 02:00')
+  .onRun(syncAllSummaries(context));
 
 exports.getPinnedRepositories = functions.https
   .onRequest(async (req, res) => {
