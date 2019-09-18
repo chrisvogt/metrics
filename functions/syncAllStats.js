@@ -38,13 +38,11 @@ const syncAllStats = ({ config, database }) => async () => {
   });
 
   resultList.forEach(async ({name, value}) => {
-    const docRef = database
-      .collection('stats')
-      .doc(name);
-      await docRef.set({
-        timestamp: Date.now(),
-        data: value
-      });
+    const docRef = database.collection('stats').doc(name);
+    await docRef.set({
+      timestamp: Date.now(),
+      data: value
+    });
   });
 
   return resultList;

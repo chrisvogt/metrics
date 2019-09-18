@@ -39,9 +39,7 @@ const syncAllStats = ({ config, database }) => async () => {
     const results = await Promise.all(summaryPromises);
     const updatePromises = results.map(async result => {
         const { name, summaries, timestamp } = result;
-        const docRef = database
-            .collection('summaries')
-            .doc(name);
+        const docRef = database.collection('summaries').doc(name);
         await docRef.set({
             name,
             summaries,

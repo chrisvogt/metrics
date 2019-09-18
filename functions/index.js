@@ -45,6 +45,18 @@ exports.getPinnedRepositories = functions.https
     })
   });
 
+exports.getSummaries = functions.https
+  .onRequest(async (req, res) => {
+    return cors(req, res, async () => {
+      const summariesRef = database.collection('summaries').doc('last_30_days');
+      const doc = await summariesRef.get();
+      const data = doc.data();
+      res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
+      res.set('Access-Control-Allow-Origin', '*');
+      res.status(200).send(data);
+    })
+  });
+
 exports.getGoodreadsUpdates = functions.https
   .onRequest(async (req, res) => {
     return cors(req, res, async () => {
