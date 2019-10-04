@@ -14,7 +14,7 @@ const parser = new xml2js.Parser({
 
 const getGoodreadsUpdates = async ({ config }) => {
   const { goodreads: { access_token: accessToken, user_id: userID } } = config;
-  const goodreadsURL = `https://www.goodreads.com/user/show/${ userID }?format=xml&key=${ accessToken }`;
+  const goodreadsURL = `https://www.goodreads.com/user/show/${userID}?format=xml&key=${accessToken}`;
 
   const response = await got(goodreadsURL);
   const xml = response.body;

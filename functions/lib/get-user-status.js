@@ -5,7 +5,7 @@ const getAuthor = author => {
     about,
     name: name,
     sort_by_name: sortName,
-    shelf_display_name: displayName 
+    shelf_display_name: displayName
   } = author;
 
   return {

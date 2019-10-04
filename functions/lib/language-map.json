@@ -1,0 +1,28 @@
+{
+  "scripting": [
+    "PHP",
+    "JavaScript",
+    "Python",
+    "Ruby",
+    "Bash"
+  ],
+  "styles": [
+    "SCSS",
+    "CSS",
+    "LESS"
+  ],
+  "data": [
+    "YAML",
+    "JSON",
+    "INI"
+  ],
+  "markup": [
+    "HTML",
+    "Markdown",
+    "JSX"
+  ],
+  "other": [
+    "Text",
+    "Other"
+  ]
+}
