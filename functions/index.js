@@ -72,9 +72,9 @@ exports.getGoodreadsUpdates = functions.https
   exports.getWidgetContent = functions.https
   .onRequest(async (req, res) => {
     return cors(req, res, async () => {
-      const updates = await getWidgetContent({ context, req });
+      const response = await getWidgetContent({ context, req });
       res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
       res.set('Access-Control-Allow-Origin', '*');
-      res.status(200).send(updates);
+      res.status(200).send(response);
     })
   });
