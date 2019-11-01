@@ -15,6 +15,8 @@
     }, {
       "source": "/api/goodreads-updates", "function": "getGoodreadsUpdates"
     }, {
+      "source": "/api/widget-content", "function": "getWidgetContent"
+    }, {
       "source": "/api/summaries", "function": "getSummaries"
     } ]
   }
