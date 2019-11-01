@@ -78,3 +78,4 @@ exports.getGoodreadsUpdates = functions.https
       res.status(200).send(updates);
     })
   });
+  
