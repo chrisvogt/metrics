@@ -68,13 +68,23 @@ exports.getGoodreadsUpdates = functions.https
     })
   });
 
-
-  exports.getWidgetContent = functions.https
+exports.getWidgetContent = functions.https
   .onRequest(async (req, res) => {
     return cors(req, res, async () => {
-      const response = await getWidgetContent({ context, req });
-      res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
-      res.set('Access-Control-Allow-Origin', '*');
-      res.status(200).send(response);
+      try {
+        const response = await getWidgetContent({ context, req });
+        res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
+        res.set('Access-Control-Allow-Origin', '*');
+        res.status(200).send({
+          ok: true,
+          payload: response
+        });
+      } catch (error) {
+        const { message } = error;
+        res.status(400).send({
+          ok: false,
+          error: { message }
+        });
+      }
     })
   });
