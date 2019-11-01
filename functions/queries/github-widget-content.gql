@@ -1,0 +1,96 @@
+query GitHubWidgetQuery($username: String!) {
+  user(login: $username) {
+    login
+    name
+    createdAt
+    bio
+    followers {
+      totalCount
+    }
+    following {
+      totalCount
+    }
+    url
+    status {
+      emoji
+      updatedAt
+      createdAt
+      expiresAt
+      message
+    }
+    projectsUrl
+    location
+    avatarUrl
+    pinnedItems(last: 10) {
+      totalCount
+      nodes {
+        __typename
+        ... on Gist {
+          url
+          id
+          name
+          updatedAt
+          pushedAt
+        }
+        ... on Repository {
+          createdAt
+          description
+          hasIssuesEnabled
+          hasWikiEnabled
+          homepageUrl
+          id
+          licenseInfo {
+            name
+            nickname
+            key
+            url
+          }
+          name
+          nameWithOwner
+          openGraphImageUrl
+          primaryLanguage {
+            id
+            color
+            name
+          }
+          updatedAt
+          pushedAt
+          url
+          usesCustomOpenGraphImage
+        }
+      }
+    }
+    repositories {
+      totalCount
+    }
+    pullRequests(last: 1, states: MERGED) {
+      nodes {
+        labels(last: 10) {
+          edges {
+            node {
+              id
+              color
+              name
+            }
+          }
+        }
+        lastEditedAt
+        url
+        closed
+        closedAt
+        createdAt
+        id
+        merged
+        number
+        repository {
+          name
+          id
+          url
+        }
+        title
+        url
+        viewerDidAuthor
+      }
+    }
+  }
+}

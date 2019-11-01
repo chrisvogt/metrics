@@ -8,6 +8,7 @@ const cors = require('cors')({
 
 const getGoodreadsUpdates = require('./getGoodreadsUpdates');
 const getPinnedRepositories = require('./getPinnedRepositories');
+const getWidgetContent = require('./getWidgetContent');
 const syncAllStats = require('./syncAllStats');
 const syncAllSummaries = require('./syncAllSummaries');
 const syncYesterdaysCodeSummary = require('./syncYesterdaysCodeSummary');
@@ -64,5 +65,26 @@ exports.getGoodreadsUpdates = functions.https
       res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
       res.set('Access-Control-Allow-Origin', '*');
       res.status(200).send(updates);
+    })
+  });
+
+exports.getWidgetContent = functions.https
+  .onRequest(async (req, res) => {
+    return cors(req, res, async () => {
+      try {
+        const response = await getWidgetContent({ context, req });
+        res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
+        res.set('Access-Control-Allow-Origin', '*');
+        res.status(200).send({
+          ok: true,
+          payload: response
+        });
+      } catch (error) {
+        const { message } = error;
+        res.status(400).send({
+          ok: false,
+          error: { message }
+        });
+      }
     })
   });
