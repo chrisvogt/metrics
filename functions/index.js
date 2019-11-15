@@ -6,6 +6,7 @@ const cors = require('cors')({
   origin: true,
 });
 
+const getGoodreadsProfile = require('./getGoodreadsProfile');
 const getGoodreadsUpdates = require('./getGoodreadsUpdates');
 const getPinnedRepositories = require('./getPinnedRepositories');
 const getWidgetContent = require('./getWidgetContent');
@@ -55,6 +56,16 @@ exports.getSummaries = functions.https
       res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
       res.set('Access-Control-Allow-Origin', '*');
       res.status(200).send(data);
+    })
+  });
+
+  exports.getGoodreadsProfile = functions.https
+  .onRequest(async (req, res) => {
+    return cors(req, res, async () => {
+      const profile = await getGoodreadsProfile(context);
+      res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400');
+      res.set('Access-Control-Allow-Origin', '*');
+      res.status(200).send(profile);
     })
   });
 
