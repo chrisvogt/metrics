@@ -1,9 +1,11 @@
 "use strict";
 
 const getGitHubWidgetContent = require("./lib/get-github-widget-content");
+const getGoodreadsWidgetContent = require("./lib/get-goodreads-widget-content");
 
 const widgetHandlerMap = {
-  github: getGitHubWidgetContent
+  github: getGitHubWidgetContent,
+  goodreads: getGoodreadsWidgetContent
 };
 
 const getWidgetContent = async ({ context, req }) => {
