@@ -22,12 +22,10 @@ const getAuthor = author => {
       _: imageURL = '',
       nophoto: hasImageURL = false
     } = {},
-    link,
     small_image_url: {
       _: smallImageURL = '',
       nophoto: hasSmallImageURL = false
     } = {},
-    name,
     ratingsCount: ratingsCount,
     text_reviews_count: textReviewCount
   } = author;
@@ -74,7 +72,7 @@ const getReview = update => {
       book
     },
     type,
-    updatedAt: updated
+    updated_at: updated
   } = update;
 
   return {
