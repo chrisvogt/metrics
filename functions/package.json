@@ -1,6 +1,6 @@
 {
   "name": "personal-metrics",
-  "version": "0.3.1",
+  "version": "0.3.2-alpha",
   "description": "Personal metrics. A life-tracking hobby project.",
   "scripts": {
     "lint": "eslint .",
