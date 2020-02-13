@@ -1,7 +1,7 @@
 const getUserProfile = require('../api/spotify/get-user-profile')
 const getTopTracks = require('../api/spotify/get-top-tracks')
 
-const trackToCollectionItem = require('../transformers/trackToCollectionItem')
+const trackToCollectionItem = require('../transformers/track-to-collection-item')
 
 // NOTE(cvogt): this widget content handler is returning what I'm testing as a
 // new common schema for widget content.
