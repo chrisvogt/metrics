@@ -1,6 +1,6 @@
 {
   "name": "personal-metrics",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Personal metrics. A life-tracking hobby project.",
   "scripts": {
     "deploy": "firebase deploy --only functions",
