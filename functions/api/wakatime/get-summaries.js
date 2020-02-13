@@ -1,33 +1,33 @@
-const request = require('requestretry');
+const request = require('requestretry')
 
 const getSummaries = async (queryParams, options) => {
-    const { accessToken } = options;
+  const { accessToken } = options
 
-    if (!accessToken) {
-        throw new Error('An access token is required to call the WakaTime API.');
+  if (!accessToken) {
+    throw new Error('An access token is required to call the WakaTime API.')
+  }
+
+  try {
+    const { data: summaries = [] } = await request({
+      fullResponse: false,
+      headers: { Authorization: `Basic ${accessToken}` },
+      json: true,
+      qs: queryParams,
+      retryStrategy: err => !!err,
+      uri: 'https://wakatime.com/api/v1/users/current/summaries'
+    })
+
+    return {
+      ok: true,
+      summaries
     }
-
-    try {
-        const { data: summaries = [] } = await request({
-            fullResponse: false,
-            headers: { Authorization: `Basic ${accessToken}` },
-            json: true,
-            qs: queryParams,
-            retryStrategy: err => !!err,
-            uri: 'https://wakatime.com/api/v1/users/current/summaries'
-        });
-
-        return {
-            ok: true,
-            summaries
-        };
-    } catch (error) {
-        const { message } = error;
-        return {
-            ok: false,
-            error: message
-        }
+  } catch (error) {
+    const { message } = error
+    return {
+      ok: false,
+      error: message
     }
-};
+  }
+}
 
-module.exports = getSummaries;
+module.exports = getSummaries

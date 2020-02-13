@@ -1,7 +1,7 @@
-const { items } = require('./top-tracks.mock.json');
+const { items } = require('./top-tracks.mock.json')
 
 const getTopTracks = async () => {
-    return items;
-};
+  return items
+}
 
-module.exports = getTopTracks;
+module.exports = getTopTracks

@@ -1,7 +1,5 @@
-'use strict';
-
-const get = require('lodash/get');
-const graphqlGot = require('graphql-got');
+const get = require('lodash/get')
+const graphqlGot = require('graphql-got')
 
 const query = `
 query PinnedRepositoriesQuery($username: String!, $last: Int = 10) {
@@ -38,29 +36,29 @@ query PinnedRepositoriesQuery($username: String!, $last: Int = 10) {
 	}
 }`
 
-const MAX_REPOS = 10;
+const MAX_REPOS = 10
 const getPinnedRepositories = async ({ config }) => {
-	const {
-		github: {
-			access_token: token,
-			pinned_repository_max: last = MAX_REPOS,
-			username,
-		}
-	} = config;
+  const {
+    github: {
+      access_token: token,
+      pinned_repository_max: last = MAX_REPOS,
+      username
+    }
+  } = config
 
-  const {body} = await graphqlGot('https://api.github.com/graphql', {
+  const { body } = await graphqlGot('https://api.github.com/graphql', {
     query,
-		token,
-		variables: {
-			username,
-			last
-		}
-	});
-  
-  const pinnedRepositories = get(body, 'user.pinnedRepositories.nodes', []);
+    token,
+    variables: {
+      username,
+      last
+    }
+  })
+
+  const pinnedRepositories = get(body, 'user.pinnedRepositories.nodes', [])
   return {
-		pinnedRepositories
-	};
+    pinnedRepositories
+  }
 }
 
-module.exports = getPinnedRepositories;
+module.exports = getPinnedRepositories

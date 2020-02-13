@@ -8,18 +8,18 @@ const trackToCollectionItem = item => {
     preview_url: previewURL,
     type,
     uri
-  } = item;
+  } = item
 
   return {
     albumImages,
-    artists: artists.map(({ name }) => name),
+    artists: artists.map(artist => artist.name),
     id,
     name,
     previewURL,
     spotifyURL,
     type,
     uri
-  };
-};
+  }
+}
 
-module.exports = trackToCollectionItem;
+module.exports = trackToCollectionItem

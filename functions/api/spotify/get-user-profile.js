@@ -1,7 +1,7 @@
-const profile = require('./user-profile.mock.json');
+const profile = require('./user-profile.mock.json')
 
 const getUserProfile = async () => {
-    return profile;
-};
+  return profile
+}
 
-module.exports = getUserProfile;
+module.exports = getUserProfile
