@@ -1,26 +1,24 @@
-"use strict";
+const getGitHubWidgetContent = require('./lib/get-github-widget-content')
+const getGoodreadsWidgetContent = require('./lib/get-goodreads-widget-content')
 
-const getGitHubWidgetContent = require("./lib/get-github-widget-content");
-const getGoodreadsWidgetContent = require("./lib/get-goodreads-widget-content");
-
-const widgetHandlerMap = {
+const widgetHandlerRegistry = {
   github: getGitHubWidgetContent,
   goodreads: getGoodreadsWidgetContent
-};
+}
 
 const getWidgetContent = async ({ context, req }) => {
   const {
     query: { widget }
-  } = req;
+  } = req
 
-  if (!widgetHandlerMap[widget]) {
-    throw new Error("Widget type unrecognized or missing.");
+  if (!widgetHandlerRegistry[widget]) {
+    throw new Error(`Unrecognized widget type: ${widget}`)
   }
 
-  const widgetHandler = widgetHandlerMap[widget];
-  const payload = await widgetHandler({ context });
+  const getContent = widgetHandlerRegistry[widget]
+  const widgetContent = await getContent({ context })
 
-  return payload;
-};
+  return widgetContent
+}
 
-module.exports = getWidgetContent;
+module.exports = getWidgetContent

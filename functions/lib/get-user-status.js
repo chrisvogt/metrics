@@ -1,20 +1,18 @@
-'use strict';
-
 const getAuthor = author => {
   const {
     about,
     name: name,
     sort_by_name: sortName,
-    shelf_display_name: displayName 
-  } = author;
+    shelf_display_name: displayName
+  } = author
 
   return {
     about,
     displayName,
     name,
     sortName
-  };
-};
+  }
+}
 
 const getBook = book => {
   const {
@@ -28,7 +26,7 @@ const getBook = book => {
     publisher,
     sort_by_title: sortTitle,
     title
-  } = book;
+  } = book
 
   return {
     author: getAuthor(author),
@@ -41,8 +39,8 @@ const getBook = book => {
     publisher,
     sortTitle,
     title
-  };
-};
+  }
+}
 
 const getUserStatus = update => {
   const {
@@ -56,11 +54,11 @@ const getUserStatus = update => {
         page: { _: page },
         percent: { _: percent },
         updated_at: { _: updated },
-        user_id: { _: userID },
+        user_id: { _: userID }
       }
     },
     type
-  } = update;
+  } = update
 
   return {
     actionText,
@@ -73,7 +71,7 @@ const getUserStatus = update => {
     type,
     updated: updated,
     userID
-  };
-};
+  }
+}
 
-module.exports = getUserStatus;
+module.exports = getUserStatus

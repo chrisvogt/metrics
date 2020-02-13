@@ -1,14 +1,14 @@
 {
   "name": "personal-metrics",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Personal metrics. A life-tracking hobby project.",
   "scripts": {
+    "deploy": "firebase deploy --only functions",
     "lint": "eslint .",
+    "logs": "firebase functions:log",
     "serve": "firebase serve --only functions",
     "shell": "firebase functions:shell",
-    "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "start": "npm run shell"
   },
   "engines": {
     "node": "10"
@@ -22,8 +22,8 @@
     "lodash": "^4.17.14",
     "moment": "^2.24.0",
     "q-i": "^2.0.1",
-    "request": "^2.88.0",
     "request-promise": "^4.2.4",
+    "request": "^2.88.0",
     "requestretry": "^4.0.0",
     "xml2js": "^0.4.19"
   },
