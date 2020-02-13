@@ -2,11 +2,8 @@ const admin = require('firebase-admin')
 const cors = require('cors')({ origin: true })
 const functions = require('firebase-functions')
 
-const getPinnedRepositories = require('./getPinnedRepositories')
-const getWidgetContent = require('./getWidgetContent')
-const syncAllStats = require('./syncAllStats')
-const syncAllSummaries = require('./syncAllSummaries')
-const syncYesterdaysCodeSummary = require('./syncYesterdaysCodeSummary')
+const getPinnedRepositories = require('./get-pinned-repositories')
+const getWidgetContent = require('./get-widget-content')
 
 const firebaseServiceAccountToken = require('./token.json')
 
@@ -18,18 +15,6 @@ admin.initializeApp({
 const config = functions.config()
 const database = admin.firestore()
 const context = { config, database }
-
-exports.syncAllStats = functions.pubsub
-  .schedule('every day 02:00')
-  .onRun(syncAllStats(context))
-
-exports.syncYesterdaysCodeSummary = functions.pubsub
-  .schedule('every day 02:00')
-  .onRun(syncYesterdaysCodeSummary(context))
-
-exports.syncAllSummaries = functions.pubsub
-  .schedule('every day 02:00')
-  .onRun(syncAllSummaries(context))
 
 exports.getPinnedRepositories = functions.https.onRequest(async (req, res) => {
   return cors(req, res, async () => {

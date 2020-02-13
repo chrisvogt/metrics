@@ -1,17 +1,21 @@
 {
+  "firebase": {
+    "database_url": "FIREBASE_DATABASE_URL"
+  },
   "github": {
     "access_token": "GITHUB_ACCESS_TOKEN",
     "username": "GITHUB_USERNAME_FOR_QUERY",
     "pinned_repository_max": 10
   },
-  "firebase": {
-    "database_url": "FIREBASE_DATABASE_URL"
-  },
   "goodreads": {
     "access_token": "GOODREADS_ACCESS_TOKEN",
     "user_id": "GOODREADS_USER_ID"
   },
+  "spotify": {
+    "client_id": "SPOTIFY_CLIENT_ID",
+    "client_secret": "SPOTIFY_CLIENT_SECRET"
+  },
   "wakatime": {
-    "access_token": "WAKATIME_ACCESS_TOKEN",
+    "access_token": "WAKATIME_ACCESS_TOKEN"
   }
 }
