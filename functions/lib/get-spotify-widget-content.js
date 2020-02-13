@@ -1,20 +1,20 @@
-const getUserProfile = require('../api/spotify/get-user-profile');
-const getTopTracks = require('../api/spotify/get-top-tracks');
+const getUserProfile = require('../api/spotify/get-user-profile')
+const getTopTracks = require('../api/spotify/get-top-tracks')
 
-const trackToCollectionItem = require('../transformers/trackToCollectionItem');
+const trackToCollectionItem = require('../transformers/trackToCollectionItem')
 
 // NOTE(cvogt): this widget content handler is returning what I'm testing as a
 // new common schema for widget content.
 //
 // TODO: refactor to use selectors
 const getSpotifyWidgetContent = async () => {
-  const profile = await getUserProfile();
-  const topTracks = await getTopTracks();
+  const profile = await getUserProfile()
+  const topTracks = await getTopTracks()
 
   // NOTE(cvogt): these values are hard-coded until access token support is
   // available to fetch fresh data
-  const followersCount = profile.followers.total;
-  const playlistsCount = 52;
+  const followersCount = profile.followers.total
+  const playlistsCount = 52
 
   return {
     collections: {
@@ -41,7 +41,7 @@ const getSpotifyWidgetContent = async () => {
       displayName: profile.display_name,
       profileURL: profile.external_urls.spotify
     }
-  };
-};
+  }
+}
 
-module.exports = getSpotifyWidgetContent;
+module.exports = getSpotifyWidgetContent

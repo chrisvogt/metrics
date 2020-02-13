@@ -1,18 +1,16 @@
-'use strict';
-
-const getReview = require('./get-review');
-const getUserStatus = require('./get-user-status');
+const getReview = require('./get-review')
+const getUserStatus = require('./get-user-status')
 
 const transformUpdate = update => {
   if (update.type === 'userstatus') {
-    return getUserStatus(update);
+    return getUserStatus(update)
   }
 
   if (update.type === 'review') {
-    return getReview(update);
+    return getReview(update)
   }
 
-  return null;
-};
+  return null
+}
 
-module.exports = transformUpdate;
+module.exports = transformUpdate
