@@ -1,6 +1,9 @@
-const FieldValue = require('firebase-admin').firestore.FieldValue
-const getSummaries = require('./api/wakatime/get-summaries')
+const {
+  firestore: { FieldValue }
+} = require('firebase-admin')
 const moment = require('moment')
+
+const getSummaries = require('./api/wakatime/get-summaries')
 
 const ymdFormat = 'YYYY-MM-DD'
 const ranges = [
@@ -35,15 +38,17 @@ const syncAllStats = ({ config, database }) => async () => {
     const query = { end, start }
     const { error, ok, summaries } = await getSummaries(query, options)
 
-    if (ok) {
-      return {
-        name,
-        summaries,
-        timestamp: FieldValue.serverTimestamp()
-      }
+    if (!ok) {
+      return console.error(`Failed fetching ${name} data from WakaTime.`, {
+        error
+      })
     }
 
-    console.error(`Failed fetching ${name} data from WakaTime.`, { error })
+    return {
+      name,
+      summaries,
+      timestamp: FieldValue.serverTimestamp()
+    }
   })
 
   const results = await Promise.all(summaryPromises)
@@ -55,6 +60,10 @@ const syncAllStats = ({ config, database }) => async () => {
       summaries,
       timestamp
     })
+    return {
+      success: true,
+      timestamp
+    }
   })
 
   await Promise.all(updatePromises)
@@ -62,6 +71,10 @@ const syncAllStats = ({ config, database }) => async () => {
   console.info('Completed syncing summaries.', {
     updatedDocs: results.map(result => result.name)
   })
+
+  return {
+    success: true
+  }
 }
 
 module.exports = syncAllStats

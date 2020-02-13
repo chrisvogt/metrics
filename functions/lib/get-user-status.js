@@ -1,7 +1,7 @@
 const getAuthor = author => {
   const {
     about,
-    name: name,
+    name,
     sort_by_name: sortName,
     shelf_display_name: displayName
   } = author
@@ -69,7 +69,7 @@ const getUserStatus = update => {
     page: Number(page),
     percent: Number(percent),
     type,
-    updated: updated,
+    updated,
     userID
   }
 }

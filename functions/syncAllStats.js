@@ -8,7 +8,7 @@ const syncAllStats = ({ config, database }) => async () => {
 
   const retryOnPending = (err, response, body) => {
     const { data: { status } = {} } = body
-    return Bool(err) || status !== 'ok'
+    return Boolean(err) || status !== 'ok'
   }
 
   const statsPromises = statsList.map(async range => {
@@ -19,7 +19,7 @@ const syncAllStats = ({ config, database }) => async () => {
       json: true,
       retryDelay: sixtySecondsInMs,
       retryStrategy: retryOnPending,
-      uri: baseUrl + endpoint + `/${range}`
+      uri: `${baseUrl}${endpoint}/${range}`
     })
     const { body: { data = {} } = {} } = response
     return data

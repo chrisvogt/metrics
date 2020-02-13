@@ -36,7 +36,7 @@ const syncYesterdaysCodeSummary = ({ config, database }) => async () => {
   })
 
   if (summaries.statusCode >= 400) {
-    throw new Error(`HTTP Error: ${response.statusCode}`)
+    throw new Error(`HTTP Error: ${summaries.statusCode}`)
   }
 
   const { body: { data } = {} } = summaries
@@ -48,7 +48,7 @@ const syncYesterdaysCodeSummary = ({ config, database }) => async () => {
       reference: yesterdayFormatted,
       result: 'success'
     }
-  } catch (err) {
+  } catch (error) {
     await docRef.set({ error })
     return {
       date: yesterday,

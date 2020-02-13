@@ -1,4 +1,4 @@
-const get = require('lodash').get
+const get = require('lodash/get')
 const got = require('got')
 const xml2js = require('xml2js')
 

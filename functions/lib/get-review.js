@@ -17,7 +17,7 @@ const getAuthor = author => {
       _: smallImageURL = '',
       nophoto: hasSmallImageURL = false
     } = {},
-    ratingsCount: ratingsCount,
+    ratingsCount,
     text_reviews_count: textReviewCount
   } = author
 

@@ -12,7 +12,7 @@ const trackToCollectionItem = item => {
 
   return {
     albumImages,
-    artists: artists.map(({ name }) => name),
+    artists: artists.map(artist => artist.name),
     id,
     name,
     previewURL,
