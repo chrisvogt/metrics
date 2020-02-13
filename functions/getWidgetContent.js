@@ -2,10 +2,12 @@
 
 const getGitHubWidgetContent = require("./lib/get-github-widget-content");
 const getGoodreadsWidgetContent = require("./lib/get-goodreads-widget-content");
+const getSpotifyWidgetContent = require("./lib/get-spotify-widget-content");
 
 const widgetHandlerMap = {
   github: getGitHubWidgetContent,
-  goodreads: getGoodreadsWidgetContent
+  goodreads: getGoodreadsWidgetContent,
+  spotify: getSpotifyWidgetContent
 };
 
 const getWidgetContent = async ({ context, req }) => {
