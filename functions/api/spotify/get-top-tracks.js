@@ -14,10 +14,10 @@ const getTopTracks = async accessToken => {
       uri: 'https://api.spotify.com/v1/me/top/tracks'
     })
 
-    return [response, null];
+    return [response, null]
   } catch (error) {
-    console.error('Error fetching top tracks from Spotify.');
-    return [null, error];
+    console.error('Error fetching top tracks from Spotify.')
+    return [null, error]
   }
 }
 

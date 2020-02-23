@@ -4,7 +4,7 @@ const getTopTracksFromDb = async ({ database }) => {
   const doc = await docRef.get()
   const { items } = doc.data()
 
-  return items;
-};
+  return items
+}
 
 module.exports = getTopTracksFromDb

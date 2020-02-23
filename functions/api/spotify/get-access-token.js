@@ -18,18 +18,13 @@ const getAccessToken = async auth => {
       url: 'https://accounts.spotify.com/api/token'
     })
 
-    const {
-      access_token: accessToken,
-      expires_in: expiresInSec,
-      scope
-    } = response || {};
+    const { access_token: accessToken, expires_in: expiresInSec, scope } =
+      response || {}
 
     const leadTimeSec = 300
     const expiresAt = new Date()
 
-    expiresAt.setSeconds(
-      expiresAt.getSeconds() + (expiresInSec - leadTimeSec)
-    )
+    expiresAt.setSeconds(expiresAt.getSeconds() + (expiresInSec - leadTimeSec))
 
     const accessTokenObj = {
       accessToken,
@@ -39,7 +34,7 @@ const getAccessToken = async auth => {
 
     return [accessTokenObj, null]
   } catch (err) {
-    console.log('There was an error', err);
+    console.log('There was an error', err)
     const { error } = err
     return [null, error]
   }

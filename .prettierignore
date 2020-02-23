@@ -1,9 +1,11 @@
-.cache/
+.cache
 .DS_Store
 .env
 .gatsby-context.js
 *.log
+build
 coverage
 logs
 node_modules
+package.json
 public

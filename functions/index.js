@@ -19,7 +19,7 @@ const context = { config, database }
 
 exports.syncSpotifyTopTracks = functions.pubsub
   .schedule('every day 02:00')
-  .onRun(syncSpotifyTopTracks(context));
+  .onRun(syncSpotifyTopTracks(context))
 
 exports.getPinnedRepositories = functions.https.onRequest(async (req, res) => {
   return cors(req, res, async () => {
