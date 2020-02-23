@@ -1,15 +1,19 @@
+/**
+ * This file is a temporary mock file for development.
+ */
+
 const getUserProfile = require('../api/spotify/get-user-profile')
-const getTopTracks = require('../api/spotify/get-top-tracks')
+const getTopTracksFromDb = require('../api/firestore/get-top-tracks')
 
 const trackToCollectionItem = require('../transformers/track-to-collection-item')
 
 // NOTE(cvogt): this widget content handler is returning what I'm testing as a
 // new common schema for widget content.
-//
+
 // TODO: refactor to use selectors
-const getSpotifyWidgetContent = async () => {
+const getSpotifyWidgetContent = async ({ context }) => {
   const profile = await getUserProfile()
-  const topTracks = await getTopTracks()
+  const topTracks = await getTopTracksFromDb(context)
 
   // NOTE(cvogt): these values are hard-coded until access token support is
   // available to fetch fresh data
