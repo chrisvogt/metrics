@@ -8,7 +8,8 @@ const getTopTracks = async accessToken => {
       json: true,
       qs: {
         time_range: 'short_term',
-        limit: 12
+        limit: 12,
+        offset: 0
       },
       retryStrategy: err => !!err,
       uri: 'https://api.spotify.com/v1/me/top/tracks'

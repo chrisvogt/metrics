@@ -54,7 +54,7 @@ exports.getWidgetContent = functions.https.onRequest(async (req, res) => {
   return cors(req, res, async () => {
     try {
       const response = await getWidgetContent({ context, req })
-      res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400')
+      // res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400')
       res.set('Access-Control-Allow-Origin', '*')
       res.status(200).send({
         ok: true,
