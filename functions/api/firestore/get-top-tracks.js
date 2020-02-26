@@ -1,10 +1,14 @@
 const getTopTracksFromDb = async ({ database }) => {
-  const docRef = database.collection('spotify').doc('top-tracks')
+  const topTracksRef = database.doc('spotify/top-tracks')
+  let items
 
-  console.log('getting top tracks from db', docRef)
-
-  const doc = await docRef.get()
-  const { items } = doc.data()
+  try {
+    const doc = (await topTracksRef.get()) || {}
+    const data = doc.data() || {}
+    items = data.items || []
+  } catch (error) {
+    throw error
+  }
 
   return items
 }
