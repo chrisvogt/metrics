@@ -16,7 +16,7 @@ const getTopTracks = async accessToken => {
 
     return [response, null]
   } catch (error) {
-    console.error('Error fetching top tracks from Spotify.')
+    console.error('Error fetching top tracks from Spotify.', error)
     return [null, error]
   }
 }

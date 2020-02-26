@@ -21,6 +21,15 @@ exports.syncSpotifyTopTracks = functions.pubsub
   .schedule('every day 02:00')
   .onRun(syncSpotifyTopTracks(context))
 
+exports.syncTracks = functions.https.onRequest(async (req, res) => {
+  return cors(req, res, async () => {
+    const result = await syncSpotifyTopTracks(context)
+    res.set('Cache-Control', 'public, max-age=3600, s-maxage=14400')
+    res.set('Access-Control-Allow-Origin', '*')
+    res.status(200).send({ status: result })
+  })
+})
+
 exports.getPinnedRepositories = functions.https.onRequest(async (req, res) => {
   return cors(req, res, async () => {
     const repositories = await getPinnedRepositories(context)

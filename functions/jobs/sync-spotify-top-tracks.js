@@ -1,31 +1,34 @@
 const getSpotifyTopTracks = require('../lib/get-spotify-top-tracks')
 
 const syncSpotifyTopTracks = async ({ database }) => {
+  let topTracks
   try {
-    const topTracks = await getSpotifyTopTracks()
-    const { items } = topTracks
-
-    if (!topTracks || !topTracks.length) {
-      return {
-        result: 'FAILURE'
-      }
-    }
-
-    const docRef = database.collection('spotify').doc('top-tracks')
-
-    await docRef.set({
-      timestamp: Date.now(),
-      items
-    })
-
-    return {
-      result: 'SUCCESS'
-    }
+    const { items = [] } = (await getSpotifyTopTracks()) || {}
+    topTracks = items
   } catch (error) {
-    console.log('Failure', error)
+    console.error('Get top tracks failed', error)
     return {
-      result: 'FAILURE'
+      result: 'FAILURE',
+      message: 'Failed to fetch top tracks.'
     }
+  }
+
+  if (!topTracks.length > 0) {
+    return {
+      result: 'FAILURE',
+      message: 'No tracks were returned.'
+    }
+  }
+
+  const docRef = database.collection('spotify').doc('top-tracks')
+
+  await docRef.set({
+    timestamp: Date.now(),
+    items: topTracks
+  })
+
+  return {
+    result: 'SUCCESS'
   }
 }
 
