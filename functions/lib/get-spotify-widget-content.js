@@ -15,8 +15,7 @@ const getSpotifyWidgetContent = async ({ context }) => {
   const profile = await getUserProfile()
   const topTracks = await getTopTracksFromDb(context)
 
-  // NOTE(cvogt): these values are hard-coded until access token support is
-  // available to fetch fresh data
+  // NOTE(cvogt): these values are hard-coded for now
   const followersCount = profile.followers.total
   const playlistsCount = 52
 
