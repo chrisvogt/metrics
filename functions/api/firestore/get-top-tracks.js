@@ -1,3 +1,4 @@
+// fetch top tracks from DB
 const getTopTracksFromDb = async ({ database }) => {
   const topTracksRef = database.doc('spotify/top-tracks')
   let items
