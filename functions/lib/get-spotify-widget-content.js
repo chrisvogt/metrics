@@ -21,7 +21,9 @@ const getSpotifyWidgetContent = async ({ context }) => {
 
   return {
     collections: {
-      topTracks: topTracks.map(trackToCollectionItem)
+      topTracks: topTracks
+        .map(trackToCollectionItem)
+        .filter(({ id }) => id !== '2hup7lQB1vMfVTemkfljLR')
     },
     metrics: [
       {
