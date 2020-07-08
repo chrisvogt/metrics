@@ -2,6 +2,7 @@ const admin = require('firebase-admin')
 const cors = require('cors')({ origin: true })
 const functions = require('firebase-functions')
 
+const syncInstagramData = require('./jobs/sync-instagram-data')
 const syncSpotifyTopTracks = require('./jobs/sync-spotify-top-tracks')
 const getPinnedRepositories = require('./get-pinned-repositories')
 const getWidgetContent = require('./get-widget-content')
@@ -19,7 +20,11 @@ const context = { config, database }
 
 exports.syncSpotifyTopTracks = functions.pubsub
   .schedule('every day 02:00')
-  .onRun(syncSpotifyTopTracks(context));
+  .onRun(() => syncSpotifyTopTracks(context));
+
+exports.syncInstagramData = functions.pubsub
+  .schedule('every day 02:00')
+  .onRun(() => syncInstagramData());
 
 exports.getPinnedRepositories = functions.https.onRequest(async (req, res) => {
   return cors(req, res, async () => {
