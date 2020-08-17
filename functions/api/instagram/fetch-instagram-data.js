@@ -13,6 +13,10 @@ const defaultFields = [
 const INSTAGRAM_BASE_URL = 'https://graph.instagram.com';
 
 const fetchInstagramMedia = async () => {
+
+  // TEMP FOR DEV
+  return require('./fetch-instagram-data.mock.json')
+
   const {
     instagram: {
       user_id: userId,

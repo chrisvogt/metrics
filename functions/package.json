@@ -15,6 +15,7 @@
     "node": "10"
   },
   "dependencies": {
+    "axios": "^0.19.2",
     "cors": "^2.8.5",
     "firebase-admin": "^8.13.0",
     "firebase-functions": "^3.7.0",
@@ -22,6 +23,8 @@
     "graphql-got": "^0.1.2",
     "lodash": "^4.17.14",
     "moment": "^2.24.0",
+    "p-all": "^3.0.0",
+    "p-map": "^4.0.0",
     "q-i": "^2.0.1",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",

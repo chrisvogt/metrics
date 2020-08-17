@@ -1,12 +1,10 @@
 const getGitHubWidgetContent = require('./lib/get-github-widget-content')
 const getGoodreadsWidgetContent = require('./lib/get-goodreads-widget-content')
-const fetchRecentInstagramMedia = require('./lib/fetch-recent-instagram-media')
 const getSpotifyWidgetContent = require('./lib/get-spotify-widget-content')
 
 const widgetHandlerRegistry = {
   github: getGitHubWidgetContent,
   goodreads: getGoodreadsWidgetContent,
-  instagram: fetchRecentInstagramMedia,
   spotify: getSpotifyWidgetContent
 }
 
