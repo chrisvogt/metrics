@@ -17,10 +17,6 @@
         "source": "/api/goodreads-updates",
         "function": "getGoodreadsUpdates"
       },
-      {
-        "source": "/jobs/sync-instagram",
-        "function": "syncInstagramData"
-      },
       { 
         "source": "/api/widget-content",
         "function": "getWidgetContent"
