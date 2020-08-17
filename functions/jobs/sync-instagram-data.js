@@ -118,7 +118,7 @@ const syncInstagramData = async () => {
       stopOnError: false,
     })
 
-    console.info('Finished uploading all files to storage.', result)
+    console.info('Finished uploading all files to storage.')
   } catch (error) {
     console.error('Something went wrong downloading media files', error)
   }
