@@ -1,10 +1,11 @@
-const path = require('path')
+const admin = require('firebase-admin')
 const pMap = require('p-map')
 
 const fetchAndUploadFile = require('../api/cloud-storage/fetch-and-upload-file')
 const fetchInstagramData = require('../api/instagram/fetch-instagram-data')
 const listInstagramMedia = require('../api/cloud-storage/list-instagram-media')
 const toIGDestinationPath = require('../transformers/to-ig-destination-path')
+const transformInstagramMedia = require('../transformers/transform-instagram-media')
 
 const { CLOUD_STORAGE_IMAGES_BUCKET } = require('../constants')
 
@@ -22,14 +23,13 @@ feed into GCP Storage and Firebase.
 
 * sync
 
-- [ ] Store the raw Instagram response data.
+- [x] Store the raw Instagram response data.
 - [ ] Store the transformed Instagram media.
-  - [ ] Filter out all except IMAGE posts.
+  - [x] Filter out all except IMAGE and CAROUSEL posts.
 - [x] Download each media file.
   - [x] Only download NEW media files
 - [x] Upload each media file
 - [ ] -Delete all unrecognized files (format: `${id}.jpg`) from GCP.- (do this in another job)
-- [ ] Store reponse data for the client.
 
 * notes
 
@@ -45,33 +45,70 @@ const validMediaBaseURLs = [
   'https://scontent.cdninstagram.com',
 ]
 
+const validMediaTypes = ['CAROUSEL_ALBUM', 'IMAGE']
+
 const syncInstagramData = async () => {
+  const instagramResponse = await fetchInstagramData()
   const {
     media: { data: rawMedia },
-  } = await fetchInstagramData()
+  } = instagramResponse
 
   const storedMediaFileNames = await listInstagramMedia()
 
   const mediaToDownload = rawMedia
-    .slice(0, 2)
-    .filter(({ id, media_url: mediaURL }) => {
+    .filter(({ id, media_type: mediaType, media_url: mediaURL }) => {
       const isAlreadyDownloaded = storedMediaFileNames.includes(
         toIGDestinationPath(mediaURL, id)
       )
+
+      const isValidMediaType = validMediaTypes.includes(mediaType)
+
       const isValidMediaURL = validMediaBaseURLs.find((baseURL) =>
         mediaURL.startsWith(baseURL)
       )
-      return !isAlreadyDownloaded && isValidMediaURL
+
+      return isValidMediaType && isValidMediaURL && !isAlreadyDownloaded
     })
-    .map(({ id, media_type: mediaType, media_url: mediaURL }) => ({
+    .map(({ id, media_url: mediaURL }) => ({
       id,
-      mediaType,
       mediaURL,
     }))
 
+  const db = admin.firestore()
+
+  // Save the raw Instagram response data
+  await db
+    .collection('instagram')
+    .doc('last-response')
+    .set({
+      ...instagramResponse,
+      fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+    })
+
+  const filteredMedia = rawMedia.filter(({ media_type: mediaType }) =>
+    validMediaTypes.includes(mediaType)
+  )
+
+  await db
+    .collection('instagram')
+    .doc('widget-content')
+    .set({
+      media: filteredMedia.map(transformInstagramMedia),
+      meta: {
+        synced: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      profile: {
+        username: instagramResponse.username,
+        mediaCount: instagramResponse.media_count
+      },
+    })
+
   if (!mediaToDownload.length) {
     console.log('No new files identified to download.')
-    return 'ok'
+    return {
+      ok: true,
+      totalUploadedCount: 0,
+    }
   }
 
   let result
@@ -87,6 +124,7 @@ const syncInstagramData = async () => {
   }
 
   return {
+    ok: true,
     destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
     totalUploadedCount: result.length,
     uploadedFiles: result.map(({ fileName }) => fileName),
