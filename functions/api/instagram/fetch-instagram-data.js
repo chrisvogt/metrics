@@ -17,7 +17,7 @@ const fetchInstagramMedia = async () => {
     instagram: {
       user_id: userId,
       access_token: accessToken
-    }
+    } = {}
   } = functions.config()
 
   const { body } = await got(userId, {

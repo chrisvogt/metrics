@@ -40,21 +40,19 @@ Valid media URL path beginnings:
 
 */
 
-const validMediaBaseURLs = [
-  'https://video.cdninstagram.com',
-  'https://scontent.cdninstagram.com',
-]
-
 const validMediaTypes = ['CAROUSEL_ALBUM', 'IMAGE']
 
 const syncInstagramData = async () => {
   const instagramResponse = await fetchInstagramData()
+
   const {
     media: { data: rawMedia },
   } = instagramResponse
 
   const storedMediaFileNames = await listInstagramMedia()
 
+  // TODO: update the filters to use the same source of truth as data being saved
+  // to the db.
   const mediaToDownload = rawMedia
     .filter(({ id, media_type: mediaType, media_url: mediaURL }) => {
       const isAlreadyDownloaded = storedMediaFileNames.includes(
@@ -63,11 +61,7 @@ const syncInstagramData = async () => {
 
       const isValidMediaType = validMediaTypes.includes(mediaType)
 
-      const isValidMediaURL = validMediaBaseURLs.find((baseURL) =>
-        mediaURL.startsWith(baseURL)
-      )
-
-      return isValidMediaType && isValidMediaURL && !isAlreadyDownloaded
+      return isValidMediaType && !isAlreadyDownloaded
     })
     .map(({ id, media_url: mediaURL }) => ({
       id,
@@ -104,7 +98,6 @@ const syncInstagramData = async () => {
     })
 
   if (!mediaToDownload.length) {
-    console.log('No new files identified to download.')
     return {
       ok: true,
       totalUploadedCount: 0,
@@ -118,7 +111,7 @@ const syncInstagramData = async () => {
       stopOnError: false,
     })
 
-    console.info('Finished uploading all files to storage.')
+    console.info('Successfully uploaded all files to storage.')
   } catch (error) {
     console.error('Something went wrong downloading media files', error)
   }
