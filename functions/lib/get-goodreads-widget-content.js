@@ -65,10 +65,10 @@ const getUpdates = result => {
 
 const getGoodreadsWidgetContent = async ({ context }) => {
   const {
-    config: { goodreads: { access_token: accessToken, user_id: userID } } = {}
+    config: { goodreads: { access_token: accessToken, key, user_id: userID } } = {}
   } = context
 
-  const goodreadsURL = `https://www.goodreads.com/user/show/${userID}?format=xml&key=${accessToken}`
+  const goodreadsURL = `https://www.goodreads.com/user/show/${userID}?format=xml&key=${key}`
 
   const response = await got(goodreadsURL)
   const xml = response.body
