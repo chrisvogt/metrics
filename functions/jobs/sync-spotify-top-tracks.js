@@ -94,13 +94,16 @@ const syncSpotifyTopTracks = async () => {
   const saveWidgetContent = async () => {
     const {
       display_name: displayName,
-      external_urls: { spotify: userProfileURL } = {},
+      external_urls: { spotify: profileURL } = {},
       followers: { total: followersCount } = {},
       id,
       images,
     } = userProfile
 
     const avatarURL = images.find(({ url }) => !!url)
+
+    // TODO(chrisvogt): replace with synced data
+    const playlistsCount = 52
 
     return await db
       .collection(DATABASE_COLLECTION_SPOTIFY)
@@ -112,12 +115,28 @@ const syncSpotifyTopTracks = async () => {
         meta: {
           synced: admin.firestore.FieldValue.serverTimestamp(),
         },
+        metrics: [
+          ...(followersCount
+            ? [
+                {
+                  displayName: 'Followers',
+                  id: 'followers-count',
+                  value: followersCount,
+                },
+              ]
+            : []),
+          {
+            displayName: 'Playlists',
+            id: 'playlists-count',
+            value: playlistsCount,
+          },
+        ],
         profile: {
           avatarURL,
           displayName,
           followersCount,
           id,
-          userProfileURL,
+          profileURL
         },
       })
   }
