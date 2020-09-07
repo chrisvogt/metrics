@@ -58,7 +58,7 @@ app.get('/api/widgets/:provider', async (req, res) => {
 })
 
 app.get('*', (req, res) => {
-  res.status(404).send(404)
+  res.sendStatus(404)
 })
 
 exports.app = functions.https.onRequest(app)
