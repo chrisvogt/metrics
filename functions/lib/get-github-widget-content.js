@@ -1,4 +1,5 @@
 const fs = require('fs')
+const functions = require('firebase-functions')
 const graphqlGot = require('graphql-got')
 const path = require('path')
 
@@ -7,19 +8,21 @@ const query = fs.readFileSync(
   'utf8'
 )
 
-const getGitHubWidgetContent = async ({ context }) => {
-  const {
-    config: {
-      github: { access_token: token, username }
-    }
-  } = context
+const getGitHubWidgetContent = async () => {
+  const config = functions.config()
+
+  const { github: { access_token: accessToken, username } = {} } = config
+
+  if (!accessToken || !username) {
+    throw new Error('Missing required config for GitHub widget.')
+  }
 
   const { body } = await graphqlGot('https://api.github.com/graphql', {
     query,
-    token,
+    token: accessToken,
     variables: {
-      username
-    }
+      username,
+    },
   })
 
   return body

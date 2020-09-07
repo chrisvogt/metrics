@@ -4,6 +4,7 @@ const functions = require('firebase-functions')
 const getSpotifyAccessToken = require('../api/spotify/get-access-token')
 const getSpotifyTopTracks = require('../api/spotify/get-top-tracks')
 const getSpotifyUserProfile = require('../api/spotify/get-user-profile')
+const transformTrackToCollectionItem = require('../transformers/track-to-collection-item')
 
 const { DATABASE_COLLECTION_SPOTIFY } = require('../constants')
 
@@ -93,82 +94,49 @@ const syncSpotifyTopTracks = async () => {
   const saveWidgetContent = async () => {
     const {
       display_name: displayName,
-      external_urls: { spotify: userProfileURL } = {},
+      external_urls: { spotify: profileURL } = {},
       followers: { total: followersCount } = {},
       id,
       images,
     } = userProfile
 
-    // NOTE(chrisvogt): use the first image with a
     const avatarURL = images.find(({ url }) => !!url)
 
-    const transformTopTrack = (track = {}) => {
-      const {
-        album,
-        artists,
-        duration_ms: durationMs,
-        explicit,
-        id,
-        name,
-        popularity,
-        preview_url: previewURL,
-        type,
-        uri,
-      } = track
-
-      const transformAlbum = (album = {}) => {
-        const {
-          album_type: albumType,
-          external_urls: externalURLs,
-          id,
-          images,
-          name,
-          release_date: releaseDate,
-          type,
-          uri,
-        } = album
-        return {
-          albumType,
-          externalURLs,
-          id,
-          images,
-          name,
-          releaseDate,
-          type,
-          uri,
-        }
-      }
-
-      return {
-        album: transformAlbum(album),
-        artists,
-        durationMs,
-        explicit,
-        id,
-        name,
-        popularity,
-        previewURL,
-        type,
-        uri,
-      }
-    }
+    // TODO(chrisvogt): replace with synced data
+    const playlistsCount = 52
 
     return await db
       .collection(DATABASE_COLLECTION_SPOTIFY)
       .doc('widget-content')
       .set({
         collections: {
-          topTracks: topTracks.map(transformTopTrack),
+          topTracks: topTracks.map(transformTrackToCollectionItem),
         },
         meta: {
           synced: admin.firestore.FieldValue.serverTimestamp(),
         },
+        metrics: [
+          ...(followersCount
+            ? [
+                {
+                  displayName: 'Followers',
+                  id: 'followers-count',
+                  value: followersCount,
+                },
+              ]
+            : []),
+          {
+            displayName: 'Playlists',
+            id: 'playlists-count',
+            value: playlistsCount,
+          },
+        ],
         profile: {
           avatarURL,
           displayName,
           followersCount,
           id,
-          userProfileURL,
+          profileURL
         },
       })
   }
