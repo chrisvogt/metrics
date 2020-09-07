@@ -1,5 +1,5 @@
 const admin = require('firebase-admin')
-const cors = require('cors')({ origin: true })
+const cors = require('cors')
 const express = require('express')
 const functions = require('firebase-functions')
 
@@ -14,7 +14,7 @@ admin.initializeApp({
   databaseURL: 'https://personal-stats-chrisvogt.firebaseio.com',
 })
 
-exports.syncSptifyTopTracks = functions.pubsub
+exports.syncSpotifyTopTracks = functions.pubsub
   .schedule('every day 02:00')
   .onRun(() => syncSpotifyTopTracks())
 
@@ -34,28 +34,47 @@ const buildFailureResponse = (err = {}) => ({
 
 const app = express()
 
-app.get('/api/widgets/:provider', async (req, res) => {
-  const { params: { provider } = {} } = req
+const corsAllowList = [
+  'https://www.chrisvogt.me',
+  'https://chrisvogt.me',
+  'http://dev-chrisvogt.me:8000',
+  'https://dev-chrisvogt.me:8000'
+]
 
-  if (!provider || !validWidgetIds.includes(provider)) {
-    const response = buildFailureResponse({
-      message: 'A valid provider type is required.',
-    })
-    res.status(404).send(response)
+// NOTE(chrisvogt): adapted from https://expressjs.com/en/resources/middleware/cors.html
+const corsOptionsDelegate = (req, callback) => {
+  const isAllowedOrigin = corsAllowList.includes(req.header('Origin'))
+  const corsOptions = isAllowedOrigin ? { origin: true } : { origin: false }
+
+  return callback(null, corsOptions)
+}
+
+app.get(
+  '/api/widgets/:provider',
+  cors(corsOptionsDelegate),
+  async (req, res) => {
+    const { params: { provider } = {} } = req
+
+    if (!provider || !validWidgetIds.includes(provider)) {
+      const response = buildFailureResponse({
+        message: 'A valid provider type is required.',
+      })
+      res.status(404).send(response)
+      return res.end()
+    }
+
+    try {
+      const githubWidgetContent = await getWidgetContent(provider)
+      const response = buildSuccessResponse(githubWidgetContent)
+      res.status(200).send(response)
+    } catch (err) {
+      const response = buildFailureResponse(err)
+      res.status(400).send(response)
+    }
+
     return res.end()
   }
-
-  try {
-    const githubWidgetContent = await getWidgetContent(provider)
-    const response = buildSuccessResponse(githubWidgetContent)
-    res.status(200).send(response)
-  } catch (err) {
-    const response = buildFailureResponse(err)
-    res.status(400).send(response)
-  }
-
-  return res.end();
-})
+)
 
 app.get('*', (req, res) => {
   res.sendStatus(404)
