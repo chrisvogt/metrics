@@ -19,6 +19,7 @@ const getInstagramWidgetContent = async () => {
         media,
       },
       meta: {
+        // NOTE(chrisvogt): tranform the last synced timestamp into a JS Date object
         synced: new admin.firestore.Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate()
       },
       metrics: [
