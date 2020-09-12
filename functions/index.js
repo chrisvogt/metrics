@@ -4,6 +4,7 @@ const express = require('express')
 const functions = require('firebase-functions')
 
 const { getWidgetContent, validWidgetIds } = require('./lib/get-widget-content')
+const syncGoodreadsData = require('./jobs/sync-goodreads-data')
 const syncInstagramData = require('./jobs/sync-instagram-data')
 const syncSpotifyTopTracks = require('./jobs/sync-spotify-top-tracks')
 
@@ -48,6 +49,11 @@ const corsOptionsDelegate = (req, callback) => {
 
   return callback(null, corsOptions)
 }
+
+app.get('/debug/sync/goodreads', async () => {
+  const result = await syncGoodreadsData()
+  return result
+})
 
 app.get(
   '/api/widgets/:provider',
