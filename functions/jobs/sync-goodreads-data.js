@@ -1,7 +1,5 @@
 const admin = require('firebase-admin')
 
-const getReview = require('../lib/get-review')
-const getUserStatus = require('../lib/get-user-status')
 const fetchUser = require('../api/goodreads/fetch-user')
 const fetchRecentlyReadBooks = require('../api/goodreads/fetch-recently-read-books')
 
@@ -14,14 +12,14 @@ Goodreads user profile and latest books data.
 
 * concurrent
 
-- [ ] Fetch Goodreads user profile
-- [ ] Fetch Goodreads recently read shelf
+- [x] Fetch Goodreads user profile
+- [x] Fetch Goodreads recently read shelf
 
 * sync
 
-- [ ] Store the Goodreads user profile raw response
-- [ ] Store the Goodreads recently read shelf raw response
-- [ ] Store the transformed, combined Goodreads data
+- [x] Store the Goodreads user profile raw response
+- [x] Store the Goodreads recently read shelf raw response
+- [x] Store the transformed, combined Goodreads data
 
 */
 
