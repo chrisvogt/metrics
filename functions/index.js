@@ -76,6 +76,7 @@ app.get(
     try {
       const githubWidgetContent = await getWidgetContent(provider)
       const response = buildSuccessResponse(githubWidgetContent)
+      res.set('Cache-Control', 'public, max-age=14400, s-maxage=43200');
       res.status(200).send(response)
     } catch (err) {
       const response = buildFailureResponse(err)
