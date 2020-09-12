@@ -4,6 +4,7 @@ const express = require('express')
 const functions = require('firebase-functions')
 
 const { getWidgetContent, validWidgetIds } = require('./lib/get-widget-content')
+const syncGoodreadsData = require('./jobs/sync-goodreads-data')
 const syncInstagramData = require('./jobs/sync-instagram-data')
 const syncSpotifyTopTracks = require('./jobs/sync-spotify-top-tracks')
 
@@ -13,6 +14,10 @@ admin.initializeApp({
   credential: admin.credential.cert(firebaseServiceAccountToken),
   databaseURL: 'https://personal-stats-chrisvogt.firebaseio.com',
 })
+
+exports.syncGoodreadsData = functions.pubsub
+  .schedule('every day 02:00')
+  .onRun(() => syncGoodreadsData())
 
 exports.syncSpotifyTopTracks = functions.pubsub
   .schedule('every day 02:00')
@@ -48,6 +53,11 @@ const corsOptionsDelegate = (req, callback) => {
 
   return callback(null, corsOptions)
 }
+
+// app.get('/debug/sync/goodreads', async (req, res) => {
+//   const result = await syncGoodreadsData()
+//   res.status(200).send(result)
+// })
 
 app.get(
   '/api/widgets/:provider',
