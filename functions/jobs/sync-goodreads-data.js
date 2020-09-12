@@ -26,13 +26,14 @@ Goodreads user profile and latest books data.
 */
 
 const syncGoodreadsData = async () => {
+  let bookReviews
   let jsonResponse
   let profile
   let recentlyReadBooks
   let updates
 
   try {
-    const [user, reviews] = await Promise.all([
+    const [user, recentlyRead] = await Promise.all([
       fetchUser(),
       fetchRecentlyReadBooks(),
     ])
@@ -41,7 +42,8 @@ const syncGoodreadsData = async () => {
     profile = user.profile
     updates = user.updates
 
-    recentlyReadBooks = reviews
+    bookReviews = recentlyRead.bookReviews
+    recentlyReadBooks = recentlyRead.books
   } catch (error) {
     console.error('Failed to fetch Goodreads data.', error)
     return {
@@ -60,21 +62,27 @@ const syncGoodreadsData = async () => {
   })
 
   try {
-    await db.collection('goodreads').doc('last-response_user-show').set({
-      response: jsonResponse,
-      fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
-    })
-    await db
-      .collection('goodreads')
-      .doc('widget-content')
-      .set({
-        meta: {
-          synced: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        profile,
-        recentlyReadBooks,
-        updates,
-      })
+    await Promise.all([
+      await db.collection('goodreads').doc('last-response_user-show').set({
+        response: jsonResponse,
+        fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }),
+      await db.collection('goodreads').doc('last-response_book-reviews').set({
+        response: bookReviews,
+        fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }),
+      await db
+        .collection('goodreads')
+        .doc('widget-content')
+        .set({
+          meta: {
+            synced: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          profile,
+          recentlyReadBooks,
+          updates,
+        }),
+    ])
   } catch (err) {
     console.error('Failed to save Goodreads data to database.', err)
     return {
@@ -82,8 +90,6 @@ const syncGoodreadsData = async () => {
       error: err.message || err,
     }
   }
-
-  console.log('completed, returning...');
 
   return {
     profile,

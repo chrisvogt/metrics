@@ -93,7 +93,6 @@ module.exports = async () => {
   // using Goodreads to get my book review, and then returning the book data from
   // Google Books.
   const bookPromises = bookReviews
-    .slice(0, 12)
     .map((book) => fetchBookFromGoogle(book))
   const bookResults = await Promise.all(bookPromises)
   const books = bookResults
@@ -102,5 +101,5 @@ module.exports = async () => {
     )
     .map(transformBookData)
 
-  return books
+  return { books, bookReviews }
 }
