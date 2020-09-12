@@ -75,6 +75,8 @@ module.exports = async () => {
     `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read`
   )
 
+  let rawReviewsResponse
+
   const bookReviews = await new Promise((resolve, reject) => {
     parseString(body, (error, result) => {
       if (error) {
@@ -83,6 +85,9 @@ module.exports = async () => {
 
       const reviewsResponse = result.GoodreadsResponse.reviews[0].review
       const transformedReviews = reviewsResponse.reduce(transformReview, [])
+
+      rawReviewsResponse = reviewsResponse
+
       resolve(transformedReviews)
     })
   })
@@ -101,5 +106,5 @@ module.exports = async () => {
     )
     .map(transformBookData)
 
-  return { books, bookReviews }
+  return { books, rawReviewsResponse }
 }

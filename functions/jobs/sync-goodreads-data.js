@@ -26,10 +26,10 @@ Goodreads user profile and latest books data.
 */
 
 const syncGoodreadsData = async () => {
-  let bookReviews
   let jsonResponse
   let profile
   let recentlyReadBooks
+  let reviewsResponse
   let updates
 
   try {
@@ -42,7 +42,7 @@ const syncGoodreadsData = async () => {
     profile = user.profile
     updates = user.updates
 
-    bookReviews = recentlyRead.bookReviews
+    reviewsResponse = recentlyRead.rawReviewsResponse
     recentlyReadBooks = recentlyRead.books
   } catch (error) {
     console.error('Failed to fetch Goodreads data.', error)
@@ -68,7 +68,7 @@ const syncGoodreadsData = async () => {
         fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
       }),
       await db.collection('goodreads').doc('last-response_book-reviews').set({
-        response: bookReviews,
+        response: reviewsResponse,
         fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
       }),
       await db
