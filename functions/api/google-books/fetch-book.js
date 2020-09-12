@@ -1,25 +1,32 @@
-const got = require('got');
+const functions = require('firebase-functions')
+const got = require('got')
 
-const fetchBook = async (apiKey, book) => {
-  const {isbn, rating} = book;
+const fetchBook = async (book) => {
+  const { isbn, rating } = book
 
-  const bookEndpoint = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}`;
+  const config = functions.config()
+  const { google: { books_api_key: apiKey } = {} } = config
 
+  let googleBookData
   try {
-    const {body} = await got(bookEndpoint);
-    const {items: [bookData] = []} = JSON.parse(body);
+    const { body } = await got(
+      `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}`
+    )
+    const { items: [bookData] = [] } = JSON.parse(body)
 
     if (!bookData) {
-      throw new Error(`Failed to find Google Books data for ${isbn}.`);
+      throw new Error(`Failed to fetch Google Books data for ${isbn}.`)
     }
 
-    return {
-      book: bookData,
-      rating
-    };
-  } catch (error) {
-    console.log(error);
+    googleBookData = bookData
+  } catch(error) {
+    return null
   }
-};
+
+  return {
+    book: googleBookData,
+    rating,
+  }
+}
 
 module.exports = fetchBook

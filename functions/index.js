@@ -50,9 +50,9 @@ const corsOptionsDelegate = (req, callback) => {
   return callback(null, corsOptions)
 }
 
-app.get('/debug/sync/goodreads', async () => {
+app.get('/debug/sync/goodreads', async (req, res) => {
   const result = await syncGoodreadsData()
-  return result
+  res.status(200).send(result)
 })
 
 app.get(
