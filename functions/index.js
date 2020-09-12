@@ -40,10 +40,14 @@ const buildFailureResponse = (err = {}) => ({
 const app = express()
 
 const corsAllowList = [
-  'https://www.chrisvogt.me',
-  'https://chrisvogt.me',
   'http://dev-chrisvogt.me:8000',
-  'https://dev-chrisvogt.me:8000'
+  'http://localhost:8000',
+  'https://chrisvogt.me',
+  'https://dev-chrisvogt.me:8000',
+  'https://dev-chrisvogt.me',
+  'https://localhost:8000',
+  'https://www.chrisvogt.me',
+  'localhost:8000',
 ]
 
 // NOTE(chrisvogt): adapted from https://expressjs.com/en/resources/middleware/cors.html
@@ -76,7 +80,7 @@ app.get(
     try {
       const githubWidgetContent = await getWidgetContent(provider)
       const response = buildSuccessResponse(githubWidgetContent)
-      res.set('Cache-Control', 'public, max-age=14400, s-maxage=43200');
+      res.set('Cache-Control', 'public, max-age=14400, s-maxage=43200')
       res.status(200).send(response)
     } catch (err) {
       const response = buildFailureResponse(err)
