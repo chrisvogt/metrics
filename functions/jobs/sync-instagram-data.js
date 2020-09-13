@@ -117,8 +117,8 @@ const syncInstagramData = async () => {
   }
 
   return {
-    ok: true,
     destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+    result: 'SUCCESS',
     totalUploadedCount: result.length,
     uploadedFiles: result.map(({ fileName }) => fileName),
   }
