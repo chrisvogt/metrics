@@ -1,3 +1,4 @@
+const { logger } = require('firebase-functions')
 const request = require('request-promise')
 
 const getAccessToken = async auth => {
@@ -39,7 +40,7 @@ const getAccessToken = async auth => {
 
     return [accessTokenObj, null]
   } catch (err) {
-    console.log('There was an error', err);
+    logger.log('Error fetching Spotify user access token.', err);
     const { error } = err
     return [null, error]
   }
