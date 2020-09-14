@@ -8,9 +8,8 @@ const fetchBook = async (book) => {
 
   let googleBookData
   try {
-    const { body } = await got(
-      `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}`
-    )
+    const endpoint = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}`
+    const { body } = await got(endpoint)
     const { items: [bookData] = [] } = JSON.parse(body)
 
     if (!bookData) {
@@ -19,7 +18,10 @@ const fetchBook = async (book) => {
 
     googleBookData = bookData
   } catch (error) {
-    logger.error('Error fetching book data from Google Books API.', error)
+    logger.error('Error fetching book data from Google Books API.', {
+      endpoint,
+      error
+    })
     return null
   }
 
