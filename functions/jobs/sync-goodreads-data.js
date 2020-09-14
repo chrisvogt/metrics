@@ -44,7 +44,6 @@ const syncGoodreadsData = async () => {
     reviewsResponse = recentlyRead.rawReviewsResponse
     recentlyReadBooks = recentlyRead.books
   } catch (error) {
-    // console.error('Failed to fetch Goodreads data.', error)
     logger.error('Failed to fetch Goodreads data.', error)
     return {
       result: 'FAILURE',

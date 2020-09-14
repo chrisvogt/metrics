@@ -19,10 +19,7 @@ const fetchBook = async (book) => {
 
     googleBookData = bookData
   } catch (error) {
-    logger.error('Error fetching book data from Google Books API.', {
-      endpoint,
-      error: error.message || error
-    })
+    logger.error('Error fetching book data from Google Books API.', error)
     return null
   }
 
