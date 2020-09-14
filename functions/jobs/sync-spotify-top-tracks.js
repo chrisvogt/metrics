@@ -1,5 +1,5 @@
 const admin = require('firebase-admin')
-const functions = require('firebase-functions')
+const { config, logger } = require('firebase-functions')
 
 const getSpotifyAccessToken = require('../api/spotify/get-access-token')
 const getSpotifyTopTracks = require('../api/spotify/get-top-tracks')
@@ -9,15 +9,13 @@ const transformTrackToCollectionItem = require('../transformers/track-to-collect
 const { DATABASE_COLLECTION_SPOTIFY } = require('../constants')
 
 const syncSpotifyTopTracks = async () => {
-  const config = functions.config()
-
   const {
     spotify: {
       client_id: clientId,
       client_secret: clientSecret,
       refresh_token: refreshToken,
     } = {},
-  } = config
+  } = config()
 
   let accessToken
   try {
@@ -34,8 +32,8 @@ const syncSpotifyTopTracks = async () => {
     }
 
     accessToken = accessTokenObj.accessToken
-  } catch (err) {
-    console.error('Failed to get the Spotify access token', err)
+  } catch (error) {
+    logger.error('Failed to get the Spotify access token', error)
   }
 
   if (!accessToken) {
@@ -49,11 +47,11 @@ const syncSpotifyTopTracks = async () => {
   try {
     const spotifyUserProfile = await getSpotifyUserProfile(accessToken)
     userProfile = spotifyUserProfile
-  } catch (err) {
-    console.error('Failed to fetch the spotify user profile', err)
+  } catch (error) {
+    logger.error('Failed to fetch the spotify user profile', error)
     return {
       result: 'FAILURE',
-      error: err,
+      error,
     }
   }
 
@@ -61,11 +59,11 @@ const syncSpotifyTopTracks = async () => {
   try {
     const topTracksResult = await getSpotifyTopTracks(accessToken)
     topTracks = topTracksResult
-  } catch (err) {
-    console.error('Failed to fetch and save Spotify top tracks.', err)
+  } catch (error) {
+    logger.error('Failed to fetch and save Spotify top tracks.', error)
     return {
       result: 'FAILURE',
-      error: err,
+      error,
     }
   }
 
@@ -136,7 +134,7 @@ const syncSpotifyTopTracks = async () => {
           displayName,
           followersCount,
           id,
-          profileURL
+          profileURL,
         },
       })
   }
@@ -148,15 +146,19 @@ const syncSpotifyTopTracks = async () => {
       [saveWidgetContent()]
     )
 
+    logger.info('Spotify sync finished successfully.', {
+      tracksSyncedCount: topTracks.length
+    })
+
     return {
       result: 'SUCCESS',
-      totalSyncedCount: topTracks.length,
+      tracksSyncedCount: topTracks.length,
     }
-  } catch (err) {
-    console.error('Failed to save Spotify data to db.', err)
+  } catch (error) {
+    logger.error('Failed to save Spotify data to db.', error)
     return {
       result: 'FAILURE',
-      error: err,
+      error,
     }
   }
 }
