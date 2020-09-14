@@ -1,4 +1,4 @@
-const functions = require('firebase-functions')
+const { config, logger } = require('firebase-functions')
 const get = require('lodash/get')
 const got = require('got')
 const xml2js = require('xml2js')
@@ -78,9 +78,7 @@ const getUpdatesFromResponse = (result) => {
 }
 
 const fetchUser = async () => {
-  const config = functions.config()
-  const { goodreads: { key, user_id: userID } = {} } = config
-
+  const { goodreads: { key, user_id: userID } = {} } = config()
   const goodreadsURL = `https://www.goodreads.com/user/show/${userID}?format=xml&key=${key}`
 
   const response = await got(goodreadsURL)
@@ -92,7 +90,7 @@ const fetchUser = async () => {
 
   parser.parseString(xml, (err, result) => {
     if (err) {
-      console.error('Error fetching Goodreads user data.', err)
+      logger.error('Error fetching Goodreads user data.', err)
     }
 
     jsonResponse = result

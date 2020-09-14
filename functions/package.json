@@ -1,6 +1,6 @@
 {
   "name": "personal-metrics",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Personal metrics. A hobby life-tracking project.",
   "scripts": {
     "deploy": "firebase deploy --only functions",
@@ -22,7 +22,7 @@
     "firebase-functions": "^3.11.0",
     "got": "^11.5.2",
     "graphql-got": "^0.1.2",
-    "lodash": "^4.17.14",
+    "lodash": "^4.17.20",
     "moment": "^2.24.0",
     "p-all": "^3.0.0",
     "p-map": "^4.0.0",

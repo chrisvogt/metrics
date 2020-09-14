@@ -42,6 +42,7 @@ const app = express()
 const corsAllowList = [
   'http://dev-chrisvogt.me:8000',
   'http://localhost:8000',
+  'http://www.chrisvogt.me',
   'https://chrisvogt.me',
   'https://dev-chrisvogt.me:8000',
   'https://dev-chrisvogt.me',
@@ -50,12 +51,8 @@ const corsAllowList = [
   'localhost:8000',
 ]
 
-// NOTE(chrisvogt): adapted from https://expressjs.com/en/resources/middleware/cors.html
-const corsOptionsDelegate = (req, callback) => {
-  const isAllowedOrigin = corsAllowList.includes(req.header('Origin'))
-  const corsOptions = isAllowedOrigin ? { origin: true } : { origin: false }
-
-  return callback(null, corsOptions)
+const corsOptions = {
+  origin: corsAllowList
 }
 
 // app.get('/debug/sync/goodreads', async (req, res) => {
@@ -65,7 +62,7 @@ const corsOptionsDelegate = (req, callback) => {
 
 app.get(
   '/api/widgets/:provider',
-  cors(corsOptionsDelegate),
+  cors(corsOptions),
   async (req, res) => {
     const { params: { provider } = {} } = req
 

@@ -1,4 +1,5 @@
 const admin = require('firebase-admin')
+const { logger } = require('firebase-functions')
 const pMap = require('p-map')
 
 const fetchAndUploadFile = require('../api/cloud-storage/fetch-and-upload-file')
@@ -110,15 +111,19 @@ const syncInstagramData = async () => {
       concurrency: 10,
       stopOnError: false,
     })
-
-    console.info('Successfully uploaded all files to storage.')
   } catch (error) {
-    console.error('Something went wrong downloading media files', error)
+    logger.error('Something went wrong downloading media files', error)
   }
 
-  return {
-    ok: true,
+  logger.info('Instagram sync finished successfully.', {
     destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+    totalUploadedCount: result.length,
+    uploadedFiles: result.map(({ fileName }) => fileName),
+  })
+
+  return {
+    destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+    result: 'SUCCESS',
     totalUploadedCount: result.length,
     uploadedFiles: result.map(({ fileName }) => fileName),
   }

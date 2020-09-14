@@ -1,17 +1,16 @@
-const functions = require('firebase-functions')
+const { config, logger } = require('firebase-functions')
 const got = require('got')
 
 const fetchBook = async (book) => {
   const { isbn, rating } = book
 
-  const config = functions.config()
-  const { google: { books_api_key: apiKey } = {} } = config
+  const { google: { books_api_key: apiKey } = {} } = config()
+
+  const endpoint = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}&country=US`
 
   let googleBookData
   try {
-    const { body } = await got(
-      `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}`
-    )
+    const { body } = await got(endpoint)
     const { items: [bookData] = [] } = JSON.parse(body)
 
     if (!bookData) {
@@ -19,7 +18,8 @@ const fetchBook = async (book) => {
     }
 
     googleBookData = bookData
-  } catch(error) {
+  } catch (error) {
+    logger.error('Error fetching book data from Google Books API.', error)
     return null
   }
 
