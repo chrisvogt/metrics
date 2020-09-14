@@ -1,11 +1,10 @@
-const functions = require('firebase-functions')
+const { config, logger } = require('firebase-functions')
 const got = require('got')
 
 const fetchBook = async (book) => {
   const { isbn, rating } = book
 
-  const config = functions.config()
-  const { google: { books_api_key: apiKey } = {} } = config
+  const { google: { books_api_key: apiKey } = {} } = config()
 
   let googleBookData
   try {
@@ -19,7 +18,8 @@ const fetchBook = async (book) => {
     }
 
     googleBookData = bookData
-  } catch(error) {
+  } catch (error) {
+    logger.error('Error fetching book data from Google Books API.', error)
     return null
   }
 

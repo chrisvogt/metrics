@@ -1,4 +1,5 @@
 const admin = require('firebase-admin')
+const { logger } = require('firebase-functions')
 
 const fetchUser = require('../api/goodreads/fetch-user')
 const fetchRecentlyReadBooks = require('../api/goodreads/fetch-recently-read-books')
@@ -43,7 +44,8 @@ const syncGoodreadsData = async () => {
     reviewsResponse = recentlyRead.rawReviewsResponse
     recentlyReadBooks = recentlyRead.books
   } catch (error) {
-    console.error('Failed to fetch Goodreads data.', error)
+    // console.error('Failed to fetch Goodreads data.', error)
+    logger.error('Failed to fetch Goodreads data.', error)
     return {
       result: 'FAILURE',
       error: error.message || error,
@@ -82,7 +84,7 @@ const syncGoodreadsData = async () => {
         }),
     ])
   } catch (err) {
-    console.error('Failed to save Goodreads data to database.', err)
+    logger.error('Failed to save Goodreads data to database.', err)
     return {
       result: 'FAILURE',
       error: err.message || err,
