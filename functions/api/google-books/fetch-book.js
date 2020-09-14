@@ -6,7 +6,7 @@ const fetchBook = async (book) => {
 
   const { google: { books_api_key: apiKey } = {} } = config()
 
-  const endpoint = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}`
+  const endpoint = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}&country=US`
 
   let googleBookData
   try {
