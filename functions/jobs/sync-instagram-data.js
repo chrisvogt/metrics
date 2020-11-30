@@ -56,12 +56,9 @@ const syncInstagramData = async () => {
   // to the db.
   const mediaToDownload = rawMedia
     .filter(({ id, media_type: mediaType, media_url: mediaURL }) => {
-      const isAlreadyDownloaded = storedMediaFileNames.includes(
-        toIGDestinationPath(mediaURL, id)
-      )
-
+      const imagePath = toIGDestinationPath(mediaURL, id)
+      const isAlreadyDownloaded = storedMediaFileNames.includes(imagePath)
       const isValidMediaType = validMediaTypes.includes(mediaType)
-
       return isValidMediaType && !isAlreadyDownloaded
     })
     .map(({ id, media_url: mediaURL }) => ({
