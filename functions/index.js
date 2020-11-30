@@ -55,11 +55,6 @@ const corsOptions = {
   origin: corsAllowList
 }
 
-// app.get('/debug/sync/goodreads', async (req, res) => {
-//   const result = await syncGoodreadsData()
-//   res.status(200).send(result)
-// })
-
 app.get(
   '/api/widgets/:provider',
   cors(corsOptions),

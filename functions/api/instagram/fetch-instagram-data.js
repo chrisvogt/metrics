@@ -5,7 +5,6 @@ const defaultFields = [
   'account_type',
   'id',
   'username',
-  'ig_id',
   'media_count',
   'media{caption,id,ig_id,media_type,like_count,comments_count,media_url,permalink,thumbnail_url,timestamp,username}'
 ]
