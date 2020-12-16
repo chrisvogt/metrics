@@ -14,8 +14,6 @@ const syncGoodreadsData = async () => {
   let reviewsResponse
   let updates
 
-  console.log('SYNCING GOODREADS DATA')
-
   try {
     const [user, recentlyRead] = await Promise.all([
       fetchUser(),
@@ -57,19 +55,17 @@ const syncGoodreadsData = async () => {
     profile,
   }
 
-  console.log(widgetContent)
-
   try {
     await Promise.all([
-      // await db.collection('goodreads').doc('last-response_user-show').set({
-      //   response: jsonResponse,
-      //   fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
-      // }),
-      // await db.collection('goodreads').doc('last-response_book-reviews').set({
-      //   response: reviewsResponse,
-      //   fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
-      // }),
-      // await db.collection('goodreads').doc('widget-content').set(widgetContent),
+      await db.collection('goodreads').doc('last-response_user-show').set({
+        response: jsonResponse,
+        fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }),
+      await db.collection('goodreads').doc('last-response_book-reviews').set({
+        response: reviewsResponse,
+        fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }),
+      await db.collection('goodreads').doc('widget-content').set(widgetContent),
     ])
   } catch (err) {
     logger.error('Failed to save Goodreads data to database.', err)
@@ -81,13 +77,7 @@ const syncGoodreadsData = async () => {
 
   return {
     result: 'SUCCESS',
-    data: {
-      collections: {
-        recentlyReadBooks,
-        updates,
-      },
-      profile,
-    },
+    data: widgetContent
   }
 }
 
