@@ -83,6 +83,14 @@ app.get(
   }
 )
 
+app.get(
+  '/api/widgets/:provider/sync',
+  async (req, res) => {
+    const result = await syncGoodreadsData()
+    res.status(200).send(result)
+  }
+)
+
 app.get('*', (req, res) => {
   res.sendStatus(404)
 })

@@ -1,31 +1,34 @@
 const { config, logger } = require('firebase-functions')
 const got = require('got')
+const { selectGoogleBooksAPIKey } = require('../../selectors/config')
+
+const appConfig = config()
+const googleBooksAPIKey = selectGoogleBooksAPIKey(appConfig)
 
 const fetchBook = async (book) => {
   const { isbn, rating } = book
 
-  const { google: { books_api_key: apiKey } = {} } = config()
-
-  const endpoint = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}&country=US`
-
-  let googleBookData
-  try {
-    const { body } = await got(endpoint)
-    const { items: [bookData] = [] } = JSON.parse(body)
-
-    if (!bookData) {
-      throw new Error(`Failed to fetch Google Books data for ${isbn}.`)
-    }
-
-    googleBookData = bookData
-  } catch (error) {
-    logger.error('Error fetching book data from Google Books API.', error)
-    return null
+  if (!isbn) {
+    throw new Error(`ISBN number required to search Google Books. You passed: ${isbn}`)
   }
 
-  return {
-    book: googleBookData,
-    rating,
+  const googleBooksVolumeURL = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${googleBooksAPIKey}&country=US`
+
+  try {
+    const { body } = await got(googleBooksVolumeURL)
+    const { items: [book] = [] } = JSON.parse(body)
+
+    if (!book) {
+      logger.error(`No result returned from Google Books for ISBN: ${isbn}.`)
+    }
+
+    return {
+      book,
+      rating,
+    }
+  } catch (error) {
+    logger.error('Error fetching data Google Books API.', error)
+    return null
   }
 }
 

@@ -4,32 +4,17 @@ const { logger } = require('firebase-functions')
 const fetchUser = require('../api/goodreads/fetch-user')
 const fetchRecentlyReadBooks = require('../api/goodreads/fetch-recently-read-books')
 
-/*
-
-Sync Goodreads Data
-
-The goal of this job is to store both the client-ready and original forms of the
-Goodreads user profile and latest books data.
-
-* concurrent
-
-- [x] Fetch Goodreads user profile
-- [x] Fetch Goodreads recently read shelf
-
-* sync
-
-- [x] Store the Goodreads user profile raw response
-- [x] Store the Goodreads recently read shelf raw response
-- [x] Store the transformed, combined Goodreads data
-
-*/
-
+/**
+ * Sync Goodreads Data
+ */
 const syncGoodreadsData = async () => {
   let jsonResponse
   let profile
   let recentlyReadBooks
   let reviewsResponse
   let updates
+
+  console.log('SYNCING GOODREADS DATA')
 
   try {
     const [user, recentlyRead] = await Promise.all([
@@ -51,36 +36,40 @@ const syncGoodreadsData = async () => {
     }
   }
 
-  const db = admin.firestore()
-  db.settings({
-    // Firestore throws when saving documents containing null values. The raw
+  const db = admin
+    .firestore()
+    .settings({
+    // Firestore throws when saving documents containing null values and the
     // Goodreads response object contains null values for unset fields. The
     // Firestore `ignoreUndefinedProperties` option enables support for fields
     // with null values.
     ignoreUndefinedProperties: true,
   })
 
+  const widgetContent = {
+    collections: {
+      recentlyReadBooks,
+      updates,
+    },
+    meta: {
+      synced: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    profile,
+  }
+
+  console.log(widgetContent)
+
   try {
     await Promise.all([
-      await db.collection('goodreads').doc('last-response_user-show').set({
-        response: jsonResponse,
-        fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }),
-      await db.collection('goodreads').doc('last-response_book-reviews').set({
-        response: reviewsResponse,
-        fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }),
-      await db
-        .collection('goodreads')
-        .doc('widget-content')
-        .set({
-          meta: {
-            synced: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          profile,
-          recentlyReadBooks,
-          updates,
-        }),
+      // await db.collection('goodreads').doc('last-response_user-show').set({
+      //   response: jsonResponse,
+      //   fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+      // }),
+      // await db.collection('goodreads').doc('last-response_book-reviews').set({
+      //   response: reviewsResponse,
+      //   fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+      // }),
+      // await db.collection('goodreads').doc('widget-content').set(widgetContent),
     ])
   } catch (err) {
     logger.error('Failed to save Goodreads data to database.', err)
@@ -91,10 +80,14 @@ const syncGoodreadsData = async () => {
   }
 
   return {
-    profile,
-    recentlyReadBooks,
     result: 'SUCCESS',
-    updates,
+    data: {
+      collections: {
+        recentlyReadBooks,
+        updates,
+      },
+      profile,
+    },
   }
 }
 
