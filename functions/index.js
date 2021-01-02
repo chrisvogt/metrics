@@ -91,7 +91,7 @@ app.get(
   }
 )
 
-// TODO: enble this based on the environment
+// TODO: enable this based on the environment
 // app.get(
 //   '/api/widgets/:provider/sync',
 //   async (req, res) => {
