@@ -1,11 +1,11 @@
 const convertToHttps = require('to-https')
-const functions = require('firebase-functions')
-const got = require('got')
-const { parseString } = require('xml2js')
-
 const fetchBookFromGoogle = require('../google-books/fetch-book')
-
-const isString = (subject) => typeof subject === 'string'
+const functions = require('firebase-functions')
+const get = require('lodash/get')
+const got = require('got')
+const isArray = require('lodash/isArray')
+const isString = require('lodash/isString')
+const { parseString } = require('xml2js')
 
 const transformBookData = (book) => {
   const {
@@ -38,53 +38,52 @@ const transformBookData = (book) => {
   }
 }
 
-const transformReview = (books, book) => {
-  const {
-    read_at: [date],
-  } = book
-
-  if (!isString(date) && date.length > 3) {
-    return
-  }
-
-  const {
-    book: bookData,
-    rating: [rating],
-  } = book
-  const [{ isbn: isbnArr = [], isbn13: isbn13Arr = [] }] = bookData
-  const [isbn10] = isbnArr
-  const [isbn13] = isbn13Arr
-
-  const isbn = isString(isbn13) ? isbn13 : isString(isbn10) ? isbn10 : false
-  if (Array.isArray(books) && isString(isbn)) {
-    books.push({
-      isbn,
-      rating,
-    })
-  }
-
-  return books
-}
-
 module.exports = async () => {
   const config = functions.config()
-
   const { goodreads: { key, user_id: userID } = {} } = config
 
   const { body } = await got(
-    `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read`
+    `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read&per_page=18`
   )
 
   let rawReviewsResponse
 
+  /**
+   * Transforms Goodreads Book Reviews response from XML into JSON
+   */
   const bookReviews = await new Promise((resolve, reject) => {
-    parseString(body, (error, result) => {
+    parseString(body, (error, response) => {
       if (error) {
         reject(error)
       }
 
-      const reviewsResponse = result.GoodreadsResponse.reviews[0].review
-      const transformedReviews = reviewsResponse.reduce(transformReview, [])
+      const reviewsResponse = get(response, 'GoodreadsResponse.reviews[0].review', [])
+      const transformedReviews = reviewsResponse.reduce((books, book) => {
+        const {
+          read_at: [date],
+        } = book
+      
+        if (!isString(date) && date.length > 3) {
+          return
+        }
+      
+        const {
+          book: bookData,
+          rating: [rating],
+        } = book
+      
+        const [{ isbn: [isbn10] = [], isbn13: [isbn13] = [] }] = bookData  
+        const isbn = isbn13 || isbn10
+      
+        if (isArray(books) && isString(isbn)) {
+          books.push({
+            isbn,
+            rating,
+          })
+        }
+      
+        return books
+      }, [])
 
       rawReviewsResponse = reviewsResponse
 
@@ -97,8 +96,7 @@ module.exports = async () => {
   // information. The Google Books data is really clean and useful. So, I'm currently
   // using Goodreads to get my book review, and then returning the book data from
   // Google Books.
-  const bookPromises = bookReviews
-    .map((book) => fetchBookFromGoogle(book))
+  const bookPromises = bookReviews.map((book) => fetchBookFromGoogle(book))
   const bookResults = await Promise.all(bookPromises)
   const books = bookResults
     .filter(
