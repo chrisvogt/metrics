@@ -43,7 +43,7 @@ module.exports = async () => {
   const { goodreads: { key, user_id: userID } = {} } = config
 
   const { body } = await got(
-    `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read`
+    `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read&per_page=18`
   )
 
   let rawReviewsResponse

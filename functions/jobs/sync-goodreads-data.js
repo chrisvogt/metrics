@@ -36,13 +36,6 @@ const syncGoodreadsData = async () => {
 
   const db = admin
     .firestore()
-    .settings({
-    // Firestore throws when saving documents containing null values and the
-    // Goodreads response object contains null values for unset fields. The
-    // Firestore `ignoreUndefinedProperties` option enables support for fields
-    // with null values.
-    ignoreUndefinedProperties: true,
-  })
 
   const widgetContent = {
     collections: {
