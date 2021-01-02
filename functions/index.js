@@ -15,6 +15,14 @@ admin.initializeApp({
   databaseURL: 'https://personal-stats-chrisvogt.firebaseio.com',
 })
 
+admin.firestore().settings({
+  // Firestore throws when saving documents containing null values and the
+  // Goodreads response object contains null values for unset fields. The
+  // Firestore `ignoreUndefinedProperties` option enables support for fields
+  // with null values.
+  ignoreUndefinedProperties: true,
+})
+
 exports.syncGoodreadsData = functions.pubsub
   .schedule('every day 02:00')
   .onRun(() => syncGoodreadsData())
@@ -82,6 +90,15 @@ app.get(
     return res.end()
   }
 )
+
+// TODO: enable this based on the environment
+// app.get(
+//   '/api/widgets/:provider/sync',
+//   async (req, res) => {
+//     const result = await syncGoodreadsData()
+//     res.status(200).send(result)
+//   }
+// )
 
 app.get('*', (req, res) => {
   res.sendStatus(404)
