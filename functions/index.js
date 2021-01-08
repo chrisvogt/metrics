@@ -6,7 +6,7 @@ const functions = require('firebase-functions')
 const { getWidgetContent, validWidgetIds } = require('./lib/get-widget-content')
 const syncGoodreadsData = require('./jobs/sync-goodreads-data')
 const syncInstagramData = require('./jobs/sync-instagram-data')
-const syncSpotifyTopTracks = require('./jobs/sync-spotify-top-tracks')
+const syncSpotifyData = require('./jobs/sync-spotify-data')
 
 const firebaseServiceAccountToken = require('./token.json')
 
@@ -27,9 +27,9 @@ exports.syncGoodreadsData = functions.pubsub
   .schedule('every day 02:00')
   .onRun(() => syncGoodreadsData())
 
-exports.syncSpotifyTopTracks = functions.pubsub
+exports.syncSpotifyData = functions.pubsub
   .schedule('every day 02:00')
-  .onRun(() => syncSpotifyTopTracks())
+  .onRun(() => syncSpotifyData())
 
 exports.syncInstagramData = functions.pubsub
   .schedule('every day 02:00')
@@ -90,15 +90,6 @@ app.get(
     return res.end()
   }
 )
-
-// TODO: enable this based on the environment
-// app.get(
-//   '/api/widgets/:provider/sync',
-//   async (req, res) => {
-//     const result = await syncGoodreadsData()
-//     res.status(200).send(result)
-//   }
-// )
 
 app.get('*', (req, res) => {
   res.sendStatus(404)
