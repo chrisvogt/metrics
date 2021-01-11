@@ -7,6 +7,7 @@ const { getWidgetContent, validWidgetIds } = require('./lib/get-widget-content')
 const syncGoodreadsData = require('./jobs/sync-goodreads-data')
 const syncInstagramData = require('./jobs/sync-instagram-data')
 const syncSpotifyData = require('./jobs/sync-spotify-data')
+const syncSteamData = require('./jobs/sync-steam-data')
 
 const firebaseServiceAccountToken = require('./token.json')
 
@@ -30,6 +31,10 @@ exports.syncGoodreadsData = functions.pubsub
 exports.syncSpotifyData = functions.pubsub
   .schedule('every day 02:00')
   .onRun(() => syncSpotifyData())
+
+exports.syncSteamData = functions.pubsub
+  .schedule('every day 02:00')
+  .onRun(() => syncSteamData())
 
 exports.syncInstagramData = functions.pubsub
   .schedule('every day 02:00')
