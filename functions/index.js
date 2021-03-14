@@ -3,7 +3,10 @@ const cors = require('cors')
 const express = require('express')
 const functions = require('firebase-functions')
 
-const { getWidgetContent, validWidgetIds } = require('./lib/get-widget-content')
+const {
+  getWidgetContent,
+  validWidgetIds
+} = require('./lib/get-widget-content')
 const syncGoodreadsData = require('./jobs/sync-goodreads-data')
 const syncInstagramData = require('./jobs/sync-instagram-data')
 const syncSpotifyData = require('./jobs/sync-spotify-data')
@@ -72,7 +75,11 @@ app.get(
   '/api/widgets/:provider',
   cors(corsOptions),
   async (req, res) => {
-    const { params: { provider } = {} } = req
+    const {
+      params: {
+        provider
+      } = {}
+    } = req
 
     if (!provider || !validWidgetIds.includes(provider)) {
       const response = buildFailureResponse({
@@ -83,8 +90,8 @@ app.get(
     }
 
     try {
-      const githubWidgetContent = await getWidgetContent(provider)
-      const response = buildSuccessResponse(githubWidgetContent)
+      const widgetContent = await getWidgetContent(provider)
+      const response = buildSuccessResponse(widgetContent)
       res.set('Cache-Control', 'public, max-age=14400, s-maxage=43200')
       res.status(200).send(response)
     } catch (err) {
@@ -98,6 +105,7 @@ app.get(
 
 app.get('*', (req, res) => {
   res.sendStatus(404)
+  return res.end();
 })
 
 exports.app = functions.https.onRequest(app)
