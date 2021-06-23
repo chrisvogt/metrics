@@ -3,10 +3,7 @@ const cors = require('cors')
 const express = require('express')
 const functions = require('firebase-functions')
 
-const {
-  getWidgetContent,
-  validWidgetIds
-} = require('./lib/get-widget-content')
+const { getWidgetContent, validWidgetIds } = require('./lib/get-widget-content')
 const syncGoodreadsData = require('./jobs/sync-goodreads-data')
 const syncInstagramData = require('./jobs/sync-instagram-data')
 const syncSpotifyData = require('./jobs/sync-spotify-data')
@@ -43,7 +40,7 @@ exports.syncInstagramData = functions.pubsub
   .schedule('every day 02:00')
   .onRun(() => syncInstagramData())
 
-const buildSuccessResponse = (payload) => ({
+const buildSuccessResponse = payload => ({
   ok: true,
   payload,
 })
@@ -68,44 +65,36 @@ const corsAllowList = [
 ]
 
 const corsOptions = {
-  origin: corsAllowList
+  origin: corsAllowList,
 }
 
-app.get(
-  '/api/widgets/:provider',
-  cors(corsOptions),
-  async (req, res) => {
-    const {
-      params: {
-        provider
-      } = {}
-    } = req
+app.get('/api/widgets/:provider', cors(corsOptions), async (req, res) => {
+  const { params: { provider } = {} } = req
 
-    if (!provider || !validWidgetIds.includes(provider)) {
-      const response = buildFailureResponse({
-        message: 'A valid provider type is required.',
-      })
-      res.status(404).send(response)
-      return res.end()
-    }
-
-    try {
-      const widgetContent = await getWidgetContent(provider)
-      const response = buildSuccessResponse(widgetContent)
-      res.set('Cache-Control', 'public, max-age=14400, s-maxage=43200')
-      res.status(200).send(response)
-    } catch (err) {
-      const response = buildFailureResponse(err)
-      res.status(400).send(response)
-    }
-
+  if (!provider || !validWidgetIds.includes(provider)) {
+    const response = buildFailureResponse({
+      message: 'A valid provider type is required.',
+    })
+    res.status(404).send(response)
     return res.end()
   }
-)
+
+  try {
+    const widgetContent = await getWidgetContent(provider)
+    const response = buildSuccessResponse(widgetContent)
+    res.set('Cache-Control', 'public, max-age=14400, s-maxage=43200')
+    res.status(200).send(response)
+  } catch (err) {
+    const response = buildFailureResponse(err)
+    res.status(400).send(response)
+  }
+
+  return res.end()
+})
 
 app.get('*', (req, res) => {
   res.sendStatus(404)
-  return res.end();
+  return res.end()
 })
 
 exports.app = functions.https.onRequest(app)

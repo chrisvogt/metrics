@@ -1,0 +1,34 @@
+{
+  "name": "metrics",
+  "version": "0.1.0",
+  "description": "This repository contains the Firebase-backed API used to fetch widget data rendered on my personal website, [www.chrisvogt.me](https://www.chrisvogt.me).",
+  "main": "index.js",
+  "dependencies": {
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-react": "^7.18.3",
+    "prettier": "^2.3.1"
+  },
+  "devDependencies": {
+    "husky": "^6.0.0",
+    "pretty-quick": "^3.1.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrisvogt/metrics.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chrisvogt/metrics/issues"
+  },
+  "homepage": "https://github.com/chrisvogt/metrics#readme"
+}
