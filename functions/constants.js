@@ -38,7 +38,7 @@ const providers = {
   GITHUB: 'github',
   GOODREADS: 'goodreads',
   SPOTIFY: 'spotify',
-  STEAM: 'steam'
+  STEAM: 'steam',
 }
 
 /**
@@ -48,7 +48,7 @@ const providers = {
  */
 const responses = {
   SUCCESS: 'SUCCESS',
-  FAILURE: 'FAILURE'
+  FAILURE: 'FAILURE',
 }
 
 module.exports = {
@@ -56,5 +56,5 @@ module.exports = {
   CLOUD_STORAGE_INSTAGRAM_PATH,
   IMAGE_CDN_BASE_URL,
   providers,
-  responses
+  responses,
 }

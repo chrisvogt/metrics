@@ -3,10 +3,7 @@ const { providers: { STEAM } = {} } = require('../constants')
 
 const getSteamWidgetContent = async () => {
   const db = admin.firestore()
-  const doc = await db
-    .collection(STEAM)
-    .doc('widget-content')
-    .get()
+  const doc = await db.collection(STEAM).doc('widget-content').get()
 
   const { meta = {}, ...responseData } = doc.data()
 
