@@ -14,7 +14,7 @@ const transformInstagramMedia = rawMedia => {
     timestamp,
     username,
   } = rawMedia
-  return ({
+  return {
     caption,
     cdnMediaURL: `${IMAGE_CDN_BASE_URL}${toIGDestinationPath(mediaURL, id)}`,
     id,
@@ -22,7 +22,7 @@ const transformInstagramMedia = rawMedia => {
     permalink,
     timestamp,
     username,
-  })
+  }
 }
 
 module.exports = transformInstagramMedia

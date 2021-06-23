@@ -7,7 +7,7 @@ const trackToCollectionItem = item => {
     name,
     preview_url: previewURL,
     type,
-    uri
+    uri,
   } = item
 
   return {
@@ -18,7 +18,7 @@ const trackToCollectionItem = item => {
     previewURL,
     spotifyURL,
     type,
-    uri
+    uri,
   }
 }
 

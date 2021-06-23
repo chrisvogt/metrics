@@ -5,37 +5,35 @@ const getAccessToken = async ({
   clientId,
   clientSecret,
   redirectURI,
-  refreshToken
+  refreshToken,
 }) => {
   const {
     access_token: accessToken,
     expires_in: expiresInSec,
-    scope
+    scope,
   } = await request.post({
     form: {
       client_id: clientId,
       client_secret: clientSecret,
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      redirect_uri: redirectURI
+      redirect_uri: redirectURI,
     },
     fullResponse: false,
     json: true,
     retryStrategy: err => !!err,
-    url: 'https://accounts.spotify.com/api/token'
+    url: 'https://accounts.spotify.com/api/token',
   })
 
   const leadTimeSec = 300
   const expiresAt = new Date()
 
-  expiresAt.setSeconds(
-    expiresAt.getSeconds() + (expiresInSec - leadTimeSec)
-  )
+  expiresAt.setSeconds(expiresAt.getSeconds() + (expiresInSec - leadTimeSec))
 
   return {
     accessToken,
     expiresAt,
-    scope
+    scope,
   }
 }
 

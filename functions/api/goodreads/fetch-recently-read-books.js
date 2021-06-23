@@ -7,7 +7,7 @@ const isArray = require('lodash/isArray')
 const isString = require('lodash/isString')
 const { parseString } = require('xml2js')
 
-const transformBookData = (book) => {
+const transformBookData = book => {
   const {
     book: {
       volumeInfo: {
@@ -57,31 +57,35 @@ module.exports = async () => {
         reject(error)
       }
 
-      const reviewsResponse = get(response, 'GoodreadsResponse.reviews[0].review', [])
+      const reviewsResponse = get(
+        response,
+        'GoodreadsResponse.reviews[0].review',
+        []
+      )
       const transformedReviews = reviewsResponse.reduce((books, book) => {
         const {
           read_at: [date],
         } = book
-      
+
         if (!isString(date) && date.length > 3) {
           return
         }
-      
+
         const {
           book: bookData,
           rating: [rating],
         } = book
-      
-        const [{ isbn: [isbn10] = [], isbn13: [isbn13] = [] }] = bookData  
+
+        const [{ isbn: [isbn10] = [], isbn13: [isbn13] = [] }] = bookData
         const isbn = isbn13 || isbn10
-      
+
         if (isArray(books) && isString(isbn)) {
           books.push({
             isbn,
             rating,
           })
         }
-      
+
         return books
       }, [])
 
@@ -96,7 +100,7 @@ module.exports = async () => {
   // information. The Google Books data is really clean and useful. So, I'm currently
   // using Goodreads to get my book review, and then returning the book data from
   // Google Books.
-  const bookPromises = bookReviews.map((book) => fetchBookFromGoogle(book))
+  const bookPromises = bookReviews.map(book => fetchBookFromGoogle(book))
   const bookResults = await Promise.all(bookPromises)
   const books = bookResults
     .filter(
