@@ -10,7 +10,8 @@
     "serve": "firebase serve --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
-    "test": ""
+    "test": "",
+    "prepare": "husky install"
   },
   "engines": {
     "node": ">=12"
@@ -37,7 +38,9 @@
   "devDependencies": {
     "eslint": "^7.7.0",
     "eslint-plugin-promise": "^4.0.1",
-    "firebase-functions-test": "^0.2.1"
+    "firebase-functions-test": "^0.2.1",
+    "husky": "^6.0.0",
+    "pretty-quick": "^3.1.1"
   },
   "private": true
 }

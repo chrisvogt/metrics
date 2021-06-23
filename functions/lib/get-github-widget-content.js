@@ -20,7 +20,7 @@ const getGitHubWidgetContent = async () => {
   const { body } = await graphqlGot('https://api.github.com/graphql', {
     query,
     headers: {
-      Authorization: `token ${accessToken}`
+      Authorization: `token ${accessToken}`,
     },
     variables: {
       username,

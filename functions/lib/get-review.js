@@ -4,7 +4,7 @@ const getActor = actor => {
   return {
     imageURL,
     link,
-    name
+    name,
   }
 }
 
@@ -15,10 +15,10 @@ const getAuthor = author => {
     image_url: { _: imageURL = '', nophoto: hasImageURL = false } = {},
     small_image_url: {
       _: smallImageURL = '',
-      nophoto: hasSmallImageURL = false
+      nophoto: hasSmallImageURL = false,
     } = {},
     ratingsCount,
-    text_reviews_count: textReviewCount
+    text_reviews_count: textReviewCount,
   } = author
 
   return {
@@ -29,7 +29,7 @@ const getAuthor = author => {
     smallImageURL,
     hasSmallImageURL,
     ratingsCount,
-    textReviewCount
+    textReviewCount,
   }
 }
 
@@ -40,7 +40,7 @@ const getBook = book => {
     author: author && getAuthor(author),
     goodreadsID,
     link,
-    title
+    title,
   }
 }
 
@@ -52,7 +52,7 @@ const getReview = update => {
     link,
     object: { book },
     type,
-    updated_at: updated
+    updated_at: updated,
   } = update
 
   return {
@@ -62,7 +62,7 @@ const getReview = update => {
     link,
     rating: Number(rating),
     type,
-    updated
+    updated,
   }
 }
 

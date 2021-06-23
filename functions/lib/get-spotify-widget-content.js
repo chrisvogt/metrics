@@ -7,7 +7,7 @@ const getSpotifyWidgetContent = async () => {
 
   const transformedMeta = {
     ...meta,
-    // NOTE(chrisvogt): tranform the last synced timestamp into a JS Date object
+    // NOTE(chrisvogt): tranforms the last synced timestamp into a JS Date object
     synced: new admin.firestore.Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate()
   }
 
