@@ -10,7 +10,7 @@ const fetchAndUploadFile = ({ mediaURL, id }) => {
     const destinationPath = toIGDestinationPath(mediaURL, id)
 
     try {
-      https.get(mediaURL, (res) => {
+      https.get(mediaURL, res => {
         const file = bucket.file(destinationPath)
         res.pipe(
           file.createWriteStream({

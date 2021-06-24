@@ -6,7 +6,7 @@ const xml2js = require('xml2js')
 const getReview = require('../../lib/get-review')
 const getUserStatus = require('../../lib/get-user-status')
 
-const transformUpdate = (update) => {
+const transformUpdate = update => {
   if (update.type === 'userstatus') {
     return getUserStatus(update)
   }
@@ -24,12 +24,12 @@ const parser = new xml2js.Parser({
   trim: true,
 })
 
-const getProfileFromResponse = (result) => {
+const getProfileFromResponse = result => {
   const readShelf = get(
     result,
     'GoodreadsResponse.user.user_shelves.user_shelf',
     []
-  ).filter((shelf) => shelf.name === 'read')[0]
+  ).filter(shelf => shelf.name === 'read')[0]
   const { book_count: { _: bookCount = '' } = {} } = readShelf
   const rawProfile = get(result, 'GoodreadsResponse.user', {})
 
@@ -61,18 +61,18 @@ const getProfileFromResponse = (result) => {
   }
 }
 
-const getUpdatesFromResponse = (result) => {
+const getUpdatesFromResponse = result => {
   const rawUpdates = get(result, 'GoodreadsResponse.user.updates.update', [])
-  const isDefined = (subject) => Boolean(subject)
-  const validateUpdate = (update) =>
+  const isDefined = subject => Boolean(subject)
+  const validateUpdate = update =>
     update.type === 'userstatus' || update.type === 'review'
 
   // TODO: only show the latest `type: userstatus` per unique `book.goodreadsID`.
   // otherwise, show every `type: review'.
   const updates = rawUpdates
-    .filter((update) => validateUpdate(update))
-    .map((update) => transformUpdate(update))
-    .filter((update) => isDefined(update))
+    .filter(update => validateUpdate(update))
+    .map(update => transformUpdate(update))
+    .filter(update => isDefined(update))
 
   return updates
 }

@@ -5,11 +5,13 @@ const { selectGoogleBooksAPIKey } = require('../../selectors/config')
 const appConfig = config()
 const googleBooksAPIKey = selectGoogleBooksAPIKey(appConfig)
 
-const fetchBook = async (book) => {
+const fetchBook = async book => {
   const { isbn, rating } = book
 
   if (!isbn) {
-    throw new Error(`ISBN number required to search Google Books. You passed: ${isbn}`)
+    throw new Error(
+      `ISBN number required to search Google Books. You passed: ${isbn}`
+    )
   }
 
   const googleBooksVolumeURL = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${googleBooksAPIKey}&country=US`

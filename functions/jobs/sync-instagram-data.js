@@ -8,7 +8,11 @@ const listInstagramMedia = require('../api/cloud-storage/list-instagram-media')
 const toIGDestinationPath = require('../transformers/to-ig-destination-path')
 const transformInstagramMedia = require('../transformers/transform-instagram-media')
 
-const { CLOUD_STORAGE_IMAGES_BUCKET } = require('../constants')
+const {
+  CLOUD_STORAGE_IMAGES_BUCKET,
+  providers: { INSTAGRAM } = {},
+  responses: { SUCCESS } = {},
+} = require('../constants')
 
 /*
 
@@ -70,7 +74,7 @@ const syncInstagramData = async () => {
 
   // Save the raw Instagram response data
   await db
-    .collection('instagram')
+    .collection(INSTAGRAM)
     .doc('last-response')
     .set({
       ...instagramResponse,
@@ -82,7 +86,7 @@ const syncInstagramData = async () => {
   )
 
   await db
-    .collection('instagram')
+    .collection(INSTAGRAM)
     .doc('widget-content')
     .set({
       media: filteredMedia.map(transformInstagramMedia),
@@ -91,7 +95,7 @@ const syncInstagramData = async () => {
       },
       profile: {
         username: instagramResponse.username,
-        mediaCount: instagramResponse.media_count
+        mediaCount: instagramResponse.media_count,
       },
     })
 
@@ -120,7 +124,7 @@ const syncInstagramData = async () => {
 
   return {
     destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
-    result: 'SUCCESS',
+    result: SUCCESS,
     totalUploadedCount: result.length,
     uploadedFiles: result.map(({ fileName }) => fileName),
   }

@@ -3,14 +3,14 @@ const getAuthor = author => {
     about,
     name,
     sort_by_name: sortName,
-    shelf_display_name: displayName
+    shelf_display_name: displayName,
   } = author
 
   return {
     about,
     displayName,
     name,
-    sortName
+    sortName,
   }
 }
 
@@ -25,7 +25,7 @@ const getBook = book => {
     publication_year: { _: publicationYear },
     publisher,
     sort_by_title: sortTitle,
-    title
+    title,
   } = book
 
   return {
@@ -38,7 +38,7 @@ const getBook = book => {
     publicationYear: Number(publicationYear),
     publisher,
     sortTitle,
-    title
+    title,
   }
 }
 
@@ -54,10 +54,10 @@ const getUserStatus = update => {
         page: { _: page },
         percent: { _: percent },
         updated_at: { _: updated },
-        user_id: { _: userID }
-      }
+        user_id: { _: userID },
+      },
     },
-    type
+    type,
   } = update
 
   return {
@@ -70,7 +70,7 @@ const getUserStatus = update => {
     percent: Number(percent),
     type,
     updated,
-    userID
+    userID,
   }
 }
 

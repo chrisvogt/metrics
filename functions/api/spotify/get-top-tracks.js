@@ -7,16 +7,16 @@ const getTopTracks = async accessToken => {
     json: true,
     qs: {
       time_range: 'short_term',
-      limit: 12
+      limit: 12,
     },
     retryStrategy: err => !!err,
-    uri: 'https://api.spotify.com/v1/me/top/tracks'
+    uri: 'https://api.spotify.com/v1/me/top/tracks',
   })
 
   if (!items || !items.length > 0) {
     throw new Error('No top tracks returned from Spotify.')
   }
-  
+
   return items
 }
 

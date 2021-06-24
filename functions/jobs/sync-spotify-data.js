@@ -2,7 +2,7 @@ const admin = require('firebase-admin')
 const { config: getConfig, logger } = require('firebase-functions')
 
 const getSpotifyAccessToken = require('../api/spotify/get-access-token')
-const getSpotifyPlaylists = require('../api/spotify/get-playlists');
+const getSpotifyPlaylists = require('../api/spotify/get-playlists')
 const getSpotifyTopTracks = require('../api/spotify/get-top-tracks')
 const getSpotifyUserProfile = require('../api/spotify/get-user-profile')
 const transformTrackToCollectionItem = require('../transformers/track-to-collection-item')
@@ -11,13 +11,16 @@ const {
   selectSpotifyClientId,
   selectSpotifyClientSecret,
   selectSpotifyRedirectURI,
-  selectSpotifyRefreshToken
+  selectSpotifyRefreshToken,
 } = require('../selectors/config')
 
-const { DATABASE_COLLECTION_SPOTIFY } = require('../constants')
+const {
+  providers: { SPOTIFY } = {},
+  responses: { SUCCESS, FAILURE } = {},
+} = require('../constants')
 
 const syncSpotifyTopTracks = async () => {
-  const config = getConfig();
+  const config = getConfig()
 
   const clientId = selectSpotifyClientId(config)
   const clientSecret = selectSpotifyClientSecret(config)
@@ -28,12 +31,12 @@ const syncSpotifyTopTracks = async () => {
     clientId,
     clientSecret,
     redirectURI,
-    refreshToken
+    refreshToken,
   })
 
   if (!accessToken) {
     return {
-      result: 'FAILURE',
+      result: FAILURE,
       error: 'Need a valid access token to call Spotify API.',
     }
   }
@@ -44,7 +47,7 @@ const syncSpotifyTopTracks = async () => {
   } catch (error) {
     logger.error('Failed to fetch Spotify user profile.', error)
     return {
-      result: 'FAILURE',
+      result: FAILURE,
       error,
     }
   }
@@ -55,11 +58,11 @@ const syncSpotifyTopTracks = async () => {
   } catch (error) {
     logger.error('Failed to fetch Spotify top tracks.', error)
     return {
-      result: 'FAILURE',
+      result: FAILURE,
       error,
     }
   }
-    
+
   let playlists
   let playlistsCount
   let playlistsResponse
@@ -70,7 +73,7 @@ const syncSpotifyTopTracks = async () => {
   } catch (error) {
     logger.error('Failed to fetch Spotify playlists.', error)
     return {
-      result: 'FAILURE',
+      result: FAILURE,
       error,
     }
   }
@@ -116,39 +119,30 @@ const syncSpotifyTopTracks = async () => {
       id,
       profileURL,
     },
-  };
+  }
 
   const db = admin.firestore()
 
-  const savePlaylists = async () => await db
-    .collection(DATABASE_COLLECTION_SPOTIFY)
-    .doc('last-response_playlists')
-    .set({
+  const savePlaylists = async () =>
+    await db.collection(SPOTIFY).doc('last-response_playlists').set({
       response: playlistsResponse,
       fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
     })
 
-  const saveTopTracksResponse = async () => await db
-    .collection(DATABASE_COLLECTION_SPOTIFY)
-    .doc('last-response_top-tracks')
-    .set({
+  const saveTopTracksResponse = async () =>
+    await db.collection(SPOTIFY).doc('last-response_top-tracks').set({
       response: topTracks,
       fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
     })
 
-  const saveUserProfileResponse = async () => await db
-    .collection(DATABASE_COLLECTION_SPOTIFY)
-    .doc('last-response_user-profile')
-    .set({
+  const saveUserProfileResponse = async () =>
+    await db.collection(SPOTIFY).doc('last-response_user-profile').set({
       response: userProfile,
       fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
     })
 
   const saveWidgetContent = async () => {
-    return await db
-      .collection(DATABASE_COLLECTION_SPOTIFY)
-      .doc('widget-content')
-      .set(widgetContent)
+    return await db.collection(SPOTIFY).doc('widget-content').set(widgetContent)
   }
 
   try {
@@ -160,18 +154,18 @@ const syncSpotifyTopTracks = async () => {
     )
 
     logger.info('Spotify sync finished successfully.', {
-      tracksSyncedCount: topTracks.length
+      tracksSyncedCount: topTracks.length,
     })
 
     return {
-      result: 'SUCCESS',
+      result: SUCCESS,
       tracksSyncedCount: topTracks.length,
-      widgetContent
+      widgetContent,
     }
   } catch (error) {
     logger.error('Failed to save Spotify data to db.', error)
     return {
-      result: 'FAILURE',
+      result: FAILURE,
       error,
     }
   }

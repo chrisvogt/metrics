@@ -6,9 +6,9 @@ const getUserProfile = async accessToken => {
     headers: { Authorization: `Bearer ${accessToken}` },
     json: true,
     retryStrategy: err => !!err,
-    uri: 'https://api.spotify.com/v1/me'
+    uri: 'https://api.spotify.com/v1/me',
   })
-  
+
   return response
 }
 

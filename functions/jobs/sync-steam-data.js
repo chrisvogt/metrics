@@ -7,12 +7,15 @@ const getRecentlyPlayedGames = require('../api/steam/get-recently-played-games')
 
 const { selectSteamAPIKey, selectSteamUserId } = require('../selectors/config')
 
-const { DATABASE_COLLECTION_STEAM } = require('../constants')
+const {
+  providers: { STEAM } = {},
+  responses: { SUCCESS, FAILURE } = {},
+} = require('../constants')
 
 const buildImage = (appId, hashId) =>
   `http://media.steampowered.com/steamcommunity/public/images/apps/${appId}/${hashId}.jpg`
 
-const transformSteamGame = (game) => {
+const transformSteamGame = game => {
   const {
     appid: id,
     img_icon_url: iconHash,
@@ -56,7 +59,7 @@ const syncSteamData = async () => {
 
   const widgetContent = {
     collections: {
-      recentlyPlayedGames: recentlyPlayedGames.map((game) =>
+      recentlyPlayedGames: recentlyPlayedGames.map(game =>
         transformSteamGame(game)
       ),
     },
@@ -83,20 +86,17 @@ const syncSteamData = async () => {
 
   try {
     const db = admin.firestore()
-    await await db
-      .collection(DATABASE_COLLECTION_STEAM)
-      .doc('widget-content')
-      .set(widgetContent)
+    await await db.collection(STEAM).doc('widget-content').set(widgetContent)
   } catch (err) {
     logger.error('Failed to save Steam data to database.', err)
     return {
-      result: 'FAILURE',
+      result: FAILURE,
       error: err.message || err,
     }
   }
 
   return {
-    result: 'SUCCESS',
+    result: SUCCESS,
     data: widgetContent,
   }
 }

@@ -9,7 +9,7 @@ const widgetHandlerRegistry = {
   goodreads: getGoodreadsWidgetContent,
   instagram: getInstagramWidgetContent,
   spotify: getSpotifyWidgetContent,
-  steam: getSteamWidgetContent
+  steam: getSteamWidgetContent,
 }
 
 const validWidgetIds = Object.keys(widgetHandlerRegistry)
@@ -27,5 +27,5 @@ const getWidgetContent = async widgetId => {
 
 module.exports = {
   getWidgetContent,
-  validWidgetIds
+  validWidgetIds,
 }

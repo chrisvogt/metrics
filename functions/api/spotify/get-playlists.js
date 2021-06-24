@@ -1,6 +1,6 @@
 const got = require('got')
 
-const SPOTIFY_BASE_URL = 'https://api.spotify.com/v1/';
+const SPOTIFY_BASE_URL = 'https://api.spotify.com/v1/'
 
 const getPlaylists = async accessToken => {
   const { body } = await got('me/playlists', {
@@ -9,10 +9,10 @@ const getPlaylists = async accessToken => {
     prefixUrl: SPOTIFY_BASE_URL,
     searchParams: {
       limit: 12,
-      offset: 0
-    }
+      offset: 0,
+    },
   })
-  
+
   return body
 }
 

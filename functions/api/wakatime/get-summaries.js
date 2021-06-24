@@ -14,18 +14,18 @@ const getSummaries = async (queryParams, options) => {
       json: true,
       qs: queryParams,
       retryStrategy: err => !!err,
-      uri: 'https://wakatime.com/api/v1/users/current/summaries'
+      uri: 'https://wakatime.com/api/v1/users/current/summaries',
     })
 
     return {
       ok: true,
-      summaries
+      summaries,
     }
   } catch (error) {
     const { message } = error
     return {
       ok: false,
-      error: message
+      error: message,
     }
   }
 }

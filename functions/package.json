@@ -1,28 +1,31 @@
 {
   "name": "personal-metrics",
   "version": "0.5.6",
-  "description": "Personal metrics. A hobby life-tracking project.",
+  "description": "Personal API journaling my online and social network activity.",
+  "license": "MIT",
   "scripts": {
     "deploy": "firebase deploy --only functions",
-    "lint": "",
+    "lint": "pretty-quick --staged",
     "logs": "firebase functions:log",
     "serve": "firebase serve --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
-    "test": ""
+    "test": "",
+    "prepare": "husky install",
+    "pretty-quick": "pretty-quick"
   },
   "engines": {
-    "node": "10"
+    "node": ">=12"
   },
   "dependencies": {
     "axios": "^0.21.1",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "firebase-admin": "^9.1.1",
+    "firebase-admin": "^9.9.0",
     "firebase-functions": "^3.11.0",
     "got": "^11.5.2",
     "graphql-got": "^0.1.2",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "moment": "^2.24.0",
     "p-all": "^3.0.0",
     "p-map": "^4.0.0",
@@ -36,7 +39,14 @@
   "devDependencies": {
     "eslint": "^7.7.0",
     "eslint-plugin-promise": "^4.0.1",
-    "firebase-functions-test": "^0.2.1"
+    "firebase-functions-test": "^0.2.1",
+    "husky": "^6.0.0",
+    "pretty-quick": "^3.1.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
   },
   "private": true
 }
