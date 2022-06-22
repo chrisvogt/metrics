@@ -20,7 +20,7 @@
     "express": "^4.17.1",
     "firebase-admin": "^9.1.1",
     "firebase-functions": "^3.11.0",
-    "got": "^11.5.2",
+    "got": "^11.8.5",
     "graphql-got": "^0.1.2",
     "lodash": "^4.17.20",
     "moment": "^2.24.0",
