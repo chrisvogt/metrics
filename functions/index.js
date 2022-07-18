@@ -56,15 +56,19 @@ const buildFailureResponse = (err = {}) => ({
 const app = express()
 
 const corsAllowList = [
+  'http://chrisvogt.me',
   'http://dev-chrisvogt.me:8000',
+  'http://dev-chrisvogt.me',
   'http://localhost:8000',
+  'http://next.chrisvogt.me',
   'http://www.chrisvogt.me',
   'https://chrisvogt.me',
   'https://dev-chrisvogt.me:8000',
   'https://dev-chrisvogt.me',
   'https://localhost:8000',
+  'https://next.chrisvogt.me',
   'https://www.chrisvogt.me',
-  'localhost:8000',
+  'localhost:8000'
 ]
 
 const corsOptions = {
