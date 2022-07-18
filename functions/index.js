@@ -75,19 +75,19 @@ const corsOptions = {
   origin: corsAllowList
 }
 
-app.get(
-  '/api/widgets/sync/instagram',
-  async (req, res) => {
-    try {
-      const result = await syncInstagramData()
-      console.log('Success syncing Instagram data', result);
-      res.status(200).send(result)
-    } catch (err) {
-      console.log('Error syncing Instagram data', err);
-      res.status(500).send({ error: err })
-    }
-  }
-)
+// app.get(
+//   '/api/widgets/sync/instagram',
+//   async (req, res) => {
+//     try {
+//       const result = await syncInstagramData()
+//       console.log('Success syncing Instagram data', result);
+//       res.status(200).send(result)
+//     } catch (err) {
+//       console.log('Error syncing Instagram data', err);
+//       res.status(500).send({ error: err })
+//     }
+//   }
+// )
 
 app.get(
   '/api/widgets/:provider',
@@ -110,7 +110,6 @@ app.get(
     try {
       const widgetContent = await getWidgetContent(provider)
       const response = buildSuccessResponse(widgetContent)
-      res.set('Cache-Control', 'public, max-age=14400, s-maxage=43200')
       res.status(200).send(response)
     } catch (err) {
       const response = buildFailureResponse(err)
