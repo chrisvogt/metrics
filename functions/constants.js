@@ -8,7 +8,7 @@ const DATABASE_COLLECTION_STEAM = 'steam'
 
 const DATABASE_COLLECTION_INSTAGRAM = 'instagram'
 
-const IMAGE_CDN_BASE_URL = 'https://img.chrisvogt.me/'
+const IMAGE_CDN_BASE_URL = 'https://chrisvogt.imgix.net/'
 
 module.exports = {
   CLOUD_STORAGE_IMAGES_BUCKET,

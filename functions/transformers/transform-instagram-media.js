@@ -1,4 +1,3 @@
-const { transform } = require('lodash')
 const { IMAGE_CDN_BASE_URL } = require('../constants')
 const toIGDestinationPath = require('../transformers/to-ig-destination-path')
 
