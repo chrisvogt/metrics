@@ -34,10 +34,24 @@ const transformSteamGame = (game) => {
     playTimeForever,
   }
 }
-
+/**
+ * Sync Steam Data
+ * 
+ * To Do:
+ * 
+ * - [ ] Handle images
+ * 
+ * https://cdn.cloudflare.steamstatic.com/steam/apps/{steamId}/{fileName}.jpg 
+ *
+ * Available files:
+ *
+ *  - hero_capsule.jpg
+ *  - capsule_616x353.jpg
+ *  - header.jpg
+ *  - capsule_231x87.jpg
+ */
 const syncSteamData = async () => {
   const config = getConfig()
-
   const apiKey = selectSteamAPIKey(config)
   const userId = selectSteamUserId(config)
 
@@ -46,6 +60,33 @@ const syncSteamData = async () => {
     getOwnedGames(apiKey, userId),
     getPlayerSummary(apiKey, userId),
   ])
+
+  const db = admin.firestore()
+
+  const saveOwnedGames = async () => await db
+    .collection(DATABASE_COLLECTION_STEAM)
+    .doc('last-response_owned-games')
+    .set({
+      response: ownedGames,
+      fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+    })
+
+  const savePlayerSummary = async () => await db
+    .collection(DATABASE_COLLECTION_STEAM)
+    .doc('last-response_player-summary')
+    .set({
+      response: playerSummary,
+      fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+    })
+
+  const saveRecentlyPlayedGames = async () => await db
+    .collection(DATABASE_COLLECTION_STEAM)
+    .doc('last-response_recently-played-games')
+    .set({
+      response: recentlyPlayedGames,
+      fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+    })
+
 
   const { game_count: ownedGameCount = 0 } = ownedGames
   const {
@@ -81,23 +122,28 @@ const syncSteamData = async () => {
     },
   }
 
+  const saveWidgetContent = async () => await db
+    .collection(DATABASE_COLLECTION_STEAM)
+    .doc('widget-content')
+    .set(widgetContent);
+
   try {
-    const db = admin.firestore()
-    await await db
-      .collection(DATABASE_COLLECTION_STEAM)
-      .doc('widget-content')
-      .set(widgetContent)
+    await Promise.all([
+      saveOwnedGames(),
+      savePlayerSummary(),
+      saveRecentlyPlayedGames(),
+      saveWidgetContent(),
+    ])
+    return {
+      result: 'SUCCESS',
+      data: widgetContent,
+    }
   } catch (err) {
     logger.error('Failed to save Steam data to database.', err)
     return {
       result: 'FAILURE',
       error: err.message || err,
     }
-  }
-
-  return {
-    result: 'SUCCESS',
-    data: widgetContent,
   }
 }
 
