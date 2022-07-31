@@ -56,27 +56,17 @@ const buildFailureResponse = (err = {}) => ({
 const app = express()
 
 const corsAllowList = [
-  'http://chrisvogt.me',
-  'http://dev-chrisvogt.me:8000',
-  'http://dev-chrisvogt.me',
-  'http://localhost:8000',
-  'http://next.chrisvogt.me',
-  'http://www.chrisvogt.me',
-  'https://chrisvogt.me',
-  'https://dev-chrisvogt.me:8000',
-  'https://dev-chrisvogt.me',
-  'https://localhost:8000',
-  'https://next.chrisvogt.me',
-  'https://www.chrisvogt.me',
-  'localhost:8000'
-]
+  /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
+  /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me$/,
+  /\.netlify\.app$/
+];
 
 const corsOptions = {
   origin: corsAllowList
 }
 
 // app.get(
-//   '/api/widgets/sync/instagram',
+//   '/api/widgets/sync/instagram', 
 //   async (req, res) => {
 //     try {
 //       const result = await syncInstagramData()
