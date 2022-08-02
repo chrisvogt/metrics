@@ -2,7 +2,7 @@ const admin = require('firebase-admin')
 const { config: getConfig, logger } = require('firebase-functions')
 
 const getSpotifyAccessToken = require('../api/spotify/get-access-token')
-const getSpotifyPlaylists = require('../api/spotify/get-playlists');
+const getSpotifyPlaylists = require('../api/spotify/get-playlists')
 const getSpotifyTopTracks = require('../api/spotify/get-top-tracks')
 const getSpotifyUserProfile = require('../api/spotify/get-user-profile')
 const transformTrackToCollectionItem = require('../transformers/track-to-collection-item')
@@ -17,7 +17,7 @@ const {
 const { DATABASE_COLLECTION_SPOTIFY } = require('../constants')
 
 const syncSpotifyTopTracks = async () => {
-  const config = getConfig();
+  const config = getConfig()
 
   const clientId = selectSpotifyClientId(config)
   const clientSecret = selectSpotifyClientSecret(config)
@@ -96,13 +96,13 @@ const syncSpotifyTopTracks = async () => {
     metrics: [
       ...(followersCount
         ? [
-            {
-              displayName: 'Followers',
-              id: 'followers-count',
-              value: followersCount,
-            },
-          ]
-        : []),
+          {
+            displayName: 'Followers',
+            id: 'followers-count',
+            value: followersCount,
+          },
+        ] : []
+      ),
       {
         displayName: 'Playlists',
         id: 'playlists-count',
@@ -116,7 +116,7 @@ const syncSpotifyTopTracks = async () => {
       id,
       profileURL,
     },
-  };
+  }
 
   const db = admin.firestore()
 
