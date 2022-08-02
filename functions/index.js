@@ -57,7 +57,7 @@ const app = express()
 
 const corsAllowList = [
   /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
-  /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me$/,
+  /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
   /\.netlify\.app$/
 ];
 
