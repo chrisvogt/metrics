@@ -9,7 +9,7 @@ const defaultFields = [
   'media{caption,id,ig_id,media_type,like_count,comments_count,media_url,permalink,thumbnail_url,timestamp,username}'
 ]
 
-const INSTAGRAM_BASE_URL = 'https://graph.instagram.com';
+const INSTAGRAM_BASE_URL = 'https://graph.instagram.com'
 
 const fetchInstagramMedia = async () => {
   const {
@@ -28,7 +28,7 @@ const fetchInstagramMedia = async () => {
     }
   })
 
-  return body;
+  return body
 }
 
 module.exports = fetchInstagramMedia

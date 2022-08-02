@@ -107,13 +107,13 @@ const syncSteamData = async () => {
     metrics: [
       ...(ownedGameCount
         ? [
-            {
-              displayName: 'Owned Games',
-              id: 'owned-games-count',
-              value: ownedGameCount,
-            },
-          ]
-        : []),
+          {
+            displayName: 'Owned Games',
+            id: 'owned-games-count',
+            value: ownedGameCount,
+          },
+        ] : []
+      ),
     ],
     profile: {
       avatarURL,
@@ -125,7 +125,7 @@ const syncSteamData = async () => {
   const saveWidgetContent = async () => await db
     .collection(DATABASE_COLLECTION_STEAM)
     .doc('widget-content')
-    .set(widgetContent);
+    .set(widgetContent)
 
   try {
     await Promise.all([

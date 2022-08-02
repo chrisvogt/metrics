@@ -59,7 +59,7 @@ const corsAllowList = [
   /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
   /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
   /\.netlify\.app$/
-];
+]
 
 const corsOptions = {
   origin: corsAllowList
@@ -70,10 +70,10 @@ const corsOptions = {
 //   async (req, res) => {
 //     try {
 //       const result = await syncInstagramData()
-//       console.log('Success syncing Instagram data', result);
+//       console.log('Success syncing Instagram data', result)
 //       res.status(200).send(result)
 //     } catch (err) {
-//       console.log('Error syncing Instagram data', err);
+//       console.log('Error syncing Instagram data', err)
 //       res.status(500).send({ error: err })
 //     }
 //   }
@@ -112,7 +112,7 @@ app.get(
 
 app.get('*', (req, res) => {
   res.sendStatus(404)
-  return res.end();
+  return res.end()
 })
 
 exports.app = functions.https.onRequest(app)
