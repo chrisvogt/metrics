@@ -29,7 +29,7 @@
     "q-i": "^2.0.1",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
-    "requestretry": "^5.0.0",
+    "requestretry": "^7.0.0",
     "to-https": "^1.1.0",
     "xml2js": "^0.4.23"
   },
