@@ -1,4 +1,3 @@
-const { logger } = require('firebase-functions')
 const request = require('request-promise')
 
 const getAccessToken = async ({

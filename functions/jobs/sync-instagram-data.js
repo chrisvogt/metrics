@@ -126,6 +126,6 @@ const syncInstagramData = async () => {
   }
 }
 
-;async () => await syncInstagramData()
+async () => await syncInstagramData()
 
 module.exports = syncInstagramData

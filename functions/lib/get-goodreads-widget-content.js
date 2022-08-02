@@ -2,7 +2,7 @@ const admin = require('firebase-admin')
 
 const getGoodreadsWidgetContent = async () => {
   const db = admin.firestore()
-  const doc = await db.collection('goodreads').doc('widget-content').get();
+  const doc = await db.collection('goodreads').doc('widget-content').get()
   const {meta, ...responseData} = doc.data()
 
   const transformedMeta = {

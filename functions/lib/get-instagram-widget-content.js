@@ -2,7 +2,7 @@ const admin = require('firebase-admin')
 
 const getInstagramWidgetContent = async () => {
   const db = admin.firestore()
-  const doc = await db.collection('instagram').doc('widget-content').get();
+  const doc = await db.collection('instagram').doc('widget-content').get()
 
   try {
     const {

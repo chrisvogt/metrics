@@ -4,41 +4,41 @@ const { logger } = require('firebase-functions')
 const fetchUser = require('../api/goodreads/fetch-user')
 const fetchRecentlyReadBooks = require('../api/goodreads/fetch-recently-read-books')
 
+const fetchAllGoodreadsPromises = async () => {
+  try {
+    const [user = {}, recentlyRead = {}] = await Promise.all([
+      fetchUser(),
+      fetchRecentlyReadBooks(),
+    ])
+
+    return {
+      collections: {
+        recentlyReadBooks: recentlyRead.books,
+        updates: user.updates
+      },
+      profile: user.profile,
+      responses: {
+        user: user.jsonResponse,
+        reviews: recentlyRead.rawReviewsResponse,
+      }
+    }
+  } catch (error) {
+    return {
+      error: error.message || error,
+    }
+  }
+}
+
 /**
  * Sync Goodreads Data
  */
 const syncGoodreadsData = async () => {
-  const fetchGoodreadsData = new Promise(async resolve => {
-    try {
-      const [user = {}, recentlyRead = {}] = await Promise.all([
-        fetchUser(),
-        fetchRecentlyReadBooks(),
-      ])
-  
-      return void resolve({
-        collections: {
-          recentlyReadBooks: recentlyRead.books,
-          updates: user.updates
-        },
-        profile: user.profile,
-        responses: {
-          user: user.jsonResponse,
-          reviews: recentlyRead.rawReviewsResponse,
-        }
-      })
-    } catch (error) {
-      return void resolve({
-        error: error.message || error,
-      })
-    }
-  })
-
   const {
     collections = {},
     error,
     profile = {},
     responses = {}
-  } = await(fetchGoodreadsData)
+  } = await fetchAllGoodreadsPromises()
 
   if (error) {
     logger.error('Failed to fetch Goodreads data.', error)
@@ -54,7 +54,7 @@ const syncGoodreadsData = async () => {
       synced: admin.firestore.FieldValue.serverTimestamp(),
     },
     profile,
-  };
+  }
 
   try {
     const db = admin.firestore()
