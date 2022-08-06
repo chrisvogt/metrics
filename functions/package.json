@@ -12,7 +12,7 @@
     "test": "npm run lint"
   },
   "engines": {
-    "node": "14"
+    "node": "16"
   },
   "dependencies": {
     "axios": "^0.21.4",
