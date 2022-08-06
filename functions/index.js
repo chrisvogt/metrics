@@ -100,6 +100,7 @@ app.get(
     try {
       const widgetContent = await getWidgetContent(provider)
       const response = buildSuccessResponse(widgetContent)
+      res.set('Cache-Control', 'public, max-age=3600, s-maxage=7200')
       res.status(200).send(response)
     } catch (err) {
       const response = buildFailureResponse(err)
