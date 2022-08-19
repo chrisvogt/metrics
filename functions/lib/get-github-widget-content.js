@@ -13,7 +13,7 @@ const getGitHubWidgetContent = async () => {
 
   const { github: { access_token: accessToken, username } = {} } = config
 
-  if (!accessToken || !username) {
+  if (!(accessToken && username)) {
     throw new Error('Missing required config for GitHub widget.')
   }
 

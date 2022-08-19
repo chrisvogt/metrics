@@ -5,7 +5,7 @@
   "github": {
     "access_token": "GITHUB_ACCESS_TOKEN",
     "username": "GITHUB_USERNAME_FOR_QUERY",
-    "pinned_repository_max": 10
+    "pinned_repository_max": 4
   },
   "goodreads": {
     "access_token": "GOODREADS_ACCESS_TOKEN",
