@@ -1,4 +1,5 @@
 const admin = require('firebase-admin')
+const { Timestamp } = require ('firebase/firestore')
 
 const getInstagramWidgetContent = async () => {
   const db = admin.firestore()
@@ -19,8 +20,7 @@ const getInstagramWidgetContent = async () => {
         media,
       },
       meta: {
-        // NOTE(chrisvogt): tranform the last synced timestamp into a JS Date object
-        synced: new admin.firestore.Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate()
+        synced: new Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate()
       },
       metrics: [
         {

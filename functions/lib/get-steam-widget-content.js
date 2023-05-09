@@ -1,5 +1,6 @@
 const admin = require('firebase-admin')
 const { DATABASE_COLLECTION_STEAM } = require('../constants')
+const { Timestamp } = require ('firebase/firestore')
 
 const getSteamWidgetContent = async () => {
   const db = admin.firestore()
@@ -12,8 +13,7 @@ const getSteamWidgetContent = async () => {
 
   const transformedMeta = {
     ...meta,
-    // NOTE(chrisvogt): tranform the last synced timestamp into a JS Date object
-    synced: new admin.firestore.Timestamp(
+    synced: new Timestamp(
       meta.synced._seconds,
       meta.synced._nanoseconds
     ).toDate(),

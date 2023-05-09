@@ -67,6 +67,7 @@ const syncInstagramData = async () => {
     }))
 
   const db = admin.firestore()
+  const timestamp = admin.firestore.FieldValue.serverTimestamp()
 
   // Save the raw Instagram response data
   await db
@@ -74,7 +75,7 @@ const syncInstagramData = async () => {
     .doc('last-response')
     .set({
       ...instagramResponse,
-      fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+      fetchedAt: timestamp,
     })
 
   const filteredMedia = rawMedia.filter(({ media_type: mediaType }) =>
@@ -87,7 +88,7 @@ const syncInstagramData = async () => {
     .set({
       media: filteredMedia.map(transformInstagramMedia),
       meta: {
-        synced: admin.firestore.FieldValue.serverTimestamp(),
+        synced: timestamp,
       },
       profile: {
         username: instagramResponse.username,
