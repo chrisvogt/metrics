@@ -1,5 +1,6 @@
 const admin = require('firebase-admin')
 const { config: getConfig, logger } = require('firebase-functions')
+const { FieldValue } = require('@google-cloud/firestore')
 
 const getSpotifyAccessToken = require('../api/spotify/get-access-token')
 const getSpotifyPlaylists = require('../api/spotify/get-playlists')
@@ -91,7 +92,7 @@ const syncSpotifyTopTracks = async () => {
       topTracks: topTracks.map(transformTrackToCollectionItem),
     },
     meta: {
-      synced: admin.firestore.FieldValue.serverTimestamp(),
+      synced: FieldValue.serverTimestamp(),
     },
     metrics: [
       ...(followersCount
@@ -125,7 +126,7 @@ const syncSpotifyTopTracks = async () => {
     .doc('last-response_playlists')
     .set({
       response: playlistsResponse,
-      fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+      fetchedAt: FieldValue.serverTimestamp(),
     })
 
   const saveTopTracksResponse = async () => await db
@@ -133,7 +134,7 @@ const syncSpotifyTopTracks = async () => {
     .doc('last-response_top-tracks')
     .set({
       response: topTracks,
-      fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+      fetchedAt: FieldValue.serverTimestamp(),
     })
 
   const saveUserProfileResponse = async () => await db
@@ -141,7 +142,7 @@ const syncSpotifyTopTracks = async () => {
     .doc('last-response_user-profile')
     .set({
       response: userProfile,
-      fetchedAt: admin.firestore.FieldValue.serverTimestamp(),
+      fetchedAt: FieldValue.serverTimestamp(),
     })
 
   const saveWidgetContent = async () => {

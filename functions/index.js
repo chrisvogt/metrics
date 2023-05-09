@@ -65,15 +65,29 @@ const corsOptions = {
   origin: corsAllowList
 }
 
+const syncHandlersByProvider = {
+  goodreads: syncGoodreadsData,
+  instagram: syncInstagramData,
+  spotify: syncSpotifyData,
+  steam: syncSteamData
+}
+
 app.get(
-  '/api/widgets/sync/instagram', 
+  '/api/widgets/sync/:provider', 
   async (req, res) => {
+    const provider = req.params.provider
+    const handler = syncHandlersByProvider[provider]
+
+    if (!handler) {
+      console.log(`Attempted to sync an unrecognized provider: ${provider}`)
+      res.status(400).send('Unrecognized or unsupported provider.')
+    }
+
     try {
-      const result = await syncInstagramData()
-      console.log('Success syncing Instagram data', result)
+      const result = await handler()
       res.status(200).send(result)
     } catch (err) {
-      console.log('Error syncing Instagram data', err)
+      console.error('Error syncing data manually.', err)
       res.status(500).send({ error: err })
     }
   }
@@ -83,11 +97,7 @@ app.get(
   '/api/widgets/:provider',
   cors(corsOptions),
   async (req, res) => {
-    const {
-      params: {
-        provider
-      } = {}
-    } = req
+    const provider = req.params.provider
 
     if (!provider || !validWidgetIds.includes(provider)) {
       const response = buildFailureResponse({
