@@ -1,5 +1,6 @@
 const admin = require('firebase-admin')
 const { logger } = require('firebase-functions')
+const { FieldValue } = require('@google-cloud/firestore')
 
 const fetchUser = require('../api/goodreads/fetch-user')
 const fetchRecentlyReadBooks = require('../api/goodreads/fetch-recently-read-books')
@@ -51,7 +52,7 @@ const syncGoodreadsData = async () => {
   const widgetContent = {
     collections,
     meta: {
-      synced: admin.firestore.FieldValue.serverTimestamp(),
+      synced: FieldValue.serverTimestamp(),
     },
     profile,
   }
@@ -61,11 +62,11 @@ const syncGoodreadsData = async () => {
     await Promise.all([
       await db.collection('goodreads').doc('last-response_user-show').set({
         response: responses.user,
-        updated: admin.firestore.FieldValue.serverTimestamp(),
+        updated: FieldValue.serverTimestamp(),
       }),
       await db.collection('goodreads').doc('last-response_book-reviews').set({
         response: responses.reviews,
-        updated: admin.firestore.FieldValue.serverTimestamp(),
+        updated: FieldValue.serverTimestamp(),
       }),
       await db.collection('goodreads').doc('widget-content').set(widgetContent),
     ])
