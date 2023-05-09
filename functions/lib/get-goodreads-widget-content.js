@@ -1,4 +1,5 @@
 const admin = require('firebase-admin')
+const { Timestamp } = require ('firebase/firestore')
 
 const getGoodreadsWidgetContent = async () => {
   const db = admin.firestore()
@@ -7,13 +8,12 @@ const getGoodreadsWidgetContent = async () => {
 
   const transformedMeta = {
     ...meta,
-    // NOTE(chrisvogt): tranform the last synced timestamp into a JS Date object
-    synced: new admin.firestore.Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate()
+    synced: new Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate(),
   }
 
   return {
     ...responseData,
-    meta: transformedMeta
+    meta: transformedMeta,
   }
 }
 

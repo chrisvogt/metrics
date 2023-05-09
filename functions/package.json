@@ -1,12 +1,12 @@
 {
   "name": "personal-metrics",
-  "version": "0.5.8",
+  "version": "0.6.0",
   "description": "Personal metrics. A hobby life-tracking project.",
   "scripts": {
     "deploy": "firebase deploy --only functions",
     "lint": "eslint .",
     "logs": "firebase functions:log",
-    "serve": "firebase serve --only functions",
+    "serve": "firebase serve --only functions --port 5054",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "test": "npm run lint"
@@ -15,11 +15,13 @@
     "node": "16"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^6.5.0",
     "axios": "^0.21.4",
     "cors": "^2.8.5",
     "express": "^4.18.1",
-    "firebase-admin": "^9.12.0",
-    "firebase-functions": "^3.22.0",
+    "firebase": "^9.21.0",
+    "firebase-admin": "^11.8.0",
+    "firebase-functions": "^4.4.0",
     "got": "^11.8.5",
     "graphql-got": "^0.1.2",
     "lodash": "^4.17.21",
