@@ -65,8 +65,6 @@ const corsOptions = {
   origin: corsAllowList
 }
 
-console.log('Starting the server');
-
 app.get(
   '/api/widgets/sync/instagram', 
   async (req, res) => {
