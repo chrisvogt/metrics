@@ -15,7 +15,7 @@ const transformInstagramMedia = rawMedia => {
   } = rawMedia
   return ({
     caption,
-    cdnMediaURL: `${IMAGE_CDN_BASE_URL}${toIGDestinationPath(mediaURL, id)}`,
+    cdnMediaURL: `${IMAGE_CDN_BASE_URL}${toIGDestinationPath(mediaURL, id)}?auto=format`,
     id,
     mediaType,
     permalink,
