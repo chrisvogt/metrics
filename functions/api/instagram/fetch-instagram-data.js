@@ -14,12 +14,11 @@ const INSTAGRAM_BASE_URL = 'https://graph.instagram.com'
 const fetchInstagramMedia = async () => {
   const {
     instagram: {
-      user_id: userId,
       access_token: accessToken
     } = {}
   } = functions.config()
 
-  const { body } = await got(userId, {
+  const { body } = await got('me', {
     responseType: 'json',
     prefixUrl: INSTAGRAM_BASE_URL,
     searchParams: {

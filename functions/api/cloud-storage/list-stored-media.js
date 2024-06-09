@@ -5,7 +5,7 @@ const { CLOUD_STORAGE_IMAGES_BUCKET } = require('../../constants')
 // TODO: RegEx every name to identify the media ID and return a list.
 
 /* List Instagram media in the Cloud Storage bucket. */
-const listInstagramMedia = async () => {
+const listStoredMedia = async () => {
   const bucket = admin.storage().bucket(CLOUD_STORAGE_IMAGES_BUCKET)
   const [files] = await bucket.getFiles()
 
@@ -14,4 +14,4 @@ const listInstagramMedia = async () => {
   return fileNames
 }
 
-module.exports = listInstagramMedia
+module.exports = listStoredMedia

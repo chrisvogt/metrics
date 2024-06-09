@@ -43,6 +43,7 @@ const transformSteamGame = (game) => {
  * - [ ] Handle images
  * 
  * https://cdn.cloudflare.steamstatic.com/steam/apps/{steamId}/{fileName}.jpg 
+ * Example: https://cdn.cloudflare.steamstatic.com/steam/apps/1716740/capsule_231x87.jpg
  *
  * Available files:
  *
