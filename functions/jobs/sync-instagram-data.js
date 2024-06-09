@@ -5,7 +5,7 @@ const pMap = require('p-map')
 
 const fetchAndUploadFile = require('../api/cloud-storage/fetch-and-upload-file')
 const fetchInstagramData = require('../api/instagram/fetch-instagram-data')
-const listInstagramMedia = require('../api/cloud-storage/list-instagram-media')
+const listInstagramMedia = require('../api/cloud-storage/list-stored-media')
 const toIGDestinationPath = require('../transformers/to-ig-destination-path')
 const transformInstagramMedia = require('../transformers/transform-instagram-media')
 
