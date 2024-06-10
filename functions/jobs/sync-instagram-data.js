@@ -5,7 +5,7 @@ const pMap = require('p-map')
 
 const fetchAndUploadFile = require('../api/cloud-storage/fetch-and-upload-file')
 const fetchInstagramData = require('../api/instagram/fetch-instagram-data')
-const listInstagramMedia = require('../api/cloud-storage/list-stored-media')
+const listStoredMedia = require('../api/cloud-storage/list-stored-media')
 const toIGDestinationPath = require('../transformers/to-ig-destination-path')
 const transformInstagramMedia = require('../transformers/transform-instagram-media')
 
@@ -51,18 +51,19 @@ const syncInstagramData = async () => {
     media: { data: rawMedia },
   } = instagramResponse
 
-  const storedMediaFileNames = await listInstagramMedia()
+  const storedMediaFileNames = await listStoredMedia()
 
   // TODO: update the filters to use the same source of truth as data being saved
   // to the db.
   const mediaToDownload = rawMedia
     .filter(({ id, media_type: mediaType, media_url: mediaURL }) => {
-      const imagePath = toIGDestinationPath(mediaURL, id)
-      const isAlreadyDownloaded = storedMediaFileNames.includes(imagePath)
+      const destinationPath = toIGDestinationPath(mediaURL, id)
+      const isAlreadyDownloaded = storedMediaFileNames.includes(destinationPath)
       const isValidMediaType = validMediaTypes.includes(mediaType)
       return isValidMediaType && !isAlreadyDownloaded
     })
     .map(({ id, media_url: mediaURL }) => ({
+      destinationPath: toIGDestinationPath(mediaURL, id),
       id,
       mediaURL,
     }))

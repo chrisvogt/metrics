@@ -1,18 +1,32 @@
+const { parseString } = require('xml2js')
 const convertToHttps = require('to-https')
-const fetchBookFromGoogle = require('../google-books/fetch-book')
 const functions = require('firebase-functions')
 const get = require('lodash/get')
 const got = require('got')
 const isArray = require('lodash/isArray')
 const isString = require('lodash/isString')
-const { parseString } = require('xml2js')
+const { logger } = require('firebase-functions')
+const pMap = require('p-map')
+
+const fetchAndUploadFile = require('../cloud-storage/fetch-and-upload-file')
+const fetchBookFromGoogle = require('../google-books/fetch-book')
+const listStoredMedia = require('../cloud-storage/list-stored-media')
+
+const {
+  CLOUD_STORAGE_IMAGES_BUCKET,
+  IMAGE_CDN_BASE_URL
+} = require('../../constants')
+
+const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
 const transformBookData = (book) => {
   const {
     book: {
+      id,
       volumeInfo: {
         authors,
         categories = [],
+        description,
         imageLinks: { smallThumbnail = '', thumbnail = '' } = {},
         infoLink = '',
         pageCount,
@@ -24,9 +38,15 @@ const transformBookData = (book) => {
     rating,
   } = book
 
+  const mediaDestinationPath = toBookMediaDestinationPath(id)
+
   return {
     authors,
     categories,
+    cdnMediaURL: `${IMAGE_CDN_BASE_URL}${mediaDestinationPath}`,
+    mediaDestinationPath: mediaDestinationPath,
+    description,
+    id,
     infoLink: infoLink ? convertToHttps(infoLink) : '',
     pageCount,
     previewLink,
@@ -104,5 +124,61 @@ module.exports = async () => {
     )
     .map(transformBookData)
 
-  return { books, rawReviewsResponse }
+  const storedMediaFileNames = await listStoredMedia()
+
+  // TODO: update the filters to use the same source of truth as data being saved
+  // to the db.
+  const mediaToDownload = books
+    .filter(({ mediaDestinationPath, thumbnail }) => {
+      if (!thumbnail) {
+        return // I've found at least 1 book that doesn't contain a thumbnail
+      }
+      const isAlreadyDownloaded = storedMediaFileNames.includes(mediaDestinationPath)
+      return !isAlreadyDownloaded
+    })
+    .map(({ id, mediaDestinationPath, thumbnail }) => ({
+      destinationPath: mediaDestinationPath,
+      id,
+      mediaURL: thumbnail,
+    }))
+
+  if (!mediaToDownload.length) {
+    logger.info('Goodreads data sync finished successfully without media uploads.', {
+      destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+      totalUploadedCount: 0,
+      uploadedFiles: [],
+    })
+    return {
+      books,
+      rawReviewsResponse,
+      result: 'SUCCESS',
+      totalUploadedCount: 0,
+      uploadedFiles: [],
+    }
+  }
+
+  let result
+  try {
+    result = await pMap(mediaToDownload, fetchAndUploadFile, {
+      concurrency: 10,
+      stopOnError: false,
+    })
+  } catch (error) {
+    logger.error('Something went wrong fetching and uploading one or more media files.', error)
+  }
+
+  logger.info('Goodreads data sync finished successfully with media uploads.', {
+    destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+    totalUploadedCount: result?.length,
+    uploadedFiles: result.map(({ fileName }) => fileName),
+  })
+
+  return {
+    books,
+    rawReviewsResponse,
+    destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+    result: 'SUCCESS',
+    totalUploadedCount: result?.length,
+    uploadedFiles: result?.map(({ fileName }) => fileName),
+  }
 }

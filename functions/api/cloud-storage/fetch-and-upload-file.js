@@ -2,12 +2,14 @@ const admin = require('firebase-admin')
 const https = require('https')
 
 const { CLOUD_STORAGE_IMAGES_BUCKET } = require('../../constants')
-const toIGDestinationPath = require('../../transformers/to-ig-destination-path')
 
-const fetchAndUploadFile = ({ mediaURL, id }) => {
+const fetchAndUploadFile = ({ destinationPath, mediaURL, id }) => {
   return new Promise((resolve, reject) => {
+    if (!mediaURL) {
+      return reject(`Missing media to download for ${id}.`)
+    }
+
     const bucket = admin.storage().bucket(CLOUD_STORAGE_IMAGES_BUCKET)
-    const destinationPath = toIGDestinationPath(mediaURL, id)
 
     try {
       https.get(mediaURL, (res) => {
@@ -23,12 +25,12 @@ const fetchAndUploadFile = ({ mediaURL, id }) => {
         )
       })
 
-      resolve({
+      return resolve({
         id,
         fileName: destinationPath,
       })
     } catch (error) {
-      reject(`Failed to fetch or upload file: ${destinationPath}`, error)
+      return reject(`Failed to fetch or upload file: ${destinationPath}`, error)
     }
   })
 }
