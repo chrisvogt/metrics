@@ -2,6 +2,7 @@ const admin = require('firebase-admin')
 const cors = require('cors')
 const express = require('express')
 const functions = require('firebase-functions')
+const { logger } = require('firebase-functions')
 
 const {
   getWidgetContent,
@@ -79,7 +80,7 @@ app.get(
     const handler = syncHandlersByProvider[provider]
 
     if (!handler) {
-      console.log(`Attempted to sync an unrecognized provider: ${provider}`)
+      logger.log(`Attempted to sync an unrecognized provider: ${provider}`)
       res.status(400).send('Unrecognized or unsupported provider.')
     }
 
@@ -87,7 +88,7 @@ app.get(
       const result = await handler()
       res.status(200).send(result)
     } catch (err) {
-      console.error('Error syncing data manually.', err)
+      logger.error('Error syncing data manually.', err)
       res.status(500).send({ error: err })
     }
   }
