@@ -1,124 +1,62 @@
-const { initializeApp } = require('firebase-admin/app')
-const { logger } = require('firebase-functions')
 const { onSchedule } = require('firebase-functions/v2/scheduler')
 const { onRequest } = require('firebase-functions/v2/https')
-const admin = require('firebase-admin')
-const cors = require('cors')
-const express = require('express')
+const { logger } = require('firebase-functions')
+const app = require('./app')
 
-const {
-  getWidgetContent,
-  validWidgetIds
-} = require('./lib/get-widget-content')
+// Import your sync jobs
 const syncGoodreadsData = require('./jobs/sync-goodreads-data')
 const syncInstagramData = require('./jobs/sync-instagram-data')
 const syncSpotifyData = require('./jobs/sync-spotify-data')
 const syncSteamData = require('./jobs/sync-steam-data')
 
-const firebaseServiceAccountToken = require('./token.json')
-
-initializeApp({
-  credential: admin.credential.cert(firebaseServiceAccountToken),
-  databaseURL: 'https://personal-stats-chrisvogt.firebaseio.com',
-})
-
-admin.firestore().settings({
-  // Firestore throws when saving documents containing null values and the
-  // Goodreads response object contains null values for unset fields. The
-  // Firestore `ignoreUndefinedProperties` option enables support for fields
-  // with null values.
-  ignoreUndefinedProperties: true,
-})
-
-module.exports.syncGoodreadsDataSecondGen = onSchedule('every day 02:00', () => syncGoodreadsData())
-
-module.exports.syncSpotifyDataSecondGen = onSchedule('every day 02:00', () => syncSpotifyData())
-
-module.exports.syncSteamDataSecondGen = onSchedule('every day 02:00', () => syncSteamData())
-
-module.exports.syncInstagramDataSecondGen = onSchedule('every day 02:00', () => syncInstagramData())
-
-const buildSuccessResponse = (payload) => ({
-  ok: true,
-  payload,
-})
-
-const buildFailureResponse = (err = {}) => ({
-  ok: false,
-  error: err.message || err,
-})
-
-const app = express()
-
-const corsAllowList = [
-  /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
-  /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
-  /\.netlify\.app$/
-]
-
-const corsOptions = {
-  origin: corsAllowList
-}
-
-const syncHandlersByProvider = {
-  goodreads: syncGoodreadsData,
-  instagram: syncInstagramData,
-  spotify: syncSpotifyData,
-  steam: syncSteamData
-}
-
-app.get(
-  '/api/widgets/sync/:provider', 
-  async (req, res) => {
-    const provider = req.params.provider
-    const handler = syncHandlersByProvider[provider]
-
-    if (!handler) {
-      logger.log(`Attempted to sync an unrecognized provider: ${provider}`)
-      res.status(400).send('Unrecognized or unsupported provider.')
-    }
-
+// Scheduled functions
+exports.syncGoodreadsDataSecondGen = onSchedule(
+  { schedule: 'every day 02:00' },
+  async () => {
     try {
-      const result = await handler()
-      res.status(200).send(result)
-    } catch (err) {
-      logger.error('Error syncing data manually.', err)
-      res.status(500).send({ error: err })
+      await syncGoodreadsData()
+      logger.info('Goodreads data synced successfully.')
+    } catch (error) {
+      logger.error('Error syncing Goodreads data:', error)
     }
   }
 )
 
-app.get(
-  '/api/widgets/:provider',
-  cors(corsOptions),
-  async (req, res) => {
-    const provider = req.params.provider
-
-    if (!provider || !validWidgetIds.includes(provider)) {
-      const response = buildFailureResponse({
-        message: 'A valid provider type is required.',
-      })
-      res.status(404).send(response)
-      return res.end()
-    }
-
+exports.syncSpotifyDataSecondGen = onSchedule(
+  { schedule: 'every day 02:00' },
+  async () => {
     try {
-      const widgetContent = await getWidgetContent(provider)
-      const response = buildSuccessResponse(widgetContent)
-      res.set('Cache-Control', 'public, max-age=3600, s-maxage=7200')
-      res.status(200).send(response)
-    } catch (err) {
-      const response = buildFailureResponse(err)
-      res.status(400).send(response)
+      await syncSpotifyData()
+      logger.info('Spotify data synced successfully.')
+    } catch (error) {
+      logger.error('Error syncing Spotify data:', error)
     }
-
-    return res.end()
   }
 )
 
-app.get('*', (req, res) => {
-  res.sendStatus(404)
-  return res.end()
-})
+exports.syncSteamDataSecondGen = onSchedule(
+  { schedule: 'every day 02:00' },
+  async () => {
+    try {
+      await syncSteamData()
+      logger.info('Steam data synced successfully.')
+    } catch (error) {
+      logger.error('Error syncing Steam data:', error)
+    }
+  }
+)
 
+exports.syncInstagramDataSecondGen = onSchedule(
+  { schedule: 'every day 02:00' },
+  async () => {
+    try {
+      await syncInstagramData()
+      logger.info('Instagram data synced successfully.')
+    } catch (error) {
+      logger.error('Error syncing Instagram data:', error)
+    }
+  }
+)
+
+// Export your Express app as a Cloud Function
 exports.appSecondGen = onRequest(app)

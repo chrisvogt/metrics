@@ -1,9 +1,8 @@
-const admin = require('firebase-admin')
+const { db } = require('../firebase');
 const { DATABASE_COLLECTION_STEAM } = require('../constants')
 const { Timestamp } = require ('firebase/firestore')
 
 const getSteamWidgetContent = async () => {
-  const db = admin.firestore()
   const doc = await db
     .collection(DATABASE_COLLECTION_STEAM)
     .doc('widget-content')
