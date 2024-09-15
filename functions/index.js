@@ -121,4 +121,4 @@ app.get('*', (req, res) => {
   return res.end()
 })
 
-exports.app = onRequest(app)
+exports.appSecondGen = onRequest(app)
