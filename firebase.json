@@ -4,6 +4,7 @@
     "indexes": "firestore.indexes.json"
   },
   "functions": {
+    "runtime": "nodejs20",
     "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run lint"]
   },
   "hosting": {
@@ -11,7 +12,10 @@
     "rewrites": [
       {
         "source": "**",
-        "function": "appSecondGen"
+        "function": {
+          "functionId": "appSecondGen",
+          "region": "us-central1"
+        }
       }
     ]
   }

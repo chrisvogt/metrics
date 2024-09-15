@@ -1,8 +1,7 @@
-const admin = require('firebase-admin')
+const { db } = require('../firebase')
 const { Timestamp } = require ('firebase/firestore')
 
 const getInstagramWidgetContent = async () => {
-  const db = admin.firestore()
   const doc = await db.collection('instagram').doc('widget-content').get()
 
   try {

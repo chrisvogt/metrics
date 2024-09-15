@@ -1,4 +1,4 @@
-const admin = require('firebase-admin')
+const { db } = require('../firebase')
 const { logger } = require('firebase-functions')
 const { FieldValue } = require('@google-cloud/firestore')
 
@@ -58,7 +58,6 @@ const syncGoodreadsData = async () => {
   }
 
   try {
-    const db = admin.firestore()
     await Promise.all([
       await db.collection('goodreads').doc('last-response_user-show').set({
         response: responses.user,

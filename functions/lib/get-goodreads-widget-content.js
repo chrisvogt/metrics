@@ -1,8 +1,7 @@
-const admin = require('firebase-admin')
+const { db } = require('../firebase')
 const { Timestamp } = require ('firebase/firestore')
 
 const getGoodreadsWidgetContent = async () => {
-  const db = admin.firestore()
   const doc = await db.collection('goodreads').doc('widget-content').get()
   const {meta, ...responseData} = doc.data()
 

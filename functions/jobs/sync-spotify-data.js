@@ -1,4 +1,4 @@
-const admin = require('firebase-admin')
+const { db } = require('../firebase')
 const { config: getConfig, logger } = require('firebase-functions')
 const { FieldValue } = require('@google-cloud/firestore')
 
@@ -118,8 +118,6 @@ const syncSpotifyTopTracks = async () => {
       profileURL,
     },
   }
-
-  const db = admin.firestore()
 
   const savePlaylists = async () => await db
     .collection(DATABASE_COLLECTION_SPOTIFY)

@@ -1,4 +1,4 @@
-const admin = require('firebase-admin')
+const { db } = require('../firebase')
 const { config: getConfig, logger } = require('firebase-functions')
 const { FieldValue } = require('@google-cloud/firestore')
 
@@ -62,8 +62,6 @@ const syncSteamData = async () => {
     getOwnedGames(apiKey, userId),
     getPlayerSummary(apiKey, userId),
   ])
-
-  const db = admin.firestore()
 
   const saveOwnedGames = async () => await db
     .collection(DATABASE_COLLECTION_STEAM)

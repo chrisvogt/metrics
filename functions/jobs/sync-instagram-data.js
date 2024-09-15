@@ -1,4 +1,4 @@
-const admin = require('firebase-admin')
+const { db } = require('../firebase')
 const { FieldValue } = require('@google-cloud/firestore')
 const { logger } = require('firebase-functions')
 const pMap = require('p-map')
@@ -68,7 +68,6 @@ const syncInstagramData = async () => {
       mediaURL,
     }))
 
-  const db = admin.firestore()
   const timestamp = FieldValue.serverTimestamp()
 
   // Save the raw Instagram response data
