@@ -1,4 +1,4 @@
-const { db } = require('../firebase');
+const { db } = require('../firebase')
 const { DATABASE_COLLECTION_STEAM } = require('../constants')
 const { Timestamp } = require ('firebase/firestore')
 
