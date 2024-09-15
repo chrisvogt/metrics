@@ -1,4 +1,4 @@
-const { config, logger } = require('firebase-functions')
+const { logger } = require('firebase-functions')
 const get = require('lodash/get')
 const got = require('got')
 const xml2js = require('xml2js')
@@ -78,7 +78,8 @@ const getUpdatesFromResponse = (result) => {
 }
 
 const fetchUser = async () => {
-  const { goodreads: { key, user_id: userID } = {} } = config()
+  const key = process.env.GOODREADS_API_KEY
+  const userID = process.env.GOODREADS_USER_ID
   const goodreadsURL = `https://www.goodreads.com/user/show/${userID}?format=xml&key=${key}`
 
   const response = await got(goodreadsURL)

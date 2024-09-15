@@ -1,5 +1,5 @@
 const { db } = require('../firebase')
-const { config: getConfig, logger } = require('firebase-functions')
+const { logger } = require('firebase-functions')
 const { FieldValue } = require('@google-cloud/firestore')
 
 const getSpotifyAccessToken = require('../api/spotify/get-access-token')
@@ -8,23 +8,14 @@ const getSpotifyTopTracks = require('../api/spotify/get-top-tracks')
 const getSpotifyUserProfile = require('../api/spotify/get-user-profile')
 const transformTrackToCollectionItem = require('../transformers/track-to-collection-item')
 
-const {
-  selectSpotifyClientId,
-  selectSpotifyClientSecret,
-  selectSpotifyRedirectURI,
-  selectSpotifyRefreshToken
-} = require('../selectors/config')
-
 const { DATABASE_COLLECTION_SPOTIFY } = require('../constants')
 
+const clientId = process.env.SPOTIFY_CLIENT_ID
+const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+const redirectURI = process.env.SPOTIFY_REDIRECT_URI
+const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN
+
 const syncSpotifyTopTracks = async () => {
-  const config = getConfig()
-
-  const clientId = selectSpotifyClientId(config)
-  const clientSecret = selectSpotifyClientSecret(config)
-  const redirectURI = selectSpotifyRedirectURI(config)
-  const refreshToken = selectSpotifyRefreshToken(config)
-
   const { accessToken } = await getSpotifyAccessToken({
     clientId,
     clientSecret,

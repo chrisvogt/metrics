@@ -1,4 +1,3 @@
-const functions = require('firebase-functions')
 const got = require('got')
 
 const defaultFields = [
@@ -12,11 +11,7 @@ const defaultFields = [
 const INSTAGRAM_BASE_URL = 'https://graph.instagram.com'
 
 const fetchInstagramMedia = async () => {
-  const {
-    instagram: {
-      access_token: accessToken
-    } = {}
-  } = functions.config()
+  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
 
   const { body } = await got('me', {
     responseType: 'json',

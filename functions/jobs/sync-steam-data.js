@@ -1,12 +1,13 @@
 const { db } = require('../firebase')
-const { config: getConfig, logger } = require('firebase-functions')
+const { logger } = require('firebase-functions')
 const { FieldValue } = require('@google-cloud/firestore')
 
 const getOwnedGames = require('../api/steam/get-owned-games')
 const getPlayerSummary = require('../api/steam/get-player-summary')
 const getRecentlyPlayedGames = require('../api/steam/get-recently-played-games')
 
-const { selectSteamAPIKey, selectSteamUserId } = require('../selectors/config')
+const apiKey = process.env.STEAM_API_KEY
+const userId = process.env.STEAM_USER_ID
 
 const { DATABASE_COLLECTION_STEAM } = require('../constants')
 
@@ -53,10 +54,6 @@ const transformSteamGame = (game) => {
  *  - capsule_231x87.jpg
  */
 const syncSteamData = async () => {
-  const config = getConfig()
-  const apiKey = selectSteamAPIKey(config)
-  const userId = selectSteamUserId(config)
-
   const [recentlyPlayedGames, ownedGames, playerSummary] = await Promise.all([
     getRecentlyPlayedGames(apiKey, userId),
     getOwnedGames(apiKey, userId),

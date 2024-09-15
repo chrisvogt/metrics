@@ -1,9 +1,7 @@
-const { config, logger } = require('firebase-functions')
+const { logger } = require('firebase-functions')
 const got = require('got')
-const { selectGoogleBooksAPIKey } = require('../../selectors/config')
 
-const appConfig = config()
-const googleBooksAPIKey = selectGoogleBooksAPIKey(appConfig)
+const googleBooksAPIKey = process.env.GOOGLE_BOOKS_API_KEY
 
 const fetchBook = async (book) => {
   const { isbn, rating } = book
