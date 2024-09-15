@@ -1,18 +1,24 @@
-const { onSchedule } = require('firebase-functions/v2/scheduler')
-const { onRequest } = require('firebase-functions/v2/https')
-const { logger } = require('firebase-functions')
-const app = require('./app')
+// index.js
 
-// Import your sync jobs
+const { onRequest } = require('firebase-functions/v2/https')
+const { onSchedule } = require('firebase-functions/v2/scheduler')
+const app = require('./app')
+const { logger } = require('firebase-functions')
 const syncGoodreadsData = require('./jobs/sync-goodreads-data')
 const syncInstagramData = require('./jobs/sync-instagram-data')
 const syncSpotifyData = require('./jobs/sync-spotify-data')
 const syncSteamData = require('./jobs/sync-steam-data')
 
-// Scheduled functions
+// Express App HTTP Function
+exports.appSecondGen = onRequest(app)
+
+// Scheduled Functions
+
 exports.syncGoodreadsDataSecondGen = onSchedule(
-  { schedule: 'every day 02:00' },
-  async () => {
+  {
+    schedule: 'every day 02:00',
+  },
+  async (event) => {
     try {
       await syncGoodreadsData()
       logger.info('Goodreads data synced successfully.')
@@ -22,9 +28,25 @@ exports.syncGoodreadsDataSecondGen = onSchedule(
   }
 )
 
+exports.syncInstagramDataSecondGen = onSchedule(
+  {
+    schedule: 'every day 02:00',
+  },
+  async (event) => {
+    try {
+      await syncInstagramData()
+      logger.info('Instagram data synced successfully.')
+    } catch (error) {
+      logger.error('Error syncing Instagram data:', error)
+    }
+  }
+)
+
 exports.syncSpotifyDataSecondGen = onSchedule(
-  { schedule: 'every day 02:00' },
-  async () => {
+  {
+    schedule: 'every day 02:00',
+  },
+  async (event) => {
     try {
       await syncSpotifyData()
       logger.info('Spotify data synced successfully.')
@@ -35,8 +57,10 @@ exports.syncSpotifyDataSecondGen = onSchedule(
 )
 
 exports.syncSteamDataSecondGen = onSchedule(
-  { schedule: 'every day 02:00' },
-  async () => {
+  {
+    schedule: 'every day 02:00',
+  },
+  async (event) => {
     try {
       await syncSteamData()
       logger.info('Steam data synced successfully.')
@@ -45,18 +69,3 @@ exports.syncSteamDataSecondGen = onSchedule(
     }
   }
 )
-
-exports.syncInstagramDataSecondGen = onSchedule(
-  { schedule: 'every day 02:00' },
-  async () => {
-    try {
-      await syncInstagramData()
-      logger.info('Instagram data synced successfully.')
-    } catch (error) {
-      logger.error('Error syncing Instagram data:', error)
-    }
-  }
-)
-
-// Export your Express app as a Cloud Function
-exports.appSecondGen = onRequest(app)
