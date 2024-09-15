@@ -1,8 +1,10 @@
+const { initializeApp } = require('firebase-admin/app')
+const { logger } = require('firebase-functions')
+const { onSchedule } = require('firebase-functions/v2/scheduler')
+const {onRequest} = require('firebase-functions/v2/https')
 const admin = require('firebase-admin')
 const cors = require('cors')
 const express = require('express')
-const functions = require('firebase-functions')
-const { logger } = require('firebase-functions')
 
 const {
   getWidgetContent,
@@ -15,7 +17,7 @@ const syncSteamData = require('./jobs/sync-steam-data')
 
 const firebaseServiceAccountToken = require('./token.json')
 
-admin.initializeApp({
+initializeApp({
   credential: admin.credential.cert(firebaseServiceAccountToken),
   databaseURL: 'https://personal-stats-chrisvogt.firebaseio.com',
 })
@@ -28,21 +30,13 @@ admin.firestore().settings({
   ignoreUndefinedProperties: true,
 })
 
-exports.syncGoodreadsData = functions.pubsub
-  .schedule('every day 02:00')
-  .onRun(() => syncGoodreadsData())
+module.exports.syncGoodreadsDataSecondGen = onSchedule('every day 02:00', () => syncGoodreadsData())
 
-exports.syncSpotifyData = functions.pubsub
-  .schedule('every day 02:00')
-  .onRun(() => syncSpotifyData())
+module.exports.syncSpotifyDataSecondGen = onSchedule('every day 02:00', () => syncSpotifyData())
 
-exports.syncSteamData = functions.pubsub
-  .schedule('every day 02:00')
-  .onRun(() => syncSteamData())
+module.exports.syncSteamDataSecondGen = onSchedule('every day 02:00', () => syncSteamData())
 
-exports.syncInstagramData = functions.pubsub
-  .schedule('every day 02:00')
-  .onRun(() => syncInstagramData())
+module.exports.syncInstagramDataSecondGen = onSchedule('every day 02:00', () => syncInstagramData())
 
 const buildSuccessResponse = (payload) => ({
   ok: true,
@@ -127,4 +121,4 @@ app.get('*', (req, res) => {
   return res.end()
 })
 
-exports.app = functions.https.onRequest(app)
+exports.app = onRequest(app)
