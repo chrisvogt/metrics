@@ -1,7 +1,7 @@
 const { initializeApp } = require('firebase-admin/app')
 const { logger } = require('firebase-functions')
 const { onSchedule } = require('firebase-functions/v2/scheduler')
-const {onRequest} = require('firebase-functions/v2/https')
+const { onRequest } = require('firebase-functions/v2/https')
 const admin = require('firebase-admin')
 const cors = require('cors')
 const express = require('express')
