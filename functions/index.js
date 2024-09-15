@@ -18,7 +18,7 @@ exports.syncGoodreadsDataSecondGen = onSchedule(
   {
     schedule: 'every day 02:00',
   },
-  async (event) => {
+  async () => {
     try {
       await syncGoodreadsData()
       logger.info('Goodreads data synced successfully.')
@@ -32,7 +32,7 @@ exports.syncInstagramDataSecondGen = onSchedule(
   {
     schedule: 'every day 02:00',
   },
-  async (event) => {
+  async () => {
     try {
       await syncInstagramData()
       logger.info('Instagram data synced successfully.')
@@ -46,7 +46,7 @@ exports.syncSpotifyDataSecondGen = onSchedule(
   {
     schedule: 'every day 02:00',
   },
-  async (event) => {
+  async () => {
     try {
       await syncSpotifyData()
       logger.info('Spotify data synced successfully.')
@@ -60,7 +60,7 @@ exports.syncSteamDataSecondGen = onSchedule(
   {
     schedule: 'every day 02:00',
   },
-  async (event) => {
+  async () => {
     try {
       await syncSteamData()
       logger.info('Steam data synced successfully.')
