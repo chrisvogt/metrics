@@ -1,5 +1,5 @@
 const admin = require('firebase-admin')
-const { FieldValue } = require('@google-cloud/firestore')
+const { Timestamp } = require('firebase-admin/firestore')
 const { logger } = require('firebase-functions')
 const pMap = require('p-map')
 
@@ -69,7 +69,6 @@ const syncInstagramData = async () => {
     }))
 
   const db = admin.firestore()
-  const timestamp = FieldValue.serverTimestamp()
 
   // Save the raw Instagram response data
   await db
@@ -77,26 +76,28 @@ const syncInstagramData = async () => {
     .doc('last-response')
     .set({
       ...instagramResponse,
-      fetchedAt: timestamp,
+      fetchedAt: Timestamp.now(),
     })
 
   const filteredMedia = rawMedia.filter(({ media_type: mediaType }) =>
     validMediaTypes.includes(mediaType)
   )
 
+  // Save the widget content
   await db
     .collection('instagram')
     .doc('widget-content')
     .set({
       media: filteredMedia.map(transformInstagramMedia),
       meta: {
-        synced: timestamp,
+        synced: Timestamp.now(),
       },
       profile: {
         username: instagramResponse.username,
-        mediaCount: instagramResponse.media_count
+        mediaCount: instagramResponse.media_count,
       },
     })
+
 
   if (!mediaToDownload.length) {
     return {
