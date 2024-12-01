@@ -1,9 +1,8 @@
 const admin = require('firebase-admin')
 const cors = require('cors')
 const express = require('express')
-const functions = require('firebase-functions')
 const { logger } = require('firebase-functions')
-const { pubsub } = require('firebase-functions/v1')
+const { https, pubsub } = require('firebase-functions/v1')
 
 const {
   getWidgetContent,
@@ -128,4 +127,4 @@ app.get('*', (req, res) => {
   return res.end()
 })
 
-exports.app = functions.https.onRequest(app)
+exports.app = https.onRequest(app)

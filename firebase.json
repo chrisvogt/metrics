@@ -6,11 +6,7 @@
   "functions": {
     "predeploy": [],
     "runtime": "nodejs18",
-    "source": "functions",
-    "options": {
-      "memory": "256MB",
-      "timeoutSeconds": 60
-    }
+    "source": "functions"
   },
   "hosting": {
     "public": "public",
