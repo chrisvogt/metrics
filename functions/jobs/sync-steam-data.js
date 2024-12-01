@@ -1,6 +1,6 @@
 const admin = require('firebase-admin')
 const { config: getConfig, logger } = require('firebase-functions')
-const { FieldValue } = require('@google-cloud/firestore')
+const { Timestamp } = require('firebase-admin/firestore')
 
 const getOwnedGames = require('../api/steam/get-owned-games')
 const getPlayerSummary = require('../api/steam/get-player-summary')
@@ -70,7 +70,7 @@ const syncSteamData = async () => {
     .doc('last-response_owned-games')
     .set({
       response: ownedGames,
-      fetchedAt: FieldValue.serverTimestamp(),
+      fetchedAt: Timestamp.now(),
     })
 
   const savePlayerSummary = async () => await db
@@ -78,7 +78,7 @@ const syncSteamData = async () => {
     .doc('last-response_player-summary')
     .set({
       response: playerSummary,
-      fetchedAt: FieldValue.serverTimestamp(),
+      fetchedAt: Timestamp.now(),
     })
 
   const saveRecentlyPlayedGames = async () => await db
@@ -86,7 +86,7 @@ const syncSteamData = async () => {
     .doc('last-response_recently-played-games')
     .set({
       response: recentlyPlayedGames,
-      fetchedAt: FieldValue.serverTimestamp(),
+      fetchedAt: Timestamp.now(),
     })
 
 
@@ -104,7 +104,7 @@ const syncSteamData = async () => {
       ),
     },
     meta: {
-      synced: FieldValue.serverTimestamp(),
+      synced: Timestamp.now(),
     },
     metrics: [
       ...(ownedGameCount
