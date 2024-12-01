@@ -1,6 +1,6 @@
 const { parseString } = require('xml2js')
 const convertToHttps = require('to-https')
-const functions = require('firebase-functions')
+const functions = require('firebase-functions/v1')
 const get = require('lodash/get')
 const got = require('got')
 const isArray = require('lodash/isArray')

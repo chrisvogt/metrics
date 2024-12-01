@@ -1,8 +1,8 @@
 const admin = require('firebase-admin')
 const cors = require('cors')
 const express = require('express')
-const functions = require('firebase-functions')
 const { logger } = require('firebase-functions')
+const { https, pubsub } = require('firebase-functions/v1')
 
 const {
   getWidgetContent,
@@ -28,19 +28,19 @@ admin.firestore().settings({
   ignoreUndefinedProperties: true,
 })
 
-exports.syncGoodreadsData = functions.pubsub
+exports.syncGoodreadsData = pubsub
   .schedule('every day 02:00')
   .onRun(() => syncGoodreadsData())
 
-exports.syncSpotifyData = functions.pubsub
+exports.syncSpotifyData = pubsub
   .schedule('every day 02:00')
   .onRun(() => syncSpotifyData())
 
-exports.syncSteamData = functions.pubsub
+exports.syncSteamData = pubsub
   .schedule('every day 02:00')
   .onRun(() => syncSteamData())
 
-exports.syncInstagramData = functions.pubsub
+exports.syncInstagramData = pubsub
   .schedule('every day 02:00')
   .onRun(() => syncInstagramData())
 
@@ -127,4 +127,4 @@ app.get('*', (req, res) => {
   return res.end()
 })
 
-exports.app = functions.https.onRequest(app)
+exports.app = https.onRequest(app)
