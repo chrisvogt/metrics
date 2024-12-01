@@ -1,5 +1,5 @@
 const fs = require('fs')
-const functions = require('firebase-functions')
+const functions = require('firebase-functions/v1')
 const graphqlGot = require('graphql-got')
 const path = require('path')
 
