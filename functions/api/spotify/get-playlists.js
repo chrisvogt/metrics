@@ -8,7 +8,7 @@ const getPlaylists = async accessToken => {
     responseType: 'json',
     prefixUrl: SPOTIFY_BASE_URL,
     searchParams: {
-      limit: 13,
+      limit: 14,
       offset: 0
     }
   })
