@@ -4,24 +4,47 @@ const toIGDestinationPath = require('../transformers/to-ig-destination-path')
 const transformInstagramMedia = rawMedia => {
   const {
     caption,
+    comments_count: commentsCounts,
+    children,
     id,
+    like_count: likeCount,
     media_type: mediaType,
-    // NOTE(cvogt): I am intentionally stripping this out from the response object
-    // to prevent unauthorized access.
     media_url: mediaURL,
     permalink,
+    shortcode,
+    thumbnail_url: thumbnailURL,
     timestamp,
     username,
   } = rawMedia
-  return ({
+
+  // Determine the media URL to use for the CDN (prefer thumbnailURL for videos)
+  const preferredMediaURL = mediaType === 'VIDEO' ? thumbnailURL : mediaURL
+  const cdnMediaURL = `${IMAGE_CDN_BASE_URL}${toIGDestinationPath(preferredMediaURL, id)}`
+
+  // Recursively transform child media, if present
+  const transformedChildren = children?.data?.map(child => {
+    const childMediaURL = child.thumbnail_url || child.media_url // Prefer thumbnail_url for children if available
+    return {
+      ...child,
+      cdnMediaURL: `${IMAGE_CDN_BASE_URL}${toIGDestinationPath(childMediaURL, child.id)}`
+    }
+  })
+
+  return {
     caption,
-    cdnMediaURL: `${IMAGE_CDN_BASE_URL}${toIGDestinationPath(mediaURL, id)}`,
+    cdnMediaURL,
+    children: transformedChildren, // Include transformed children
+    commentsCounts,
     id,
+    likeCount,
     mediaType,
+    mediaURL,
     permalink,
+    shortcode,
+    thumbnailURL,
     timestamp,
     username,
-  })
+  }
 }
 
 module.exports = transformInstagramMedia

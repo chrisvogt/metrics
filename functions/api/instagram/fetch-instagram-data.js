@@ -6,7 +6,7 @@ const defaultFields = [
   'id',
   'username',
   'media_count',
-  'media{caption,id,ig_id,media_type,media_url,permalink,thumbnail_url,timestamp,username}'
+  'media{caption,children{id,media_url,thumbnail_url},id,ig_id,media_type,media_url,permalink,thumbnail_url,timestamp,username}'
 ]
 
 const INSTAGRAM_BASE_URL = 'https://graph.instagram.com'

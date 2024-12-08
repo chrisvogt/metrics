@@ -42,7 +42,39 @@ Valid media URL path beginnings:
 
 */
 
-const validMediaTypes = ['CAROUSEL_ALBUM', 'IMAGE']
+const validMediaTypes = ['CAROUSEL_ALBUM', 'IMAGE', 'VIDEO']
+
+// Reducer to handle media filtering and transformation
+const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
+  const { id, media_type: mediaType, media_url: mediaURL, thumbnail_url: thumbnailURL, children } = mediaItem
+  const destinationPath = toIGDestinationPath(thumbnailURL || mediaURL, id) // Prefer thumbnailURL if available
+  const isAlreadyDownloaded = storedMediaFileNames.includes(destinationPath)
+  const isValidMediaType = validMediaTypes.includes(mediaType)
+
+  if (isValidMediaType && !isAlreadyDownloaded) {
+    // Push the main media item
+    acc.push({
+      destinationPath,
+      id,
+      mediaURL: thumbnailURL || mediaURL // Save thumbnailURL if available
+    })
+  }
+
+  // If the media item has children, process them recursively
+  if (mediaType === 'CAROUSEL_ALBUM' && children?.data) {
+    const childMedia = children.data.map(child => ({
+      id: child.id,
+      mediaURL: child.thumbnail_url || child.media_url, // Prefer thumbnailURL for child items
+      destinationPath: toIGDestinationPath(child.thumbnail_url || child.media_url, child.id)
+    }))
+    // Filter children for already downloaded media
+    childMedia
+      .filter(({ destinationPath }) => !storedMediaFileNames.includes(destinationPath))
+      .forEach(validChild => acc.push(validChild))
+  }
+
+  return acc
+}
 
 const syncInstagramData = async () => {
   const instagramResponse = await fetchInstagramData()
@@ -53,20 +85,8 @@ const syncInstagramData = async () => {
 
   const storedMediaFileNames = await listStoredMedia()
 
-  // TODO: update the filters to use the same source of truth as data being saved
-  // to the db.
-  const mediaToDownload = rawMedia
-    .filter(({ id, media_type: mediaType, media_url: mediaURL }) => {
-      const destinationPath = toIGDestinationPath(mediaURL, id)
-      const isAlreadyDownloaded = storedMediaFileNames.includes(destinationPath)
-      const isValidMediaType = validMediaTypes.includes(mediaType)
-      return isValidMediaType && !isAlreadyDownloaded
-    })
-    .map(({ id, media_url: mediaURL }) => ({
-      destinationPath: toIGDestinationPath(mediaURL, id),
-      id,
-      mediaURL,
-    }))
+  const mediaReducer = getMediaReducer(storedMediaFileNames)
+  const mediaToDownload = rawMedia.reduce(mediaReducer, [])
 
   const db = admin.firestore()
 
@@ -97,7 +117,6 @@ const syncInstagramData = async () => {
         mediaCount: instagramResponse.media_count,
       },
     })
-
 
   if (!mediaToDownload.length) {
     return {
