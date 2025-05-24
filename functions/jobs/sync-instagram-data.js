@@ -103,24 +103,30 @@ const syncInstagramData = async () => {
     validMediaTypes.includes(mediaType)
   )
 
+  const updatedWidgetContent = {
+    media: filteredMedia.map(transformInstagramMedia),
+    meta: {
+      synced: Timestamp.now(),
+    },
+    profile: {
+      biography: instagramResponse.biography,
+      followersCount: instagramResponse.followers_count,
+      mediaCount: instagramResponse.media_count,
+      username: instagramResponse.username,
+    },
+  }
+
   // Save the widget content
   await db
     .collection('instagram')
     .doc('widget-content')
-    .set({
-      media: filteredMedia.map(transformInstagramMedia),
-      meta: {
-        synced: Timestamp.now(),
-      },
-      profile: {
-        username: instagramResponse.username,
-        mediaCount: instagramResponse.media_count,
-      },
-    })
+    .set(updatedWidgetContent)
 
   if (!mediaToDownload.length) {
     return {
+      data: updatedWidgetContent,
       ok: true,
+      result: 'SUCCESS',
       totalUploadedCount: 0,
     }
   }
@@ -146,6 +152,7 @@ const syncInstagramData = async () => {
     result: 'SUCCESS',
     totalUploadedCount: result.length,
     uploadedFiles: result.map(({ fileName }) => fileName),
+    data: updatedWidgetContent,
   }
 }
 
