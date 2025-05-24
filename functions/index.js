@@ -88,7 +88,7 @@ app.get(
       const result = await handler()
       res.status(200).send(result)
     } catch (err) {
-      logger.error('Error syncing data manually.', err)
+      logger.error(`Error syncing ${provider} data.`, err)
       res.status(500).send({ error: err })
     }
   }
