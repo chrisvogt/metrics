@@ -1,11 +1,14 @@
 const admin = require('firebase-admin')
 const { config: getConfig, logger } = require('firebase-functions')
 const { Timestamp } = require('firebase-admin/firestore')
+const pMap = require('p-map')
 
+const fetchAndUploadFile = require('../api/cloud-storage/fetch-and-upload-file')
 const getSpotifyAccessToken = require('../api/spotify/get-access-token')
 const getSpotifyPlaylists = require('../api/spotify/get-playlists')
 const getSpotifyTopTracks = require('../api/spotify/get-top-tracks')
 const getSpotifyUserProfile = require('../api/spotify/get-user-profile')
+const listStoredMedia = require('../api/cloud-storage/list-stored-media')
 const transformTrackToCollectionItem = require('../transformers/track-to-collection-item')
 
 const {
@@ -15,7 +18,50 @@ const {
   selectSpotifyRefreshToken
 } = require('../selectors/config')
 
-const { DATABASE_COLLECTION_SPOTIFY } = require('../constants')
+const {
+  CLOUD_STORAGE_IMAGES_BUCKET,
+  CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH,
+  DATABASE_COLLECTION_SPOTIFY,
+  IMAGE_CDN_BASE_URL
+} = require('../constants')
+
+const SPOTIFY_MOSAIC_BASE_URL = 'https://mosaic.scdn.co/300/'
+
+// Spotify playlists return 3 image sizes: 640x640, 300x300, and 60x60. I'm only interested in the 300x300 size.
+const getMediaURLFromPlaylist = playlist => playlist.images?.find(playlist => playlist.height === 300 || playlist.width === 300)?.url
+
+// Reducer to handle media filtering and transformation
+const getMediaToDownloadReducer = (storedMediaFileNames = []) => (acc, playlist) => {
+  const mediaURL = getMediaURLFromPlaylist(playlist)
+  if (!mediaURL) {
+    return acc
+  }
+
+  // I'm using the media filename — a hash — to identify the media file in GCP Storage because I assume the
+  // images on mosaic.scdn.co rotate and change over time based on the playlist.
+  const id = mediaURL.replace(SPOTIFY_MOSAIC_BASE_URL, '')
+  const destinationPath = `${CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH}${id}.jpg`
+  const isAlreadyDownloaded = storedMediaFileNames.includes(destinationPath)
+
+  if (!isAlreadyDownloaded) {
+    acc.push({
+      destinationPath,
+      id,
+      mediaURL
+    })
+  }
+
+  return acc
+}
+
+const transformPlaylists = (playlists) => playlists.map(playlist => {
+  const id = getMediaURLFromPlaylist(playlist)?.replace(SPOTIFY_MOSAIC_BASE_URL, '');
+  const cdnImageURL = `${IMAGE_CDN_BASE_URL}${CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH}${id}.jpg`
+  return {
+    ...playlist,
+    cdnImageURL
+  }
+})
 
 const syncSpotifyTopTracks = async () => {
   const config = getConfig()
@@ -66,7 +112,7 @@ const syncSpotifyTopTracks = async () => {
   let playlistsResponse
   try {
     playlistsResponse = await getSpotifyPlaylists(accessToken)
-    playlists = playlistsResponse.items
+    playlists = transformPlaylists(playlistsResponse.items)
     playlistsCount = playlistsResponse.total
   } catch (error) {
     logger.error('Failed to fetch Spotify playlists.', error)
@@ -74,6 +120,26 @@ const syncSpotifyTopTracks = async () => {
       result: 'FAILURE',
       error,
     }
+  }
+
+  const storedMediaFileNames = await listStoredMedia()
+
+  const mediaToDownloadReducer = getMediaToDownloadReducer(storedMediaFileNames)
+  const mediaToDownload = playlists.reduce(mediaToDownloadReducer, [])
+
+  let uploadResult
+  try {
+    const uploadResult = await pMap(mediaToDownload, fetchAndUploadFile, {
+      concurrency: 10,
+      stopOnError: false,
+    })
+    logger.info('Spotify playlists image sync finished successfully.', {
+      destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+      totalUploadedCount: uploadResult.length,
+      uploadedFiles: uploadResult.map(({ fileName }) => fileName),
+    })
+  } catch (error) {
+    logger.error('Something went wrong downloading Spotify playlist media files.', error)
   }
 
   const {
@@ -93,6 +159,7 @@ const syncSpotifyTopTracks = async () => {
     },
     meta: {
       synced: Timestamp.now(),
+      totalUploadedMediaCount: uploadResult?.length ?? 0,
     },
     metrics: [
       ...(followersCount
@@ -161,12 +228,14 @@ const syncSpotifyTopTracks = async () => {
     )
 
     logger.info('Spotify sync finished successfully.', {
-      tracksSyncedCount: topTracks.length
+      tracksSyncedCount: topTracks.length,
+      totalUploadedMediaCount: uploadResult?.length ?? 0,
     })
 
     return {
       result: 'SUCCESS',
       tracksSyncedCount: topTracks.length,
+      totalUploadedMediaCount: uploadResult?.length ?? 0,
       widgetContent
     }
   } catch (error) {
