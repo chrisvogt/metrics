@@ -6,14 +6,18 @@ const getInstagramWidgetContent = async () => {
   const doc = await db.collection('instagram').doc('widget-content').get()
 
   try {
+    const data = doc.data()
+
     const {
       meta,
       media,
       profile: {
-        mediaCount = -1,
-        username
+        biography = '',
+        followersCount = 0,
+        mediaCount = 0,
+        username = '',
       } = {}
-    } = doc.data()
+    } = data
   
     return {
       collections: {
@@ -23,6 +27,11 @@ const getInstagramWidgetContent = async () => {
         synced: new Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate()
       },
       metrics: [
+        {
+          displayName: 'Followers',
+          id: 'followers-count',
+          value: followersCount,
+        },
         {
           displayName: 'Posts',
           id: 'media-count',
@@ -34,6 +43,7 @@ const getInstagramWidgetContent = async () => {
         id: 'instagram',
       },
       profile: {
+        biography,
         displayName: username,
         profileURL: `https://www.instagram.com/${username}`,
       },
