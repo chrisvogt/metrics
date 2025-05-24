@@ -5,7 +5,7 @@
   },
   "functions": {
     "predeploy": [],
-    "runtime": "nodejs18",
+    "runtime": "nodejs20",
     "source": "functions"
   },
   "hosting": {
