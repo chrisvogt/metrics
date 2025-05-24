@@ -68,9 +68,7 @@ module.exports = async () => {
 
   let rawReviewsResponse
 
-  /**
-   * Transforms Goodreads Book Reviews response from XML into JSON
-   */
+  // Transforms Goodreads Book Reviews response from XML into JSON
   const bookReviews = await new Promise((resolve, reject) => {
     parseString(body, (error, response) => {
       if (error) {
