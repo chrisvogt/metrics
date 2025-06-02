@@ -10,11 +10,6 @@ const { selectSteamAPIKey, selectSteamUserId } = require('../selectors/config')
 
 const { DATABASE_COLLECTION_STEAM } = require('../constants')
 
-const buildIconImageUrl = (appId, hashId) =>
-  `http://media.steampowered.com/steamcommunity/public/images/apps/${appId}/${hashId}.jpg`
-
-const buildLogoImageUrl = appId => `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/capsule_231x87.jpg`
-
 const transformSteamGame = (game) => {
   const {
     appid: id,
@@ -24,14 +19,16 @@ const transformSteamGame = (game) => {
     playtime_forever: playTimeForever,
   } = game
 
-  const iconURL = buildIconImageUrl(id, iconHash)
-  const logoURL = buildLogoImageUrl(id)
-
   return {
     displayName,
-    iconURL,
     id,
-    logoURL,
+    images: {
+      capsuleLarge: `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/capsule_616x353.jpg`,
+      capsuleSmall: `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/capsule_231x87.jpg`,
+      icon: iconHash ? `http://media.steampowered.com/steamcommunity/public/images/apps/${id}/${iconHash}.jpg` : '',
+      header: `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/header.jpg`,
+      heroCapsule: `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/hero_capsule.jpg`
+    },
     playTime2Weeks,
     playTimeForever,
   }
