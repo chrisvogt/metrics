@@ -10,21 +10,22 @@ const { selectSteamAPIKey, selectSteamUserId } = require('../selectors/config')
 
 const { DATABASE_COLLECTION_STEAM } = require('../constants')
 
-const buildImage = (appId, hashId) =>
+const buildIconImageUrl = (appId, hashId) =>
   `http://media.steampowered.com/steamcommunity/public/images/apps/${appId}/${hashId}.jpg`
+
+const buildLogoImageUrl = appId => `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/capsule_231x87.jpg`
 
 const transformSteamGame = (game) => {
   const {
     appid: id,
     img_icon_url: iconHash,
-    img_logo_url: logoHash,
     name: displayName,
     playtime_2weeks: playTime2Weeks,
     playtime_forever: playTimeForever,
   } = game
 
-  const iconURL = buildImage(id, iconHash)
-  const logoURL = buildImage(id, logoHash)
+  const iconURL = buildIconImageUrl(id, iconHash)
+  const logoURL = buildLogoImageUrl(id)
 
   return {
     displayName,
