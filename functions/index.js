@@ -44,14 +44,14 @@ exports.syncInstagramData = pubsub
   .schedule('every day 02:00')
   .onRun(() => syncInstagramData())
 
-const buildSuccessResponse = (payload) => ({
+exports.buildSuccessResponse = (payload) => ({
   ok: true,
   payload,
 })
 
-const buildFailureResponse = (err = {}) => ({
+exports.buildFailureResponse = (err) => ({
   ok: false,
-  error: err.message || err,
+  error: err?.message || err,
 })
 
 const app = express()
@@ -101,7 +101,7 @@ app.get(
     const provider = req.params.provider
 
     if (!provider || !validWidgetIds.includes(provider)) {
-      const response = buildFailureResponse({
+      const response = exports.buildFailureResponse({
         message: 'A valid provider type is required.',
       })
       res.status(404).send(response)
@@ -110,11 +110,11 @@ app.get(
 
     try {
       const widgetContent = await getWidgetContent(provider)
-      const response = buildSuccessResponse(widgetContent)
+      const response = exports.buildSuccessResponse(widgetContent)
       res.set('Cache-Control', 'public, max-age=3600, s-maxage=7200')
       res.status(200).send(response)
     } catch (err) {
-      const response = buildFailureResponse(err)
+      const response = exports.buildFailureResponse(err)
       res.status(400).send(response)
     }
 

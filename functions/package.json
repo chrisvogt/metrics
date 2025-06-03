@@ -9,7 +9,9 @@
     "serve": "firebase serve --only functions --port 5002",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
-    "test": "npm run lint"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "engines": {
     "node": "20"
@@ -36,9 +38,11 @@
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.0",
     "eslint": "^7.32.0",
     "eslint-plugin-promise": "^4.3.1",
-    "firebase-functions-test": "^3.3.0"
+    "firebase-functions-test": "^3.3.0",
+    "vitest": "^3.2.0"
   },
   "private": true
 }
