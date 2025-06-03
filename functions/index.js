@@ -2,7 +2,7 @@ const admin = require('firebase-admin')
 const cors = require('cors')
 const express = require('express')
 const { logger } = require('firebase-functions')
-const { https, pubsub } = require('firebase-functions/v1')
+const { config, https, pubsub } = require('firebase-functions/v1')
 
 const {
   getWidgetContent,
@@ -17,7 +17,7 @@ const firebaseServiceAccountToken = require('./token.json')
 
 admin.initializeApp({
   credential: admin.credential.cert(firebaseServiceAccountToken),
-  databaseURL: 'https://personal-stats-chrisvogt.firebaseio.com',
+  databaseURL: config().storage.firestore_database_url,
 })
 
 admin.firestore().settings({

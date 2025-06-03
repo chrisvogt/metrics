@@ -47,13 +47,17 @@ firebase functions:config:get > .runtimeconfig.json
 ```
 
 ```
-# Starts the local server on port 5054
+# Starts the local server on port 5002
 npm run serve
 ```
 
 ## Usage
 
-After installing, use the command `npm run serve` to run the local Firebase emulators on port 5054. If everything is working as expected then the following routes should become available.
+After installing, use the command `npm run serve` to run the local Firebase emulators on port 5002.
+
+### Endpoints
+
+The following endpoints are available.
 
 | Widget | Description |
 |--------|-------------|
@@ -70,4 +74,4 @@ After installing, use the command `npm run serve` to run the local Firebase emul
 
 ## Copyright & License
 
-Copyright © 2023 [Chris Vogt](https://www.chrisvogt.me). Released under the [MIT License](LICENSE).
+Copyright © 2020-2025 [Chris Vogt](https://www.chrisvogt.me). Released under the [MIT License](LICENSE).
