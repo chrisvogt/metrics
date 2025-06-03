@@ -55,7 +55,7 @@ const getMediaToDownloadReducer = (storedMediaFileNames = []) => (acc, playlist)
 }
 
 const transformPlaylists = (playlists) => playlists.map(playlist => {
-  const id = getMediaURLFromPlaylist(playlist)?.replace(SPOTIFY_MOSAIC_BASE_URL, '');
+  const id = getMediaURLFromPlaylist(playlist)?.replace(SPOTIFY_MOSAIC_BASE_URL, '')
   const cdnImageURL = `${IMAGE_CDN_BASE_URL}${CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH}${id}.jpg`
   return {
     ...playlist,
