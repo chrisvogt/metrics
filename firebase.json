@@ -4,6 +4,7 @@
     "indexes": "firestore.indexes.json"
   },
   "functions": {
+    "port": 5020,
     "predeploy": [],
     "runtime": "nodejs20",
     "source": "functions"

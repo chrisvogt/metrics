@@ -6,7 +6,7 @@
     "deploy": "firebase deploy --only functions",
     "lint": "eslint .",
     "logs": "firebase functions:log",
-    "serve": "firebase serve --only functions --port 5054",
+    "serve": "firebase serve --only functions --port 5002",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "test": "npm run lint"
