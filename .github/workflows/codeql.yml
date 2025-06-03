@@ -1,0 +1,44 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * 0' # Optional: weekly scan on Sundays at 2 AM UTC
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      matrix:
+        language: [javascript]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          source-root: functions
+
+      - name: Install dependencies
+        run: |
+          cd functions
+          npm ci
+
+      - name: Build (not needed for plain JS)
+        run: echo "No build step defined, skipping."
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
