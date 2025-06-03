@@ -57,16 +57,16 @@ After installing, use the command `npm run serve` to run the local Firebase emul
 
 | Widget | Description |
 |--------|-------------|
-| [widgets/github](http://localhost:5054/personal-stats-chrisvogt/us-central1/app/api/widgets/github) | GET the GitHub widget content.                                           |
-| [widgets/sync/github](http://localhost:5054/personal-stats-chrisvogt/us-central1/app/api/widgets/github) | GET request that runs a job syncing GitHub widget content.          |
-| [widgets/goodreads](http://localhost:5054/personal-stats-chrisvogt/us-central1/app/api/widgets/goodreads) | GET the Goodreads widget content.                                  |
-| [widgets/sync/goodreads](http://localhost:5054/personal-stats-chrisvogt/us-central1/app/api/widgets/goodreads) | GET request that runs a job syncing Goodreads widget content. |
-| [widgets/instagram](http://localhost:5054/personal-stats-chrisvogt/us-central1/app/api/widgets/instagram) | GET the Instagram widget content.                                  |
-| [widgets/sync/instagram](http://localhost:5054/personal-stats-chrisvogt/us-central1/app/api/widgets/instagram) | GET request that runs a job syncing Instagram widget content. |
-| [widgets/spotify](http://localhost:5054/personal-stats-chrisvogt/us-central1/app/api/widgets/spotify) | GET the Spotify widget content.                                        |
-| [widgets/sync/spotify](http://localhost:5054/personal-stats-chrisvogt/us-central1/app/api/widgets/spotify) | GET request that runs a job syncing Spotify widget content.       |
-| [widgets/steam](http://localhost:5054/personal-stats-chrisvogt/us-central1/app/api/widgets/steam) | GET the Steam widget content.                                              |
-| [widgets/sync/steam](http://localhost:5054/personal-stats-chrisvogt/us-central1/app/api/widgets/steam) | GET request that runs a job syncing Steam widget content.             |
+| [widgets/github](http://localhost:5002/api/widgets/github) | GET the GitHub widget content.                                           |
+| [widgets/sync/github](http://localhost:5002/api/widgets/sync/github) | GET request that runs a job syncing GitHub widget content.          |
+| [widgets/goodreads](http://localhost:5002/api/widgets/goodreads) | GET the Goodreads widget content.                                  |
+| [widgets/sync/goodreads](http://localhost:5002/api/widgets/sync/goodreads) | GET request that runs a job syncing Goodreads widget content. |
+| [widgets/instagram](http://localhost:5002/api/widgets/instagram) | GET the Instagram widget content.                                  |
+| [widgets/sync/instagram](http://localhost:5002/api/widgets/sync/instagram) | GET request that runs a job syncing Instagram widget content. |
+| [widgets/spotify](http://localhost:5002/api/widgets/spotify) | GET the Spotify widget content.                                        |
+| [widgets/sync/spotify](http://localhost:5002/api/widgets/sync/spotify) | GET request that runs a job syncing Spotify widget content.       |
+| [widgets/steam](http://localhost:5002/api/widgets/steam) | GET the Steam widget content.                                              |
+| [widgets/sync/steam](http://localhost:5002/api/widgets/sync/steam) | GET request that runs a job syncing Steam widget content.             |
 
 ## Copyright & License
 
