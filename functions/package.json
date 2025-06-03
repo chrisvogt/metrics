@@ -9,7 +9,10 @@
     "serve": "firebase serve --only functions --port 5002",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
-    "test": "npm run lint"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "coverage": "vitest run --coverage --reporter=json --reporter=lcov --reporter=text"
   },
   "engines": {
     "node": "20"
