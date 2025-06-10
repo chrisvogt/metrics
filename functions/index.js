@@ -12,6 +12,7 @@ const syncGoodreadsData = require('./jobs/sync-goodreads-data')
 const syncInstagramData = require('./jobs/sync-instagram-data')
 const syncSpotifyData = require('./jobs/sync-spotify-data')
 const syncSteamData = require('./jobs/sync-steam-data')
+const syncFlickrData = require('./jobs/sync-flickr-data')
 
 const firebaseServiceAccountToken = require('./token.json')
 
@@ -44,6 +45,10 @@ exports.syncInstagramData = pubsub
   .schedule('every day 02:00')
   .onRun(() => syncInstagramData())
 
+exports.syncFlickrData = pubsub
+  .schedule('every day 02:00')
+  .onRun(() => syncFlickrData())
+
 const buildSuccessResponse = (payload) => ({
   ok: true,
   payload,
@@ -70,7 +75,8 @@ const syncHandlersByProvider = {
   goodreads: syncGoodreadsData,
   instagram: syncInstagramData,
   spotify: syncSpotifyData,
-  steam: syncSteamData
+  steam: syncSteamData,
+  flickr: syncFlickrData
 }
 
 app.get(
