@@ -2,6 +2,10 @@
   "firebase": {
     "database_url": "FIREBASE_DATABASE_URL"
   },
+  "flickr": {
+    "api_key": "FLICKR_API_KEY",
+    "user_id": "FLICKR_USER_ID"
+  },
   "github": {
     "access_token": "GITHUB_ACCESS_TOKEN",
     "username": "GITHUB_USERNAME_FOR_QUERY",
