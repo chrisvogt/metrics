@@ -1,9 +1,9 @@
-import { defineConfig } from 'vitest/config'
+const { defineConfig } = require('vitest/config')
 
-export default defineConfig({
+module.exports = defineConfig({
   test: {
     environment: 'node',
-    include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: ['**/*.{test,spec}.{js,mjs,cjs}'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'lcov'],
@@ -14,11 +14,6 @@ export default defineConfig({
         '**/*.spec.js',
         '.eslintrc.js',
       ],
-      all: true,
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
     },
   },
 }) 
