@@ -1,5 +1,5 @@
 const admin = require('firebase-admin')
-const { config: getConfig, logger } = require('firebase-functions')
+const { logger } = require('firebase-functions')
 const { Timestamp } = require('firebase-admin/firestore')
 const pMap = require('p-map')
 
@@ -10,13 +10,6 @@ const getSpotifyTopTracks = require('../api/spotify/get-top-tracks')
 const getSpotifyUserProfile = require('../api/spotify/get-user-profile')
 const listStoredMedia = require('../api/cloud-storage/list-stored-media')
 const transformTrackToCollectionItem = require('../transformers/track-to-collection-item')
-
-const {
-  selectSpotifyClientId,
-  selectSpotifyClientSecret,
-  selectSpotifyRedirectURI,
-  selectSpotifyRefreshToken
-} = require('../selectors/config')
 
 const {
   CLOUD_STORAGE_IMAGES_BUCKET,
@@ -64,12 +57,11 @@ const transformPlaylists = (playlists) => playlists.map(playlist => {
 })
 
 const syncSpotifyTopTracks = async () => {
-  const config = getConfig()
-
-  const clientId = selectSpotifyClientId(config)
-  const clientSecret = selectSpotifyClientSecret(config)
-  const redirectURI = selectSpotifyRedirectURI(config)
-  const refreshToken = selectSpotifyRefreshToken(config)
+  // In v2, we'll use environment variables directly instead of config()
+  const clientId = process.env.SPOTIFY_CLIENT_ID
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+  const redirectURI = process.env.SPOTIFY_REDIRECT_URI
+  const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN
 
   const { accessToken } = await getSpotifyAccessToken({
     clientId,

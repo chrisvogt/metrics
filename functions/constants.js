@@ -1,7 +1,4 @@
-const functions = require('firebase-functions/v1')
-const config = functions.config()
-
-const CLOUD_STORAGE_IMAGES_BUCKET = config.storage.cloud_storage_images_bucket
+const CLOUD_STORAGE_IMAGES_BUCKET = process.env.CLOUD_STORAGE_IMAGES_BUCKET
 
 const CLOUD_STORAGE_INSTAGRAM_PATH = 'ig/'
 
@@ -15,7 +12,7 @@ const DATABASE_COLLECTION_STEAM = 'steam'
 
 const DATABASE_COLLECTION_INSTAGRAM = 'instagram'
 
-const IMAGE_CDN_BASE_URL = config.storage.image_cdn_base_url
+const IMAGE_CDN_BASE_URL = process.env.IMAGE_CDN_BASE_URL
 
 module.exports = {
   CLOUD_STORAGE_IMAGES_BUCKET,

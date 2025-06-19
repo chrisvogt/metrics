@@ -7,7 +7,8 @@
     "port": 5020,
     "predeploy": [],
     "runtime": "nodejs20",
-    "source": "functions"
+    "source": "functions",
+    "codebase": "default"
   },
   "hosting": {
     "public": "public",

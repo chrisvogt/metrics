@@ -1,6 +1,6 @@
 const admin = require('firebase-admin')
 const { Timestamp } = require('firebase-admin/firestore')
-const { config, logger } = require('firebase-functions')
+const { logger } = require('firebase-functions')
 
 const { DATABASE_COLLECTION_FLICKR } = require('../constants')
 const fetchPhotos = require('../api/flickr/fetch-photos')
@@ -12,7 +12,7 @@ const fetchPhotos = require('../api/flickr/fetch-photos')
  * Photos are stored with their metadata and URLs to different sizes.
  */
 const syncFlickrData = async () => {
-  const { flickr: { user_id: flickrUsername } = {} } = config()
+  const flickrUsername = process.env.FLICKR_USER_ID
 
   try {
     const photosResponse = await fetchPhotos()

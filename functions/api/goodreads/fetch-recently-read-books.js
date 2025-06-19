@@ -1,6 +1,5 @@
 const { parseString } = require('xml2js')
 const convertToHttps = require('to-https')
-const functions = require('firebase-functions/v1')
 const get = require('lodash/get')
 const got = require('got')
 const isArray = require('lodash/isArray')
@@ -59,8 +58,8 @@ const transformBookData = (book) => {
 }
 
 module.exports = async () => {
-  const config = functions.config()
-  const { goodreads: { key, user_id: userID } = {} } = config
+  const key = process.env.GOODREADS_API_KEY
+  const userID = process.env.GOODREADS_USER_ID
 
   const { body } = await got(
     `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read&per_page=18`
