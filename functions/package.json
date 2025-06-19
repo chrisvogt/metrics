@@ -1,6 +1,6 @@
 {
   "name": "personal-metrics",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Personal metrics API. A hobby project tracking my online metrics.",
   "scripts": {
     "deploy": "firebase deploy --only functions",
