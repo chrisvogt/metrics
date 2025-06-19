@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.0
+
+- Adds "ownedGame" to the Steam widget API response.
+
 ## 0.8.0
 
 - Fetches additional fields from the Instagram API: biography, followersCount.
