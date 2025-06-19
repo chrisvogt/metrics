@@ -1,8 +1,15 @@
+// Load environment variables from .env file in development
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
+
 const admin = require('firebase-admin')
 const cors = require('cors')
 const express = require('express')
 const { logger } = require('firebase-functions')
-const { config, https, pubsub } = require('firebase-functions/v1')
+const { onRequest } = require('firebase-functions/v2/https')
+const { onSchedule } = require('firebase-functions/v2/scheduler')
+const { defineString } = require('firebase-functions/params')
 
 const {
   getWidgetContent,
@@ -16,9 +23,12 @@ const syncFlickrData = require('./jobs/sync-flickr-data')
 
 const firebaseServiceAccountToken = require('./token.json')
 
+// Define parameters for v2
+const storageFirestoreDatabaseUrl = defineString('STORAGE_FIRESTORE_DATABASE_URL')
+
 admin.initializeApp({
   credential: admin.credential.cert(firebaseServiceAccountToken),
-  databaseURL: config().storage.firestore_database_url,
+  databaseURL: storageFirestoreDatabaseUrl.value(),
 })
 
 admin.firestore().settings({
@@ -29,25 +39,30 @@ admin.firestore().settings({
   ignoreUndefinedProperties: true,
 })
 
-exports.syncGoodreadsData = pubsub
-  .schedule('every day 02:00')
-  .onRun(() => syncGoodreadsData())
+exports.syncGoodreadsData = onSchedule({
+  schedule: 'every day 02:00',
+  region: 'us-central1'
+}, () => syncGoodreadsData())
 
-exports.syncSpotifyData = pubsub
-  .schedule('every day 02:00')
-  .onRun(() => syncSpotifyData())
+exports.syncSpotifyData = onSchedule({
+  schedule: 'every day 02:00',
+  region: 'us-central1'
+}, () => syncSpotifyData())
 
-exports.syncSteamData = pubsub
-  .schedule('every day 02:00')
-  .onRun(() => syncSteamData())
+exports.syncSteamData = onSchedule({
+  schedule: 'every day 02:00',
+  region: 'us-central1'
+}, () => syncSteamData())
 
-exports.syncInstagramData = pubsub
-  .schedule('every day 02:00')
-  .onRun(() => syncInstagramData())
+exports.syncInstagramData = onSchedule({
+  schedule: 'every day 02:00',
+  region: 'us-central1'
+}, () => syncInstagramData())
 
-exports.syncFlickrData = pubsub
-  .schedule('every day 02:00')
-  .onRun(() => syncFlickrData())
+exports.syncFlickrData = onSchedule({
+  schedule: 'every day 02:00',
+  region: 'us-central1'
+}, () => syncFlickrData())
 
 const buildSuccessResponse = (payload) => ({
   ok: true,
@@ -133,4 +148,6 @@ app.get('*', (req, res) => {
   return res.end()
 })
 
-exports.app = https.onRequest(app)
+exports.app = onRequest({
+  region: 'us-central1'
+}, app)
