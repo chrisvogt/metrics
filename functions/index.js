@@ -4,6 +4,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const admin = require('firebase-admin')
+const compression = require('compression')
 const cors = require('cors')
 const express = require('express')
 const { logger } = require('firebase-functions')
@@ -75,6 +76,9 @@ const buildFailureResponse = (err = {}) => ({
 })
 
 const app = express()
+
+// Enable compression middleware
+app.use(compression())
 
 const corsAllowList = [
   /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
