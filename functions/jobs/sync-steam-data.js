@@ -33,6 +33,7 @@ const transformSteamGame = (game) => {
     playTimeForever,
   }
 }
+
 /**
  * Sync Steam Data
  * 
@@ -87,7 +88,6 @@ const syncSteamData = async () => {
       fetchedAt: Timestamp.now(),
     })
 
-
   const { game_count: ownedGameCount = 0 } = ownedGames
   const {
     avatarfull: avatarURL,
@@ -97,9 +97,11 @@ const syncSteamData = async () => {
 
   const widgetContent = {
     collections: {
-      recentlyPlayedGames: recentlyPlayedGames.map((game) =>
-        transformSteamGame(game)
-      ),
+      ownedGames: ownedGames.games
+        .map(game => transformSteamGame(game))
+        .filter(game => game.playTimeForever >= 100)
+        .sort((a, b) => b.playTimeForever - a.playTimeForever),
+      recentlyPlayedGames: recentlyPlayedGames.map(game => transformSteamGame(game))
     },
     meta: {
       synced: Timestamp.now(),

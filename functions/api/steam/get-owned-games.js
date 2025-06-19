@@ -11,6 +11,7 @@ const getOwnedGames = async (apiKey, userId) => {
     searchParams: {
       key: apiKey,
       steamid: userId,
+      include_appinfo: true
     },
   })
 
