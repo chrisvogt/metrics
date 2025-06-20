@@ -23,7 +23,7 @@ const transformSteamGame = (game) => {
     images: {
       capsuleLarge: `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/capsule_616x353.jpg`,
       capsuleSmall: `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/capsule_231x87.jpg`,
-      icon: iconHash ? `http://media.steampowered.com/steamcommunity/public/images/apps/${id}/${iconHash}.jpg` : '',
+      icon: iconHash ? `https://media.steampowered.com/steamcommunity/public/images/apps/${id}/${iconHash}.jpg` : '',
       header: `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/header.jpg`,
       heroCapsule: `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/hero_capsule.jpg`
     },
