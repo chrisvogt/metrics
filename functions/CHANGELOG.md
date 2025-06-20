@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+- Fix Steam icon URL to use https instead of http.
+
 ## 0.9.0
 
 - Adds "ownedGame" to the Steam widget API response.
