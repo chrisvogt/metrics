@@ -1,9 +1,9 @@
-const admin = require('firebase-admin')
-const { logger } = require('firebase-functions')
-const { Timestamp } = require('firebase-admin/firestore')
+import admin from 'firebase-admin'
+import { logger } from 'firebase-functions'
+import { Timestamp } from 'firebase-admin/firestore'
 
-const fetchUser = require('../api/goodreads/fetch-user')
-const fetchRecentlyReadBooks = require('../api/goodreads/fetch-recently-read-books')
+import fetchUser from '../api/goodreads/fetch-user.js'
+import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.js'
 
 const fetchAllGoodreadsPromises = async () => {
   try {
@@ -84,4 +84,4 @@ const syncGoodreadsData = async () => {
   }
 }
 
-module.exports = syncGoodreadsData
+export default syncGoodreadsData

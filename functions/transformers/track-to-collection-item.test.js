@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import trackToCollectionItem from '../transformers/track-to-collection-item'
+import trackToCollectionItem from '../transformers/track-to-collection-item.js'
 
 describe('trackToCollectionItem', () => {
   it('should transform a complete track object correctly', () => {

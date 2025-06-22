@@ -1,5 +1,5 @@
-const admin = require('firebase-admin')
-const { Timestamp } = require ('firebase/firestore')
+import admin from 'firebase-admin'
+import { Timestamp } from 'firebase/firestore'
 
 const getInstagramWidgetContent = async () => {
   const db = admin.firestore()
@@ -53,4 +53,4 @@ const getInstagramWidgetContent = async () => {
   }
 }
 
-module.exports = getInstagramWidgetContent
+export default getInstagramWidgetContent

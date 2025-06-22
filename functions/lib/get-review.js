@@ -66,4 +66,4 @@ const getReview = update => {
   }
 }
 
-module.exports = getReview
+export default getReview

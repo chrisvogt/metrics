@@ -1,9 +1,9 @@
-const admin = require('firebase-admin')
-const { Timestamp } = require('firebase-admin/firestore')
-const { logger } = require('firebase-functions')
+import admin from 'firebase-admin'
+import { Timestamp } from 'firebase-admin/firestore'
+import { logger } from 'firebase-functions'
 
-const { DATABASE_COLLECTION_FLICKR } = require('../constants')
-const fetchPhotos = require('../api/flickr/fetch-photos')
+import { DATABASE_COLLECTION_FLICKR } from '../constants.js'
+import fetchPhotos from '../api/flickr/fetch-photos.js'
 
 /**
  * Sync Flickr Data
@@ -74,4 +74,4 @@ const syncFlickrData = async () => {
   }
 }
 
-module.exports = syncFlickrData 
+export default syncFlickrData 

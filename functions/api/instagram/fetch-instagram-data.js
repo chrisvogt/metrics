@@ -1,4 +1,4 @@
-const got = require('got')
+import got from 'got'
 
 const defaultFields = [
   'account_type',
@@ -27,4 +27,4 @@ const fetchInstagramMedia = async () => {
   return body
 }
 
-module.exports = fetchInstagramMedia
+export default fetchInstagramMedia

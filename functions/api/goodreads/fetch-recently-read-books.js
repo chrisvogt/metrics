@@ -1,20 +1,20 @@
-const { parseString } = require('xml2js')
-const convertToHttps = require('to-https')
-const get = require('lodash/get')
-const got = require('got')
-const isArray = require('lodash/isArray')
-const isString = require('lodash/isString')
-const { logger } = require('firebase-functions')
-const pMap = require('p-map')
+import { parseString } from 'xml2js'
+import convertToHttps from 'to-https'
+import get from 'lodash.get'
+import got from 'got'
+import isArray from 'lodash.isarray'
+import isString from 'lodash.isstring'
+import { logger } from 'firebase-functions'
+import pMap from 'p-map'
 
-const fetchAndUploadFile = require('../cloud-storage/fetch-and-upload-file')
-const fetchBookFromGoogle = require('../google-books/fetch-book')
-const listStoredMedia = require('../cloud-storage/list-stored-media')
+import fetchAndUploadFile from '../cloud-storage/fetch-and-upload-file.js'
+import fetchBookFromGoogle from '../google-books/fetch-book.js'
+import listStoredMedia from '../cloud-storage/list-stored-media.js'
 
-const {
+import {
   CLOUD_STORAGE_IMAGES_BUCKET,
   IMAGE_CDN_BASE_URL
-} = require('../../constants')
+} from '../../constants.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
@@ -57,7 +57,7 @@ const transformBookData = (book) => {
   }
 }
 
-module.exports = async () => {
+export default async () => {
   const key = process.env.GOODREADS_API_KEY
   const userID = process.env.GOODREADS_USER_ID
 

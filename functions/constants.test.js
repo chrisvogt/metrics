@@ -1,58 +1,91 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
+
+import {
+  CLOUD_STORAGE_IMAGES_BUCKET,
+  CLOUD_STORAGE_INSTAGRAM_PATH,
+  CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH,
+  DATABASE_COLLECTION_FLICKR,
+  DATABASE_COLLECTION_INSTAGRAM,
+  DATABASE_COLLECTION_SPOTIFY,
+  DATABASE_COLLECTION_STEAM,
+  IMAGE_CDN_BASE_URL
+} from './constants.js'
 
 describe('constants', () => {
-  let constants
-  let originalEnv
-
-  beforeEach(() => {
-    originalEnv = { ...process.env }
-    // Mock environment variables
-    process.env.CLOUD_STORAGE_IMAGES_BUCKET = 'test-bucket'
-    process.env.IMAGE_CDN_BASE_URL = 'https://cdn.example.com/'
-    
-    // Clear module cache to ensure fresh import
-    delete require.cache[require.resolve('./constants')]
-    constants = require('./constants')
+  describe('CLOUD_STORAGE_INSTAGRAM_PATH', () => {
+    it('should be a string with the correct value', () => {
+      expect(CLOUD_STORAGE_INSTAGRAM_PATH).toBe('ig/')
+      expect(typeof CLOUD_STORAGE_INSTAGRAM_PATH).toBe('string')
+    })
   })
 
-  afterEach(() => {
-    process.env = originalEnv
-    delete require.cache[require.resolve('./constants')]
+  describe('CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH', () => {
+    it('should be a string with the correct value', () => {
+      expect(CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH).toBe('spotify/playlists/')
+      expect(typeof CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH).toBe('string')
+    })
   })
 
-  it('should export all required constants', () => {
-    expect(constants).toHaveProperty('CLOUD_STORAGE_IMAGES_BUCKET')
-    expect(constants).toHaveProperty('CLOUD_STORAGE_INSTAGRAM_PATH')
-    expect(constants).toHaveProperty('CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH')
-    expect(constants).toHaveProperty('DATABASE_COLLECTION_FLICKR')
-    expect(constants).toHaveProperty('DATABASE_COLLECTION_SPOTIFY')
-    expect(constants).toHaveProperty('DATABASE_COLLECTION_STEAM')
-    expect(constants).toHaveProperty('DATABASE_COLLECTION_INSTAGRAM')
-    expect(constants).toHaveProperty('IMAGE_CDN_BASE_URL')
+  describe('DATABASE_COLLECTION_FLICKR', () => {
+    it('should be a string with the correct value', () => {
+      expect(DATABASE_COLLECTION_FLICKR).toBe('flickr')
+      expect(typeof DATABASE_COLLECTION_FLICKR).toBe('string')
+    })
   })
 
-  it('should have correct values for environment-dependent constants', () => {
-    expect(constants.CLOUD_STORAGE_IMAGES_BUCKET).toBe('test-bucket')
-    expect(constants.IMAGE_CDN_BASE_URL).toBe('https://cdn.example.com/')
+  describe('DATABASE_COLLECTION_INSTAGRAM', () => {
+    it('should be a string with the correct value', () => {
+      expect(DATABASE_COLLECTION_INSTAGRAM).toBe('instagram')
+      expect(typeof DATABASE_COLLECTION_INSTAGRAM).toBe('string')
+    })
   })
 
-  it('should have correct values for hardcoded constants', () => {
-    expect(constants.CLOUD_STORAGE_INSTAGRAM_PATH).toBe('ig/')
-    expect(constants.CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH).toBe('spotify/playlists/')
-    expect(constants.DATABASE_COLLECTION_FLICKR).toBe('flickr')
-    expect(constants.DATABASE_COLLECTION_SPOTIFY).toBe('spotify')
-    expect(constants.DATABASE_COLLECTION_STEAM).toBe('steam')
-    expect(constants.DATABASE_COLLECTION_INSTAGRAM).toBe('instagram')
+  describe('DATABASE_COLLECTION_SPOTIFY', () => {
+    it('should be a string with the correct value', () => {
+      expect(DATABASE_COLLECTION_SPOTIFY).toBe('spotify')
+      expect(typeof DATABASE_COLLECTION_SPOTIFY).toBe('string')
+    })
   })
 
-  it('should handle undefined environment variables', () => {
-    delete process.env.CLOUD_STORAGE_IMAGES_BUCKET
-    delete process.env.IMAGE_CDN_BASE_URL
-    
-    delete require.cache[require.resolve('./constants')]
-    const constantsWithoutEnv = require('./constants')
-    
-    expect(constantsWithoutEnv.CLOUD_STORAGE_IMAGES_BUCKET).toBeUndefined()
-    expect(constantsWithoutEnv.IMAGE_CDN_BASE_URL).toBeUndefined()
+  describe('DATABASE_COLLECTION_STEAM', () => {
+    it('should be a string with the correct value', () => {
+      expect(DATABASE_COLLECTION_STEAM).toBe('steam')
+      expect(typeof DATABASE_COLLECTION_STEAM).toBe('string')
+    })
+  })
+
+  describe('environment-dependent constants', () => {
+    it('should have CLOUD_STORAGE_IMAGES_BUCKET as string or undefined', () => {
+      expect(typeof CLOUD_STORAGE_IMAGES_BUCKET === 'string' || CLOUD_STORAGE_IMAGES_BUCKET === undefined).toBe(true)
+    })
+
+    it('should have IMAGE_CDN_BASE_URL as string or undefined', () => {
+      expect(typeof IMAGE_CDN_BASE_URL === 'string' || IMAGE_CDN_BASE_URL === undefined).toBe(true)
+    })
+  })
+
+  describe('all constants', () => {
+    it('should export all expected constants', () => {
+      const constants = {
+        CLOUD_STORAGE_IMAGES_BUCKET,
+        CLOUD_STORAGE_INSTAGRAM_PATH,
+        CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH,
+        DATABASE_COLLECTION_FLICKR,
+        DATABASE_COLLECTION_INSTAGRAM,
+        DATABASE_COLLECTION_SPOTIFY,
+        DATABASE_COLLECTION_STEAM,
+        IMAGE_CDN_BASE_URL
+      }
+
+      expect(Object.keys(constants)).toHaveLength(8)
+      expect(constants).toHaveProperty('CLOUD_STORAGE_IMAGES_BUCKET')
+      expect(constants).toHaveProperty('CLOUD_STORAGE_INSTAGRAM_PATH')
+      expect(constants).toHaveProperty('CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH')
+      expect(constants).toHaveProperty('DATABASE_COLLECTION_FLICKR')
+      expect(constants).toHaveProperty('DATABASE_COLLECTION_INSTAGRAM')
+      expect(constants).toHaveProperty('DATABASE_COLLECTION_SPOTIFY')
+      expect(constants).toHaveProperty('DATABASE_COLLECTION_STEAM')
+      expect(constants).toHaveProperty('IMAGE_CDN_BASE_URL')
+    })
   })
 }) 

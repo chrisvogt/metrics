@@ -1,6 +1,6 @@
-const admin = require('firebase-admin')
+import admin from 'firebase-admin'
 
-const { CLOUD_STORAGE_IMAGES_BUCKET } = require('../../constants')
+import { CLOUD_STORAGE_IMAGES_BUCKET } from '../../constants.js'
 
 // TODO: RegEx every name to identify the media ID and return a list.
 
@@ -14,4 +14,4 @@ const listStoredMedia = async () => {
   return fileNames
 }
 
-module.exports = listStoredMedia
+export default listStoredMedia

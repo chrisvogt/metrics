@@ -1,10 +1,10 @@
-const { logger } = require('firebase-functions')
-const get = require('lodash/get')
-const got = require('got')
-const xml2js = require('xml2js')
+import { logger } from 'firebase-functions'
+import get from 'lodash.get'
+import got from 'got'
+import xml2js from 'xml2js'
 
-const getReview = require('../../lib/get-review')
-const getUserStatus = require('../../lib/get-user-status')
+import getReview from '../../lib/get-review.js'
+import getUserStatus from '../../lib/get-user-status.js'
 
 const transformUpdate = (update) => {
   if (update.type === 'userstatus') {
@@ -106,4 +106,4 @@ const fetchUser = async () => {
   }
 }
 
-module.exports = fetchUser
+export default fetchUser

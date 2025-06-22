@@ -1,5 +1,5 @@
-const get = require('lodash/get')
-const graphqlGot = require('graphql-got')
+import get from 'lodash.get'
+import graphqlGot from 'graphql-got'
 
 const query = `
 query PinnedRepositoriesQuery($username: String!, $last: Int = 10) {
@@ -61,4 +61,4 @@ const getPinnedRepositories = async ({ config }) => {
   }
 }
 
-module.exports = getPinnedRepositories
+export default getPinnedRepositories

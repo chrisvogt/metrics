@@ -1,4 +1,4 @@
-const got = require('got')
+import got from 'got'
 
 const ENDPOINT =
   'https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/'
@@ -17,4 +17,4 @@ const getRecentlyPLayedGames = async (apiKey, userId) => {
   return games
 }
 
-module.exports = getRecentlyPLayedGames
+export default getRecentlyPLayedGames

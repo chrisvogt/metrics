@@ -1,4 +1,4 @@
-const got = require('got')
+import got from 'got'
 
 const ENDPOINT =
   'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/'
@@ -17,4 +17,4 @@ const getPlayerSummary = async (apiKey, userId) => {
   return player.length ? player[0] : player
 }
 
-module.exports = getPlayerSummary
+export default getPlayerSummary

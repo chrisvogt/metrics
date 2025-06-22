@@ -22,4 +22,4 @@ const trackToCollectionItem = item => {
   }
 }
 
-module.exports = trackToCollectionItem
+export default trackToCollectionItem

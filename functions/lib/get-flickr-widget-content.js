@@ -1,6 +1,6 @@
-const admin = require('firebase-admin')
-const { logger } = require('firebase-functions')
-const { DATABASE_COLLECTION_FLICKR } = require('../constants')
+import admin from 'firebase-admin'
+import { logger } from 'firebase-functions'
+import { DATABASE_COLLECTION_FLICKR } from '../constants.js'
 
 const getFlickrWidgetContent = async () => {
   try {
@@ -22,4 +22,4 @@ const getFlickrWidgetContent = async () => {
   }
 }
 
-module.exports = getFlickrWidgetContent 
+export default getFlickrWidgetContent 
