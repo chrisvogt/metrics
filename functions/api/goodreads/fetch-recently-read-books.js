@@ -7,14 +7,14 @@ import isString from 'lodash.isstring'
 import { logger } from 'firebase-functions'
 import pMap from 'p-map'
 
-import fetchAndUploadFile from '../cloud-storage/fetch-and-upload-file'
-import fetchBookFromGoogle from '../google-books/fetch-book'
-import listStoredMedia from '../cloud-storage/list-stored-media'
+import fetchAndUploadFile from '../cloud-storage/fetch-and-upload-file.js'
+import fetchBookFromGoogle from '../google-books/fetch-book.js'
+import listStoredMedia from '../cloud-storage/list-stored-media.js'
 
 import {
   CLOUD_STORAGE_IMAGES_BUCKET,
   IMAGE_CDN_BASE_URL
-} from '../../constants'
+} from '../../constants.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 

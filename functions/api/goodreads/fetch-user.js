@@ -3,8 +3,8 @@ import get from 'lodash.get'
 import got from 'got'
 import xml2js from 'xml2js'
 
-import getReview from '../../lib/get-review'
-import getUserStatus from '../../lib/get-user-status'
+import getReview from '../../lib/get-review.js'
+import getUserStatus from '../../lib/get-user-status.js'
 
 const transformUpdate = (update) => {
   if (update.type === 'userstatus') {

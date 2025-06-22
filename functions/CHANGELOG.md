@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.0
+
+- Update package from CommonJS to ESM.
+
 ## 0.10.1
 
 - Continue improving code coverage.
