@@ -1,6 +1,6 @@
 {
   "name": "personal-metrics",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "Personal metrics API. A hobby project tracking my online metrics.",
   "type": "module",
   "scripts": {
@@ -48,6 +48,7 @@
     "eslint": "^7.32.0",
     "eslint-plugin-promise": "^4.3.1",
     "firebase-functions-test": "^3.3.0",
+    "supertest": "^7.1.1",
     "vitest": "^3.2.4"
   },
   "private": true,
