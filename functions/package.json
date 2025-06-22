@@ -9,7 +9,8 @@
     "serve": "firebase serve --only functions --port 5002",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
-    "test": "npm run lint"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "engines": {
     "node": ">=20"
@@ -40,7 +41,9 @@
     "dotenv": "^16.5.0",
     "eslint": "^7.32.0",
     "eslint-plugin-promise": "^4.3.1",
-    "firebase-functions-test": "^3.3.0"
+    "firebase-functions-test": "^3.3.0",
+    "vitest": "^1.0.0"
   },
-  "private": true
+  "private": true,
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }
