@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-const {
+import {
   selectGoogleBooksAPIKey,
   selectSpotifyClientId,
   selectSpotifyClientSecret,
@@ -8,7 +8,7 @@ const {
   selectSpotifyRefreshToken,
   selectSteamAPIKey,
   selectSteamUserId
-} = require('./config')
+} from './config.js'
 
 describe('config selectors', () => {
   const mockConfig = {
