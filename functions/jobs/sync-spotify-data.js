@@ -1,22 +1,22 @@
-const admin = require('firebase-admin')
-const { logger } = require('firebase-functions')
-const { Timestamp } = require('firebase-admin/firestore')
-const pMap = require('p-map')
+import admin from 'firebase-admin'
+import { logger } from 'firebase-functions'
+import { Timestamp } from 'firebase-admin/firestore'
+import pMap from 'p-map'
 
-const fetchAndUploadFile = require('../api/cloud-storage/fetch-and-upload-file')
-const getSpotifyAccessToken = require('../api/spotify/get-access-token')
-const getSpotifyPlaylists = require('../api/spotify/get-playlists')
-const getSpotifyTopTracks = require('../api/spotify/get-top-tracks')
-const getSpotifyUserProfile = require('../api/spotify/get-user-profile')
-const listStoredMedia = require('../api/cloud-storage/list-stored-media')
-const transformTrackToCollectionItem = require('../transformers/track-to-collection-item')
+import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
+import getSpotifyAccessToken from '../api/spotify/get-access-token.js'
+import getSpotifyPlaylists from '../api/spotify/get-playlists.js'
+import getSpotifyTopTracks from '../api/spotify/get-top-tracks.js'
+import getSpotifyUserProfile from '../api/spotify/get-user-profile.js'
+import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
+import transformTrackToCollectionItem from '../transformers/track-to-collection-item.js'
 
-const {
+import {
   CLOUD_STORAGE_IMAGES_BUCKET,
   CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH,
   DATABASE_COLLECTION_SPOTIFY,
   IMAGE_CDN_BASE_URL
-} = require('../constants')
+} from '../constants.js'
 
 const SPOTIFY_MOSAIC_BASE_URL = 'https://mosaic.scdn.co/300/'
 
@@ -239,4 +239,4 @@ const syncSpotifyTopTracks = async () => {
   }
 }
 
-module.exports = syncSpotifyTopTracks
+export default syncSpotifyTopTracks

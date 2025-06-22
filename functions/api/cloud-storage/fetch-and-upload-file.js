@@ -1,6 +1,6 @@
-const admin = require('firebase-admin')
-const https = require('https')
-const { CLOUD_STORAGE_IMAGES_BUCKET } = require('../../constants')
+import admin from 'firebase-admin'
+import https from 'https'
+import { CLOUD_STORAGE_IMAGES_BUCKET } from '../../constants.js'
 
 const fetchAndUploadFile = ({ destinationPath, mediaURL, id }) => {
   return new Promise((resolve, reject) => {
@@ -37,4 +37,4 @@ const fetchAndUploadFile = ({ destinationPath, mediaURL, id }) => {
   })
 }
 
-module.exports = fetchAndUploadFile
+export default fetchAndUploadFile

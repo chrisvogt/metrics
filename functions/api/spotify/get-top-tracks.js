@@ -1,4 +1,4 @@
-const request = require('requestretry')
+import request from 'requestretry'
 
 const getTopTracks = async accessToken => {
   const { items } = await request({
@@ -20,4 +20,4 @@ const getTopTracks = async accessToken => {
   return items
 }
 
-module.exports = getTopTracks
+export default getTopTracks

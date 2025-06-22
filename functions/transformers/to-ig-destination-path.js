@@ -1,6 +1,6 @@
-const path = require('path')
+import path from 'path'
 
-const { CLOUD_STORAGE_INSTAGRAM_PATH } = require('../constants')
+import { CLOUD_STORAGE_INSTAGRAM_PATH } from '../constants.js'
 
 const toIGDestinationPath = (mediaURL, id) => {
   const fileExtension = path.extname(new URL(mediaURL).pathname)
@@ -8,4 +8,4 @@ const toIGDestinationPath = (mediaURL, id) => {
   return destinationPath
 }
 
-module.exports = toIGDestinationPath
+export default toIGDestinationPath

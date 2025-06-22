@@ -1,5 +1,5 @@
-const admin = require('firebase-admin')
-const { Timestamp } = require ('firebase/firestore')
+import admin from 'firebase-admin'
+import { Timestamp } from 'firebase/firestore'
 
 const getGoodreadsWidgetContent = async () => {
   const db = admin.firestore()
@@ -17,4 +17,4 @@ const getGoodreadsWidgetContent = async () => {
   }
 }
 
-module.exports = getGoodreadsWidgetContent
+export default getGoodreadsWidgetContent

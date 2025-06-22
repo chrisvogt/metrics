@@ -1,5 +1,5 @@
-const { logger } = require('firebase-functions')
-const got = require('got')
+import { logger } from 'firebase-functions'
+import got from 'got'
 
 const googleBooksAPIKey = process.env.GOOGLE_BOOKS_API_KEY
 
@@ -30,4 +30,4 @@ const fetchBook = async (book) => {
   }
 }
 
-module.exports = fetchBook
+export default fetchBook

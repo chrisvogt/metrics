@@ -1,4 +1,4 @@
-const request = require('requestretry')
+import request from 'requestretry'
 
 const getUserProfile = async accessToken => {
   const response = await request({
@@ -12,4 +12,4 @@ const getUserProfile = async accessToken => {
   return response
 }
 
-module.exports = getUserProfile
+export default getUserProfile

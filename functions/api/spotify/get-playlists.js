@@ -1,4 +1,4 @@
-const got = require('got')
+import got from 'got'
 
 const SPOTIFY_BASE_URL = 'https://api.spotify.com/v1/'
 
@@ -16,4 +16,4 @@ const getPlaylists = async accessToken => {
   return body
 }
 
-module.exports = getPlaylists
+export default getPlaylists
