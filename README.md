@@ -1,4 +1,18 @@
-# Personal API
+<h1 align='center'>
+  Social Metrics API (<a href='https://metrics.chrisvogt.me' title='metrics.chrisvogt.me'>metrics.chrisvogt.me</a>)
+</h1>
+
+<p align='center'>
+  <a href='https://github.com/chrisvogt/metrics/actions/workflows/ci.yml'>
+    <img src='https://github.com/chrisvogt/metrics/actions/workflows/ci.yml/badge.svg?branch=main' alt='Continuous Integration badge' />
+  </a>
+  <a href='https://github.com/chrisvogt/metrics/actions/workflows/codeql.yml'>
+    <img src='https://github.com/chrisvogt/metrics/actions/workflows/codeql.yml/badge.svg?branch=main' alt='CodeQL badge' />
+  </a>
+  <a href='https://codecov.io/gh/chrisvogt/metrics'>
+    <img src='https://codecov.io/gh/chrisvogt/metrics/branch/main/graph/badge.svg?token=YUksu2c99s' alt='Code coverage report badge.' />
+  </a>
+</p>
 
 This repository contains a Firebase-backed service I use to fetch and sync data for widgets on my personal website, [www.chrisvogt.me](https://www.chrisvogt.me).
 
