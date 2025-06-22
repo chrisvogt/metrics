@@ -1,12 +1,12 @@
-const admin = require('firebase-admin')
-const { logger } = require('firebase-functions')
-const { Timestamp } = require('firebase-admin/firestore')
+import admin from 'firebase-admin'
+import { logger } from 'firebase-functions'
+import { Timestamp } from 'firebase-admin/firestore'
 
-const getOwnedGames = require('../api/steam/get-owned-games')
-const getPlayerSummary = require('../api/steam/get-player-summary')
-const getRecentlyPlayedGames = require('../api/steam/get-recently-played-games')
+import getOwnedGames from '../api/steam/get-owned-games.js'
+import getPlayerSummary from '../api/steam/get-player-summary.js'
+import getRecentlyPlayedGames from '../api/steam/get-recently-played-games.js'
 
-const { DATABASE_COLLECTION_STEAM } = require('../constants')
+import { DATABASE_COLLECTION_STEAM } from '../constants.js'
 
 const transformSteamGame = (game) => {
   const {
@@ -146,4 +146,4 @@ const syncSteamData = async () => {
   }
 }
 
-module.exports = syncSteamData
+export default syncSteamData

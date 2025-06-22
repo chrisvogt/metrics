@@ -1,4 +1,4 @@
-const got = require('got')
+import got from 'got'
 
 const ENDPOINT =
   'https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
@@ -18,4 +18,4 @@ const getOwnedGames = async (apiKey, userId) => {
   return response
 }
 
-module.exports = getOwnedGames
+export default getOwnedGames

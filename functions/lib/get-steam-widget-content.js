@@ -1,6 +1,6 @@
-const admin = require('firebase-admin')
-const { DATABASE_COLLECTION_STEAM } = require('../constants')
-const { Timestamp } = require ('firebase/firestore')
+import admin from 'firebase-admin'
+import { DATABASE_COLLECTION_STEAM } from '../constants.js'
+import { Timestamp } from 'firebase/firestore'
 
 const getSteamWidgetContent = async () => {
   const db = admin.firestore()
@@ -25,4 +25,4 @@ const getSteamWidgetContent = async () => {
   }
 }
 
-module.exports = getSteamWidgetContent
+export default getSteamWidgetContent

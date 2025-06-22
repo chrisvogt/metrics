@@ -74,4 +74,4 @@ const getUserStatus = update => {
   }
 }
 
-module.exports = getUserStatus
+export default getUserStatus

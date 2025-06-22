@@ -1,4 +1,4 @@
-const request = require('requestretry')
+import request from 'requestretry'
 
 const getSummaries = async (queryParams, options) => {
   const { accessToken } = options
@@ -30,4 +30,4 @@ const getSummaries = async (queryParams, options) => {
   }
 }
 
-module.exports = getSummaries
+export default getSummaries
