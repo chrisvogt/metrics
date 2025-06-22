@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.1
+
+- Disables all sync/* endpoints for security. They can be added back once auth is implemented.
+
 ## 0.11.0
 
 - Update package from CommonJS to ESM.
