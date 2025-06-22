@@ -31,3 +31,22 @@ jobs:
         run: |
           cd functions
           npm run lint
+
+      - name: Run unit tests
+        run: |
+          cd functions
+          npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./functions/coverage/lcov.info
+          flags: unittests
+          fail_ci_if_error: true
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          fail_ci_if_error: true # optional (default = false)
+          files: ./functions/coverage/junit.xml
