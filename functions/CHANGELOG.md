@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.1
+
+- Continue improving code coverage.
+
 ## 0.10.0
 
 - Adds vitest and the first unit test spec file.
