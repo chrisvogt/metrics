@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0
+
+- Adds vitest and the first unit test spec file.
+
 ## 0.9.1
 
 - Fix Steam icon URL to use https instead of http.
