@@ -1,5 +1,5 @@
-const { IMAGE_CDN_BASE_URL } = require('../constants')
-const toIGDestinationPath = require('../transformers/to-ig-destination-path')
+import { IMAGE_CDN_BASE_URL } from '../constants.js'
+import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 
 const transformInstagramMedia = rawMedia => {
   const {
@@ -47,4 +47,4 @@ const transformInstagramMedia = rawMedia => {
   }
 }
 
-module.exports = transformInstagramMedia
+export default transformInstagramMedia

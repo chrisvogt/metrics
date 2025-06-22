@@ -1,9 +1,9 @@
-const getGitHubWidgetContent = require('./get-github-widget-content')
-const getGoodreadsWidgetContent = require('./get-goodreads-widget-content')
-const getInstagramWidgetContent = require('./get-instagram-widget-content')
-const getSpotifyWidgetContent = require('./get-spotify-widget-content')
-const getSteamWidgetContent = require('./get-steam-widget-content')
-const getFlickrWidgetContent = require('./get-flickr-widget-content')
+import getGitHubWidgetContent from './get-github-widget-content.js'
+import getGoodreadsWidgetContent from './get-goodreads-widget-content.js'
+import getInstagramWidgetContent from './get-instagram-widget-content.js'
+import getSpotifyWidgetContent from './get-spotify-widget-content.js'
+import getSteamWidgetContent from './get-steam-widget-content.js'
+import getFlickrWidgetContent from './get-flickr-widget-content.js'
 
 const widgetHandlerRegistry = {
   github: getGitHubWidgetContent,
@@ -27,7 +27,7 @@ const getWidgetContent = async widgetId => {
   return widgetContent
 }
 
-module.exports = {
+export {
   getWidgetContent,
   validWidgetIds
 }

@@ -1,4 +1,4 @@
-const get = require('lodash/get')
+import get from 'lodash.get'
 
 /**
  * Select the Google Books API Key.
@@ -54,7 +54,7 @@ const selectSteamAPIKey = config => get(config, 'steam.api_key')
  */
 const selectSteamUserId = config => get(config, 'steam.user_id')
 
-module.exports = {
+export {
   selectGoogleBooksAPIKey,
   selectSpotifyClientId,
   selectSpotifyClientSecret,

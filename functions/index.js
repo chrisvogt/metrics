@@ -1,28 +1,29 @@
 // Load environment variables from .env file in development
 if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config()
+  import('dotenv').then(dotenv => dotenv.config())
 }
 
-const admin = require('firebase-admin')
-const compression = require('compression')
-const cors = require('cors')
-const express = require('express')
-const { logger } = require('firebase-functions')
-const { onRequest } = require('firebase-functions/v2/https')
-const { onSchedule } = require('firebase-functions/v2/scheduler')
-const { defineString } = require('firebase-functions/params')
+import admin from 'firebase-admin'
+import compression from 'compression'
+import cors from 'cors'
+import express from 'express'
+import { logger } from 'firebase-functions'
+import { onRequest } from 'firebase-functions/v2/https'
+import { onSchedule } from 'firebase-functions/v2/scheduler'
+import { defineString } from 'firebase-functions/params'
+import { readFileSync } from 'fs'
 
-const {
+import {
   getWidgetContent,
   validWidgetIds
-} = require('./lib/get-widget-content')
-const syncGoodreadsData = require('./jobs/sync-goodreads-data')
-const syncInstagramData = require('./jobs/sync-instagram-data')
-const syncSpotifyData = require('./jobs/sync-spotify-data')
-const syncSteamData = require('./jobs/sync-steam-data')
-const syncFlickrData = require('./jobs/sync-flickr-data')
+} from './lib/get-widget-content.js'
+import syncGoodreadsDataJob from './jobs/sync-goodreads-data.js'
+import syncInstagramDataJob from './jobs/sync-instagram-data.js'
+import syncSpotifyDataJob from './jobs/sync-spotify-data.js'
+import syncSteamDataJob from './jobs/sync-steam-data.js'
+import syncFlickrDataJob from './jobs/sync-flickr-data.js'
 
-const firebaseServiceAccountToken = require('./token.json')
+const firebaseServiceAccountToken = JSON.parse(readFileSync('./token.json', 'utf8'))
 
 // Define parameters for v2
 const storageFirestoreDatabaseUrl = defineString('STORAGE_FIRESTORE_DATABASE_URL')
@@ -40,30 +41,30 @@ admin.firestore().settings({
   ignoreUndefinedProperties: true,
 })
 
-exports.syncGoodreadsData = onSchedule({
+export const syncGoodreadsData = onSchedule({
   schedule: 'every day 02:00',
   region: 'us-central1'
-}, () => syncGoodreadsData())
+}, () => syncGoodreadsDataJob())
 
-exports.syncSpotifyData = onSchedule({
+export const syncSpotifyData = onSchedule({
   schedule: 'every day 02:00',
   region: 'us-central1'
-}, () => syncSpotifyData())
+}, () => syncSpotifyDataJob())
 
-exports.syncSteamData = onSchedule({
+export const syncSteamData = onSchedule({
   schedule: 'every day 02:00',
   region: 'us-central1'
-}, () => syncSteamData())
+}, () => syncSteamDataJob())
 
-exports.syncInstagramData = onSchedule({
+export const syncInstagramData = onSchedule({
   schedule: 'every day 02:00',
   region: 'us-central1'
-}, () => syncInstagramData())
+}, () => syncInstagramDataJob())
 
-exports.syncFlickrData = onSchedule({
+export const syncFlickrData = onSchedule({
   schedule: 'every day 02:00',
   region: 'us-central1'
-}, () => syncFlickrData())
+}, () => syncFlickrDataJob())
 
 const buildSuccessResponse = (payload) => ({
   ok: true,
@@ -75,10 +76,10 @@ const buildFailureResponse = (err = {}) => ({
   error: err.message || err,
 })
 
-const app = express()
+const expressApp = express()
 
 // Enable compression middleware
-app.use(compression())
+expressApp.use(compression())
 
 const corsAllowList = [
   /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
@@ -91,14 +92,14 @@ const corsOptions = {
 }
 
 const syncHandlersByProvider = {
-  goodreads: syncGoodreadsData,
-  instagram: syncInstagramData,
-  spotify: syncSpotifyData,
-  steam: syncSteamData,
-  flickr: syncFlickrData
+  goodreads: syncGoodreadsDataJob,
+  instagram: syncInstagramDataJob,
+  spotify: syncSpotifyDataJob,
+  steam: syncSteamDataJob,
+  flickr: syncFlickrDataJob
 }
 
-app.get(
+expressApp.get(
   '/api/widgets/sync/:provider', 
   async (req, res) => {
     const provider = req.params.provider
@@ -119,7 +120,7 @@ app.get(
   }
 )
 
-app.get(
+expressApp.get(
   '/api/widgets/:provider',
   cors(corsOptions),
   async (req, res) => {
@@ -147,11 +148,11 @@ app.get(
   }
 )
 
-app.get('*', (req, res) => {
+expressApp.get('*', (req, res) => {
   res.sendStatus(404)
   return res.end()
 })
 
-exports.app = onRequest({
+export const app = onRequest({
   region: 'us-central1'
-}, app)
+}, expressApp)

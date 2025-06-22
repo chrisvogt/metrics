@@ -1,15 +1,15 @@
-const admin = require('firebase-admin')
-const { Timestamp } = require('firebase-admin/firestore')
-const { logger } = require('firebase-functions')
-const pMap = require('p-map')
+import admin from 'firebase-admin'
+import { Timestamp } from 'firebase-admin/firestore'
+import { logger } from 'firebase-functions'
+import pMap from 'p-map'
 
-const fetchAndUploadFile = require('../api/cloud-storage/fetch-and-upload-file')
-const fetchInstagramData = require('../api/instagram/fetch-instagram-data')
-const listStoredMedia = require('../api/cloud-storage/list-stored-media')
-const toIGDestinationPath = require('../transformers/to-ig-destination-path')
-const transformInstagramMedia = require('../transformers/transform-instagram-media')
+import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
+import fetchInstagramData from '../api/instagram/fetch-instagram-data.js'
+import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
+import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
+import transformInstagramMedia from '../transformers/transform-instagram-media.js'
 
-const { CLOUD_STORAGE_IMAGES_BUCKET } = require('../constants')
+import { CLOUD_STORAGE_IMAGES_BUCKET } from '../constants.js'
 
 /*
 
@@ -158,4 +158,4 @@ const syncInstagramData = async () => {
 
 async () => await syncInstagramData()
 
-module.exports = syncInstagramData
+export default syncInstagramData

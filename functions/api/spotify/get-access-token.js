@@ -1,4 +1,4 @@
-const request = require('request-promise')
+import request from 'request-promise'
 
 const getAccessToken = async ({
   clientId,
@@ -38,4 +38,4 @@ const getAccessToken = async ({
   }
 }
 
-module.exports = getAccessToken
+export default getAccessToken

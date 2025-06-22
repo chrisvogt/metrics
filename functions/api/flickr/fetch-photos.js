@@ -1,5 +1,5 @@
-const { logger } = require('firebase-functions')
-const got = require('got')
+import { logger } from 'firebase-functions'
+import got from 'got'
 
 const FLICKR_API_BASE_URL = 'https://www.flickr.com/services/rest'
 
@@ -56,4 +56,4 @@ const fetchPhotos = async () => {
   }
 }
 
-module.exports = fetchPhotos 
+export default fetchPhotos 

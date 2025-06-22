@@ -4,23 +4,24 @@ describe('toIGDestinationPath', () => {
   let toIGDestinationPath
   let originalEnv
 
-  beforeEach(() => {
+  beforeEach(async () => {
     originalEnv = { ...process.env }
     
     // Mock the constants module
-    vi.doMock('../constants', () => ({
+    vi.doMock('../constants.js', () => ({
       CLOUD_STORAGE_INSTAGRAM_PATH: 'ig/'
     }))
     
     // Clear module cache to ensure fresh import
-    delete require.cache[require.resolve('./to-ig-destination-path')]
-    toIGDestinationPath = require('./to-ig-destination-path')
+    delete import.meta.cache?.[import.meta.resolve('./to-ig-destination-path.js')]
+    const module = await import('./to-ig-destination-path.js')
+    toIGDestinationPath = module.default
   })
 
   afterEach(() => {
     process.env = originalEnv
     vi.resetModules()
-    delete require.cache[require.resolve('./to-ig-destination-path')]
+    delete import.meta.cache?.[import.meta.resolve('./to-ig-destination-path.js')]
   })
 
   it('should generate correct destination path for JPEG image', () => {
