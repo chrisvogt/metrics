@@ -451,6 +451,8 @@ describe('fetchRecentlyReadBooks', () => {
     })
     mockListStoredMedia.mockResolvedValue([])
 
+    await fetchRecentlyReadBooks()
+
     // Should only process the book with valid date (the second one should be filtered out)
     expect(mockFetchBookFromGoogle).toHaveBeenCalledTimes(1)
     expect(mockFetchBookFromGoogle).toHaveBeenCalledWith({
