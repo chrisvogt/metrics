@@ -2,7 +2,6 @@ import { parseString } from 'xml2js'
 import convertToHttps from 'to-https'
 import get from 'lodash.get'
 import got from 'got'
-import isArray from 'lodash.isarray'
 import isString from 'lodash.isstring'
 import { logger } from 'firebase-functions'
 import pMap from 'p-map'
@@ -92,7 +91,7 @@ export default async () => {
         const [{ isbn: [isbn10] = [], isbn13: [isbn13] = [] }] = bookData  
         const isbn = isbn13 || isbn10
       
-        if (isArray(books) && isString(isbn)) {
+        if (Array.isArray(books) && isString(isbn)) {
           books.push({
             isbn,
             rating,
