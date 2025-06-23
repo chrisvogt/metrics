@@ -1,6 +1,6 @@
 {
   "name": "personal-metrics",
-  "version": "0.11.2",
+  "version": "0.11.3",
   "description": "Personal metrics API. A hobby project tracking my online metrics.",
   "type": "module",
   "scripts": {
@@ -26,21 +26,21 @@
     "firebase": "^11.9.1",
     "firebase-admin": "^13.4.0",
     "firebase-functions": "^6.3.2",
-    "got": "^11.8.5",
+    "got": "^14.4.7",
     "graphql-got": "^0.1.2",
     "lodash": "^4.17.21",
     "lodash.get": "^4.4.2",
     "lodash.isarray": "^3.0.4",
     "lodash.isstring": "^4.0.1",
     "moment": "^2.29.4",
-    "p-all": "^3.0.0",
-    "p-map": "^4.0.0",
+    "p-all": "^5.0.0",
+    "p-map": "^7.0.3",
     "q-i": "^2.0.1",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
-    "requestretry": "^5.0.0",
-    "to-https": "^1.1.0",
-    "xml2js": "^0.4.23"
+    "requestretry": "^7.1.0",
+    "to-https": "^2.0.0",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.2.4",
