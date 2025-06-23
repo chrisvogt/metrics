@@ -1,6 +1,6 @@
 {
   "name": "personal-metrics",
-  "version": "0.11.4",
+  "version": "0.11.5",
   "description": "Personal metrics API. A hobby project tracking my online metrics.",
   "type": "module",
   "scripts": {

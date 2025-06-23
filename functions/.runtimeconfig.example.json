@@ -22,8 +22,5 @@
   "steam": {
     "user_id": "STEAM_NUMERIC_USERID",
     "api_key": "STEAM_API_KEY"
-  },
-  "wakatime": {
-    "access_token": "WAKATIME_ACCESS_TOKEN"
   }
 }
