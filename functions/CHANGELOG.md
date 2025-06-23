@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.3
+
+- More package dependency updates.
+
+## 0.11.2
+
+- Package dependency updates.
+
 ## 0.11.1
 
 - Disables all sync/* endpoints for security. They can be added back once auth is implemented.
