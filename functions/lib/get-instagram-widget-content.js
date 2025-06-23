@@ -48,7 +48,7 @@ const getInstagramWidgetContent = async () => {
         profileURL: `https://www.instagram.com/${username}`,
       },
     }
-  } catch (error) {
+  } catch {
     throw new Error('Failed to get a response.')
   }
 }
