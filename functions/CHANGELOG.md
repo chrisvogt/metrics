@@ -1,10 +1,6 @@
 # Changelog
 
-## 0.11.3
-
-- More package dependency updates.
-
-## 0.11.2
+## 0.11.2 — 0.11.5
 
 - Package dependency updates.
 
