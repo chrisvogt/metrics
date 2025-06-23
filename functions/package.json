@@ -1,6 +1,6 @@
 {
   "name": "personal-metrics",
-  "version": "0.11.3",
+  "version": "0.11.4",
   "description": "Personal metrics API. A hobby project tracking my online metrics.",
   "type": "module",
   "scripts": {
@@ -30,7 +30,6 @@
     "graphql-got": "^0.1.2",
     "lodash": "^4.17.21",
     "lodash.get": "^4.4.2",
-    "lodash.isarray": "^4.0.0",
     "lodash.isstring": "^4.0.1",
     "moment": "^2.29.4",
     "p-all": "^5.0.0",

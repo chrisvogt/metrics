@@ -2,7 +2,6 @@ import { parseString } from 'xml2js'
 import convertToHttps from 'to-https'
 import get from 'lodash.get'
 import got from 'got'
-import isArray from 'lodash.isarray'
 import isString from 'lodash.isstring'
 import { logger } from 'firebase-functions'
 import pMap from 'p-map'
@@ -81,7 +80,7 @@ export default async () => {
         } = book
       
         if (!isString(date) && date.length > 3) {
-          return
+          return books
         }
       
         const {
@@ -92,7 +91,7 @@ export default async () => {
         const [{ isbn: [isbn10] = [], isbn13: [isbn13] = [] }] = bookData  
         const isbn = isbn13 || isbn10
       
-        if (isArray(books) && isString(isbn)) {
+        if (Array.isArray(books) && isString(isbn)) {
           books.push({
             isbn,
             rating,
@@ -104,7 +103,7 @@ export default async () => {
 
       rawReviewsResponse = reviewsResponse
 
-      resolve(transformedReviews)
+      resolve(Array.isArray(transformedReviews) ? transformedReviews : [])
     })
   })
 
@@ -162,12 +161,13 @@ export default async () => {
     })
   } catch (error) {
     logger.error('Something went wrong fetching and uploading one or more media files.', error)
+    result = [] // Ensure result is always an array
   }
 
   logger.info('Goodreads data sync finished successfully with media uploads.', {
     destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
     totalUploadedCount: result?.length,
-    uploadedFiles: result.map(({ fileName }) => fileName),
+    uploadedFiles: result?.map(({ fileName }) => fileName),
   })
 
   return {
