@@ -80,7 +80,7 @@ export default async () => {
         } = book
       
         if (!isString(date) && date.length > 3) {
-          return
+          return books
         }
       
         const {
@@ -103,7 +103,7 @@ export default async () => {
 
       rawReviewsResponse = reviewsResponse
 
-      resolve(transformedReviews)
+      resolve(Array.isArray(transformedReviews) ? transformedReviews : [])
     })
   })
 
@@ -161,12 +161,13 @@ export default async () => {
     })
   } catch (error) {
     logger.error('Something went wrong fetching and uploading one or more media files.', error)
+    result = [] // Ensure result is always an array
   }
 
   logger.info('Goodreads data sync finished successfully with media uploads.', {
     destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
     totalUploadedCount: result?.length,
-    uploadedFiles: result.map(({ fileName }) => fileName),
+    uploadedFiles: result?.map(({ fileName }) => fileName),
   })
 
   return {
