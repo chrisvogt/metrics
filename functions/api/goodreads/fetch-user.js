@@ -25,13 +25,19 @@ const parser = new xml2js.Parser({
 })
 
 const getProfileFromResponse = (result) => {
-  const readShelf = get(
+  let userShelves = get(
     result,
     'GoodreadsResponse.user.user_shelves.user_shelf',
     []
-  ).filter((shelf) => shelf.name === 'read')[0]
-  const { book_count: { _: bookCount = '' } = {} } = readShelf
-  const rawProfile = get(result, 'GoodreadsResponse.user', {})
+  )
+  // Ensure userShelves is always an array
+  if (!Array.isArray(userShelves)) userShelves = []
+  const readShelf = userShelves.filter((shelf) => shelf.name === 'read')[0]
+  
+  // Handle case where readShelf is undefined
+  const bookCount = readShelf?.book_count?._ || ''
+  
+  const rawProfile = get(result, 'GoodreadsResponse.user', {}) || {}
 
   const {
     name,
@@ -65,12 +71,15 @@ const getUpdatesFromResponse = (result) => {
   const rawUpdates = get(result, 'GoodreadsResponse.user.updates.update', [])
   const isDefined = (subject) => Boolean(subject)
   const validateUpdate = (update) =>
-    update.type === 'userstatus' || update.type === 'review'
+    update && (update.type === 'userstatus' || update.type === 'review')
 
-  // TODO: only show the latest `type: userstatus` per unique `book.goodreadsID`.
-  // otherwise, show every `type: review'.
-  const updates = rawUpdates
-    .filter((update) => validateUpdate(update))
+  // Ensure rawUpdates is always an array
+  const updatesArray = Array.isArray(rawUpdates) ? rawUpdates : [rawUpdates]
+
+  // Filter out undefined/null updates before checking type
+  const updates = updatesArray
+    .filter(isDefined)
+    .filter(validateUpdate)
     .map((update) => transformUpdate(update))
     .filter((update) => isDefined(update))
 
@@ -85,25 +94,29 @@ const fetchUser = async () => {
   const response = await got(goodreadsURL)
   const xml = response.body
 
-  let jsonResponse
-  let profile
-  let updates
+  return new Promise((resolve) => {
+    parser.parseString(xml, (err, result) => {
+      if (err) {
+        logger.error('Error fetching Goodreads user data.', err)
+        resolve({
+          jsonResponse: undefined,
+          profile: undefined,
+          updates: undefined,
+        })
+        return
+      }
 
-  parser.parseString(xml, (err, result) => {
-    if (err) {
-      logger.error('Error fetching Goodreads user data.', err)
-    }
+      const jsonResponse = result
+      const profile = getProfileFromResponse(result)
+      const updates = getUpdatesFromResponse(result)
 
-    jsonResponse = result
-    profile = getProfileFromResponse(result)
-    updates = getUpdatesFromResponse(result)
+      resolve({
+        jsonResponse,
+        profile,
+        updates,
+      })
+    })
   })
-
-  return {
-    jsonResponse,
-    profile,
-    updates,
-  }
 }
 
 export default fetchUser
