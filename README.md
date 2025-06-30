@@ -10,7 +10,7 @@
     <img src='https://github.com/chrisvogt/metrics/actions/workflows/codeql.yml/badge.svg?branch=main' alt='CodeQL badge' />
   </a>
   <a href='https://codecov.io/gh/chrisvogt/metrics'>
-    <img src='https://codecov.io/gh/chrisvogt/metrics/branch/main/graph/badge.svg?token=YUksu2c99s' alt='Code coverage report badge.' />
+    <img src='https://codecov.io/gh/chrisvogt/metrics/branch/main/graph/badge.svg?token=Hr0GpQiCu0' alt='Code coverage report badge.' />
   </a>
 </p>
 
@@ -75,16 +75,16 @@ The following endpoints are available.
 
 | Widget | Description |
 |--------|-------------|
-| [widgets/github](http://localhost:5002/api/widgets/github) | GET the GitHub widget content.                                           |
-| [widgets/sync/github](http://localhost:5002/api/widgets/sync/github) | GET request that runs a job syncing GitHub widget content.          |
-| [widgets/goodreads](http://localhost:5002/api/widgets/goodreads) | GET the Goodreads widget content.                                  |
-| [widgets/sync/goodreads](http://localhost:5002/api/widgets/sync/goodreads) | GET request that runs a job syncing Goodreads widget content. |
-| [widgets/instagram](http://localhost:5002/api/widgets/instagram) | GET the Instagram widget content.                                  |
-| [widgets/sync/instagram](http://localhost:5002/api/widgets/sync/instagram) | GET request that runs a job syncing Instagram widget content. |
-| [widgets/spotify](http://localhost:5002/api/widgets/spotify) | GET the Spotify widget content.                                        |
-| [widgets/sync/spotify](http://localhost:5002/api/widgets/sync/spotify) | GET request that runs a job syncing Spotify widget content.       |
-| [widgets/steam](http://localhost:5002/api/widgets/steam) | GET the Steam widget content.                                              |
-| [widgets/sync/steam](http://localhost:5002/api/widgets/sync/steam) | GET request that runs a job syncing Steam widget content.             |
+| [widgets/github](http://localhost:5002/api/widgets/github) | GET the GitHub widget content.                                                           |
+| [widgets/sync/github](http://localhost:5002/api/widgets/sync/github) | (DISABLED) GET request that runs a job syncing GitHub widget content.          |
+| [widgets/goodreads](http://localhost:5002/api/widgets/goodreads) | GET the Goodreads widget content.                                                  |
+| [widgets/sync/goodreads](http://localhost:5002/api/widgets/sync/goodreads) | (DISABLED) GET request that runs a job syncing Goodreads widget content. |
+| [widgets/instagram](http://localhost:5002/api/widgets/instagram) | GET the Instagram widget content.                                                  |
+| [widgets/sync/instagram](http://localhost:5002/api/widgets/sync/instagram) | (DISABLED) GET request that runs a job syncing Instagram widget content. |
+| [widgets/spotify](http://localhost:5002/api/widgets/spotify) | GET the Spotify widget content.                                                        |
+| [widgets/sync/spotify](http://localhost:5002/api/widgets/sync/spotify) | (DISABLED) GET request that runs a job syncing Spotify widget content.       |
+| [widgets/steam](http://localhost:5002/api/widgets/steam) | GET the Steam widget content.                                                              |
+| [widgets/sync/steam](http://localhost:5002/api/widgets/sync/steam) | (DISABLED) GET request that runs a job syncing Steam widget content.             |
 
 ## Copyright & License
 
