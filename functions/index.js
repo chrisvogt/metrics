@@ -90,34 +90,34 @@ const corsOptions = {
   origin: corsAllowList
 }
 
-// const syncHandlersByProvider = {
-//   goodreads: syncGoodreadsDataJob,
-//   instagram: syncInstagramDataJob,
-//   spotify: syncSpotifyDataJob,
-//   steam: syncSteamDataJob,
-//   flickr: syncFlickrDataJob
-// }
+const syncHandlersByProvider = {
+  goodreads: syncGoodreadsDataJob,
+  instagram: syncInstagramDataJob,
+  spotify: syncSpotifyDataJob,
+  steam: syncSteamDataJob,
+  flickr: syncFlickrDataJob
+}
 
-// expressApp.get(
-//   '/api/widgets/sync/:provider', 
-//   async (req, res) => {
-//     const provider = req.params.provider
-//     const handler = syncHandlersByProvider[provider]
+expressApp.get(
+  '/api/widgets/sync/:provider', 
+  async (req, res) => {
+    const provider = req.params.provider
+    const handler = syncHandlersByProvider[provider]
 
-//     if (!handler) {
-//       logger.log(`Attempted to sync an unrecognized provider: ${provider}`)
-//       res.status(400).send('Unrecognized or unsupported provider.')
-//     }
+    if (!handler) {
+      console.log(`Attempted to sync an unrecognized provider: ${provider}`)
+      res.status(400).send('Unrecognized or unsupported provider.')
+    }
 
-//     try {
-//       const result = await handler()
-//       res.status(200).send(result)
-//     } catch (err) {
-//       logger.error(`Error syncing ${provider} data.`, err)
-//       res.status(500).send({ error: err })
-//     }
-//   }
-// )
+    try {
+      const result = await handler()
+      res.status(200).send(result)
+    } catch (err) {
+      console.error(`Error syncing ${provider} data.`, err)
+      res.status(500).send({ error: err })
+    }
+  }
+)
 
 expressApp.get(
   '/api/widgets/:provider',

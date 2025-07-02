@@ -5,6 +5,7 @@ import { Timestamp } from 'firebase-admin/firestore'
 import getOwnedGames from '../api/steam/get-owned-games.js'
 import getPlayerSummary from '../api/steam/get-player-summary.js'
 import getRecentlyPlayedGames from '../api/steam/get-recently-played-games.js'
+import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
 
 import { DATABASE_COLLECTION_STEAM } from '../constants.js'
 
@@ -121,21 +122,47 @@ const syncSteamData = async () => {
     },
   }
 
+  // Generate AI summary using Gemini
+  let aiSummary = null
+  try {
+    aiSummary = await generateSteamSummary(widgetContent)
+    logger.info('Successfully generated AI summary for Steam data')
+  } catch (error) {
+    logger.error('Failed to generate AI summary:', error)
+    // Continue with sync even if AI summary fails
+  }
+
   const saveWidgetContent = async () => await db
     .collection(DATABASE_COLLECTION_STEAM)
     .doc('widget-content')
     .set(widgetContent)
 
+  const saveAISummary = async () => {
+    if (aiSummary) {
+      await db
+        .collection(DATABASE_COLLECTION_STEAM)
+        .doc('ai-summary')
+        .set({
+          summary: aiSummary,
+          generatedAt: Timestamp.now(),
+        })
+    }
+  }
+
   try {
-    await Promise.all([
-      saveOwnedGames(),
-      savePlayerSummary(),
-      saveRecentlyPlayedGames(),
-      saveWidgetContent(),
-    ])
+    // await Promise.all([
+    //   saveOwnedGames(),
+    //   savePlayerSummary(),
+    //   saveRecentlyPlayedGames(),
+    //   saveWidgetContent(),
+    //   saveAISummary(),
+    // ])
     return {
       result: 'SUCCESS',
-      data: widgetContent,
+      data: {
+        ...widgetContent,
+        aiSummary,
+      },
     }
   } catch (err) {
     logger.error('Failed to save Steam data to database.', err)
