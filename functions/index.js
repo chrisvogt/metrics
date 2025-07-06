@@ -105,7 +105,7 @@ expressApp.get(
     const handler = syncHandlersByProvider[provider]
 
     if (!handler) {
-      console.log(`Attempted to sync an unrecognized provider: ${provider}`)
+      logger.log(`Attempted to sync an unrecognized provider: ${provider}`)
       res.status(400).send('Unrecognized or unsupported provider.')
     }
 
@@ -113,7 +113,7 @@ expressApp.get(
       const result = await handler()
       res.status(200).send(result)
     } catch (err) {
-      console.error(`Error syncing ${provider} data.`, err)
+      logger.error(`Error syncing ${provider} data.`, err)
       res.status(500).send({ error: err })
     }
   }

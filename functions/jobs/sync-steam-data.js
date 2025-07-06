@@ -127,6 +127,7 @@ const syncSteamData = async () => {
   try {
     aiSummary = await generateSteamSummary(widgetContent)
     logger.info('Successfully generated AI summary for Steam data')
+    widgetContent.aiSummary = aiSummary
   } catch (error) {
     logger.error('Failed to generate AI summary:', error)
     // Continue with sync even if AI summary fails
@@ -141,7 +142,7 @@ const syncSteamData = async () => {
     if (aiSummary) {
       await db
         .collection(DATABASE_COLLECTION_STEAM)
-        .doc('ai-summary')
+        .doc('last-response_ai-summary')
         .set({
           summary: aiSummary,
           generatedAt: Timestamp.now(),
@@ -150,19 +151,16 @@ const syncSteamData = async () => {
   }
 
   try {
-    // await Promise.all([
-    //   saveOwnedGames(),
-    //   savePlayerSummary(),
-    //   saveRecentlyPlayedGames(),
-    //   saveWidgetContent(),
-    //   saveAISummary(),
-    // ])
+    await Promise.all([
+      saveOwnedGames(),
+      savePlayerSummary(),
+      saveRecentlyPlayedGames(),
+      saveWidgetContent(),
+      saveAISummary(),
+    ])
     return {
       result: 'SUCCESS',
-      data: {
-        ...widgetContent,
-        aiSummary,
-      },
+      data: widgetContent
     }
   } catch (err) {
     logger.error('Failed to save Steam data to database.', err)

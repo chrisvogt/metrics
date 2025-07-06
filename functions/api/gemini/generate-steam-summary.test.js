@@ -90,4 +90,4 @@ describe('generateSteamSummary', () => {
     
     expect(result).toBe('Mock AI summary of gaming activity')
   })
-}) 
+})

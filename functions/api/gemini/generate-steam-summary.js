@@ -69,4 +69,5 @@ Total Games Owned: ${metrics.find(m => m.id === 'owned-games-count')?.value || 0
   }
 }
 
-export default generateSteamSummary 
+export default generateSteamSummary
+  
