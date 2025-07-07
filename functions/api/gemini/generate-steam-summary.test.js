@@ -7,7 +7,15 @@ vi.mock('@google/generative-ai', () => ({
     getGenerativeModel: vi.fn().mockReturnValue({
       generateContent: vi.fn().mockResolvedValue({
         response: {
-          text: vi.fn().mockReturnValue('Mock AI summary of gaming activity')
+          text: vi.fn().mockReturnValue(`\`\`\`json
+{
+  "response": "Mock AI summary of gaming activity",
+  "debug": {
+    "recentlyPlayedGames": [],
+    "topPlayedGames": []
+  }
+}
+\`\`\``)
         }
       })
     })
