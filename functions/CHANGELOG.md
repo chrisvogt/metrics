@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.0
+
+- Uses Gemini via Firebase to add a new AI summary to the Steam widget content.
+
 ## 0.11.2 — 0.11.5
 
 - Package dependency updates.
