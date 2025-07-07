@@ -15,6 +15,9 @@ const runtimeConfig = JSON.parse(fs.readFileSync(runtimeConfigPath, 'utf8'))
 
 // Environment variable mappings
 const envVarMappings = {
+  // Firebase
+  'firebase.gemini_api_key': 'GEMINI_API_KEY',
+  
   // Storage
   'storage.firestore_database_url': 'STORAGE_FIRESTORE_DATABASE_URL',
   'storage.cloud_storage_images_bucket': 'CLOUD_STORAGE_IMAGES_BUCKET',
