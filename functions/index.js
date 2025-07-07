@@ -1,3 +1,5 @@
+import { logger } from 'firebase-functions'
+
 // Load environment variables from .env file in development
 if (process.env.NODE_ENV !== 'production') {
   import('dotenv').then(dotenv => dotenv.config())
