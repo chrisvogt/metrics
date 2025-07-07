@@ -1,8 +1,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { logger } from 'firebase-functions'
 
-const extractJsonFromMarkdown = str => {
-  const match = str.match(/```json\s*({[\s\S]*?})\s*```/);
-  return match ? JSON.parse(match[1]) : null;
+const extractJsonFromMarkdown = (str) => {
+  const match = str.match(/```json\s*({[\s\S]*?})\s*```/)
+  return match ? JSON.parse(match[1]) : null
 }
 
 /**
@@ -23,22 +24,27 @@ const generateSteamSummary = async (steamData) => {
   const { collections, profile, metrics } = steamData
 
   const prompt = `
-Hi there — can you take the following Steam gaming data and return a natural-sounding summary as a JSON object?
+Hi — please analyze the following Steam gaming data and return a natural-sounding summary in **valid JSON**.
 
 Use this structure:
+{
+  "response": "<A 1–2 paragraph third-person summary of Chris Vogt's Steam activity. Mention recent games played, total time played, genre or playstyle trends, and any standout titles. Use natural language.>",
+  "debug": {
+    "recentlyPlayedGames": [...], // title, playTime2Weeks, playTimeForever
+    "topPlayedGames": [...]       // title, playTimeForever
+  }
+}
 
-- "response": a short, scannable summary of Chris’s Steam gaming activity in 1–2 short paragraphs or bullets.
-- "debug": a breakdown of key facts (e.g., most played games, recent activity, notable genres). Include the following keys:
-  - "recentlyPlayedGames"
-  - "topPlayedGames"
-
-Please note:
-- All playtime values below are in **minutes**.
-- Use **hours** for values over 60 min (1 hour), rounded to 1 decimal place.
-- For values under 60 min, just display in minutes.
-- Do not include games with 0 total minutes.
-- Please return only valid JSON. No markdown or extra text.
-- Refer to me as “Chris.”
+Instructions:
+- All time values are in **minutes**
+- If time > 60 minutes, convert to **hours**, rounded to 1 decimal (e.g. 75 → "1.3 hours")
+- If time < 60 minutes, keep in **minutes**
+– Try to use up to 2 paragraphs if the text gets bulky
+– Know the summary is rendered next to a table showing the recent and total hours for each game
+- Exclude games with 0 total playtime
+- Refer to the player as “Chris” or “Chris Vogt”
+- Identify genre or gameplay patterns if possible (e.g. sandbox, survival, RPGs, base-building)
+- Return only **valid JSON** — no markdown or extra text
 
 Steam Profile: ${profile.displayName}  
 Total Games Owned: ${metrics.find(m => m.id === 'owned-games-count')?.value || 0}
@@ -51,6 +57,7 @@ Total Games Owned: ${metrics.find(m => m.id === 'owned-games-count')?.value || 0
 
 "topPlayedGames": ${JSON.stringify(collections.ownedGames
     .filter(game => game.playTimeForever >= 100)
+    .sort((a, b) => b.playTimeForever - a.playTimeForever)
     .map(game => ({
       title: game.displayName,
       playTimeForever: game.playTimeForever
@@ -60,14 +67,15 @@ Total Games Owned: ${metrics.find(m => m.id === 'owned-games-count')?.value || 0
   try {
     const result = await model.generateContent(prompt)
     const response = await result.response
-    const { debug, response: sanitizedResponse = '' } = extractJsonFromMarkdown(response.text())
-    console.debug('Steam Summary [Gemini] Debug', debug)
+    const { debug, response: sanitizedResponse = '' } = extractJsonFromMarkdown(
+      response.text()
+    )
+    logger.debug('Steam Summary [Gemini] Debug', debug)
     return sanitizedResponse
   } catch (error) {
-    console.error('Error generating Steam summary with Gemini:', error)
+    logger.error('Error generating Steam summary with Gemini:', error)
     throw new Error(`Failed to generate AI summary: ${error.message}`)
   }
 }
 
 export default generateSteamSummary
-  
