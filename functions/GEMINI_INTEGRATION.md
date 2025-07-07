@@ -54,7 +54,7 @@ Document structure:
 
 The AI might generate summaries like:
 
-> "Hey Chris! I've been looking at your Steam activity and you've been quite busy gaming lately. You've been diving deep into Cyberpunk 2077 with 120 minutes in the last two weeks, bringing your total playtime to 500 minutes. Elden Ring has also captured your attention with 90 minutes recently. Your most invested game is The Witcher 3 with an impressive 800 minutes total - clearly you enjoy immersive RPGs with rich storytelling. With 50 games in your library, you have quite the collection to explore!"
+> Chris Vogt's Steam activity reveals a diverse gaming history spanning numerous genres, with a particular fondness for expansive RPGs and open-world experiences. Recently, Chris has been enjoying Starfield (54 hours played overall, 15 minutes in the last two weeks) and The Outer Worlds: Spacer's Choice Edition (761 minutes total, 89 minutes in the last two weeks). His extensive playtime suggests a preference for immersive, long-term gameplay. His top played games consistently demonstrate this trend, including significant time invested in Cities: Skylines (75.7 hours), ARK: Survival Evolved (27.8 hours), and Fallout 4 (12 hours). Chris's library also indicates an interest in other genres like survival games (Conan Exiles, Rust) and simulation games (X-Plane 11, Jurassic World Evolution).
 
 ## Error Handling
 
