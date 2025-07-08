@@ -57,26 +57,26 @@ const syncGoodreadsData = async () => {
     profile,
   }
 
-  // try {
-  //   const db = admin.firestore()
-  //   await Promise.all([
-  //     await db.collection('goodreads').doc('last-response_user-show').set({
-  //       response: responses.user,
-  //       updated: Timestamp.now(),
-  //     }),
-  //     await db.collection('goodreads').doc('last-response_book-reviews').set({
-  //       response: responses.reviews,
-  //       updated: Timestamp.now(),
-  //     }),
-  //     await db.collection('goodreads').doc('widget-content').set(widgetContent),
-  //   ])
-  // } catch (err) {
-  //   logger.error('Failed to save Goodreads data to database.', err)
-  //   return {
-  //     result: 'FAILURE',
-  //     error: err.message || err,
-  //   }
-  // }
+  try {
+    const db = admin.firestore()
+    await Promise.all([
+      await db.collection('goodreads').doc('last-response_user-show').set({
+        response: responses.user,
+        updated: Timestamp.now(),
+      }),
+      await db.collection('goodreads').doc('last-response_book-reviews').set({
+        response: responses.reviews,
+        updated: Timestamp.now(),
+      }),
+      await db.collection('goodreads').doc('widget-content').set(widgetContent),
+    ])
+  } catch (err) {
+    logger.error('Failed to save Goodreads data to database.', err)
+    return {
+      result: 'FAILURE',
+      error: err.message || err,
+    }
+  }
 
   return {
     result: 'SUCCESS',
