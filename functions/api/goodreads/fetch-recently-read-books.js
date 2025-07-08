@@ -34,6 +34,7 @@ const transformBookData = (book) => {
       } = {},
     } = {},
     rating,
+    goodreadsDescription,
   } = book
 
   const mediaDestinationPath = toBookMediaDestinationPath(id)
@@ -43,7 +44,7 @@ const transformBookData = (book) => {
     categories,
     cdnMediaURL: `${IMAGE_CDN_BASE_URL}${mediaDestinationPath}`,
     mediaDestinationPath: mediaDestinationPath,
-    description,
+    description: goodreadsDescription || description,
     id,
     infoLink: infoLink ? convertToHttps(infoLink) : '',
     pageCount,
@@ -87,14 +88,19 @@ export default async () => {
           book: bookData,
           rating: [rating],
         } = book
-      
-        const [{ isbn: [isbn10] = [], isbn13: [isbn13] = [] }] = bookData  
+
+        const [{
+          description: [goodreadsDescription] = [],
+          isbn: [isbn10] = [],
+          isbn13: [isbn13] = [],
+        }] = bookData  
         const isbn = isbn13 || isbn10
       
         if (Array.isArray(books) && isString(isbn)) {
           books.push({
             isbn,
             rating,
+            goodreadsDescription,
           })
         }
       
@@ -112,12 +118,22 @@ export default async () => {
   // information. The Google Books data is really clean and useful. So, I'm currently
   // using Goodreads to get my book review, and then returning the book data from
   // Google Books.
-  const bookPromises = bookReviews.map((book) => fetchBookFromGoogle(book))
+  const bookPromises = bookReviews.map((book, index) => 
+    fetchBookFromGoogle(book).then(result => ({ 
+      googleBookResult: result, 
+      goodreadsData: book,
+      originalIndex: index 
+    }))
+  )
   const bookResults = await Promise.all(bookPromises)
   const books = bookResults
     .filter(
-      (bookResult = {}) => Boolean(bookResult) && Boolean(bookResult.book)
+      (bookResult = {}) => Boolean(bookResult.googleBookResult) && Boolean(bookResult.googleBookResult.book)
     )
+    .map(({ googleBookResult, goodreadsData }) => ({
+      ...googleBookResult,
+      goodreadsDescription: goodreadsData.goodreadsDescription
+    }))
     .map(transformBookData)
 
   const storedMediaFileNames = await listStoredMedia()
