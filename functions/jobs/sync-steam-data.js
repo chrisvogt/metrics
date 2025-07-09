@@ -126,7 +126,6 @@ const syncSteamData = async () => {
   let aiSummary = null
   try {
     aiSummary = await generateSteamSummary(widgetContent)
-    logger.info('Successfully generated AI summary for Steam data')
     widgetContent.aiSummary = aiSummary
   } catch (error) {
     logger.error('Failed to generate AI summary:', error)
