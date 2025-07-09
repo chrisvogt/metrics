@@ -133,42 +133,43 @@ const syncSteamData = async () => {
     // Continue with sync even if AI summary fails
   }
 
-  const saveWidgetContent = async () => await db
-    .collection(DATABASE_COLLECTION_STEAM)
-    .doc('widget-content')
-    .set(widgetContent)
+  return widgetContent
+  // const saveWidgetContent = async () => await db
+  //   .collection(DATABASE_COLLECTION_STEAM)
+  //   .doc('widget-content')
+  //   .set(widgetContent)
 
-  const saveAISummary = async () => {
-    if (aiSummary) {
-      await db
-        .collection(DATABASE_COLLECTION_STEAM)
-        .doc('last-response_ai-summary')
-        .set({
-          summary: aiSummary,
-          generatedAt: Timestamp.now(),
-        })
-    }
-  }
+  // const saveAISummary = async () => {
+  //   if (aiSummary) {
+  //     await db
+  //       .collection(DATABASE_COLLECTION_STEAM)
+  //       .doc('last-response_ai-summary')
+  //       .set({
+  //         summary: aiSummary,
+  //         generatedAt: Timestamp.now(),
+  //       })
+  //   }
+  // }
 
-  try {
-    await Promise.all([
-      saveOwnedGames(),
-      savePlayerSummary(),
-      saveRecentlyPlayedGames(),
-      saveWidgetContent(),
-      saveAISummary(),
-    ])
-    return {
-      result: 'SUCCESS',
-      data: widgetContent
-    }
-  } catch (err) {
-    logger.error('Failed to save Steam data to database.', err)
-    return {
-      result: 'FAILURE',
-      error: err.message || err,
-    }
-  }
+  // try {
+  //   await Promise.all([
+  //     saveOwnedGames(),
+  //     savePlayerSummary(),
+  //     saveRecentlyPlayedGames(),
+  //     saveWidgetContent(),
+  //     saveAISummary(),
+  //   ])
+  //   return {
+  //     result: 'SUCCESS',
+  //     data: widgetContent
+  //   }
+  // } catch (err) {
+  //   logger.error('Failed to save Steam data to database.', err)
+  //   return {
+  //     result: 'FAILURE',
+  //     error: err.message || err,
+  //   }
+  // }
 }
 
 export default syncSteamData
