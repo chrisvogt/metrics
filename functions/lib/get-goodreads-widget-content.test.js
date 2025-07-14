@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import admin from 'firebase-admin'
 import { Timestamp } from 'firebase/firestore'
-import getInstagramWidgetContent from './get-instagram-widget-content.js'
+import getGoodreadsWidgetContent from './get-goodreads-widget-content.js'
 
 // Mock firebase-admin
 vi.mock('firebase-admin', () => ({
@@ -16,7 +16,7 @@ vi.mock('firebase-admin', () => ({
   }
 }))
 
-describe('getInstagramWidgetContent', () => {
+describe('getGoodreadsWidgetContent', () => {
   let mockGet
   let mockDoc
   let mockCollection
@@ -41,17 +41,26 @@ describe('getInstagramWidgetContent', () => {
           _nanoseconds: 0
         }
       },
-      media: [
-        {
-          id: '123',
-          images: { thumbnail: { url: 'https://example.com/image.jpg' } }
-        }
-      ],
+      collections: {
+        recentlyReadBooks: [
+          {
+            id: 'book1',
+            title: 'Test Book',
+            author: 'Test Author',
+            rating: 4
+          }
+        ],
+        updates: [
+          {
+            id: 'update1',
+            type: 'review',
+            content: 'Great book!'
+          }
+        ]
+      },
       profile: {
-        biography: 'Test bio',
-        followersCount: 1000,
-        mediaCount: 50,
-        username: 'testuser'
+        displayName: 'Test User',
+        profileURL: 'https://www.goodreads.com/user/show/123'
       }
     }
 
@@ -59,79 +68,43 @@ describe('getInstagramWidgetContent', () => {
       data: () => mockData
     })
 
-    const result = await getInstagramWidgetContent()
+    const result = await getGoodreadsWidgetContent()
 
     expect(result).toEqual({
-      collections: {
-        media: mockData.media
-      },
+      collections: mockData.collections,
+      profile: mockData.profile,
       meta: {
         synced: new Timestamp(1640995200, 0).toDate()
-      },
-      metrics: [
-        {
-          displayName: 'Followers',
-          id: 'followers-count',
-          value: 1000
-        },
-        {
-          displayName: 'Posts',
-          id: 'media-count',
-          value: 50
-        }
-      ],
-      provider: {
-        displayName: 'Instagram',
-        id: 'instagram'
-      },
-      profile: {
-        biography: 'Test bio',
-        displayName: 'testuser',
-        profileURL: 'https://www.instagram.com/testuser'
       }
     })
 
     expect(mockFirestore).toHaveBeenCalled()
-    expect(mockCollection).toHaveBeenCalledWith('users/chrisvogt/instagram')
+    expect(mockCollection).toHaveBeenCalledWith('users/chrisvogt/goodreads')
     expect(mockDoc).toHaveBeenCalledWith('widget-content')
     expect(mockGet).toHaveBeenCalled()
   })
 
-  it('should handle missing profile data with defaults', async () => {
+  it('should handle missing data gracefully', async () => {
     const mockData = {
       meta: {
         synced: {
           _seconds: 1640995200,
           _nanoseconds: 0
         }
-      },
-      media: []
+      }
     }
 
     mockGet.mockResolvedValue({
       data: () => mockData
     })
 
-    const result = await getInstagramWidgetContent()
+    const result = await getGoodreadsWidgetContent()
 
-    expect(result.profile).toEqual({
-      biography: '',
-      displayName: '',
-      profileURL: 'https://www.instagram.com/'
-    })
-
-    expect(result.metrics).toEqual([
-      {
-        displayName: 'Followers',
-        id: 'followers-count',
-        value: 0
-      },
-      {
-        displayName: 'Posts',
-        id: 'media-count',
-        value: 0
+    expect(result).toEqual({
+      meta: {
+        synced: new Timestamp(1640995200, 0).toDate()
       }
-    ])
+    })
   })
 
   it('should throw error when data retrieval fails', async () => {
@@ -139,12 +112,12 @@ describe('getInstagramWidgetContent', () => {
       data: () => null
     })
 
-    await expect(getInstagramWidgetContent()).rejects.toThrow('Failed to get a response.')
+    await expect(getGoodreadsWidgetContent()).rejects.toThrow()
   })
 
   it('should throw error when get() throws', async () => {
     mockGet.mockRejectedValue(new Error('Database error'))
 
-    await expect(getInstagramWidgetContent()).rejects.toThrow('Database error')
+    await expect(getGoodreadsWidgetContent()).rejects.toThrow('Database error')
   })
 }) 
