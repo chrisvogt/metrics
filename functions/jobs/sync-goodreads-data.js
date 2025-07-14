@@ -4,6 +4,7 @@ import { Timestamp } from 'firebase-admin/firestore'
 
 import fetchUser from '../api/goodreads/fetch-user.js'
 import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.js'
+import { DATABASE_COLLECTION_GOODREADS } from '../constants.js'
 
 const fetchAllGoodreadsPromises = async () => {
   try {
@@ -60,15 +61,15 @@ const syncGoodreadsData = async () => {
   try {
     const db = admin.firestore()
     await Promise.all([
-      await db.collection('goodreads').doc('last-response_user-show').set({
+      await db.collection(DATABASE_COLLECTION_GOODREADS).doc('last-response_user-show').set({
         response: responses.user,
         updated: Timestamp.now(),
       }),
-      await db.collection('goodreads').doc('last-response_book-reviews').set({
+      await db.collection(DATABASE_COLLECTION_GOODREADS).doc('last-response_book-reviews').set({
         response: responses.reviews,
         updated: Timestamp.now(),
       }),
-      await db.collection('goodreads').doc('widget-content').set(widgetContent),
+      await db.collection(DATABASE_COLLECTION_GOODREADS).doc('widget-content').set(widgetContent),
     ])
   } catch (err) {
     logger.error('Failed to save Goodreads data to database.', err)

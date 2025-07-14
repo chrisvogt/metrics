@@ -92,7 +92,7 @@ describe('getInstagramWidgetContent', () => {
     })
 
     expect(mockFirestore).toHaveBeenCalled()
-    expect(mockCollection).toHaveBeenCalledWith('instagram')
+    expect(mockCollection).toHaveBeenCalledWith('users/chrisvogt/instagram')
     expect(mockDoc).toHaveBeenCalledWith('widget-content')
     expect(mockGet).toHaveBeenCalled()
   })

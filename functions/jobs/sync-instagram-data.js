@@ -9,7 +9,7 @@ import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
 
-import { CLOUD_STORAGE_IMAGES_BUCKET } from '../constants.js'
+import { CLOUD_STORAGE_IMAGES_BUCKET, DATABASE_COLLECTION_INSTAGRAM } from '../constants.js'
 
 /*
 
@@ -92,7 +92,7 @@ const syncInstagramData = async () => {
 
   // Save the raw Instagram response data
   await db
-    .collection('instagram')
+    .collection(DATABASE_COLLECTION_INSTAGRAM)
     .doc('last-response')
     .set({
       ...instagramResponse,
@@ -118,7 +118,7 @@ const syncInstagramData = async () => {
 
   // Save the widget content
   await db
-    .collection('instagram')
+    .collection(DATABASE_COLLECTION_INSTAGRAM)
     .doc('widget-content')
     .set(updatedWidgetContent)
 
