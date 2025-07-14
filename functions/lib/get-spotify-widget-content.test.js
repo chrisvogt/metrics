@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import admin from 'firebase-admin'
 import { Timestamp } from 'firebase/firestore'
-import getInstagramWidgetContent from './get-instagram-widget-content.js'
+import getSpotifyWidgetContent from './get-spotify-widget-content.js'
 
 // Mock firebase-admin
 vi.mock('firebase-admin', () => ({
@@ -16,7 +16,7 @@ vi.mock('firebase-admin', () => ({
   }
 }))
 
-describe('getInstagramWidgetContent', () => {
+describe('getSpotifyWidgetContent', () => {
   let mockGet
   let mockDoc
   let mockCollection
@@ -41,97 +41,78 @@ describe('getInstagramWidgetContent', () => {
           _nanoseconds: 0
         }
       },
-      media: [
-        {
-          id: '123',
-          images: { thumbnail: { url: 'https://example.com/image.jpg' } }
-        }
-      ],
-      profile: {
-        biography: 'Test bio',
-        followersCount: 1000,
-        mediaCount: 50,
-        username: 'testuser'
-      }
-    }
-
-    mockGet.mockResolvedValue({
-      data: () => mockData
-    })
-
-    const result = await getInstagramWidgetContent()
-
-    expect(result).toEqual({
       collections: {
-        media: mockData.media
-      },
-      meta: {
-        synced: new Timestamp(1640995200, 0).toDate()
+        playlists: [
+          {
+            id: 'playlist1',
+            name: 'Test Playlist',
+            images: [{ url: 'https://example.com/image.jpg' }]
+          }
+        ],
+        topTracks: [
+          {
+            id: 'track1',
+            name: 'Test Track',
+            artists: [{ name: 'Test Artist' }]
+          }
+        ]
       },
       metrics: [
         {
           displayName: 'Followers',
           id: 'followers-count',
           value: 1000
-        },
-        {
-          displayName: 'Posts',
-          id: 'media-count',
-          value: 50
         }
       ],
-      provider: {
-        displayName: 'Instagram',
-        id: 'instagram'
-      },
       profile: {
-        biography: 'Test bio',
-        displayName: 'testuser',
-        profileURL: 'https://www.instagram.com/testuser'
+        displayName: 'Test User',
+        id: 'user123',
+        profileURL: 'https://open.spotify.com/user/user123'
       }
-    })
-
-    expect(mockFirestore).toHaveBeenCalled()
-    expect(mockCollection).toHaveBeenCalledWith('users/chrisvogt/instagram')
-    expect(mockDoc).toHaveBeenCalledWith('widget-content')
-    expect(mockGet).toHaveBeenCalled()
-  })
-
-  it('should handle missing profile data with defaults', async () => {
-    const mockData = {
-      meta: {
-        synced: {
-          _seconds: 1640995200,
-          _nanoseconds: 0
-        }
-      },
-      media: []
     }
 
     mockGet.mockResolvedValue({
       data: () => mockData
     })
 
-    const result = await getInstagramWidgetContent()
+    const result = await getSpotifyWidgetContent()
 
-    expect(result.profile).toEqual({
-      biography: '',
-      displayName: '',
-      profileURL: 'https://www.instagram.com/'
+    expect(result).toEqual({
+      collections: mockData.collections,
+      metrics: mockData.metrics,
+      profile: mockData.profile,
+      meta: {
+        synced: new Timestamp(1640995200, 0).toDate()
+      }
     })
 
-    expect(result.metrics).toEqual([
-      {
-        displayName: 'Followers',
-        id: 'followers-count',
-        value: 0
-      },
-      {
-        displayName: 'Posts',
-        id: 'media-count',
-        value: 0
+    expect(mockFirestore).toHaveBeenCalled()
+    expect(mockCollection).toHaveBeenCalledWith('users/chrisvogt/spotify')
+    expect(mockDoc).toHaveBeenCalledWith('widget-content')
+    expect(mockGet).toHaveBeenCalled()
+  })
+
+  it('should handle missing data gracefully', async () => {
+    const mockData = {
+      meta: {
+        synced: {
+          _seconds: 1640995200,
+          _nanoseconds: 0
+        }
       }
-    ])
+    }
+
+    mockGet.mockResolvedValue({
+      data: () => mockData
+    })
+
+    const result = await getSpotifyWidgetContent()
+
+    expect(result).toEqual({
+      meta: {
+        synced: new Timestamp(1640995200, 0).toDate()
+      }
+    })
   })
 
   it('should throw error when data retrieval fails', async () => {
@@ -139,12 +120,12 @@ describe('getInstagramWidgetContent', () => {
       data: () => null
     })
 
-    await expect(getInstagramWidgetContent()).rejects.toThrow('Failed to get a response.')
+    await expect(getSpotifyWidgetContent()).rejects.toThrow()
   })
 
   it('should throw error when get() throws', async () => {
     mockGet.mockRejectedValue(new Error('Database error'))
 
-    await expect(getInstagramWidgetContent()).rejects.toThrow('Database error')
+    await expect(getSpotifyWidgetContent()).rejects.toThrow('Database error')
   })
 }) 

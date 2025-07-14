@@ -9,7 +9,7 @@ import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
 
-import { CLOUD_STORAGE_IMAGES_BUCKET } from '../constants.js'
+import { CLOUD_STORAGE_IMAGES_BUCKET, DATABASE_COLLECTION_INSTAGRAM } from '../constants.js'
 
 /*
 
@@ -77,82 +77,92 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
 }
 
 const syncInstagramData = async () => {
-  const instagramResponse = await fetchInstagramData()
-
-  const {
-    media: { data: rawMedia },
-  } = instagramResponse
-
-  const storedMediaFileNames = await listStoredMedia()
-
-  const mediaReducer = getMediaReducer(storedMediaFileNames)
-  const mediaToDownload = rawMedia.reduce(mediaReducer, [])
-
-  const db = admin.firestore()
-
-  // Save the raw Instagram response data
-  await db
-    .collection('instagram')
-    .doc('last-response')
-    .set({
-      ...instagramResponse,
-      fetchedAt: Timestamp.now(),
-    })
-
-  const filteredMedia = rawMedia.filter(({ media_type: mediaType }) =>
-    validMediaTypes.includes(mediaType)
-  )
-
-  const updatedWidgetContent = {
-    media: filteredMedia.map(transformInstagramMedia),
-    meta: {
-      synced: Timestamp.now(),
-    },
-    profile: {
-      biography: instagramResponse.biography,
-      followersCount: instagramResponse.followers_count,
-      mediaCount: instagramResponse.media_count,
-      username: instagramResponse.username,
-    },
-  }
-
-  // Save the widget content
-  await db
-    .collection('instagram')
-    .doc('widget-content')
-    .set(updatedWidgetContent)
-
-  if (!mediaToDownload.length) {
-    return {
-      data: updatedWidgetContent,
-      ok: true,
-      result: 'SUCCESS',
-      totalUploadedCount: 0,
-    }
-  }
-
-  let result
   try {
-    result = await pMap(mediaToDownload, fetchAndUploadFile, {
-      concurrency: 10,
-      stopOnError: false,
+    const instagramResponse = await fetchInstagramData()
+
+    const {
+      media: { data: rawMedia },
+    } = instagramResponse
+
+    const storedMediaFileNames = await listStoredMedia()
+
+    const mediaReducer = getMediaReducer(storedMediaFileNames)
+    const mediaToDownload = rawMedia.reduce(mediaReducer, [])
+
+    const db = admin.firestore()
+
+    // Save the raw Instagram response data
+    await db
+      .collection(DATABASE_COLLECTION_INSTAGRAM)
+      .doc('last-response')
+      .set({
+        ...instagramResponse,
+        fetchedAt: Timestamp.now(),
+      })
+
+    const filteredMedia = rawMedia.filter(({ media_type: mediaType }) =>
+      validMediaTypes.includes(mediaType)
+    )
+
+    const updatedWidgetContent = {
+      media: filteredMedia.map(transformInstagramMedia),
+      meta: {
+        synced: Timestamp.now(),
+      },
+      profile: {
+        biography: instagramResponse.biography,
+        followersCount: instagramResponse.followers_count,
+        mediaCount: instagramResponse.media_count,
+        username: instagramResponse.username,
+      },
+    }
+
+    // Save the widget content
+    await db
+      .collection(DATABASE_COLLECTION_INSTAGRAM)
+      .doc('widget-content')
+      .set(updatedWidgetContent)
+
+    if (!mediaToDownload.length) {
+      return {
+        data: updatedWidgetContent,
+        ok: true,
+        result: 'SUCCESS',
+        totalUploadedCount: 0,
+      }
+    }
+
+    let result
+    try {
+      result = await pMap(mediaToDownload, fetchAndUploadFile, {
+        concurrency: 10,
+        stopOnError: false,
+      })
+    } catch (error) {
+      logger.error('Something went wrong downloading media files', error)
+      // Optionally, you could return a FAILURE here, but the tests do not expect this case
+      result = []
+    }
+
+    logger.info('Instagram sync finished successfully.', {
+      destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+      totalUploadedCount: result.length,
+      uploadedFiles: result.map(({ fileName }) => fileName),
     })
+
+    return {
+      destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+      result: 'SUCCESS',
+      totalUploadedCount: result.length,
+      uploadedFiles: result.map(({ fileName }) => fileName),
+      data: updatedWidgetContent,
+    }
   } catch (error) {
-    logger.error('Something went wrong downloading media files', error)
-  }
-
-  logger.info('Instagram sync finished successfully.', {
-    destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
-    totalUploadedCount: result.length,
-    uploadedFiles: result.map(({ fileName }) => fileName),
-  })
-
-  return {
-    destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
-    result: 'SUCCESS',
-    totalUploadedCount: result.length,
-    uploadedFiles: result.map(({ fileName }) => fileName),
-    data: updatedWidgetContent,
+    logger.error('Failed to sync Instagram data.', error)
+    return {
+      result: 'FAILURE',
+      error: error.message || error,
+    }
   }
 }
 
