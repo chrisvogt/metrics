@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.0
+
+- **BREAKING CHANGE**: Migrates database structure to user-scoped collections for multi-tenant support
+- All database collections now use `users/chrisvogt/` prefix (e.g., `users/chrisvogt/spotify/widget-content`)
+- Storage paths updated to be user-scoped (e.g., `chrisvogt/spotify/playlists/`)
+- Added `CURRENT_USERNAME` constant for future multi-tenant configuration
+- Updated all sync jobs and widget content functions to use new user-scoped paths
+- No data loss - existing data remains in old collections while new data uses user-scoped structure
+- Foundation ready for Firebase Auth and OAuth integration for multiple users
+
 ## 0.12.0
 
 - Uses Gemini via Firebase to add a new AI summary to the Steam widget content.

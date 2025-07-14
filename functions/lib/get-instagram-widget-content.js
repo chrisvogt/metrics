@@ -1,9 +1,10 @@
 import admin from 'firebase-admin'
 import { Timestamp } from 'firebase/firestore'
+import { DATABASE_COLLECTION_INSTAGRAM } from '../constants.js'
 
 const getInstagramWidgetContent = async () => {
   const db = admin.firestore()
-  const doc = await db.collection('instagram').doc('widget-content').get()
+  const doc = await db.collection(DATABASE_COLLECTION_INSTAGRAM).doc('widget-content').get()
 
   try {
     const data = doc.data()
