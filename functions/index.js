@@ -87,6 +87,9 @@ const corsAllowList = [
   /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
   /\.netlify\.app$/,
   /https?:\/\/([a-z0-9]+[.])*chronogrove[.]com$/,
+  /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
+  /localhost:?(\d+)?$/,
+  /^https?:\/\/8ms\.4a9\.mytemp\.website$/,
 ]
 
 const corsOptions = {
