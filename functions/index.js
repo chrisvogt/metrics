@@ -138,7 +138,9 @@ expressApp.get(
     
     // Determine userId based on hostname — this is a temporary solution to allow
     // the widget to be used on the Chronogrove website.
-    const userId = req.hostname === 'api.chronogrove.com' ? 'chronogrove' : 'chrisvogt'
+    // Uses x-forwarded-host for Firebase Hosting + Cloud Functions setup
+    const originalHostname = req.headers['x-forwarded-host'] || req.hostname
+    const userId = originalHostname === 'api.chronogrove.com' ? 'chronogrove' : 'chrisvogt'
 
     try {
       const widgetContent = await getWidgetContent(provider, userId)
