@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.0
+
+- **FEATURE**: Added multi-tenant support for Instagram widget
+- Instagram widget now supports dynamic user-based collection names (`users/{userId}/instagram`)
+- Added hostname-based user detection in API endpoints (chronogrove.com → chronogrove, others → chrisvogt)
+- Updated Instagram widget tests with comprehensive coverage (100% code coverage)
+- Fixed linter warnings and improved error handling in Instagram widget
+- Temporary solution for multi-tenant support while maintaining backward compatibility
+
 ## 0.13.0
 
 - **BREAKING CHANGE**: Migrates database structure to user-scoped collections for multi-tenant support

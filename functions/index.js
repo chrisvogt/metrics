@@ -85,7 +85,11 @@ expressApp.use(compression())
 const corsAllowList = [
   /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
   /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
-  /\.netlify\.app$/
+  /\.netlify\.app$/,
+  /https?:\/\/([a-z0-9]+[.])*chronogrove[.]com$/,
+  /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
+  /localhost:?(\d+)?$/,
+  /^https?:\/\/8ms\.4a9\.mytemp\.website$/,
 ]
 
 const corsOptions = {
@@ -134,9 +138,15 @@ expressApp.get(
       res.status(404).send(response)
       return res.end()
     }
+    
+    // Determine userId based on hostname — this is a temporary solution to allow
+    // the widget to be used on the Chronogrove website.
+    // Uses x-forwarded-host for Firebase Hosting + Cloud Functions setup
+    const originalHostname = req.headers['x-forwarded-host'] || req.hostname
+    const userId = originalHostname === 'api.chronogrove.com' ? 'chronogrove' : 'chrisvogt'
 
     try {
-      const widgetContent = await getWidgetContent(provider)
+      const widgetContent = await getWidgetContent(provider, userId)
       const response = buildSuccessResponse(widgetContent)
       res.set('Cache-Control', 'public, max-age=3600, s-maxage=7200')
       res.status(200).send(response)
