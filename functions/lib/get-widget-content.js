@@ -16,13 +16,13 @@ const widgetHandlerRegistry = {
 
 const validWidgetIds = Object.keys(widgetHandlerRegistry)
 
-const getWidgetContent = async widgetId => {
+const getWidgetContent = async (widgetId, userId) => {
   if (!validWidgetIds.includes(widgetId)) {
     throw new Error(`Unrecognized widget type: ${widgetId}`)
   }
 
   const getContent = widgetHandlerRegistry[widgetId]
-  const widgetContent = await getContent()
+  const widgetContent = await getContent(userId)
 
   return widgetContent
 }
