@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.15.0
+
+- **FEATURE**: Added AI-powered reading summary to Goodreads widget using Google Gemini
+- Goodreads widget now includes intelligent 2-3 paragraph summaries of reading activity and patterns
+- AI analyzes recent books, identifies genre preferences, and highlights standout reads
+- Enhanced Goodreads sync job to generate and store AI summaries separately for widget consumption
+- Increased Goodreads API fetch limit from 18 to 100 books for better reading pattern analysis
+- Added comprehensive test coverage for new AI summary functionality (100% code coverage)
+- Graceful fallback handling when AI summary generation fails - sync continues without interruption
+- AI summaries are cached separately and can be regenerated independently of book data
+
 ## 0.14.0
 
 - **FEATURE**: Added multi-tenant support for Instagram widget
