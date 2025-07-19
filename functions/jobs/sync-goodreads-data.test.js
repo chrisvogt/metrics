@@ -30,8 +30,13 @@ vi.mock('../api/goodreads/fetch-recently-read-books.js', () => ({
   default: vi.fn()
 }))
 
+vi.mock('../api/goodreads/generate-goodreads-summary.js', () => ({
+  default: vi.fn()
+}))
+
 import fetchUser from '../api/goodreads/fetch-user.js'
 import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.js'
+import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summary.js'
 
 describe('syncGoodreadsData', () => {
   let mockSet
@@ -78,8 +83,11 @@ describe('syncGoodreadsData', () => {
       rawReviewsResponse: { reviews: 'data' }
     }
 
+    const mockAISummary = '<p>Chris has been actively reading lately.</p>'
+
     fetchUser.mockResolvedValue(mockUserData)
     fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
+    generateGoodreadsSummary.mockResolvedValue(mockAISummary)
 
     const result = await syncGoodreadsData()
 
@@ -90,13 +98,15 @@ describe('syncGoodreadsData', () => {
     })
     expect(result.data.profile).toEqual(mockUserData.profile)
     expect(result.data.meta.synced).toBeInstanceOf(Timestamp)
+    expect(result.data.aiSummary).toBe(mockAISummary)
 
     expect(mockFirestore).toHaveBeenCalled()
     expect(mockCollection).toHaveBeenCalledWith('users/chrisvogt/goodreads')
     expect(mockDoc).toHaveBeenCalledWith('last-response_user-show')
     expect(mockDoc).toHaveBeenCalledWith('last-response_book-reviews')
     expect(mockDoc).toHaveBeenCalledWith('widget-content')
-    expect(mockSet).toHaveBeenCalledTimes(3)
+    expect(mockDoc).toHaveBeenCalledWith('last-response_ai-summary')
+    expect(mockSet).toHaveBeenCalledTimes(4)
   })
 
   it('should handle API errors gracefully', async () => {
@@ -150,6 +160,66 @@ describe('syncGoodreadsData', () => {
     expect(result).toEqual({
       result: 'FAILURE',
       error: 'Reviews API Error'
+    })
+  })
+
+  it('should continue sync even when AI summary generation fails', async () => {
+    const mockUserData = {
+      profile: { displayName: 'Test User' },
+      updates: [],
+      jsonResponse: { user: 'data' }
+    }
+
+    const mockRecentlyReadData = {
+      books: [{ id: 'book1', title: 'Test Book' }],
+      rawReviewsResponse: { reviews: 'data' }
+    }
+
+    fetchUser.mockResolvedValue(mockUserData)
+    fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
+    generateGoodreadsSummary.mockRejectedValue(new Error('AI API Error'))
+
+    const result = await syncGoodreadsData()
+
+    expect(result.result).toBe('SUCCESS')
+    expect(result.data.aiSummary).toBeUndefined()
+    
+    // Should still save other data
+    expect(mockSet).toHaveBeenCalledTimes(3) // user, reviews, widget (no AI summary)
+    expect(mockDoc).toHaveBeenCalledWith('last-response_user-show')
+    expect(mockDoc).toHaveBeenCalledWith('last-response_book-reviews')
+    expect(mockDoc).toHaveBeenCalledWith('widget-content')
+    expect(mockDoc).not.toHaveBeenCalledWith('last-response_ai-summary')
+  })
+
+  it('should save AI summary separately when generated successfully', async () => {
+    const mockUserData = {
+      profile: { displayName: 'Test User' },
+      updates: [],
+      jsonResponse: { user: 'data' }
+    }
+
+    const mockRecentlyReadData = {
+      books: [{ id: 'book1', title: 'Test Book' }],
+      rawReviewsResponse: { reviews: 'data' }
+    }
+
+    const mockAISummary = '<p>AI generated summary</p>'
+
+    fetchUser.mockResolvedValue(mockUserData)
+    fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
+    generateGoodreadsSummary.mockResolvedValue(mockAISummary)
+
+    const result = await syncGoodreadsData()
+
+    expect(result.result).toBe('SUCCESS')
+    expect(result.data.aiSummary).toBe(mockAISummary)
+    
+    // Verify AI summary was saved separately
+    expect(mockDoc).toHaveBeenCalledWith('last-response_ai-summary')
+    expect(mockSet).toHaveBeenCalledWith({
+      summary: mockAISummary,
+      generatedAt: expect.any(Timestamp)
     })
   })
 }) 
