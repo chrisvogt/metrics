@@ -139,7 +139,7 @@ describe('generateGoodreadsSummary', () => {
 
     const result = await generateGoodreadsSummary(mockGoodreadsData)
 
-             expect(result).toBe('<p>Chris\'s reading activity data is currently unavailable.</p>')
+    expect(result).toBe('<p>Chris\'s reading activity data is currently unavailable.</p>')
     
     // Verify prompt includes empty arrays for missing data
     expect(mockGenerateContent).toHaveBeenCalledWith(expect.stringContaining('"recentlyReadBooks": []'))
