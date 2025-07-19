@@ -62,7 +62,7 @@ export default async () => {
   const userID = process.env.GOODREADS_USER_ID
 
   const { body } = await got(
-    `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read&per_page=18`
+    `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read&per_page=100`
   )
 
   let rawReviewsResponse

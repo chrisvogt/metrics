@@ -4,6 +4,7 @@ import { Timestamp } from 'firebase-admin/firestore'
 
 import fetchUser from '../api/goodreads/fetch-user.js'
 import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.js'
+import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summary.js'
 import { DATABASE_COLLECTION_GOODREADS } from '../constants.js'
 
 const fetchAllGoodreadsPromises = async () => {
@@ -15,7 +16,7 @@ const fetchAllGoodreadsPromises = async () => {
 
     return {
       collections: {
-        recentlyReadBooks: recentlyRead.books,
+        recentlyReadBooks: recentlyRead.books.slice(0, 18),
         updates: user.updates
       },
       profile: user.profile,
@@ -58,18 +59,57 @@ const syncGoodreadsData = async () => {
     profile,
   }
 
+  // Generate AI summary using Gemini
+  let aiSummary = null
   try {
-    const db = admin.firestore()
+    aiSummary = await generateGoodreadsSummary(widgetContent)
+    widgetContent.aiSummary = aiSummary
+  } catch (error) {
+    logger.error('Failed to generate Goodreadsn AI summary:', error)
+    // Continue with sync even if AI summary fails
+  }
+
+  const db = admin.firestore()
+
+  const saveUserResponse = async () => await db
+    .collection(DATABASE_COLLECTION_GOODREADS)
+    .doc('last-response_user-show')
+    .set({
+      response: responses.user,
+      updated: Timestamp.now(),
+    })
+
+  const saveBookReviews = async () => await db
+    .collection(DATABASE_COLLECTION_GOODREADS)
+    .doc('last-response_book-reviews')
+    .set({
+      response: responses.reviews,
+      updated: Timestamp.now(),
+    })
+
+  const saveWidgetContent = async () => await db
+    .collection(DATABASE_COLLECTION_GOODREADS)
+    .doc('widget-content')
+    .set(widgetContent)
+
+  const saveAISummary = async () => {
+    if (aiSummary) {
+      await db
+        .collection(DATABASE_COLLECTION_GOODREADS)
+        .doc('last-response_ai-summary')
+        .set({
+          summary: aiSummary,
+          generatedAt: Timestamp.now(),
+        })
+    }
+  }
+
+  try {
     await Promise.all([
-      await db.collection(DATABASE_COLLECTION_GOODREADS).doc('last-response_user-show').set({
-        response: responses.user,
-        updated: Timestamp.now(),
-      }),
-      await db.collection(DATABASE_COLLECTION_GOODREADS).doc('last-response_book-reviews').set({
-        response: responses.reviews,
-        updated: Timestamp.now(),
-      }),
-      await db.collection(DATABASE_COLLECTION_GOODREADS).doc('widget-content').set(widgetContent),
+      saveUserResponse(),
+      saveBookReviews(),
+      // saveWidgetContent(),
+      saveAISummary(),
     ])
   } catch (err) {
     logger.error('Failed to save Goodreads data to database.', err)
