@@ -108,7 +108,7 @@ const syncGoodreadsData = async () => {
     await Promise.all([
       saveUserResponse(),
       saveBookReviews(),
-      // saveWidgetContent(),
+      saveWidgetContent(),
       saveAISummary(),
     ])
   } catch (err) {
