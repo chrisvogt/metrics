@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.16.0
+
+- **FEATURE**: Added AI-powered music summary to Spotify widget using Google Gemini
+- Spotify widget now includes intelligent 2-3 paragraph summaries of listening activity and musical preferences
+- AI analyzes top tracks, artists, playlists, and identifies genre patterns and listening habits
+- Enhanced Spotify sync job to generate and store AI summaries separately for widget consumption
+- Comprehensive prompt includes track popularity scores, playlist metadata, and profile information
+- Added comprehensive test coverage for new AI summary functionality
+- Graceful fallback handling when AI summary generation fails - sync continues without interruption
+- AI summaries are cached separately and can be regenerated independently of music data
+
 ## 0.15.0
 
 - **FEATURE**: Added AI-powered reading summary to Goodreads widget using Google Gemini
