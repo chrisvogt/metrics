@@ -10,6 +10,7 @@ import getSpotifyTopTracks from '../api/spotify/get-top-tracks.js'
 import getSpotifyUserProfile from '../api/spotify/get-user-profile.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import transformTrackToCollectionItem from '../transformers/track-to-collection-item.js'
+import generateSpotifySummary from '../api/gemini/generate-spotify-summary.js'
 
 import {
   CLOUD_STORAGE_IMAGES_BUCKET,
@@ -178,6 +179,16 @@ const syncSpotifyTopTracks = async () => {
     },
   }
 
+  // Generate AI summary using Gemini
+  let aiSummary = null
+  try {
+    aiSummary = await generateSpotifySummary(widgetContent)
+    widgetContent.aiSummary = aiSummary
+  } catch (error) {
+    logger.error('Failed to generate AI summary:', error)
+    // Continue with sync even if AI summary fails
+  }
+
   const db = admin.firestore()
 
   const savePlaylists = async () => await db
@@ -211,12 +222,25 @@ const syncSpotifyTopTracks = async () => {
       .set(widgetContent)
   }
 
+  const saveAISummary = async () => {
+    if (aiSummary) {
+      await db
+        .collection(DATABASE_COLLECTION_SPOTIFY)
+        .doc('last-response_ai-summary')
+        .set({
+          summary: aiSummary,
+          generatedAt: Timestamp.now(),
+        })
+    }
+  }
+
   try {
     await Promise.all(
       [savePlaylists()],
       [saveTopTracksResponse()],
       [saveUserProfileResponse()],
-      [saveWidgetContent()]
+      // [saveWidgetContent()],
+      [saveAISummary()]
     )
 
     logger.info('Spotify sync finished successfully.', {
