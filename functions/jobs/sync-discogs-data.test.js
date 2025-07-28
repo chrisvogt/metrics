@@ -247,4 +247,39 @@ describe('syncDiscogsData', () => {
     expect(result.totalUploadedCount).toBe(1)
     expect(result.data.collections.releases).toHaveLength(1)
   })
+
+  it('should handle media download errors gracefully', async () => {
+    const mockDiscogsResponse = {
+      pagination: { page: 1, pages: 1, per_page: 1, items: 1, urls: {} },
+      releases: [
+        {
+          id: 999999,
+          instance_id: 888888,
+          date_added: '2025-01-01T00:00:00-00:00',
+          rating: 4,
+          basic_information: {
+            id: 999999,
+            thumb: 'https://example.com/thumb.jpg',
+            cover_image: 'https://example.com/cover.jpg',
+            title: 'Album With Download Error',
+            year: 2024
+          },
+          folder_id: 1
+        }
+      ]
+    }
+
+    fetchDiscogsReleases.mockResolvedValue(mockDiscogsResponse)
+    listStoredMedia.mockResolvedValue([])
+    
+    // Mock fetchAndUploadFile to throw an error
+    const { default: fetchAndUploadFile } = await import('../api/cloud-storage/fetch-and-upload-file.js')
+    fetchAndUploadFile.mockRejectedValue(new Error('Download failed'))
+
+    const result = await syncDiscogsData()
+
+    expect(result.result).toBe('SUCCESS')
+    expect(result.totalUploadedCount).toBe(0)
+    expect(result.data.collections.releases).toHaveLength(1)
+  })
 }) 

@@ -160,6 +160,4 @@ const syncDiscogsData = async () => {
   }
 }
 
-async () => await syncDiscogsData()
-
 export default syncDiscogsData 
