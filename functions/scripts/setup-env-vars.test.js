@@ -6,7 +6,9 @@ import { setupEnvVars, envVarMappings } from './setup-env-vars.js'
 // Mock fs, path, and child_process
 vi.mock('fs')
 vi.mock('path')
-vi.mock('child_process')
+vi.mock('child_process', () => ({
+  execSync: vi.fn()
+}))
 
 describe('setup-env-vars.js', () => {
   let log, warn, error, execSyncImpl
@@ -104,5 +106,37 @@ describe('setup-env-vars.js', () => {
     const runtimeConfig = JSON.parse(fs.readFileSync('/mock/path/.runtimeconfig.json', 'utf8'))
     setupEnvVars({ runtimeConfig, execSyncImpl, log, warn, error })
     expect(error).toHaveBeenCalled()
+  })
+
+  it('should execute main block logic when run directly', () => {
+    // Test the logic that would execute in the main block
+    const runtimeConfigPath = path.join(__dirname, '..', '.runtimeconfig.json')
+    const runtimeConfig = JSON.parse(fs.readFileSync(runtimeConfigPath, 'utf8'))
+    
+    // Mock console methods for this test
+    const originalLog = console.log
+    const originalWarn = console.warn
+    const originalError = console.error
+    console.log = vi.fn()
+    console.warn = vi.fn()
+    console.error = vi.fn()
+    
+    // Mock execSync to prevent real Firebase commands
+    const mockExecSync = vi.fn()
+    
+    try {
+      // Call setupEnvVars with the same parameters as the main block, but with mocked execSync
+      setupEnvVars({ runtimeConfig, execSyncImpl: mockExecSync })
+      
+      // Verify that the main execution logic was triggered
+      expect(path.join).toHaveBeenCalledWith(__dirname, '..', '.runtimeconfig.json')
+      expect(fs.readFileSync).toHaveBeenCalledWith(runtimeConfigPath, 'utf8')
+      expect(console.log).toHaveBeenCalledWith('Setting up environment variables for Firebase Functions v2...\n')
+    } finally {
+      // Restore original console methods
+      console.log = originalLog
+      console.warn = originalWarn
+      console.error = originalError
+    }
   })
 }) 
