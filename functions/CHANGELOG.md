@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.16.0
+
+- **FEATURE**: Added comprehensive Discogs integration for vinyl record collection tracking
+- New Discogs API integration to fetch user's vinyl record collection and releases
+- Added Discogs sync job to periodically update collection data from Discogs API
+- Created Discogs widget content function to serve collection data to frontend
+- Added data transformers for Discogs releases and destination path handling
+- Comprehensive test coverage for all Discogs functionality (100% code coverage)
+- Added Discogs API configuration and environment variables
+- Integration follows existing multi-tenant architecture patterns
+
 ## 0.15.0
 
 - **FEATURE**: Added AI-powered reading summary to Goodreads widget using Google Gemini
