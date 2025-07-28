@@ -1,9 +1,10 @@
 import { logger } from 'firebase-functions'
+import { DISCOGS_USERNAME } from '../../constants.js'
 
 const fetchDiscogsReleases = async () => {
   try {
     const apiKey = process.env.DISCOGS_API_KEY
-    const username = process.env.DISCOGS_USERNAME
+    const username = DISCOGS_USERNAME
 
     if (!apiKey || !username) {
       throw new Error('Missing required environment variables: DISCOGS_API_KEY or DISCOGS_USERNAME')
