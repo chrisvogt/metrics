@@ -9,10 +9,6 @@ const fs = require('fs')
 const path = require('path')
 const { execSync } = require('child_process')
 
-// Read the runtime config
-const runtimeConfigPath = path.join(__dirname, '..', '.runtimeconfig.json')
-const runtimeConfig = JSON.parse(fs.readFileSync(runtimeConfigPath, 'utf8'))
-
 // Environment variable mappings
 const envVarMappings = {
   // Gemini (via Firebase)
@@ -23,6 +19,10 @@ const envVarMappings = {
   'storage.cloud_storage_images_bucket': 'CLOUD_STORAGE_IMAGES_BUCKET',
   'storage.image_cdn_base_url': 'IMAGE_CDN_BASE_URL',
   
+  // Discogs
+  'discogs.api_key': 'DISCOGS_API_KEY',
+  'discogs.username': 'DISCOGS_USERNAME',
+
   // Flickr
   'flickr.api_key': 'FLICKR_API_KEY',
   'flickr.user_id': 'FLICKR_USER_ID',
@@ -52,28 +52,35 @@ const envVarMappings = {
   'google.books_api_key': 'GOOGLE_BOOKS_API_KEY'
 }
 
-console.log('Setting up environment variables for Firebase Functions v2...\n')
+function setupEnvVars({ runtimeConfig, execSyncImpl = execSync, log = console.log, warn = console.warn, error = console.error }) {
+  log('Setting up environment variables for Firebase Functions v2...\n')
 
-// Set each environment variable
-Object.entries(envVarMappings).forEach(([configPath, envVar]) => {
-  const value = configPath.split('.').reduce((obj, key) => obj?.[key], runtimeConfig)
-  
-  if (value) {
-    try {
-      // Use Firebase CLI to set the environment variable
-      const command = `firebase functions:config:set ${configPath}="${value}"`
-      console.log(`Setting ${envVar}...`)
-      execSync(command, { stdio: 'inherit' })
-    } catch (error) {
-      console.error(`Failed to set ${envVar}:`, error.message)
+  Object.entries(envVarMappings).forEach(([configPath, envVar]) => {
+    const value = configPath.split('.').reduce((obj, key) => obj?.[key], runtimeConfig)
+    if (value) {
+      try {
+        const command = `firebase functions:config:set ${configPath}="${value}"`
+        log(`Setting ${envVar}...`)
+        execSyncImpl(command, { stdio: 'inherit' })
+      } catch (err) {
+        error(`Failed to set ${envVar}:`, err.message)
+      }
+    } else {
+      warn(`Warning: No value found for ${configPath}`)
     }
-  } else {
-    console.warn(`Warning: No value found for ${configPath}`)
-  }
-})
+  })
 
-console.log('\nEnvironment variables setup complete!')
-console.log('\nNext steps:')
-console.log('1. Deploy your functions: firebase deploy --only functions')
-console.log('2. For local development, create a .env file with the same variables')
-console.log('3. You can now safely delete .runtimeconfig.json if you want') 
+  log('\nEnvironment variables setup complete!')
+  log('\nNext steps:')
+  log('1. Deploy your functions: firebase deploy --only functions')
+  log('2. For local development, create a .env file with the same variables')
+  log('3. You can now safely delete .runtimeconfig.json if you want')
+}
+
+if (require.main === module) {
+  const runtimeConfigPath = path.join(__dirname, '..', '.runtimeconfig.json')
+  const runtimeConfig = JSON.parse(fs.readFileSync(runtimeConfigPath, 'utf8'))
+  setupEnvVars({ runtimeConfig })
+}
+
+module.exports = { setupEnvVars, envVarMappings } 
