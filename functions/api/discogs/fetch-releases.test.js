@@ -4,11 +4,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 global.fetch = vi.fn()
 
 // Mock firebase-functions logger
+const mockLogger = {
+  info: vi.fn(),
+  error: vi.fn()
+}
+
 vi.mock('firebase-functions', () => ({
-  logger: {
-    info: vi.fn(),
-    error: vi.fn()
-  }
+  logger: mockLogger
 }))
 
 describe('fetchDiscogsReleases', () => {
@@ -90,6 +92,9 @@ describe('fetchDiscogsReleases', () => {
       },
       releases: mockResponse.releases
     })
+
+    // Verify logger.info was called
+    expect(mockLogger.info).toHaveBeenCalledWith('Fetching Discogs releases page 1')
   })
 
   it('should handle multiple pages and concatenate results', async () => {
@@ -126,6 +131,10 @@ describe('fetchDiscogsReleases', () => {
     expect(result.pagination.items).toBe(2)
     expect(result.releases[0].id).toBe(1)
     expect(result.releases[1].id).toBe(2)
+
+    // Verify logger.info was called for both pages
+    expect(mockLogger.info).toHaveBeenCalledWith('Fetching Discogs releases page 1')
+    expect(mockLogger.info).toHaveBeenCalledWith('Fetching Discogs releases page 2')
   })
 
   it('should throw error when API key is missing', async () => {
@@ -148,6 +157,14 @@ describe('fetchDiscogsReleases', () => {
     )
   })
 
+  it('should throw error when both API key and username are missing', async () => {
+    // Don't set any environment variables
+    const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
+    await expect(fetchDiscogsReleases()).rejects.toThrow(
+      'Missing required environment variables: DISCOGS_API_KEY or DISCOGS_USERNAME'
+    )
+  })
+
   it('should handle API error responses', async () => {
     // Set environment variables BEFORE importing the module
     vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
@@ -164,6 +181,12 @@ describe('fetchDiscogsReleases', () => {
     await expect(fetchDiscogsReleases()).rejects.toThrow(
       'Discogs API error: 401 Unauthorized'
     )
+
+    // Verify logger.error was called
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Failed to fetch Discogs releases',
+      expect.any(Error)
+    )
   })
 
   it('should handle network errors', async () => {
@@ -173,8 +196,73 @@ describe('fetchDiscogsReleases', () => {
     
     const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
     
-    fetch.mockRejectedValueOnce(new Error('Network error'))
+    const networkError = new Error('Network error')
+    fetch.mockRejectedValueOnce(networkError)
 
     await expect(fetchDiscogsReleases()).rejects.toThrow('Network error')
+
+    // Verify logger.error was called
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Failed to fetch Discogs releases',
+      networkError
+    )
+  })
+
+  it('should handle JSON parsing errors', async () => {
+    // Set environment variables BEFORE importing the module
+    vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
+    vi.stubEnv('DISCOGS_USERNAME', 'testuser')
+    
+    const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
+    
+    const jsonError = new Error('Invalid JSON')
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => { throw jsonError }
+    })
+
+    await expect(fetchDiscogsReleases()).rejects.toThrow('Invalid JSON')
+
+    // Verify logger.error was called
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Failed to fetch Discogs releases',
+      jsonError
+    )
+  })
+
+  it('should handle empty releases array', async () => {
+    // Set environment variables BEFORE importing the module
+    vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
+    vi.stubEnv('DISCOGS_USERNAME', 'testuser')
+    
+    const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
+    
+    const mockResponse = {
+      pagination: {
+        page: 1,
+        pages: 1,
+        per_page: 50,
+        items: 0
+      },
+      releases: []
+    }
+
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse
+    })
+
+    const result = await fetchDiscogsReleases()
+
+    expect(result).toEqual({
+      pagination: {
+        page: 1,
+        pages: 1,
+        per_page: 0,
+        items: 0,
+        urls: {}
+      },
+      releases: []
+    })
   })
 }) 
