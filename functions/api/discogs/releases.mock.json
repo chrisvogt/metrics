@@ -1,0 +1,2119 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 1,
+    "per_page": 50,
+    "items": 37,
+    "urls": {}
+  },
+  "releases": [
+    {
+      "id": 28461454,
+      "instance_id": 2045415075,
+      "date_added": "2025-07-27T23:34:53-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 28461454,
+        "master_id": 3255691,
+        "master_url": "https://api.discogs.com/masters/3255691",
+        "resource_url": "https://api.discogs.com/releases/28461454",
+        "thumb": "https://i.discogs.com/gZkev980p_Lvv3FiNfXLxdpUVM5huRUc-bwsKnpinr0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4NDYx/NDU0LTE3MTYzNDU0/OTAtNjg5OC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/iejysiuZZMMScKhszIck7jmzKUomj1nqDmfpICMPAjw/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4NDYx/NDU0LTE3MTYzNDU0/OTAtNjg5OC5qcGVn.jpeg",
+        "title": "The Rise & Fall Of A Midwest Princess",
+        "year": 2023,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP"]
+          },
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Single Sided"]
+          },
+          {
+            "name": "All Media",
+            "qty": "1",
+            "text": "Collector's Edition, 180 Gram",
+            "descriptions": ["Album", "Deluxe Edition", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Amusement Records (3)",
+            "catno": "B0038014-01",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 3589090,
+            "resource_url": "https://api.discogs.com/labels/3589090"
+          },
+          {
+            "name": "Island Records",
+            "catno": "B0038014-01",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 8377,
+            "resource_url": "https://api.discogs.com/labels/8377"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Chappell Roan",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 6360106,
+            "resource_url": "https://api.discogs.com/artists/6360106"
+          }
+        ],
+        "genres": ["Pop"],
+        "styles": ["Indie Pop"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 33129744,
+      "instance_id": 2045415339,
+      "date_added": "2025-07-27T23:37:53-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 33129744,
+        "master_id": 3505440,
+        "master_url": "https://api.discogs.com/masters/3505440",
+        "resource_url": "https://api.discogs.com/releases/33129744",
+        "thumb": "https://i.discogs.com/iti19QdXDe85hE864kg25VKTKsyDFFBX6S1rQBJXJBA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTI5/NzQ0LTE3NDEwNDkz/NDUtNzY5My5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/DRbhD6Dy3Bj0VXrs5Zh9EHEOFkPAOa3YyELl2H12uY4/rs:fit/g:sm/q:90/h:566/w:566/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTI5/NzQ0LTE3NDEwNDkz/NDUtNzY5My5qcGVn.jpeg",
+        "title": "Brat And It's Completely Different",
+        "year": 2025,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "Green Translucent [Brat Green]",
+            "descriptions": ["LP", "Album"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Atlantic",
+            "catno": "075678603990",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 681,
+            "resource_url": "https://api.discogs.com/labels/681"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Charli XCX",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 1345479,
+            "resource_url": "https://api.discogs.com/artists/1345479"
+          }
+        ],
+        "genres": ["Electronic", "Pop"],
+        "styles": ["Dance-pop", "Electro House", "Future Pop"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 19427773,
+      "instance_id": 2045413952,
+      "date_added": "2025-07-27T23:24:35-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 19427773,
+        "master_id": 1566145,
+        "master_url": "https://api.discogs.com/masters/1566145",
+        "resource_url": "https://api.discogs.com/releases/19427773",
+        "thumb": "https://i.discogs.com/spUimbPBKS2xmz4GyM4Wd12xALzqse4h-bW2NtnhBJk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5NDI3/NzczLTE2MjU4MDE1/NDEtODA5Ni5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/GP1TDUePwOK_f__8jkf61KvpD8ztfA2xtrT9BfhL-XM/rs:fit/g:sm/q:90/h:589/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5NDI3/NzczLTE2MjU4MDE1/NDEtODA5Ni5qcGVn.jpeg",
+        "title": "Black Pumas",
+        "year": 2021,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Gold & Red/Black - Gatefold",
+            "descriptions": ["LP", "Album", "Deluxe Edition", "Stereo"]
+          },
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Black/Red Marble - Gatefold",
+            "descriptions": ["LP", "Album", "Deluxe Edition", "Stereo"]
+          },
+          {
+            "name": "All Media",
+            "qty": "1",
+            "text": "Anniversary Release",
+            "descriptions": ["Album", "Deluxe Edition", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "ATO Records",
+            "catno": "ATO0534",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 19639,
+            "resource_url": "https://api.discogs.com/labels/19639"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Black Pumas",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 6529084,
+            "resource_url": "https://api.discogs.com/artists/6529084"
+          }
+        ],
+        "genres": ["Rock", "Funk / Soul"],
+        "styles": ["Psychedelic", "Soul", "Rock & Roll"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 7146187,
+      "instance_id": 2045415119,
+      "date_added": "2025-07-27T23:35:27-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 7146187,
+        "master_id": 850448,
+        "master_url": "https://api.discogs.com/masters/850448",
+        "resource_url": "https://api.discogs.com/releases/7146187",
+        "thumb": "https://i.discogs.com/9W9sN5pFCyII9CWt74m_xvPR4yO9tp3GSUEq1QBnx34/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcxNDYx/ODctMTQ5NTE2MDY3/NC0zMTM1LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/5KghXHq54Nu1fASTE7t0Io3_AuBN1V-tP0RVE10iHlQ/rs:fit/g:sm/q:90/h:600/w:591/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTcxNDYx/ODctMTQ5NTE2MDY3/NC0zMTM1LmpwZWc.jpeg",
+        "title": "Coming Home",
+        "year": 2015,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "180 Gram",
+            "descriptions": ["LP", "Album"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Columbia",
+            "catno": "88875 08914 1",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1866,
+            "resource_url": "https://api.discogs.com/labels/1866"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Leon Bridges",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 4332385,
+            "resource_url": "https://api.discogs.com/artists/4332385"
+          }
+        ],
+        "genres": ["Funk / Soul"],
+        "styles": ["Soul", "Funk", "Rhythm & Blues"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 27237384,
+      "instance_id": 2045414483,
+      "date_added": "2025-07-27T23:29:30-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 27237384,
+        "master_id": 556257,
+        "master_url": "https://api.discogs.com/masters/556257",
+        "resource_url": "https://api.discogs.com/releases/27237384",
+        "thumb": "https://i.discogs.com/W5yxb81-ZIoSXu0IuQwqnrvdDa1KebxBMv3IvNoVUVY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjM3/Mzg0LTE2ODU0NzQz/MjUtMjkyMC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/QeRxGM2rZWqugu-baPfVl58QMu_DGHklXAZQMSzEfQs/rs:fit/g:sm/q:90/h:600/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjM3/Mzg0LTE2ODU0NzQz/MjUtMjkyMC5qcGVn.jpeg",
+        "title": "Random Access Memories (10th Anniversary Edition)",
+        "year": 2023,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "3",
+            "text": "180 gram",
+            "descriptions": ["LP", "Album", "Reissue", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Columbia",
+            "catno": "19658773731",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1866,
+            "resource_url": "https://api.discogs.com/labels/1866"
+          },
+          {
+            "name": "Legacy",
+            "catno": "19658773731",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 15491,
+            "resource_url": "https://api.discogs.com/labels/15491"
+          },
+          {
+            "name": "Sony Music",
+            "catno": "19658773731",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 25487,
+            "resource_url": "https://api.discogs.com/labels/25487"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Daft Punk",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 1289,
+            "resource_url": "https://api.discogs.com/artists/1289"
+          }
+        ],
+        "genres": ["Electronic", "Funk / Soul", "Pop"],
+        "styles": ["Electro", "Disco", "Funk", "Synth-pop"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 28924120,
+      "instance_id": 2045415424,
+      "date_added": "2025-07-27T23:38:48-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 28924120,
+        "master_id": 556257,
+        "master_url": "https://api.discogs.com/masters/556257",
+        "resource_url": "https://api.discogs.com/releases/28924120",
+        "thumb": "https://i.discogs.com/TVVhLjEEPWi7CN6J69orTQr7a1Yk0cCdUeZqfS9u_G8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4OTI0/MTIwLTE3MDg0MzQ5/NzktMzU1OC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/Mg4ZMl75Fak1-BMzhDv-lp7orqsrkCH8ujm6w9iFaJY/rs:fit/g:sm/q:90/h:600/w:589/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4OTI0/MTIwLTE3MDg0MzQ5/NzktMzU1OC5qcGVn.jpeg",
+        "title": "Random Access Memories (Drumless Edition)",
+        "year": 2023,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "180 gram ",
+            "descriptions": ["LP", "Album"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Columbia",
+            "catno": "19658808331",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1866,
+            "resource_url": "https://api.discogs.com/labels/1866"
+          },
+          {
+            "name": "Legacy",
+            "catno": "19658808331",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 15491,
+            "resource_url": "https://api.discogs.com/labels/15491"
+          },
+          {
+            "name": "Sony Music",
+            "catno": "19658808331",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 25487,
+            "resource_url": "https://api.discogs.com/labels/25487"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Daft Punk",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 1289,
+            "resource_url": "https://api.discogs.com/artists/1289"
+          }
+        ],
+        "genres": ["Electronic", "Funk / Soul"],
+        "styles": ["Disco", "Funk", "Synth-pop", "Electro"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 33601662,
+      "instance_id": 2041694013,
+      "date_added": "2025-07-15T19:44:29-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 33601662,
+        "master_id": 10362,
+        "master_url": "https://api.discogs.com/masters/10362",
+        "resource_url": "https://api.discogs.com/releases/33601662",
+        "thumb": "https://i.discogs.com/fORCixu8USjc7940-IAaFwmUiB2Z75tyVbiakn1Waws/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzNjAx/NjYyLTE3NDY3MzE2/NTUtMTk4OS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/TaQbJB3SRGXbIZ9aOzPOCMoC1Bw2JwuQvQgNgs-hkQg/rs:fit/g:sm/q:90/h:500/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzNjAx/NjYyLTE3NDY3MzE2/NTUtMTk4OS5qcGVn.jpeg",
+        "title": "The Dark Side Of The Moon",
+        "year": 2025,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "50th Anniversary, Gatefold, 180g",
+            "descriptions": ["LP", "Album", "Reissue", "Remastered", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Columbia",
+            "catno": "19658720271",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1866,
+            "resource_url": "https://api.discogs.com/labels/1866"
+          },
+          {
+            "name": "Sony Music",
+            "catno": "19658720271",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 25487,
+            "resource_url": "https://api.discogs.com/labels/25487"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Pink Floyd",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 45467,
+            "resource_url": "https://api.discogs.com/artists/45467"
+          }
+        ],
+        "genres": ["Rock"],
+        "styles": ["Prog Rock", "Art Rock"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 26360477,
+      "instance_id": 2045413713,
+      "date_added": "2025-07-27T23:22:21-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 26360477,
+        "master_id": 3009836,
+        "master_url": "https://api.discogs.com/masters/3009836",
+        "resource_url": "https://api.discogs.com/releases/26360477",
+        "thumb": "https://i.discogs.com/OzWGZpjow4Eq-afQ00SjbcScRVw0AivgNq3Fb3aTeV8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2MzYw/NDc3LTE2Nzg0NDQ1/MTAtNjUxMy5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/11l2YV48Wl5mQr_-XCO_W2nq284JUCDDwuY7pgbTJtA/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI2MzYw/NDc3LTE2Nzg0NDQ1/MTAtNjUxMy5qcGVn.jpeg",
+        "title": "Endless Summer Vacation",
+        "year": 2023,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Album", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Columbia",
+            "catno": "19658781341",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1866,
+            "resource_url": "https://api.discogs.com/labels/1866"
+          },
+          {
+            "name": "Sony Music",
+            "catno": "19658781341",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 25487,
+            "resource_url": "https://api.discogs.com/labels/25487"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Miley Cyrus",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 676432,
+            "resource_url": "https://api.discogs.com/artists/676432"
+          }
+        ],
+        "genres": ["Rock", "Pop"],
+        "styles": ["Alt-Pop", "Pop Rock", "Dance-pop", "Psychedelic"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 34114852,
+      "instance_id": 2045415452,
+      "date_added": "2025-07-27T23:39:04-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 34114852,
+        "master_id": 3861688,
+        "master_url": "https://api.discogs.com/masters/3861688",
+        "resource_url": "https://api.discogs.com/releases/34114852",
+        "thumb": "https://i.discogs.com/TCdzBu-H0uqxBIeEt28-YO3Gzd9TcJeo4N_8KMyoncI/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0MTE0/ODUyLTE3NDg1MDEx/NjUtODg3MS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/ISOXhttcmVmrL-uFOb_Z3sOa4sgp_w2pKldT88fT_MU/rs:fit/g:sm/q:90/h:595/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0MTE0/ODUyLTE3NDg1MDEx/NjUtODg3MS5qcGVn.jpeg",
+        "title": "Flowers",
+        "year": 2025,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Album", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Dead Oceans",
+            "catno": "DOC367",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 94740,
+            "resource_url": "https://api.discogs.com/labels/94740"
+          },
+          {
+            "name": "Dead Oceans",
+            "catno": "DOC367LP",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 94740,
+            "resource_url": "https://api.discogs.com/labels/94740"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Durand Jones & The Indications",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 6476382,
+            "resource_url": "https://api.discogs.com/artists/6476382"
+          }
+        ],
+        "genres": ["Funk / Soul"],
+        "styles": ["Contemporary R&B", "Soul"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 28593214,
+      "instance_id": 2045414727,
+      "date_added": "2025-07-27T23:31:30-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 28593214,
+        "master_id": 3272203,
+        "master_url": "https://api.discogs.com/masters/3272203",
+        "resource_url": "https://api.discogs.com/releases/28593214",
+        "thumb": "https://i.discogs.com/sIW53Oj9E4IsjkRpG37HUAGtz0Rtmlgty2UAGCRciaU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4NTkz/MjE0LTE2OTczNzg0/NjQtOTEyMy5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/iaZzjHaY05AzDRZwlfPRHhuBVYZC8JmNWnsmDrktfuw/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4NTkz/MjE0LTE2OTczNzg0/NjQtOTEyMy5qcGVn.jpeg",
+        "title": "Something To Give Each Other",
+        "year": 2023,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Album"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "EMI",
+            "catno": "B003838101",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 26126,
+            "resource_url": "https://api.discogs.com/labels/26126"
+          },
+          {
+            "name": "Capitol Records",
+            "catno": "B003838101",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 654,
+            "resource_url": "https://api.discogs.com/labels/654"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Troye Sivan",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 4402206,
+            "resource_url": "https://api.discogs.com/artists/4402206"
+          }
+        ],
+        "genres": ["Electronic", "Pop"],
+        "styles": ["Dance-pop"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 30835464,
+      "instance_id": 2045413849,
+      "date_added": "2025-07-27T23:23:38-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 30835464,
+        "master_id": 3208932,
+        "master_url": "https://api.discogs.com/masters/3208932",
+        "resource_url": "https://api.discogs.com/releases/30835464",
+        "thumb": "https://i.discogs.com/sqcpKAbPqdfbaqFeWcUs1v6Eyde3Prc3uYTE4Q_TB1Y/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMwODM1/NDY0LTE3MTcxODA3/OTMtNjE3MC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/nYxmLp43jrXw3Y6Y3jfAsTi5Jcave5SN5DD3u63UwUs/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMwODM1/NDY0LTE3MTcxODA3/OTMtNjE3MC5qcGVn.jpeg",
+        "title": "Snow Angel",
+        "year": 2023,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Black Transparent [Black Ice]",
+            "descriptions": ["LP", "Album", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Interscope Records",
+            "catno": "B0038206-01",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 2311,
+            "resource_url": "https://api.discogs.com/labels/2311"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Reneé Rapp",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 12451969,
+            "resource_url": "https://api.discogs.com/artists/12451969"
+          }
+        ],
+        "genres": ["Pop"],
+        "styles": ["Indie Pop"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 33066291,
+      "instance_id": 2033058374,
+      "date_added": "2025-06-15T22:14:46-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 33066291,
+        "master_id": 3772997,
+        "master_url": "https://api.discogs.com/masters/3772997",
+        "resource_url": "https://api.discogs.com/releases/33066291",
+        "thumb": "https://i.discogs.com/RsAPEnyloaCBJSuCeTK00k3LQSBHToruIcOntuwYEdA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMDY2/MjkxLTE3NDIyMzU3/NDItNTI1NS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/e5J9oaBEHcCadflDouaN7XDdOwh64ZfmRKJQ3uXw4_U/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMDY2/MjkxLTE3NDIyMzU3/NDItNTI1NS5qcGVn.jpeg",
+        "title": "Mayhem",
+        "year": 2025,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP"]
+          },
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Single Sided", "Etched"]
+          },
+          {
+            "name": "All Media",
+            "qty": "1",
+            "text": "Pink [Opaque Hot Pink]",
+            "descriptions": ["Album"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Interscope Records",
+            "catno": "602475451167",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 2311,
+            "resource_url": "https://api.discogs.com/labels/2311"
+          },
+          {
+            "name": "Streamline Records",
+            "catno": "602475451167",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 122077,
+            "resource_url": "https://api.discogs.com/labels/122077"
+          },
+          {
+            "name": "Interscope Records",
+            "catno": "602475451082",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 2311,
+            "resource_url": "https://api.discogs.com/labels/2311"
+          },
+          {
+            "name": "Streamline Records",
+            "catno": "602475451082",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 122077,
+            "resource_url": "https://api.discogs.com/labels/122077"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Lady Gaga",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 1103159,
+            "resource_url": "https://api.discogs.com/artists/1103159"
+          }
+        ],
+        "genres": ["Electronic", "Pop"],
+        "styles": ["Dance-pop"]
+      },
+      "folder_id": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 2,
+          "value": "Mint (M)"
+        }
+      ]
+    },
+    {
+      "id": 13594384,
+      "instance_id": 2045415817,
+      "date_added": "2025-07-27T23:41:46-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 13594384,
+        "master_id": 5663,
+        "master_url": "https://api.discogs.com/masters/5663",
+        "resource_url": "https://api.discogs.com/releases/13594384",
+        "thumb": "https://i.discogs.com/RqXs0cW8bRwPVVJSxbJ56sEYHFrkc4-_JQfh7qKPo-Y/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzNTk0/Mzg0LTE1NTcxNjE2/NzUtOTE5NS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/iueLghPM-F3gPdK3NLkerpS7mJ_3FNamq7ubZgJIWRM/rs:fit/g:sm/q:90/h:600/w:591/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzNTk0/Mzg0LTE1NTcxNjE2/NzUtOTE5NS5qcGVn.jpeg",
+        "title": "Tragic Kingdom",
+        "year": 2014,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Album", "Reissue", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Interscope Records",
+            "catno": "B0022088-01",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 2311,
+            "resource_url": "https://api.discogs.com/labels/2311"
+          },
+          {
+            "name": "Trauma Records (2)",
+            "catno": "B0022088-01",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 47085,
+            "resource_url": "https://api.discogs.com/labels/47085"
+          }
+        ],
+        "artists": [
+          {
+            "name": "No Doubt",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 83614,
+            "resource_url": "https://api.discogs.com/artists/83614"
+          }
+        ],
+        "genres": ["Rock", "Reggae", "Pop"],
+        "styles": ["Ska"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 9506280,
+      "instance_id": 2045413792,
+      "date_added": "2025-07-27T23:23:09-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 9506280,
+        "master_id": 127958,
+        "master_url": "https://api.discogs.com/masters/127958",
+        "resource_url": "https://api.discogs.com/releases/9506280",
+        "thumb": "https://i.discogs.com/3nRxIlYmklBULUX7HJpcJqBbvzHO3b7e9TVoBPQWgJ0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk1MDYy/ODAtMTQ4MTc1NDMz/MC04MDk4LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/naglRoi_BkHM9V5OVh_zJRTzPaLStNHf3KdB5lVCbfc/rs:fit/g:sm/q:90/h:600/w:595/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk1MDYy/ODAtMTQ4MTc1NDMz/MC04MDk4LmpwZWc.jpeg",
+        "title": "Infinity On High",
+        "year": 2016,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "180g",
+            "descriptions": ["LP", "Album", "Reissue"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Island Records",
+            "catno": "B0025589-01",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 8377,
+            "resource_url": "https://api.discogs.com/labels/8377"
+          },
+          {
+            "name": "Decaydance",
+            "catno": "B0025589-01",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 66435,
+            "resource_url": "https://api.discogs.com/labels/66435"
+          },
+          {
+            "name": "Fueled By Ramen",
+            "catno": "B0025589-01",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 42701,
+            "resource_url": "https://api.discogs.com/labels/42701"
+          },
+          {
+            "name": "Universal Music Special Markets",
+            "catno": "B0025589-01",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 56128,
+            "resource_url": "https://api.discogs.com/labels/56128"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Fall Out Boy",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 318185,
+            "resource_url": "https://api.discogs.com/artists/318185"
+          }
+        ],
+        "genres": ["Rock"],
+        "styles": ["Alternative Rock", "Emo", "Pop Punk"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 23718974,
+      "instance_id": 2045414313,
+      "date_added": "2025-07-27T23:28:00-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 23718974,
+        "master_id": 1618628,
+        "master_url": "https://api.discogs.com/masters/1618628",
+        "resource_url": "https://api.discogs.com/releases/23718974",
+        "thumb": "https://i.discogs.com/32UrV5IU2fvW1tPIWDN70Vrhpw_eE9_cXvfrXbVRyAg/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIzNzE4/OTc0LTE3MDUxMDM5/OTktNTI5OC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/LVy9FYNaRCPvlXZ0atZRjpRw9Tz5lq4PPIhHiD61FRE/rs:fit/g:sm/q:90/h:600/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIzNzE4/OTc0LTE3MDUxMDM5/OTktNTI5OC5qcGVn.jpeg",
+        "title": "Changes",
+        "year": 2022,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Teal [Teal Francis]",
+            "descriptions": ["LP", "Album", "Limited Edition", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Karma Chief Records",
+            "catno": "KCR 12003",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1476155,
+            "resource_url": "https://api.discogs.com/labels/1476155"
+          },
+          {
+            "name": "Colemine Records",
+            "catno": "KCR 12003",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 146761,
+            "resource_url": "https://api.discogs.com/labels/146761"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Neal Francis",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 7137055,
+            "resource_url": "https://api.discogs.com/artists/7137055"
+          }
+        ],
+        "genres": ["Funk / Soul"],
+        "styles": []
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 32743437,
+      "instance_id": 2045414164,
+      "date_added": "2025-07-27T23:26:38-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 32743437,
+        "master_id": 87440,
+        "master_url": "https://api.discogs.com/masters/87440",
+        "resource_url": "https://api.discogs.com/releases/32743437",
+        "thumb": "https://i.discogs.com/s21s9yDbH12toD6IqOLSr4fF2TXgcqff7ptmx7_gGQk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNzQz/NDM3LTE3MzU5MzA1/MDItNjcyNC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/YXHJhMMvF_KKvAr-E1xi7uIQ-g68vYvajCO_PSpuu7Q/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNzQz/NDM3LTE3MzU5MzA1/MDItNjcyNC5qcGVn.jpeg",
+        "title": "Songs In The Key Of Life",
+        "year": 2024,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "7\"", "Album", "EP", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Motown",
+            "catno": "0600753164228",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1723,
+            "resource_url": "https://api.discogs.com/labels/1723"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Stevie Wonder",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 18956,
+            "resource_url": "https://api.discogs.com/artists/18956"
+          }
+        ],
+        "genres": ["Funk / Soul"],
+        "styles": ["Soul", "Disco"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 10173703,
+      "instance_id": 2045414262,
+      "date_added": "2025-07-27T23:27:33-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 10173703,
+        "master_id": 58644,
+        "master_url": "https://api.discogs.com/masters/58644",
+        "resource_url": "https://api.discogs.com/releases/10173703",
+        "thumb": "https://i.discogs.com/JC7oqyk3IjybgZ4CnTROfZo1i9aa_pPckrzpASRiuyc/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTcz/NzAzLTE1NTY2OTYz/NzgtODQxMC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/M9ml2DGWdzqx-kUhcPi-k0RNXvWSaF4sInBJqToOssw/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwMTcz/NzAzLTE1NTY2OTYz/NzgtODQxMC5qcGVn.jpeg",
+        "title": "Conjure One",
+        "year": 2017,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "Sand Colored, 180g",
+            "descriptions": [
+              "12\"",
+              "45 RPM",
+              "Album",
+              "Record Store Day",
+              "Limited Edition",
+              "Reissue"
+            ]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Nettwerk",
+            "catno": "0 6700 30246 1 7",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1263,
+            "resource_url": "https://api.discogs.com/labels/1263"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Conjure One",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 12254,
+            "resource_url": "https://api.discogs.com/artists/12254"
+          }
+        ],
+        "genres": ["Electronic"],
+        "styles": ["Downtempo", "Ambient"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 13965736,
+      "instance_id": 2045414404,
+      "date_added": "2025-07-27T23:28:52-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 13965736,
+        "master_id": 1597557,
+        "master_url": "https://api.discogs.com/masters/1597557",
+        "resource_url": "https://api.discogs.com/releases/13965736",
+        "thumb": "https://i.discogs.com/elyssWQQEhF8VY6e4S2pKKmrJWajMyLKAQ7jheKIK_w/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzOTY1/NzM2LTE1NjUwNzgx/MjItNTY5OC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/8GJAlJWS0akqg-b451uzf9PUAjGHVLPiq02XCJYHkac/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzOTY1/NzM2LTE1NjUwNzgx/MjItNTY5OC5qcGVn.jpeg",
+        "title": "Twister",
+        "year": 2019,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Purple",
+            "descriptions": ["LP", "Album"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Nettwerk",
+            "catno": "0 6700 31203 1 9",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1263,
+            "resource_url": "https://api.discogs.com/labels/1263"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Leisure (13)",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 11526830,
+            "resource_url": "https://api.discogs.com/artists/11526830"
+          }
+        ],
+        "genres": ["Electronic", "Funk / Soul", "Pop"],
+        "styles": ["Soul", "Funk", "Indie Pop", "Synth-pop"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 17919187,
+      "instance_id": 2045415475,
+      "date_added": "2025-07-27T23:39:19-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 17919187,
+        "master_id": 341630,
+        "master_url": "https://api.discogs.com/masters/341630",
+        "resource_url": "https://api.discogs.com/releases/17919187",
+        "thumb": "https://i.discogs.com/i1j6-5uFT4wyldO6flNVNeBp8g-KsR3mKvmtdTBix-w/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE3OTE5/MTg3LTE2MTY1Mjg5/MTUtMzEyNi5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/T_RbO41zF6vkdP6ak964oOUBdmNNaiWxmwbA3tcwlBo/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE3OTE5/MTg3LTE2MTY1Mjg5/MTUtMzEyNi5qcGVn.jpeg",
+        "title": "Illumination",
+        "year": 2021,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Album", "Remastered"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Nettwerk",
+            "catno": "0 6700 31252 1 5",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1263,
+            "resource_url": "https://api.discogs.com/labels/1263"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Miami Horror",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 1111889,
+            "resource_url": "https://api.discogs.com/artists/1111889"
+          }
+        ],
+        "genres": ["Electronic", "Rock", "Funk / Soul"],
+        "styles": ["House", "Funk", "Disco", "Glam"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 32465433,
+      "instance_id": 2045415514,
+      "date_added": "2025-07-27T23:39:39-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 32465433,
+        "master_id": 3616087,
+        "master_url": "https://api.discogs.com/masters/3616087",
+        "resource_url": "https://api.discogs.com/releases/32465433",
+        "thumb": "https://i.discogs.com/t-yLtMNb47jSLOYSa2s2UWKw-iPLRR_4hg_9Cqac5as/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNDY1/NDMzLTE3MzMyNDQy/NjUtNDYxNy5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/RUcjDdSWtbx_shMOF0QCeL4IiM5Vwff47zLfTVKnFcE/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNDY1/NDMzLTE3MzMyNDQy/NjUtNDYxNy5qcGVn.jpeg",
+        "title": "For Crying' Out Loud!",
+        "year": 2024,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Gold Bio-Vinyl",
+            "descriptions": ["LP", "Album", "Limited Edition"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "OYOY, Inc.",
+            "catno": "602468098928",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 2364031,
+            "resource_url": "https://api.discogs.com/labels/2364031"
+          },
+          {
+            "name": "Interscope Records",
+            "catno": "602468098928",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 2311,
+            "resource_url": "https://api.discogs.com/labels/2311"
+          }
+        ],
+        "artists": [
+          {
+            "name": "FINNEAS",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 5324432,
+            "resource_url": "https://api.discogs.com/artists/5324432"
+          }
+        ],
+        "genres": ["Pop"],
+        "styles": []
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 2956312,
+      "instance_id": 2045415591,
+      "date_added": "2025-07-27T23:40:10-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 2956312,
+        "master_id": 337506,
+        "master_url": "https://api.discogs.com/masters/337506",
+        "resource_url": "https://api.discogs.com/releases/2956312",
+        "thumb": "https://i.discogs.com/4ySa7X5N1xI2U7IGfWLKDX6-84RHVsYI4T-xQLCcO3E/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NTYz/MTItMTYyNzMyMjgy/Ny0xNDA0LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/ZYJRjQkTod9MVdRFs_7q2nEjI9KlckJVwo4KrI0iyW8/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NTYz/MTItMTYyNzMyMjgy/Ny0xNDA0LmpwZWc.jpeg",
+        "title": "Rome",
+        "year": 2011,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Album"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Parlophone",
+            "catno": "509999464850",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 2294,
+            "resource_url": "https://api.discogs.com/labels/2294"
+          },
+          {
+            "name": "Lex Records",
+            "catno": "509999464850",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 4227,
+            "resource_url": "https://api.discogs.com/labels/4227"
+          },
+          {
+            "name": "EMI",
+            "catno": "509999464850",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 26126,
+            "resource_url": "https://api.discogs.com/labels/26126"
+          },
+          {
+            "name": "Third Man Records",
+            "catno": "TMR091",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 89238,
+            "resource_url": "https://api.discogs.com/labels/89238"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Danger Mouse",
+            "anv": "",
+            "join": "&",
+            "role": "",
+            "tracks": "",
+            "id": 109129,
+            "resource_url": "https://api.discogs.com/artists/109129"
+          },
+          {
+            "name": "Daniele Luppi",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 45752,
+            "resource_url": "https://api.discogs.com/artists/45752"
+          }
+        ],
+        "genres": ["Rock"],
+        "styles": ["Alternative Rock", "Pop Rock", "Indie Rock"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 8778580,
+      "instance_id": 2041675379,
+      "date_added": "2025-07-15T17:54:16-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 8778580,
+        "master_id": 1029403,
+        "master_url": "https://api.discogs.com/masters/1029403",
+        "resource_url": "https://api.discogs.com/releases/8778580",
+        "thumb": "https://i.discogs.com/WgouMpLGGae5ROIu4Du4jJKSDyspenUkXhHls5qQpOc/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg3Nzg1/ODAtMTQ2ODU4NjM2/My02NTgxLmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/ctBNk3Tp42pBh-j28L5GPdyWEAF5kcXXYALJc2TMObI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTg3Nzg1/ODAtMTQ2ODU4NjM2/My02NTgxLmpwZWc.jpeg",
+        "title": "Love & Hate",
+        "year": 2016,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "descriptions": ["LP", "Album"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Polydor",
+            "catno": "4783458",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1610,
+            "resource_url": "https://api.discogs.com/labels/1610"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Michael Kiwanuka",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 2281535,
+            "resource_url": "https://api.discogs.com/artists/2281535"
+          }
+        ],
+        "genres": ["Rock", "Funk / Soul"],
+        "styles": ["Soul", "Rhythm & Blues", "Acoustic"]
+      },
+      "folder_id": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Mint (M)"
+        },
+        {
+          "field_id": 2,
+          "value": "Mint (M)"
+        }
+      ]
+    },
+    {
+      "id": 8186829,
+      "instance_id": 2045414890,
+      "date_added": "2025-07-27T23:32:49-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 8186829,
+        "master_id": 905068,
+        "master_url": "https://api.discogs.com/masters/905068",
+        "resource_url": "https://api.discogs.com/releases/8186829",
+        "thumb": "https://i.discogs.com/NKzwUFX1mfaVlVdALMO7Zh2sXO3S6_-NTeoO5CDkgQI/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTgxODY4/MjktMTQ1Njc2MjY2/OC01ODkzLmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/fIkTtZiLVdAYi5vv6nS8tWYWu27myWbqOLUTczuZIhY/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTgxODY4/MjktMTQ1Njc2MjY2/OC01ODkzLmpwZWc.jpeg",
+        "title": "Nothing But Thieves",
+        "year": 2015,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Album"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "RCA",
+            "catno": "88875-05832-1",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 895,
+            "resource_url": "https://api.discogs.com/labels/895"
+          },
+          {
+            "name": "Voleur Records",
+            "catno": "88875-05382-1",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 916550,
+            "resource_url": "https://api.discogs.com/labels/916550"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Nothing But Thieves",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 4234599,
+            "resource_url": "https://api.discogs.com/artists/4234599"
+          }
+        ],
+        "genres": ["Rock"],
+        "styles": []
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 32110209,
+      "instance_id": 2045414581,
+      "date_added": "2025-07-27T23:30:14-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 32110209,
+        "master_id": 33161,
+        "master_url": "https://api.discogs.com/masters/33161",
+        "resource_url": "https://api.discogs.com/releases/32110209",
+        "thumb": "https://i.discogs.com/cVNbdEzBLfqHxND5WRw87ktsm20M5bvACjFnhStc6CU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyMTEw/MjA5LTE3Mjk5NDIw/NDktMTA1OC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/0fHBCEEu3IpIR4kS4gu5ql10FvJjQyhZBIAAnVvcNog/rs:fit/g:sm/q:90/h:600/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyMTEw/MjA5LTE3Mjk5NDIw/NDktMTA1OC5qcGVn.jpeg",
+        "title": "American Idiot 20",
+        "year": 2024,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "Red & Black Splatter, 20th Anniversary",
+            "descriptions": ["LP", "Album", "Limited Edition", "Reissue"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Reprise Records",
+            "catno": "093624862734",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 157,
+            "resource_url": "https://api.discogs.com/labels/157"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Green Day",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 251593,
+            "resource_url": "https://api.discogs.com/artists/251593"
+          }
+        ],
+        "genres": ["Rock"],
+        "styles": ["Punk"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 22748366,
+      "instance_id": 2045415734,
+      "date_added": "2025-07-27T23:41:17-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 22748366,
+        "master_id": 724992,
+        "master_url": "https://api.discogs.com/masters/724992",
+        "resource_url": "https://api.discogs.com/releases/22748366",
+        "thumb": "https://i.discogs.com/OZ90Bcl683TJRR9G-o06hTBJCoXMu47XejZPmvK7T1M/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIyNzQ4/MzY2LTE2NDkxMTAx/ODctNjM5NC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/8h4ct_qShMzAQ4YD3xKK8HCzR6vyvkEpEcfEdan3p70/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIyNzQ4/MzY2LTE2NDkxMTAx/ODctNjM5NC5qcGVn.jpeg",
+        "title": "The Black Parade",
+        "year": 2022,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP"]
+          },
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Single Sided", "Etched"]
+          },
+          {
+            "name": "All Media",
+            "qty": "1",
+            "descriptions": ["Album", "Reissue", "Repress", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Reprise Records",
+            "catno": "No. 093624933595",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 157,
+            "resource_url": "https://api.discogs.com/labels/157"
+          }
+        ],
+        "artists": [
+          {
+            "name": "My Chemical Romance",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 319406,
+            "resource_url": "https://api.discogs.com/artists/319406"
+          }
+        ],
+        "genres": ["Rock"],
+        "styles": ["Emo", "Punk"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 32170227,
+      "instance_id": 2045413992,
+      "date_added": "2025-07-27T23:24:56-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 32170227,
+        "master_id": 0,
+        "master_url": null,
+        "resource_url": "https://api.discogs.com/releases/32170227",
+        "thumb": "https://i.discogs.com/SW2H0co2NA99fpFregdZUqjyxAqYtjyEe8kNOA8UODo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyMTcw/MjI3LTE3NDE1NDY1/MDctNjY0OS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/bmlG__IT0QJKPmJckdNwwQuZP7J4F40IS1V9g-DZYa8/rs:fit/g:sm/q:90/h:588/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyMTcw/MjI3LTE3NDE1NDY1/MDctNjY0OS5qcGVn.jpeg",
+        "title": "Yes!",
+        "year": 2024,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "Gold",
+            "descriptions": ["LP", "Deluxe Edition"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Rhino Records (2)",
+            "catno": "603497821334",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 33244,
+            "resource_url": "https://api.discogs.com/labels/33244"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Jason Mraz",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 334681,
+            "resource_url": "https://api.discogs.com/artists/334681"
+          }
+        ],
+        "genres": ["Rock", "Pop"],
+        "styles": ["Soft Rock", "Pop Rock"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 13050575,
+      "instance_id": 2045415392,
+      "date_added": "2025-07-27T23:38:30-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 13050575,
+        "master_id": 611685,
+        "master_url": "https://api.discogs.com/masters/611685",
+        "resource_url": "https://api.discogs.com/releases/13050575",
+        "thumb": "https://i.discogs.com/egBub1yy5JR9dQzB6yfUwoc0XBVW4dSk95Ad1L6zwII/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMDUw/NTc1LTE1NDcxNjMw/NDQtMjE4NS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/I0_79UvzIdaYzvUeMiL3HRlVot6IcnPUQ7njp48xMRE/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEzMDUw/NTc1LTE1NDcxNjMw/NDQtMjE4NS5qcGVn.jpeg",
+        "title": "Reflektor",
+        "year": 2018,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "180 Gram",
+            "descriptions": ["LP", "Album", "Reissue"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Sonovox Records",
+            "catno": "19075874401",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 90939,
+            "resource_url": "https://api.discogs.com/labels/90939"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Arcade Fire",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 281232,
+            "resource_url": "https://api.discogs.com/artists/281232"
+          }
+        ],
+        "genres": ["Rock"],
+        "styles": ["Indie Rock"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 28629352,
+      "instance_id": 2045415376,
+      "date_added": "2025-07-27T23:38:15-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 28629352,
+        "master_id": 3235912,
+        "master_url": "https://api.discogs.com/masters/3235912",
+        "resource_url": "https://api.discogs.com/releases/28629352",
+        "thumb": "https://i.discogs.com/Qx0f0JXKgvY_RI6VMfbOJV35N4tA2my4oHQIut2KTrw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4NjI5/MzUyLTE2OTgwNTE1/ODgtMTgwNS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/pagiTnZaGDhyudqTBtqLfhpWK00jIAzXSshRjahtHZg/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI4NjI5/MzUyLTE2OTgwNTE1/ODgtMTgwNS5qcGVn.jpeg",
+        "title": " Something On My Mind",
+        "year": 2023,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["12\"", "Limited Edition"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Sony Music",
+            "catno": "0196588484810",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 25487,
+            "resource_url": "https://api.discogs.com/labels/25487"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Purple Disco Machine",
+            "anv": "",
+            "join": ",",
+            "role": "",
+            "tracks": "",
+            "id": 2188903,
+            "resource_url": "https://api.discogs.com/artists/2188903"
+          },
+          {
+            "name": "Duke Dumont",
+            "anv": "",
+            "join": ",",
+            "role": "",
+            "tracks": "",
+            "id": 625833,
+            "resource_url": "https://api.discogs.com/artists/625833"
+          },
+          {
+            "name": "Nothing But Thieves",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 4234599,
+            "resource_url": "https://api.discogs.com/artists/4234599"
+          }
+        ],
+        "genres": ["Electronic"],
+        "styles": ["House"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 21310036,
+      "instance_id": 2045414667,
+      "date_added": "2025-07-27T23:30:58-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 21310036,
+        "master_id": 2421793,
+        "master_url": "https://api.discogs.com/masters/2421793",
+        "resource_url": "https://api.discogs.com/releases/21310036",
+        "thumb": "https://i.discogs.com/a7cEAyZhVR32_iGqq3AT3UBXL29WTX2FlCSdKNCln8U/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxMzEw/MDM2LTE2MzkyMzE1/NTItNDA1OS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/Gql8egApeGV4Q1qhd3_pG9xm1s_T8EY67-yyX_MArYs/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxMzEw/MDM2LTE2MzkyMzE1/NTItNDA1OS5qcGVn.jpeg",
+        "title": "Their Ultimate Collection",
+        "year": 2021,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Yellow ",
+            "descriptions": ["LP", "Compilation", "Limited Edition", "Reissue"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Sony Music",
+            "catno": "19439951261",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 25487,
+            "resource_url": "https://api.discogs.com/labels/25487"
+          },
+          {
+            "name": "Columbia",
+            "catno": "19439951261",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 1866,
+            "resource_url": "https://api.discogs.com/labels/1866"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Earth, Wind & Fire",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 22164,
+            "resource_url": "https://api.discogs.com/artists/22164"
+          }
+        ],
+        "genres": ["Funk / Soul"],
+        "styles": []
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 21986551,
+      "instance_id": 2041674608,
+      "date_added": "2025-07-15T17:50:02-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 21986551,
+        "master_id": 2339329,
+        "master_url": "https://api.discogs.com/masters/2339329",
+        "resource_url": "https://api.discogs.com/releases/21986551",
+        "thumb": "https://i.discogs.com/B78l4IUuLHICnXbzWxLdovv9mmxeUQizgFjql35pJwc/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxOTg2/NTUxLTE2NjM0MDE1/ODMtNzQ1MC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/mQXBhJ8mc8_ZXXGMfGbwssNWZlBrq3AvWDRe4LM3Ets/rs:fit/g:sm/q:90/h:574/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxOTg2/NTUxLTE2NjM0MDE1/ODMtNzQ1MC5qcGVn.jpeg",
+        "title": "Exotica Deluxe",
+        "year": 2022,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "Purple",
+            "descriptions": ["LP", "Album", "Deluxe Edition", "Limited Edition"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Sweat It Out!",
+            "catno": "SWEATSV026",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 128723,
+            "resource_url": "https://api.discogs.com/labels/128723"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Purple Disco Machine",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 2188903,
+            "resource_url": "https://api.discogs.com/artists/2188903"
+          }
+        ],
+        "genres": ["Electronic"],
+        "styles": ["Nu-Disco"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 33745782,
+      "instance_id": 2045414847,
+      "date_added": "2025-07-27T23:32:30-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 33745782,
+        "master_id": 3602432,
+        "master_url": "https://api.discogs.com/masters/3602432",
+        "resource_url": "https://api.discogs.com/releases/33745782",
+        "thumb": "https://i.discogs.com/ZJ_1FHYffLfmI5Iba6UHG2dGpEQaSFwn36sfBqdwE3c/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzNzQ1/NzgyLTE3NDUwNDE3/MzctMTMzMS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/SwZwSLRcL1_5XMJHnxq3EKg19xADLcGSlJC_gYgsP0E/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzNzQ1/NzgyLTE3NDUwNDE3/MzctMTMzMS5qcGVn.jpeg",
+        "title": "Alligator Bites Never Heal",
+        "year": 2025,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Gold",
+            "descriptions": ["LP", "Album", "Limited Edition", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Top Dawg Entertainment",
+            "catno": "602475207719",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 255292,
+            "resource_url": "https://api.discogs.com/labels/255292"
+          },
+          {
+            "name": "Capitol Records",
+            "catno": "602475207719",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 654,
+            "resource_url": "https://api.discogs.com/labels/654"
+          },
+          {
+            "name": "Capitol Records",
+            "catno": "752 077-1",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 654,
+            "resource_url": "https://api.discogs.com/labels/654"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Doechii",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 11109506,
+            "resource_url": "https://api.discogs.com/artists/11109506"
+          }
+        ],
+        "genres": ["Hip Hop"],
+        "styles": ["Pop Rap"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 15996141,
+      "instance_id": 2041675872,
+      "date_added": "2025-07-15T17:57:07-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 15996141,
+        "master_id": 11079,
+        "master_url": "https://api.discogs.com/masters/11079",
+        "resource_url": "https://api.discogs.com/releases/15996141",
+        "thumb": "https://i.discogs.com/mvHHprA9BG13IipKQk3BR0WfyC4Q9K4MTiE7NysWpSQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1OTk2/MTQxLTE2MDE1ODAx/MTEtNjM1NC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/8YdAiIuXQJCxxzRpRf08sYtLZHOmf3R4D6ISqxCM-os/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1OTk2/MTQxLTE2MDE1ODAx/MTEtNjM1NC5qcGVn.jpeg",
+        "title": "Black Holes And Revelations",
+        "year": 2020,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": ["LP", "Album", "Reissue"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Warner Records",
+            "catno": "0825646350919",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 134882,
+            "resource_url": "https://api.discogs.com/labels/134882"
+          },
+          {
+            "name": "Helium 3",
+            "catno": "0825646350919",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 66149,
+            "resource_url": "https://api.discogs.com/labels/66149"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Muse",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 1003,
+            "resource_url": "https://api.discogs.com/artists/1003"
+          }
+        ],
+        "genres": ["Rock"],
+        "styles": ["Alternative Rock", "Symphonic Rock"]
+      },
+      "folder_id": 1,
+      "notes": [
+        {
+          "field_id": 1,
+          "value": "Mint (M)"
+        }
+      ]
+    },
+    {
+      "id": 19114471,
+      "instance_id": 2033058028,
+      "date_added": "2025-06-15T22:10:48-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 19114471,
+        "master_id": 61489,
+        "master_url": "https://api.discogs.com/masters/61489",
+        "resource_url": "https://api.discogs.com/releases/19114471",
+        "thumb": "https://i.discogs.com/6o4He4UeH4RJ-bxVHRqNOXFy5DX7VbJDc85y95b1DK0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MTE0/NDcxLTE2NDU0NjU1/NjktODk1Mi5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/aU86MzlIM1GleGPcsOpiSQLXdRsXk_2IuQkqPbBx7gY/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5MTE0/NDcxLTE2NDU0NjU1/NjktODk1Mi5qcGVn.jpeg",
+        "title": "Reanimation",
+        "year": 2020,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "Gatefold",
+            "descriptions": ["LP", "Album", "Reissue"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Warner Records",
+            "catno": "093624920830",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 134882,
+            "resource_url": "https://api.discogs.com/labels/134882"
+          },
+          {
+            "name": "Machine Shop Recordings",
+            "catno": "093624920830",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 49462,
+            "resource_url": "https://api.discogs.com/labels/49462"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Linkin Park",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 40029,
+            "resource_url": "https://api.discogs.com/artists/40029"
+          }
+        ],
+        "genres": ["Hip Hop", "Rock"],
+        "styles": ["Breakbeat", "Hip Hop", "Nu Metal"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 34496788,
+      "instance_id": 2045415012,
+      "date_added": "2025-07-27T23:34:08-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 34496788,
+        "master_id": 74519,
+        "master_url": "https://api.discogs.com/masters/74519",
+        "resource_url": "https://api.discogs.com/releases/34496788",
+        "thumb": "https://i.discogs.com/o_jqkO7duRbCcybimIGNIhIGkmsU3gr9iLGnf9LGVk0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0NDk2/Nzg4LTE3NTIxMDAz/OTEtNzkwOS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/XAFZoMsTOyiPBC-eszS5C9BNNS5GOXprOtKxys7HjJc/rs:fit/g:sm/q:90/h:585/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM0NDk2/Nzg4LTE3NTIxMDAz/OTEtNzkwOS5qcGVn.jpeg",
+        "title": "Hybrid Theory",
+        "year": 2020,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Red, Gatefold",
+            "descriptions": ["LP", "Album", "Reissue"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Warner Records",
+            "catno": "093624941422",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 134882,
+            "resource_url": "https://api.discogs.com/labels/134882"
+          },
+          {
+            "name": "Machine Shop Recordings",
+            "catno": "093624941422",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 49462,
+            "resource_url": "https://api.discogs.com/labels/49462"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Linkin Park",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 40029,
+            "resource_url": "https://api.discogs.com/artists/40029"
+          }
+        ],
+        "genres": ["Rock"],
+        "styles": ["Nu Metal"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 21063136,
+      "instance_id": 2045414540,
+      "date_added": "2025-07-27T23:29:53-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 21063136,
+        "master_id": 74541,
+        "master_url": "https://api.discogs.com/masters/74541",
+        "resource_url": "https://api.discogs.com/releases/21063136",
+        "thumb": "https://i.discogs.com/ojr4xuyARQF7CvSJhtWKWg0Tl8IgXF2KFTQJUrucibo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxMDYz/MTM2LTE2Mzc2MjI3/NTktNjg0OS5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/JPdJAjcZKvWvbkZh9Zm9YFg2TmYfzsaPWqQ9WbBuOtE/rs:fit/g:sm/q:90/h:600/w:594/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTIxMDYz/MTM2LTE2Mzc2MjI3/NTktNjg0OS5qcGVn.jpeg",
+        "title": "Minutes To Midnight",
+        "year": 2021,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "text": "Yellow Translucent",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Limited Edition",
+              "Reissue",
+              "Repress"
+            ]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Warner Records",
+            "catno": "093624998105",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 134882,
+            "resource_url": "https://api.discogs.com/labels/134882"
+          },
+          {
+            "name": "Machine Shop Recordings",
+            "catno": "093624998105",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 49462,
+            "resource_url": "https://api.discogs.com/labels/49462"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Linkin Park",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 40029,
+            "resource_url": "https://api.discogs.com/artists/40029"
+          }
+        ],
+        "genres": ["Rock"],
+        "styles": ["Alternative Rock"]
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 10823449,
+      "instance_id": 2045414203,
+      "date_added": "2025-07-27T23:27:00-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 10823449,
+        "master_id": 1234777,
+        "master_url": "https://api.discogs.com/masters/1234777",
+        "resource_url": "https://api.discogs.com/releases/10823449",
+        "thumb": "https://i.discogs.com/wikcxhENJbFnG6dpnkZPTwUOziPFaQREe33HHMUS8J8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwODIz/NDQ5LTE1MDQ4OTc4/NjctNTQ5MC5qcGVn.jpeg",
+        "cover_image": "https://i.discogs.com/VeTApL2YXN5OLDy05yWrI62rDqJV0iAve0rccVXARnc/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTEwODIz/NDQ5LTE1MDQ4OTc4/NjctNTQ5MC5qcGVn.jpeg",
+        "title": "Play Dead",
+        "year": 2017,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "2",
+            "text": "Gatefold",
+            "descriptions": ["LP", "Album", "Stereo"]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Wojtek Records",
+            "catno": "WTK-150030LP",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 923386,
+            "resource_url": "https://api.discogs.com/labels/923386"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Mutemath",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 247688,
+            "resource_url": "https://api.discogs.com/artists/247688"
+          }
+        ],
+        "genres": ["Pop"],
+        "styles": []
+      },
+      "folder_id": 1
+    },
+    {
+      "id": 9411673,
+      "instance_id": 2045414623,
+      "date_added": "2025-07-27T23:30:36-07:00",
+      "rating": 0,
+      "basic_information": {
+        "id": 9411673,
+        "master_id": 1095765,
+        "master_url": "https://api.discogs.com/masters/1095765",
+        "resource_url": "https://api.discogs.com/releases/9411673",
+        "thumb": "https://i.discogs.com/C8RiGV4Kfq8nQHP1fmErnjMG2vvwdhO5P8MK_dzDKeY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk0MTE2/NzMtMTQ4MDEwNzgw/NC04OTk0LmpwZWc.jpeg",
+        "cover_image": "https://i.discogs.com/-iz-ViuiClXvpEp-sTnL_-IMXV5id6s12u9KLtF3YIc/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTk0MTE2/NzMtMTQ4MDEwNzgw/NC04OTk0LmpwZWc.jpeg",
+        "title": "Changes",
+        "year": 2016,
+        "formats": [
+          {
+            "name": "Vinyl",
+            "qty": "1",
+            "descriptions": [
+              "LP",
+              "Album",
+              "Record Store Day",
+              "Limited Edition"
+            ]
+          }
+        ],
+        "labels": [
+          {
+            "name": "Wojtek Records",
+            "catno": "WTK-160020LP",
+            "entity_type": "1",
+            "entity_type_name": "Label",
+            "id": 923386,
+            "resource_url": "https://api.discogs.com/labels/923386"
+          }
+        ],
+        "artists": [
+          {
+            "name": "Mutemath",
+            "anv": "",
+            "join": "",
+            "role": "",
+            "tracks": "",
+            "id": 247688,
+            "resource_url": "https://api.discogs.com/artists/247688"
+          }
+        ],
+        "genres": ["Electronic", "Rock", "Funk / Soul"],
+        "styles": ["Alternative Rock"]
+      },
+      "folder_id": 1
+    }
+  ]
+}

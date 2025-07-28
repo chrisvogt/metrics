@@ -23,6 +23,10 @@ const envVarMappings = {
   'storage.cloud_storage_images_bucket': 'CLOUD_STORAGE_IMAGES_BUCKET',
   'storage.image_cdn_base_url': 'IMAGE_CDN_BASE_URL',
   
+  // Discogs
+  'discogs.api_key': 'DISCOGS_API_KEY',
+  'discogs.username': 'DISCOGS_USERNAME',
+
   // Flickr
   'flickr.api_key': 'FLICKR_API_KEY',
   'flickr.user_id': 'FLICKR_USER_ID',
