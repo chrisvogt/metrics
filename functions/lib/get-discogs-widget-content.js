@@ -9,7 +9,9 @@ const getDiscogsWidgetContent = async () => {
 
   const transformedMeta = {
     ...meta,
-    synced: new Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate()
+    ...(meta?.synced && {
+      synced: new Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate()
+    })
   }
 
   return {
