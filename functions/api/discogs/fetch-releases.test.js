@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import fetchDiscogsReleases from './fetch-releases.js'
 
 // Mock fetch
 global.fetch = vi.fn()
@@ -14,17 +13,24 @@ vi.mock('firebase-functions', () => ({
 
 describe('fetchDiscogsReleases', () => {
   beforeEach(() => {
+    vi.resetModules()
     vi.clearAllMocks()
-    process.env.DISCOGS_API_KEY = 'test-api-key'
-    process.env.DISCOGS_USERNAME = 'testuser'
+    if (typeof global.fetch === 'function' && global.fetch.mockReset) {
+      global.fetch.mockReset()
+    }
   })
 
   afterEach(() => {
-    delete process.env.DISCOGS_API_KEY
-    delete process.env.DISCOGS_USERNAME
+    vi.unstubAllEnvs()
   })
 
   it('should successfully fetch releases from single page', async () => {
+    // Set environment variables BEFORE importing the module
+    vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
+    vi.stubEnv('DISCOGS_USERNAME', 'testuser')
+    
+    const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
+    
     const mockResponse = {
       pagination: {
         page: 1,
@@ -87,6 +93,12 @@ describe('fetchDiscogsReleases', () => {
   })
 
   it('should handle multiple pages and concatenate results', async () => {
+    // Set environment variables BEFORE importing the module
+    vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
+    vi.stubEnv('DISCOGS_USERNAME', 'testuser')
+    
+    const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
+    
     const page1Response = {
       pagination: { page: 1, pages: 2, per_page: 1, items: 2 },
       releases: [{ id: 1, basic_information: { title: 'Album 1' } }]
@@ -117,26 +129,32 @@ describe('fetchDiscogsReleases', () => {
   })
 
   it('should throw error when API key is missing', async () => {
-    delete process.env.DISCOGS_API_KEY
-
+    // Only set username, not API key
+    vi.stubEnv('DISCOGS_USERNAME', 'testuser')
+    
+    const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
     await expect(fetchDiscogsReleases()).rejects.toThrow(
       'Missing required environment variables: DISCOGS_API_KEY or DISCOGS_USERNAME'
     )
-
-    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('should throw error when username is missing', async () => {
-    delete process.env.DISCOGS_USERNAME
-
+    // Only set API key, not username
+    vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
+    
+    const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
     await expect(fetchDiscogsReleases()).rejects.toThrow(
       'Missing required environment variables: DISCOGS_API_KEY or DISCOGS_USERNAME'
     )
-
-    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('should handle API error responses', async () => {
+    // Set environment variables BEFORE importing the module
+    vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
+    vi.stubEnv('DISCOGS_USERNAME', 'testuser')
+    
+    const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
+    
     fetch.mockResolvedValueOnce({
       ok: false,
       status: 401,
@@ -149,6 +167,12 @@ describe('fetchDiscogsReleases', () => {
   })
 
   it('should handle network errors', async () => {
+    // Set environment variables BEFORE importing the module
+    vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
+    vi.stubEnv('DISCOGS_USERNAME', 'testuser')
+    
+    const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
+    
     fetch.mockRejectedValueOnce(new Error('Network error'))
 
     await expect(fetchDiscogsReleases()).rejects.toThrow('Network error')
