@@ -11,7 +11,8 @@ import transformDiscogsRelease from '../transformers/transform-discogs-release.j
 
 import { 
   CLOUD_STORAGE_IMAGES_BUCKET, 
-  DATABASE_COLLECTION_DISCOGS 
+  DATABASE_COLLECTION_DISCOGS,
+  DISCOGS_USERNAME
 } from '../constants.js'
 
 /*
@@ -102,6 +103,9 @@ const syncDiscogsData = async () => {
       },
       metrics: {
         'LPs Owned': pagination.items
+      },
+      profile: {
+        profileURL: `https://www.discogs.com/user/${DISCOGS_USERNAME}/collection`
       },
       meta: {
         synced: Timestamp.now(),
