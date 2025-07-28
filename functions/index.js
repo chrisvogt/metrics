@@ -18,6 +18,7 @@ import {
   getWidgetContent,
   validWidgetIds
 } from './lib/get-widget-content.js'
+import syncDiscogsDataJob from './jobs/sync-discogs-data.js'
 import syncGoodreadsDataJob from './jobs/sync-goodreads-data.js'
 import syncInstagramDataJob from './jobs/sync-instagram-data.js'
 import syncSpotifyDataJob from './jobs/sync-spotify-data.js'
@@ -97,6 +98,7 @@ const corsOptions = {
 }
 
 const syncHandlersByProvider = {
+  discogs: syncDiscogsDataJob,
   goodreads: syncGoodreadsDataJob,
   instagram: syncInstagramDataJob,
   spotify: syncSpotifyDataJob,
