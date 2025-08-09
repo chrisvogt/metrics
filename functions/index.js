@@ -29,6 +29,7 @@ import syncInstagramDataJob from './jobs/sync-instagram-data.js'
 import syncSpotifyDataJob from './jobs/sync-spotify-data.js'
 import syncSteamDataJob from './jobs/sync-steam-data.js'
 import syncFlickrDataJob from './jobs/sync-flickr-data.js'
+import rateLimiter from './middleware/rate-limiter.js'
 
 const firebaseServiceAccountToken = JSON.parse(readFileSync('./token.json', 'utf8'))
 
@@ -115,6 +116,39 @@ const buildFailureResponse = (err = {}) => ({
   error: err.message || err,
 })
 
+// Authentication middleware
+const authenticateUser = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        ok: false,
+        error: 'No valid authorization header found'
+      })
+    }
+
+    const token = authHeader.split('Bearer ')[1]
+    const decodedToken = await admin.auth().verifyIdToken(token)
+    
+    // Check if user's email domain matches chrisvogt.me
+    if (!decodedToken.email || !decodedToken.email.endsWith('@chrisvogt.me')) {
+      return res.status(403).json({
+        ok: false,
+        error: 'Access denied. Only chrisvogt.me domain users are allowed.'
+      })
+    }
+
+    req.user = decodedToken
+    next()
+  } catch (error) {
+    logger.error('Authentication error:', error)
+    return res.status(401).json({
+      ok: false,
+      error: 'Invalid or expired token'
+    })
+  }
+}
+
 const expressApp = express()
 
 // Enable compression middleware
@@ -128,6 +162,7 @@ const corsAllowList = [
   /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
   /localhost:?(\d+)?$/,
   /^https?:\/\/8ms\.4a9\.mytemp\.website$/,
+  /^https?:\/\/metrics\.dev-chrisvogt\.me:?(\d+)?$/,
 ]
 
 const corsOptions = {
@@ -143,8 +178,12 @@ const syncHandlersByProvider = {
   flickr: syncFlickrDataJob
 }
 
+// Protected sync endpoint - requires authentication
 expressApp.get(
   '/api/widgets/sync/:provider', 
+  cors(corsOptions),
+  rateLimiter(15 * 60 * 1000, 10), // 10 requests per 15 minutes for sync
+  authenticateUser,
   async (req, res) => {
     const provider = req.params.provider
     const handler = syncHandlersByProvider[provider]
@@ -152,6 +191,7 @@ expressApp.get(
     if (!handler) {
       logger.log(`Attempted to sync an unrecognized provider: ${provider}`)
       res.status(400).send('Unrecognized or unsupported provider.')
+      return
     }
 
     try {
@@ -164,6 +204,7 @@ expressApp.get(
   }
 )
 
+// Public widget endpoint - no authentication required
 expressApp.get(
   '/api/widgets/:provider',
   cors(corsOptions),
@@ -195,6 +236,56 @@ expressApp.get(
     }
 
     return res.end()
+  }
+)
+
+// New protected user info endpoint
+expressApp.get(
+  '/api/user/profile',
+  cors(corsOptions),
+  rateLimiter(15 * 60 * 1000, 50), // 50 requests per 15 minutes for profile
+  authenticateUser,
+  async (req, res) => {
+    try {
+      const userRecord = await admin.auth().getUser(req.user.uid)
+      const response = buildSuccessResponse({
+        uid: userRecord.uid,
+        email: userRecord.email,
+        displayName: userRecord.displayName,
+        photoURL: userRecord.photoURL,
+        emailVerified: userRecord.emailVerified,
+        creationTime: userRecord.metadata.creationTime,
+        lastSignInTime: userRecord.metadata.lastSignInTime
+      })
+      res.status(200).send(response)
+    } catch (err) {
+      logger.error('Error fetching user profile:', err)
+      const response = buildFailureResponse(err)
+      res.status(500).send(response)
+    }
+  }
+)
+
+// New logout endpoint (optional - for server-side logout if needed)
+expressApp.post(
+  '/api/auth/logout',
+  cors(corsOptions),
+  authenticateUser,
+  async (req, res) => {
+    try {
+      // Revoke refresh tokens for the user
+      await admin.auth().revokeRefreshTokens(req.user.uid)
+      res.status(200).send({
+        ok: true,
+        message: 'User logged out successfully'
+      })
+    } catch (err) {
+      logger.error('Error during logout:', err)
+      res.status(500).send({
+        ok: false,
+        error: 'Logout failed'
+      })
+    }
   }
 )
 

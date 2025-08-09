@@ -30,7 +30,8 @@
       "port": 8080
     },
     "hosting": {
-      "port": 5002
+      "port": 8084,
+      "host": "metrics.dev-chrisvogt.me"
     },
     "ui": {
       "enabled": true,
