@@ -14,10 +14,15 @@ import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { defineString } from 'firebase-functions/params'
 import { readFileSync } from 'fs'
 
+// Import v1 functions for auth triggers
+import { auth } from 'firebase-functions/v1'
+
 import {
   getWidgetContent,
   validWidgetIds
 } from './lib/get-widget-content.js'
+import createUserJob from './jobs/create-user.js'
+import deleteUserJob from './jobs/delete-user.js'
 import syncDiscogsDataJob from './jobs/sync-discogs-data.js'
 import syncGoodreadsDataJob from './jobs/sync-goodreads-data.js'
 import syncInstagramDataJob from './jobs/sync-instagram-data.js'
@@ -32,7 +37,7 @@ const storageFirestoreDatabaseUrl = defineString('STORAGE_FIRESTORE_DATABASE_URL
 
 admin.initializeApp({
   credential: admin.credential.cert(firebaseServiceAccountToken),
-  databaseURL: storageFirestoreDatabaseUrl.value(),
+  databaseURL: storageFirestoreDatabaseUrl,
 })
 
 admin.firestore().settings({
@@ -67,6 +72,38 @@ export const syncFlickrData = onSchedule({
   schedule: 'every day 02:00',
   region: 'us-central1'
 }, () => syncFlickrDataJob())
+
+export const handleUserCreation = auth.user().onCreate(async (user) => {
+  // Create user record in Firestore
+  const result = await createUserJob(user)
+  
+  if (result.result === 'SUCCESS') {
+    logger.info('User creation trigger completed successfully', {
+      uid: user.uid
+    })
+  } else {
+    logger.error('User creation trigger failed', {
+      uid: user.uid,
+      error: result.error
+    })
+  }
+})
+
+export const handleUserDeletion = auth.user().onDelete(async (user) => {
+  // Delete user record from Firestore
+  const result = await deleteUserJob(user)
+  
+  if (result.result === 'SUCCESS') {
+    logger.info('User deletion trigger completed successfully', {
+      uid: user.uid
+    })
+  } else {
+    logger.error('User deletion trigger failed', {
+      uid: user.uid,
+      error: result.error
+    })
+  }
+})
 
 const buildSuccessResponse = (payload) => ({
   ok: true,

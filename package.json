@@ -1,0 +1,12 @@
+{
+  "name": "firebase-user-creation-test",
+  "version": "1.0.0",
+  "description": "Test script for Firebase user creation function",
+  "main": "test-user-creation.js",
+  "scripts": {
+    "test": "NODE_ENV=development node test-user-creation.js"
+  },
+  "dependencies": {
+    "firebase": "^10.0.0"
+  }
+}
