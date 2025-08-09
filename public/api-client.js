@@ -4,9 +4,72 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  // Get the stored JWT token
+  // Get the stored JWT token (fallback to localStorage)
   getAuthToken() {
+    // First try to get from session cookie
+    const sessionCookie = this.getSessionCookie();
+    if (sessionCookie) {
+      return sessionCookie;
+    }
+    
+    // Fallback to localStorage
     return localStorage.getItem('authToken');
+  }
+
+  // Get session cookie if it exists
+  getSessionCookie() {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'session') {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  // Create a session cookie from JWT token
+  async createSession(token) {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/auth/session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include' // Important: include cookies
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create session: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Session cookie created successfully');
+      return result;
+    } catch (error) {
+      console.error('Error creating session cookie:', error);
+      throw error;
+    }
+  }
+
+  // Clear session cookie
+  clearSession() {
+    // Clear the session cookie by setting it to expire in the past
+    document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    localStorage.removeItem('authToken');
+  }
+
+  // List all cookies (for debugging)
+  listAllCookies() {
+    const cookies = {};
+    document.cookie.split(';').forEach(cookie => {
+      const [name, value] = cookie.trim().split('=');
+      if (name && value) {
+        cookies[name] = value;
+      }
+    });
+    return cookies;
   }
 
   // Make an authenticated API request
@@ -23,6 +86,7 @@ class ApiClient {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      credentials: 'include' // Include cookies in requests
     };
 
     const finalOptions = {
@@ -80,9 +144,20 @@ class ApiClient {
 
   // Logout (server-side)
   async logout() {
-    return this.makeRequest('/api/auth/logout', {
-      method: 'POST',
-    });
+    try {
+      const result = await this.makeRequest('/api/auth/logout', {
+        method: 'POST',
+      });
+      
+      // Clear local session data
+      this.clearSession();
+      
+      return result;
+    } catch (error) {
+      // Even if server logout fails, clear local session
+      this.clearSession();
+      throw error;
+    }
   }
 }
 

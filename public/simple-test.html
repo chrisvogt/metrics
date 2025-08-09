@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Auth Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 1rem;
+            margin-bottom: 1rem;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            border-left: 4px solid #007bff;
+        }
+        .success {
+            border-left-color: #28a745;
+        }
+        .error {
+            border-left-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Authentication Test</h1>
+    
+    <div class="test-section">
+        <h2>Firebase Auth Test</h2>
+        <button class="button" onclick="testLogin()">Test Login</button>
+        <button class="button" onclick="testLogout()">Test Logout</button>
+        <button class="button" onclick="getToken()">Get Token</button>
+        <div id="authResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>API Test (JWT Token)</h2>
+        <button class="button" onclick="testApiCall()">Test API Call</button>
+        <div id="apiResult"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getAuth, 
+            signInWithPopup, 
+            GoogleAuthProvider, 
+            signOut,
+            onAuthStateChanged,
+            connectAuthEmulator
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { firebaseConfig } from './firebase-config.js';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // Connect to emulator in development
+        if (window.location.hostname === 'metrics.dev-chrisvogt.me') {
+          connectAuthEmulator(auth, 'http://127.0.0.1:9099');
+        }
+        
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({
+            hd: 'chrisvogt.me'
+        });
+
+        let currentToken = null;
+
+        // Global functions for testing
+        window.testLogin = async function() {
+            const resultDiv = document.getElementById('authResult');
+            try {
+                resultDiv.innerHTML = '<div class="result">Logging in...</div>';
+                const result = await signInWithPopup(auth, provider);
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ Login successful!
+                        <p><strong>Email:</strong> ${result.user.email}</p>
+                        <p><strong>UID:</strong> ${result.user.uid}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Login failed: ${error.message}
+                    </div>
+                `;
+                console.error('Login error:', error);
+            }
+        };
+
+        window.testLogout = async function() {
+            const resultDiv = document.getElementById('authResult');
+            try {
+                resultDiv.innerHTML = '<div class="result">Logging out...</div>';
+                await signOut(auth);
+                resultDiv.innerHTML = '<div class="result success">✅ Logout successful!</div>';
+                currentToken = null;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Logout failed: ${error.message}
+                    </div>
+                `;
+                console.error('Logout error:', error);
+            }
+        };
+
+        window.getToken = async function() {
+            const resultDiv = document.getElementById('authResult');
+            const user = auth.currentUser;
+            
+            if (!user) {
+                resultDiv.innerHTML = '<div class="result error">❌ No user logged in</div>';
+                return;
+            }
+
+            try {
+                resultDiv.innerHTML = '<div class="result">Getting token...</div>';
+                currentToken = await user.getIdToken();
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ Token obtained!
+                        <p><strong>Token (first 50 chars):</strong> ${currentToken.substring(0, 50)}...</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Failed to get token: ${error.message}
+                    </div>
+                `;
+                console.error('Token error:', error);
+            }
+        };
+
+        window.testApiCall = async function() {
+            const resultDiv = document.getElementById('apiResult');
+            
+            if (!currentToken) {
+                resultDiv.innerHTML = '<div class="result error">❌ No token available. Get a token first.</div>';
+                return;
+            }
+
+            try {
+                resultDiv.innerHTML = '<div class="result">Making API call...</div>';
+                
+                const response = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        ✅ API call successful!
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ API call failed: ${error.message}
+                    </div>
+                `;
+                console.error('API call error:', error);
+            }
+        };
+
+        // Auth state observer
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('User signed in:', user.uid);
+            } else {
+                console.log('User signed out');
+                currentToken = null;
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Simple test page loaded');
+        });
+    </script>
+</body>
+</html>
