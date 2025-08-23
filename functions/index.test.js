@@ -257,7 +257,8 @@ describe('index.js', () => {
       
       expect(admin.default.initializeApp).toHaveBeenCalledWith({
         credential: expect.any(Object),
-        databaseURL: 'mock-database-url'
+        databaseURL: 'mock-database-url',
+        projectId: 'personal-stats-chrisvogt'
       })
       
       expect(firestoreSettingsMock).toHaveBeenCalledWith({
