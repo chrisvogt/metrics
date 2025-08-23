@@ -53,6 +53,50 @@ npm install
 
 You'll also need to [download an Admin SDK token](https://console.firebase.google.com/u/1/project/personal-stats-chrisvogt/settings/serviceaccounts/adminsdk) and place it in the /functions directory, at /functions/token.json.
 
+### Environment Variables
+
+For local development, you'll need to set up environment variables. Copy the template file and fill in your values:
+
+```bash
+# In the /functions directory
+cp env.template .env
+# Edit .env with your actual Firebase configuration
+```
+
+**Important:** Never commit the `.env` file to version control. It contains sensitive information like API keys.
+
+### Firebase Configuration
+
+The Firebase configuration is now served dynamically from the backend to prevent hardcoding sensitive values in the client. You can set these values using either method:
+
+#### Option 1: Local .env file (for development)
+Set these environment variables in your `functions/.env` file:
+
+- `FIREBASE_API_KEY` - Your Firebase API key
+- `FIREBASE_AUTH_DOMAIN` - Your Firebase auth domain
+- `FIREBASE_PROJECT_ID` - Your Firebase project ID
+- `FIREBASE_STORAGE_BUCKET` - Your Firebase storage bucket
+- `FIREBASE_MESSAGING_SENDER_ID` - Your Firebase messaging sender ID
+- `FIREBASE_APP_ID` - Your Firebase app ID
+- `FIREBASE_DATABASE_URL` - Your Firebase database URL
+- `FIREBASE_MEASUREMENT_ID` - Your Firebase measurement ID
+
+#### Option 2: Firebase Runtime Config (recommended for production)
+Use the same system you're already using for other secrets:
+
+```bash
+firebase functions:config:set firebase.api_key="your_api_key"
+firebase functions:config:set firebase.auth_domain="your_project_id.firebaseapp.com"
+firebase functions:config:set firebase.project_id="your_project_id"
+firebase functions:config:set firebase.storage_bucket="your_project_id.firebasestorage.app"
+firebase functions:config:set firebase.messaging_sender_id="your_messaging_sender_id"
+firebase functions:config:set firebase.app_id="your_app_id"
+firebase functions:config:set firebase.database_url="https://your_project_id.firebaseio.com"
+firebase functions:config:set firebase.measurement_id="your_measurement_id"
+```
+
+Then download the config: `firebase functions:config:get > .runtimeconfig.json`
+
 Finally, you can use the following command to download the secrets from Firebase. You'll need these to run any of the sync jobs. These belong in /functions/.runtimeconfig.json.
 
 ```

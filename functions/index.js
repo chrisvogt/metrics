@@ -413,6 +413,39 @@ expressApp.post('/api/auth/session', cors(corsOptions), async (req, res) => {
   }
 })
 
+// Firebase config endpoint - serves configuration dynamically
+expressApp.get('/api/firebase-config', cors(corsOptions), (req, res) => {
+  // Use Firebase runtime config (same system you're already using)
+  const config = {
+    apiKey: process.env.FIREBASE_API_KEY || 
+             process.env.FIREBASE_FUNCTIONS_CONFIG_FIREBASE?.api_key || 
+             'YOUR_API_KEY_HERE',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || 
+                process.env.FIREBASE_FUNCTIONS_CONFIG_FIREBASE?.auth_domain || 
+                'YOUR_PROJECT_ID.firebaseapp.com',
+    projectId: process.env.FIREBASE_PROJECT_ID || 
+               process.env.FIREBASE_FUNCTIONS_CONFIG_FIREBASE?.project_id || 
+               'personal-stats-chrisvogt',
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 
+                   process.env.FIREBASE_FUNCTIONS_CONFIG_FIREBASE?.storage_bucket || 
+                   'YOUR_PROJECT_ID.firebasestorage.app',
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || 
+                       process.env.FIREBASE_FUNCTIONS_CONFIG_FIREBASE?.messaging_sender_id || 
+                       'YOUR_MESSAGING_SENDER_ID',
+    appId: process.env.FIREBASE_APP_ID || 
+            process.env.FIREBASE_FUNCTIONS_CONFIG_FIREBASE?.app_id || 
+            'YOUR_APP_ID',
+    databaseURL: process.env.FIREBASE_DATABASE_URL || 
+                 process.env.FIREBASE_FUNCTIONS_CONFIG_FIREBASE?.database_url || 
+                 'https://YOUR_PROJECT_ID.firebaseio.com',
+    measurementId: process.env.FIREBASE_MEASUREMENT_ID || 
+                   process.env.FIREBASE_FUNCTIONS_CONFIG_FIREBASE?.measurement_id || 
+                   'YOUR_MEASUREMENT_ID'
+  }
+  
+  res.json(config)
+})
+
 // New logout endpoint (optional - for server-side logout if needed)
 expressApp.post(
   '/api/auth/logout',

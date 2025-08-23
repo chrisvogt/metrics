@@ -422,30 +422,43 @@
         } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Import Firebase config and API client
-        import { firebaseConfig } from './firebase-config.js';
+        import { loadFirebaseConfig } from './firebase-config.js';
         import { ApiClient } from './api-client.js';
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        // Initialize Firebase with dynamic config
+        let app, auth;
         
-        // Connect to emulator in development
-        if (window.location.hostname === 'metrics.dev-chrisvogt.me' || 
-            window.location.hostname === 'localhost' || 
-            window.location.hostname === '127.0.0.1') {
-          connectAuthEmulator(auth, 'http://127.0.0.1:9099');
-          console.log('Connected to Firebase Auth emulator');
+        async function initializeFirebase() {
+          try {
+            const firebaseConfig = await loadFirebaseConfig();
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            
+            // Connect to emulator in development
+            if (window.location.hostname === 'metrics.dev-chrisvogt.me' || 
+                window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1') {
+              connectAuthEmulator(auth, 'http://127.0.0.1:9099');
+              console.log('Connected to Firebase Auth emulator');
+            }
+            
+            // Initialize the rest of the app
+            initializeApp();
+          } catch (error) {
+            console.error('Failed to initialize Firebase:', error);
+          }
         }
         
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({
-            hd: 'chrisvogt.me' // Restrict to your domain
-        });
+        function initializeApp() {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({
+              hd: 'chrisvogt.me' // Restrict to your domain
+          });
 
-        // Initialize API client
-        const apiClient = new ApiClient();
+          // Initialize API client
+          const apiClient = new ApiClient();
 
-        // Global variables
+          // Global variables
         let phoneVerifier = null;
         let phoneConfirmationResult = null;
 
@@ -687,6 +700,10 @@
                 phoneVerifier = null;
             }
         });
+        } // Close initializeApp function
+        
+        // Start the app
+        initializeFirebase();
     </script>
 </body>
 </html>
