@@ -156,6 +156,10 @@ const buildFailureResponse = (err = {}) => ({
 
 // Authentication middleware
 const authenticateUser = async (req, res, next) => {
+  logger.info('Authenticating user', {
+    headers: req.headers,
+    cookies: req.cookies,
+  })
   try {
     // First try to authenticate with session cookie
     const sessionCookie = req.cookies?.session
@@ -240,15 +244,17 @@ const authenticateUser = async (req, res, next) => {
         emailVerified: decodedToken.email_verified
       })
 
-      // Check if user's email domain matches chrisvogt.me
-      if (!decodedToken.email || !decodedToken.email.endsWith('@chrisvogt.me')) {
+      // Check if user's email domain matches chrisvogt.me or chronogrove.com
+      if (!decodedToken.email || 
+          (!decodedToken.email.endsWith('@chrisvogt.me') && 
+           !decodedToken.email.endsWith('@chronogrove.com'))) {
         logger.warn('JWT email domain rejected', {
           email: decodedToken.email,
           uid: decodedToken.uid
         })
         return res.status(403).json({
           ok: false,
-          error: 'Access denied. Only chrisvogt.me domain users are allowed.',
+          error: 'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
         })
       }
 

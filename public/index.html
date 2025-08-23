@@ -731,6 +731,205 @@
         opacity: 0.8;
       }
     }
+    /* API Testing Interface Styles */
+    .api-section-container {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .auth-status {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .auth-status-content {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .api-endpoints {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .endpoint-group {
+      margin-bottom: 25px;
+    }
+
+    .endpoint-group h4 {
+      color: #495057;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+
+    .endpoint-item {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+
+    .method {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: white;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .method.get {
+      background: #28a745;
+    }
+
+    .method.post {
+      background: #007bff;
+    }
+
+    .method.put {
+      background: #ffc107;
+      color: #212529;
+    }
+
+    .method.delete {
+      background: #dc3545;
+    }
+
+    .endpoint-url {
+      font-family: 'Courier New', monospace;
+      background: #e9ecef;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+      flex: 1;
+    }
+
+    .endpoint-params {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .endpoint-params label {
+      font-weight: 500;
+      color: #495057;
+      min-width: 80px;
+    }
+
+    .form-control {
+      padding: 6px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+      min-width: 150px;
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .test-results {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      padding: 20px;
+    }
+
+    .results-container {
+      min-height: 100px;
+    }
+
+    .no-results {
+      color: #6c757d;
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .test-result {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .test-result.success {
+      border-left: 4px solid #28a745;
+    }
+
+    .test-result.error {
+      border-left: 4px solid #dc3545;
+    }
+
+    .test-result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .test-result-title {
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .test-result-status {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .test-result-status.success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .test-result-status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .test-result-details {
+      font-family: 'Courier New', monospace;
+      background: #e9ecef;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .test-result-url {
+      color: #007bff;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
   </style>
 </head>
 
@@ -901,19 +1100,85 @@
 
     <div class="content-container api-section-container">
       <div class="api-section">
-        <h2>Available API Endpoints</h2>
-        <div class="api-endpoint">
-          <h3>Widget Data</h3>
-          <p>Get widget content for various platforms:</p>
-          <p class="endpoint-url">GET /api/widgets/{provider}</p>
-          <p>Providers: spotify, goodreads, steam, instagram, discogs, flickr</p>
+        <h2>API Testing Interface</h2>
+        
+        <!-- Authentication Status -->
+        <div class="auth-status">
+          <h3>Authentication Status</h3>
+          <div id="authStatus" class="auth-status-content">
+            <p>Not authenticated</p>
+            <button id="getTokenBtn" class="btn btn-primary" onclick="getFreshToken()">Get Fresh ID Token</button>
+          </div>
         </div>
 
-        <div class="api-endpoint">
-          <h3>Sync Data</h3>
-          <p>Trigger data sync for a specific provider:</p>
-          <p class="endpoint-url">GET /api/widgets/sync/{provider}</p>
-          <p>Requires authentication</p>
+        <!-- API Endpoints -->
+        <div class="api-endpoints">
+          <h3>Available Endpoints</h3>
+          
+          <!-- Widget Data Endpoints -->
+          <div class="endpoint-group">
+            <h4>Widget Data (No Auth Required)</h4>
+            <div class="endpoint-item">
+              <div class="endpoint-header">
+                <span class="method get">GET</span>
+                <span class="endpoint-url">/api/widgets/{provider}</span>
+                <button class="btn btn-sm btn-secondary" onclick="testEndpoint('widgets', false)">Test</button>
+              </div>
+              <p>Get widget content for various platforms</p>
+              <div class="endpoint-params">
+                <label>Provider:</label>
+                <select id="widgetProvider" class="form-control">
+                  <option value="spotify">spotify</option>
+                  <option value="steam">steam</option>
+                  <option value="goodreads">goodreads</option>
+                  <option value="instagram">instagram</option>
+                  <option value="discogs">discogs</option>
+                  <option value="flickr">flickr</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sync Data Endpoints -->
+          <div class="endpoint-group">
+            <h4>Sync Data (Authentication Required)</h4>
+            <div class="endpoint-item">
+              <div class="endpoint-header">
+                <span class="method post">POST</span>
+                <span class="endpoint-url">/api/auth/session</span>
+                <button class="btn btn-sm btn-secondary" onclick="testEndpoint('session', true)">Test</button>
+              </div>
+              <p>Create session cookie from ID token</p>
+            </div>
+            
+            <div class="endpoint-item">
+              <div class="endpoint-header">
+                <span class="method get">GET</span>
+                <span class="endpoint-url">/api/widgets/sync/{provider}</span>
+                <button class="btn btn-sm btn-secondary" onclick="testEndpoint('sync', true)">Test</button>
+              </div>
+              <p>Trigger data sync for a specific provider</p>
+              <div class="endpoint-params">
+                <label>Provider:</label>
+                <select id="syncProvider" class="form-control">
+                  <option value="spotify">spotify</option>
+                  <option value="steam">steam</option>
+                  <option value="goodreads">goodreads</option>
+                  <option value="instagram">instagram</option>
+                  <option value="discogs">discogs</option>
+                  <option value="flickr">flickr</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="test-results">
+          <h3>Test Results</h3>
+          <div id="testResults" class="results-container">
+            <p class="no-results">No tests run yet. Click "Test" buttons above to test endpoints.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -1212,6 +1477,202 @@
           document.getElementById('phoneCode').value = '';
           phoneConfirmationResult = null;
           phoneVerifier = null;
+        }
+      });
+
+      // API Testing Functions
+      window.getFreshToken = async function() {
+        const user = auth.currentUser;
+        if (!user) {
+          showMessage('Please sign in first', 'error');
+          return;
+        }
+
+        try {
+          const token = await user.getIdToken(true); // Force refresh
+          const tokenPreview = token.substring(0, 50) + '...';
+          
+          document.getElementById('authStatus').innerHTML = `
+            <p><strong>Authenticated as:</strong> ${user.email}</p>
+            <p><strong>ID Token:</strong> <code>${tokenPreview}</code></p>
+            <button class="btn btn-success" onclick="copyToken()">Copy Token</button>
+            <button class="btn btn-secondary" onclick="clearAuth()">Clear</button>
+          `;
+          
+          // Store token for testing
+          window.currentIdToken = token;
+          showMessage('Fresh ID token obtained successfully!', 'success');
+        } catch (error) {
+          console.error('Error getting fresh token:', error);
+          showMessage('Failed to get fresh token: ' + error.message, 'error');
+        }
+      };
+
+      window.copyToken = function() {
+        if (window.currentIdToken) {
+          navigator.clipboard.writeText(window.currentIdToken);
+          showMessage('Token copied to clipboard!', 'success');
+        }
+      };
+
+      window.clearAuth = function() {
+        window.currentIdToken = null;
+        document.getElementById('authStatus').innerHTML = `
+          <p>Not authenticated</p>
+          <button id="getTokenBtn" class="btn btn-primary" onclick="getFreshToken()">Get Fresh ID Token</button>
+        `;
+        showMessage('Authentication cleared', 'info');
+      };
+
+      window.testEndpoint = async function(endpointType, requiresAuth) {
+        if (requiresAuth && !window.currentIdToken) {
+          showMessage('Please get a fresh ID token first', 'error');
+          return;
+        }
+
+        let url, method, body;
+        // Detect current environment and use appropriate base URL
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                             window.location.hostname === '127.0.0.1' || 
+                             window.location.hostname === 'metrics.dev-chrisvogt.me';
+        
+        const baseUrl = isDevelopment ? '' : 'https://metrics.chrisvogt.me';
+
+        switch (endpointType) {
+          case 'widgets':
+            const widgetProvider = document.getElementById('widgetProvider').value;
+            url = `${baseUrl}/api/widgets/${widgetProvider}`;
+            method = 'GET';
+            break;
+          
+          case 'session':
+            url = `${baseUrl}/api/auth/session`;
+            method = 'POST';
+            body = JSON.stringify({});
+            break;
+          
+          case 'sync':
+            const syncProvider = document.getElementById('syncProvider').value;
+            url = `${baseUrl}/api/widgets/sync/${syncProvider}`;
+            method = 'GET';
+            break;
+          
+          default:
+            showMessage('Unknown endpoint type', 'error');
+            return;
+        }
+
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+
+        if (requiresAuth) {
+          headers['Authorization'] = `Bearer ${window.currentIdToken}`;
+        }
+
+        const options = {
+          method,
+          headers,
+          credentials: 'include'
+        };
+
+        if (body) {
+          options.body = body;
+        }
+
+        try {
+          const startTime = Date.now();
+          const response = await fetch(url, options);
+          const endTime = Date.now();
+          const responseTime = endTime - startTime;
+
+          let responseData;
+          try {
+            responseData = await response.json();
+          } catch {
+            responseData = await response.text();
+          }
+
+          const result = {
+            endpoint: endpointType,
+            url,
+            method,
+            status: response.status,
+            statusText: response.statusText,
+            responseTime: `${responseTime}ms`,
+            headers: Object.fromEntries(response.headers.entries()),
+            data: responseData
+          };
+
+          addTestResult(result, response.ok);
+        } catch (error) {
+          const result = {
+            endpoint: endpointType,
+            url,
+            method,
+            error: error.message,
+            timestamp: new Date().toISOString()
+          };
+          addTestResult(result, false);
+        }
+      };
+
+      function addTestResult(result, success) {
+        const resultsContainer = document.getElementById('testResults');
+        const resultElement = document.createElement('div');
+        resultElement.className = `test-result ${success ? 'success' : 'error'}`;
+        
+        const statusClass = success ? 'success' : 'error';
+        const statusText = success ? 'Success' : 'Error';
+        
+        let details = '';
+        if (result.error) {
+          details = `Error: ${result.error}`;
+        } else if (result.data) {
+          details = JSON.stringify(result.data, null, 2);
+        }
+
+        resultElement.innerHTML = `
+          <div class="test-result-header">
+            <span class="test-result-title">${result.endpoint.toUpperCase()} - ${result.method} ${result.url}</span>
+            <span class="test-result-status ${statusClass}">${statusText}</span>
+          </div>
+          <div class="test-result-url">${result.url}</div>
+          ${result.status ? `<p><strong>Status:</strong> ${result.status} ${result.statusText}</p>` : ''}
+          ${result.responseTime ? `<p><strong>Response Time:</strong> ${result.responseTime}</p>` : ''}
+          ${details ? `<div class="test-result-details">${details}</div>` : ''}
+        `;
+
+        // Remove "no results" message if it exists
+        const noResults = resultsContainer.querySelector('.no-results');
+        if (noResults) {
+          noResults.remove();
+        }
+
+        // Add new result at the top
+        resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
+      }
+
+      // Update auth status when user signs in/out
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          // User is signed in - update auth status
+          if (document.getElementById('authStatus')) {
+            document.getElementById('authStatus').innerHTML = `
+              <p><strong>Authenticated as:</strong> ${user.email}</p>
+              <p>Click "Get Fresh ID Token" to test authenticated endpoints</p>
+              <button class="btn btn-primary" onclick="getFreshToken()">Get Fresh ID Token</button>
+            `;
+          }
+        } else {
+          // User is signed out - clear auth status
+          if (document.getElementById('authStatus')) {
+            document.getElementById('authStatus').innerHTML = `
+              <p>Not authenticated</p>
+              <button id="getTokenBtn" class="btn btn-primary" onclick="getFreshToken()">Get Fresh ID Token</button>
+            `;
+          }
+          window.currentIdToken = null;
         }
       });
     } // Close initializeApp function
