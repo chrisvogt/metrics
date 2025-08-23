@@ -417,14 +417,9 @@ expressApp.post('/api/auth/session', cors(corsOptions), async (req, res) => {
 expressApp.get('/api/firebase-config', cors(corsOptions), (req, res) => {
   // Build config from Firebase Admin SDK and environment variables
   const config = {
-    apiKey: process.env.FIREBASE_API_KEY,
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.FIREBASE_APP_ID,
-    databaseURL: process.env.FIREBASE_DATABASE_URL,
-    measurementId: process.env.FIREBASE_MEASUREMENT_ID
+    apiKey: process.env.CLIENT_API_KEY,
+    authDomain: process.env.CLIENT_AUTH_DOMAIN,
+    projectId: process.env.CLIENT_PROJECT_ID
   }
   
   res.json(config)

@@ -1,709 +1,759 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chris Vogt - Personal Metrics API</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-            margin: 2rem 0;
-        }
-        .header {
-            text-align: center;
-            padding: 3rem 2rem 2rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .ascii-art {
-            font-family: monospace;
-            white-space: pre;
-            font-size: 10px;
-            color: rgba(255,255,255,0.8);
-            margin-bottom: 1rem;
-        }
-        .header h1 {
-            margin: 0 0 0.5rem 0;
-            font-size: 2.5rem;
-            font-weight: 700;
-        }
-        .header p {
-            margin: 0;
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-        
-        /* Auth Section */
-        .auth-section {
-            padding: 2rem;
-        }
-        .auth-tabs {
-            display: flex;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        .auth-tab {
-            flex: 1;
-            padding: 1rem;
-            text-align: center;
-            background: none;
-            border: none;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
-        }
-        .auth-tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
-        .auth-tab:hover {
-            color: #667eea;
-        }
-        
-        .auth-content {
-            display: none;
-        }
-        .auth-content.active {
-            display: block;
-        }
-        
-        /* Form Styles */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #333;
-        }
-        .form-input {
-            width: 100%;
-            padding: 1rem;
-            border: 2px solid #e1e5e9;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
-        }
-        .form-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        .form-button {
-            width: 100%;
-            padding: 1rem;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 1rem;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-        .btn-secondary {
-            background: #f8f9fa;
-            color: #333;
-            border: 2px solid #e1e5e9;
-        }
-        .btn-secondary:hover {
-            background: #e9ecef;
-            border-color: #667eea;
-        }
-        .btn-google {
-            background: white;
-            color: #333;
-            border: 2px solid #e1e5e9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        .btn-google:hover {
-            border-color: #4285f4;
-            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.2);
-        }
-        .google-icon {
-            width: 20px;
-            height: 20px;
-        }
-        
-        /* Divider */
-        .divider {
-            text-align: center;
-            margin: 1.5rem 0;
-            position: relative;
-        }
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e1e5e9;
-        }
-        .divider span {
-            background: white;
-            padding: 0 1rem;
-            color: #666;
-            font-size: 0.9rem;
-        }
-        
-        /* User Info */
-        .user-info {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-        }
-        .user-info h3 {
-            margin: 0 0 1rem 0;
-            font-size: 1.5rem;
-        }
-        .user-detail {
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .user-detail strong {
-            min-width: 80px;
-        }
-        
-        /* Error/Success Messages */
-        .message {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            font-weight: 500;
-        }
-        .message.error {
-            background: #fee;
-            color: #c53030;
-            border: 1px solid #fed7d7;
-        }
-        .message.success {
-            background: #f0fff4;
-            color: #2f855a;
-            border: 1px solid #c6f6d5;
-        }
-        
-        /* Loading States */
-        .loading {
-            opacity: 0.7;
-            pointer-events: none;
-        }
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Hidden */
-        .hidden {
-            display: none;
-        }
-        
-        /* API Section */
-        .api-section {
-            background: #f8f9fa;
-            padding: 2rem;
-        }
-        .api-endpoint {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            border-left: 4px solid #667eea;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .endpoint-url {
-            font-family: monospace;
-            background: #f8f9fa;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            color: #495057;
-            display: inline-block;
-            margin: 0.5rem 0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chris Vogt - Personal Metrics API</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      margin: 2rem 0;
+    }
+
+    .header {
+      text-align: center;
+      padding: 3rem 2rem 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .ascii-art {
+      font-family: monospace;
+      white-space: pre;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 1rem;
+    }
+
+    .header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    .header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+
+    /* Auth Section */
+    .auth-section {
+      padding: 2rem;
+    }
+
+    .auth-tabs {
+      display: flex;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 1rem;
+      text-align: center;
+      background: none;
+      border: none;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+    }
+
+    .auth-tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .auth-tab:hover {
+      color: #667eea;
+    }
+
+    .auth-content {
+      display: none;
+    }
+
+    .auth-content.active {
+      display: block;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid #e1e5e9;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-button {
+      width: 100%;
+      padding: 1rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 1rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #333;
+      border: 2px solid #e1e5e9;
+    }
+
+    .btn-secondary:hover {
+      background: #e9ecef;
+      border-color: #667eea;
+    }
+
+    .btn-google {
+      background: white;
+      color: #333;
+      border: 2px solid #e1e5e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-google:hover {
+      border-color: #4285f4;
+      box-shadow: 0 5px 15px rgba(66, 133, 244, 0.2);
+    }
+
+    .google-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Divider */
+    .divider {
+      text-align: center;
+      margin: 1.5rem 0;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e1e5e9;
+    }
+
+    .divider span {
+      background: white;
+      padding: 0 1rem;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    /* User Info */
+    .user-info {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+    }
+
+    .user-info h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.5rem;
+    }
+
+    .user-detail {
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .user-detail strong {
+      min-width: 80px;
+    }
+
+    /* Error/Success Messages */
+    .message {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .message.error {
+      background: #fee;
+      color: #c53030;
+      border: 1px solid #fed7d7;
+    }
+
+    .message.success {
+      background: #f0fff4;
+      color: #2f855a;
+      border: 1px solid #c6f6d5;
+    }
+
+    /* Loading States */
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, .3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Hidden */
+    .hidden {
+      display: none;
+    }
+
+    /* API Section */
+    .api-section {
+      background: #f8f9fa;
+      padding: 2rem;
+    }
+
+    .api-endpoint {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      border-left: 4px solid #667eea;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .endpoint-url {
+      font-family: monospace;
+      background: #f8f9fa;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      color: #495057;
+      display: inline-block;
+      margin: 0.5rem 0;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="ascii-art">
- _        _                        _ 
-| |_ __ _| |_ _ __(_) ___ ___    __ _ _ __ (_)
-| __/ _` | __| '__| |/ __/ __|  / _` | '_ \| |
-| || (_| | |_| |  | | (__\__ \ | (_| | |_) | |
- \__\__,_|\__|_|  |_|\___|___|  \__,_| .__/|_|
-                                     |_|      
+  <div class="container">
+    <div class="header">
+      <div class="ascii-art">
+        _ _ _
+        | |_ __ _| |_ _ __(_) ___ ___ __ _ _ __ (_)
+        | __/ _` | __| '__| |/ __/ __| / _` | '_ \| |
+        | || (_| | |_| | | | (__\__ \ | (_| | |_) | |
+        \__\__,_|\__|_| |_|\___|___| \__,_| .__/|_|
+        |_|
 
-                                              by Chris Vogt
-            </div>
-            <h1>Personal Metrics API</h1>
-            <p>A collection of APIs for tracking personal metrics across various platforms.</p>
-        </div>
-
-        <div class="auth-section">
-            <div id="loginSection">
-                <div class="auth-tabs">
-                    <button class="auth-tab active" onclick="switchTab('email')">Email</button>
-                    <button class="auth-tab" onclick="switchTab('phone')">Phone</button>
-                    <button class="auth-tab" onclick="switchTab('google')">Google</button>
-                </div>
-
-                <!-- Email/Password Login -->
-                <div id="emailTab" class="auth-content active">
-                    <form id="emailForm" onsubmit="handleEmailLogin(event)">
-                        <div class="form-group">
-                            <label class="form-label" for="email">Email</label>
-                            <input type="email" id="email" class="form-input" placeholder="your@email.com" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="password">Password</label>
-                            <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
-                        </div>
-                        <button type="submit" class="form-button btn-primary">
-                            <span class="btn-text">Sign In</span>
-                            <span class="btn-loading hidden"><span class="spinner"></span> Signing in...</span>
-                        </button>
-                    </form>
-                    
-                    <div class="divider">
-                        <span>or</span>
-                    </div>
-                    
-                    <button class="form-button btn-google" onclick="handleGoogleLogin()">
-                        <svg class="google-icon" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Continue with Google
-                    </button>
-                </div>
-
-                <!-- Phone Login -->
-                <div id="phoneTab" class="auth-content">
-                    <form id="phoneForm" onsubmit="handlePhoneLogin(event)">
-                        <div class="form-group">
-                            <label class="form-label" for="phone">Phone Number</label>
-                            <input type="tel" id="phone" class="form-input" placeholder="+1 (555) 123-4567" required>
-                        </div>
-                        <div id="phoneCodeGroup" class="form-group hidden">
-                            <label class="form-label" for="phoneCode">Verification Code</label>
-                            <input type="text" id="phoneCode" class="form-input" placeholder="Enter 6-digit code" maxlength="6">
-                        </div>
-                        <button type="submit" class="form-button btn-primary">
-                            <span class="btn-text">Send Code</span>
-                            <span class="btn-loading hidden"><span class="spinner"></span> Sending...</span>
-                        </button>
-                    </form>
-                    
-                    <div class="divider">
-                        <span>or</span>
-                    </div>
-                    
-                    <button class="form-button btn-google" onclick="handleGoogleLogin()">
-                        <svg class="google-icon" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Continue with Google
-                    </button>
-                </div>
-
-                <!-- Google Login -->
-                <div id="googleTab" class="auth-content">
-                    <div style="text-align: center; padding: 2rem 0;">
-                        <p style="margin-bottom: 2rem; color: #666;">Sign in with your Google account</p>
-                        <button class="form-button btn-google" onclick="handleGoogleLogin()" style="max-width: 300px; margin: 0 auto;">
-                            <svg class="google-icon" viewBox="0 0 24 24">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            Continue with Google
-                        </button>
-                    </div>
-                </div>
-
-                <div id="messageContainer"></div>
-            </div>
-            
-            <div id="logoutSection" class="hidden">
-                <div class="user-info">
-                    <h3>Welcome back!</h3>
-                    <div class="user-detail">
-                        <strong>Email:</strong> <span id="userEmail"></span>
-                    </div>
-                    <div class="user-detail">
-                        <strong>User ID:</strong> <span id="userId"></span>
-                    </div>
-                </div>
-                <button id="logoutButton" class="form-button btn-secondary" onclick="handleLogout()">
-                    <span class="btn-text">Sign Out</span>
-                    <span class="btn-loading hidden"><span class="spinner"></span> Signing out...</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="api-section">
-            <h2>Available API Endpoints</h2>
-            <div class="api-endpoint">
-                <h3>Widget Data</h3>
-                <p>Get widget content for various platforms:</p>
-                <p class="endpoint-url">GET /api/widgets/{provider}</p>
-                <p>Providers: spotify, goodreads, steam, instagram, discogs, flickr</p>
-            </div>
-            
-            <div class="api-endpoint">
-                <h3>Sync Data</h3>
-                <p>Trigger data sync for a specific provider:</p>
-                <p class="endpoint-url">GET /api/widgets/sync/{provider}</p>
-                <p>Requires authentication</p>
-            </div>
-        </div>
+        by Chris Vogt
+      </div>
+      <h1>Personal Metrics API</h1>
+      <p>A collection of APIs for tracking personal metrics across various platforms.</p>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { 
-            getAuth, 
-            signInWithPopup, 
-            signInWithEmailAndPassword,
-            signInWithPhoneNumber,
-            RecaptchaVerifier,
-            GoogleAuthProvider, 
-            signOut,
-            onAuthStateChanged,
-            connectAuthEmulator
-        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    <div class="auth-section">
+      <div id="loginSection">
+        <div class="auth-tabs">
+          <button class="auth-tab active" onclick="switchTab('email')">Email</button>
+          <button class="auth-tab" onclick="switchTab('phone')">Phone</button>
+          <button class="auth-tab" onclick="switchTab('google')">Google</button>
+        </div>
 
-        // Import Firebase config and API client
-        import { loadFirebaseConfig } from './firebase-config.js';
-        import { ApiClient } from './api-client.js';
+        <!-- Email/Password Login -->
+        <div id="emailTab" class="auth-content active">
+          <form id="emailForm" onsubmit="handleEmailLogin(event)">
+            <div class="form-group">
+              <label class="form-label" for="email">Email</label>
+              <input type="email" id="email" class="form-input" placeholder="your@email.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="password">Password</label>
+              <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+            </div>
+            <button type="submit" class="form-button btn-primary">
+              <span class="btn-text">Sign In</span>
+              <span class="btn-loading hidden"><span class="spinner"></span> Signing in...</span>
+            </button>
+          </form>
 
-        // Initialize Firebase with dynamic config
-        let app, auth;
-        
-        async function initializeFirebase() {
-          try {
-            const firebaseConfig = await loadFirebaseConfig();
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            
-            // Connect to emulator in development
-            if (window.location.hostname === 'metrics.dev-chrisvogt.me' || 
-                window.location.hostname === 'localhost' || 
-                window.location.hostname === '127.0.0.1') {
-              connectAuthEmulator(auth, 'http://127.0.0.1:9099');
-              console.log('Connected to Firebase Auth emulator');
-            }
-            
-            // Initialize the rest of the app
-            initializeApp();
-          } catch (error) {
-            console.error('Failed to initialize Firebase:', error);
+          <div class="divider">
+            <span>or</span>
+          </div>
+
+          <button class="form-button btn-google" onclick="handleGoogleLogin()">
+            <svg class="google-icon" viewBox="0 0 24 24">
+              <path fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+            </svg>
+            Continue with Google
+          </button>
+        </div>
+
+        <!-- Phone Login -->
+        <div id="phoneTab" class="auth-content">
+          <form id="phoneForm" onsubmit="handlePhoneLogin(event)">
+            <div class="form-group">
+              <label class="form-label" for="phone">Phone Number</label>
+              <input type="tel" id="phone" class="form-input" placeholder="+1 (555) 123-4567" required>
+            </div>
+            <div id="phoneCodeGroup" class="form-group hidden">
+              <label class="form-label" for="phoneCode">Verification Code</label>
+              <input type="text" id="phoneCode" class="form-input" placeholder="Enter 6-digit code" maxlength="6">
+            </div>
+            <button type="submit" class="form-button btn-primary">
+              <span class="btn-text">Send Code</span>
+              <span class="btn-loading hidden"><span class="spinner"></span> Sending...</span>
+            </button>
+          </form>
+
+          <div class="divider">
+            <span>or</span>
+          </div>
+
+          <button class="form-button btn-google" onclick="handleGoogleLogin()">
+            <svg class="google-icon" viewBox="0 0 24 24">
+              <path fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+            </svg>
+            Continue with Google
+          </button>
+        </div>
+
+        <!-- Google Login -->
+        <div id="googleTab" class="auth-content">
+          <div style="text-align: center; padding: 2rem 0;">
+            <p style="margin-bottom: 2rem; color: #666;">Sign in with your Google account</p>
+            <button class="form-button btn-google" onclick="handleGoogleLogin()"
+              style="max-width: 300px; margin: 0 auto;">
+              <svg class="google-icon" viewBox="0 0 24 24">
+                <path fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+              </svg>
+              Continue with Google
+            </button>
+          </div>
+        </div>
+
+        <div id="messageContainer"></div>
+      </div>
+
+      <div id="logoutSection" class="hidden">
+        <div class="user-info">
+          <h3>Welcome back!</h3>
+          <div class="user-detail">
+            <strong>Email:</strong> <span id="userEmail"></span>
+          </div>
+          <div class="user-detail">
+            <strong>User ID:</strong> <span id="userId"></span>
+          </div>
+        </div>
+        <button id="logoutButton" class="form-button btn-secondary" onclick="handleLogout()">
+          <span class="btn-text">Sign Out</span>
+          <span class="btn-loading hidden"><span class="spinner"></span> Signing out...</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="api-section">
+      <h2>Available API Endpoints</h2>
+      <div class="api-endpoint">
+        <h3>Widget Data</h3>
+        <p>Get widget content for various platforms:</p>
+        <p class="endpoint-url">GET /api/widgets/{provider}</p>
+        <p>Providers: spotify, goodreads, steam, instagram, discogs, flickr</p>
+      </div>
+
+      <div class="api-endpoint">
+        <h3>Sync Data</h3>
+        <p>Trigger data sync for a specific provider:</p>
+        <p class="endpoint-url">GET /api/widgets/sync/{provider}</p>
+        <p>Requires authentication</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import {
+      getAuth,
+      signInWithPopup,
+      signInWithEmailAndPassword,
+      signInWithPhoneNumber,
+      RecaptchaVerifier,
+      GoogleAuthProvider,
+      signOut,
+      onAuthStateChanged,
+      connectAuthEmulator
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    // Import Firebase config and API client
+    import { loadFirebaseConfig } from './firebase-config.js';
+    import { ApiClient } from './api-client.js';
+
+    // Initialize Firebase with dynamic config
+    let app, auth;
+
+    async function initializeFirebase() {
+      try {
+        const firebaseConfig = await loadFirebaseConfig();
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+
+        // Connect to emulator in development
+        if (window.location.hostname === 'metrics.dev-chrisvogt.me' ||
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1') {
+          connectAuthEmulator(auth, 'http://127.0.0.1:9099');
+          console.log('Connected to Firebase Auth emulator');
+        }
+
+        // Initialize the rest of the app
+        setupApp();
+      } catch (error) {
+        console.error('Failed to initialize Firebase:', error);
+      }
+    }
+
+    function setupApp() {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        hd: 'chrisvogt.me' // Restrict to your domain
+      });
+
+      // Initialize API client
+      const apiClient = new ApiClient();
+
+      // Global variables
+      let phoneVerifier = null;
+      let phoneConfirmationResult = null;
+
+      // Tab switching
+      window.switchTab = function (tabName) {
+        // Update tabs
+        document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Update content
+        document.querySelectorAll('.auth-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(tabName + 'Tab').classList.add('active');
+
+        // Clear messages
+        clearMessages();
+      };
+
+      // Message handling
+      function showMessage(message, type = 'error') {
+        const container = document.getElementById('messageContainer');
+        container.innerHTML = `<div class="message ${type}">${message}</div>`;
+      }
+
+      function clearMessages() {
+        document.getElementById('messageContainer').innerHTML = '';
+      }
+
+      // Loading states
+      function setLoading(button, loading) {
+        const btnText = button.querySelector('.btn-text');
+        const btnLoading = button.querySelector('.btn-loading');
+
+        if (loading) {
+          btnText.classList.add('hidden');
+          btnLoading.classList.remove('hidden');
+          button.classList.add('loading');
+        } else {
+          btnText.classList.remove('hidden');
+          btnLoading.classList.add('hidden');
+          button.classList.remove('loading');
+        }
+      }
+
+      // Email/Password Login
+      window.handleEmailLogin = async function (event) {
+        event.preventDefault();
+        const form = event.target;
+        const button = form.querySelector('button[type="submit"]');
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        setLoading(button, true);
+        clearMessages();
+
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          showMessage('Successfully signed in!', 'success');
+        } catch (error) {
+          console.error('Email login error:', error);
+          let message = 'Login failed. Please check your credentials.';
+
+          switch (error.code) {
+            case 'auth/user-not-found':
+              message = 'No account found with this email address.';
+              break;
+            case 'auth/wrong-password':
+              message = 'Incorrect password.';
+              break;
+            case 'auth/invalid-email':
+              message = 'Please enter a valid email address.';
+              break;
+            case 'auth/too-many-requests':
+              message = 'Too many failed attempts. Please try again later.';
+              break;
           }
+
+          showMessage(message, 'error');
+        } finally {
+          setLoading(button, false);
         }
-        
-        function initializeApp() {
-          const provider = new GoogleAuthProvider();
-          provider.setCustomParameters({
-              hd: 'chrisvogt.me' // Restrict to your domain
-          });
+      };
 
-          // Initialize API client
-          const apiClient = new ApiClient();
+      // Phone Login
+      window.handlePhoneLogin = async function (event) {
+        event.preventDefault();
+        const form = event.target;
+        const button = form.querySelector('button[type="submit"]');
+        const phone = document.getElementById('phone').value;
+        const phoneCode = document.getElementById('phoneCode').value;
+        const phoneCodeGroup = document.getElementById('phoneCodeGroup');
 
-          // Global variables
-        let phoneVerifier = null;
-        let phoneConfirmationResult = null;
+        setLoading(button, true);
+        clearMessages();
 
-        // Tab switching
-        window.switchTab = function(tabName) {
-            // Update tabs
-            document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            // Update content
-            document.querySelectorAll('.auth-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            
-            // Clear messages
-            clearMessages();
-        };
+        try {
+          if (!phoneConfirmationResult) {
+            // First step: Send verification code
+            if (!phoneVerifier) {
+              phoneVerifier = new RecaptchaVerifier(auth, 'phoneForm', {
+                'size': 'invisible'
+              });
+            }
 
-        // Message handling
-        function showMessage(message, type = 'error') {
-            const container = document.getElementById('messageContainer');
-            container.innerHTML = `<div class="message ${type}">${message}</div>`;
+            phoneConfirmationResult = await signInWithPhoneNumber(auth, phone, phoneVerifier);
+            phoneCodeGroup.classList.remove('hidden');
+            button.querySelector('.btn-text').textContent = 'Verify Code';
+            showMessage('Verification code sent! Please check your phone.', 'success');
+          } else {
+            // Second step: Verify code
+            await phoneConfirmationResult.confirm(phoneCode);
+            showMessage('Successfully signed in!', 'success');
+
+            // Reset form
+            phoneCodeGroup.classList.add('hidden');
+            button.querySelector('.btn-text').textContent = 'Send Code';
+            phoneConfirmationResult = null;
+            document.getElementById('phoneCode').value = '';
+          }
+        } catch (error) {
+          console.error('Phone login error:', error);
+          let message = 'Phone authentication failed.';
+
+          switch (error.code) {
+            case 'auth/invalid-phone-number':
+              message = 'Please enter a valid phone number.';
+              break;
+            case 'auth/invalid-verification-code':
+              message = 'Invalid verification code. Please try again.';
+              break;
+            case 'auth/code-expired':
+              message = 'Verification code has expired. Please request a new one.';
+              phoneConfirmationResult = null;
+              phoneCodeGroup.classList.add('hidden');
+              button.querySelector('.btn-text').textContent = 'Send Code';
+              break;
+          }
+
+          showMessage(message, 'error');
+        } finally {
+          setLoading(button, false);
         }
+      };
 
-        function clearMessages() {
-            document.getElementById('messageContainer').innerHTML = '';
+      // Google Login
+      window.handleGoogleLogin = async function () {
+        const button = event.target;
+        setLoading(button, true);
+        clearMessages();
+
+        try {
+          const result = await signInWithPopup(auth, provider);
+          console.log('Google login successful:', result.user);
+          showMessage('Successfully signed in with Google!', 'success');
+        } catch (error) {
+          console.error('Google login error:', error);
+          let message = 'Google login failed.';
+
+          switch (error.code) {
+            case 'auth/popup-closed-by-user':
+              message = 'Login was cancelled.';
+              break;
+            case 'auth/popup-blocked':
+              message = 'Login popup was blocked. Please allow popups for this site.';
+              break;
+            case 'auth/unauthorized-domain':
+              message = 'This domain is not authorized for Google login.';
+              break;
+          }
+
+          showMessage(message, 'error');
+        } finally {
+          setLoading(button, false);
         }
+      };
 
-        // Loading states
-        function setLoading(button, loading) {
-            const btnText = button.querySelector('.btn-text');
-            const btnLoading = button.querySelector('.btn-loading');
-            
-            if (loading) {
-                btnText.classList.add('hidden');
-                btnLoading.classList.remove('hidden');
-                button.classList.add('loading');
-            } else {
-                btnText.classList.remove('hidden');
-                btnLoading.classList.add('hidden');
-                button.classList.remove('loading');
-            }
+      // Logout
+      window.handleLogout = async function () {
+        const button = document.getElementById('logoutButton');
+        setLoading(button, true);
+
+        try {
+          // First, call server-side logout to revoke tokens
+          await apiClient.logout();
+          // Then, sign out from Firebase Auth
+          await signOut(auth);
+          console.log('Logout successful');
+          showMessage('Successfully signed out!', 'success');
+        } catch (error) {
+          console.error('Logout error:', error);
+          // Still try to sign out from Firebase Auth even if server logout fails
+          try {
+            await signOut(auth);
+          } catch (signOutError) {
+            console.error('Firebase sign out error:', signOutError);
+          }
+          showMessage('Logout failed: ' + error.message, 'error');
+        } finally {
+          setLoading(button, false);
         }
+      };
 
-        // Email/Password Login
-        window.handleEmailLogin = async function(event) {
-            event.preventDefault();
-            const form = event.target;
-            const button = form.querySelector('button[type="submit"]');
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+      // Auth state observer
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          // User is signed in
+          document.getElementById('loginSection').classList.add('hidden');
+          document.getElementById('logoutSection').classList.remove('hidden');
+          document.getElementById('userEmail').textContent = user.email || 'No email';
+          document.getElementById('userId').textContent = user.uid;
 
-            setLoading(button, true);
-            clearMessages();
-
+          // Create session cookie from JWT token
+          try {
+            const token = await user.getIdToken();
+            await apiClient.createSession(token);
+            console.log('Session cookie created successfully');
+          } catch (error) {
+            console.error('Error creating session cookie:', error);
+            // Fallback to localStorage if session cookie creation fails
             try {
-                await signInWithEmailAndPassword(auth, email, password);
-                showMessage('Successfully signed in!', 'success');
-            } catch (error) {
-                console.error('Email login error:', error);
-                let message = 'Login failed. Please check your credentials.';
-                
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                        message = 'No account found with this email address.';
-                        break;
-                    case 'auth/wrong-password':
-                        message = 'Incorrect password.';
-                        break;
-                    case 'auth/invalid-email':
-                        message = 'Please enter a valid email address.';
-                        break;
-                    case 'auth/too-many-requests':
-                        message = 'Too many failed attempts. Please try again later.';
-                        break;
-                }
-                
-                showMessage(message, 'error');
-            } finally {
-                setLoading(button, false);
+              const token = await user.getIdToken();
+              localStorage.setItem('authToken', token);
+              console.log('JWT token stored in localStorage as fallback');
+            } catch (fallbackError) {
+              console.error('Error setting up authentication fallback:', fallbackError);
             }
-        };
+          }
+        } else {
+          // User is signed out
+          document.getElementById('loginSection').classList.remove('hidden');
+          document.getElementById('logoutSection').classList.add('hidden');
+          localStorage.removeItem('authToken');
+          apiClient.clearSession();
+          console.log('User signed out, tokens and cookies cleared');
 
-        // Phone Login
-        window.handlePhoneLogin = async function(event) {
-            event.preventDefault();
-            const form = event.target;
-            const button = form.querySelector('button[type="submit"]');
-            const phone = document.getElementById('phone').value;
-            const phoneCode = document.getElementById('phoneCode').value;
-            const phoneCodeGroup = document.getElementById('phoneCodeGroup');
+          // Reset phone form
+          document.getElementById('phoneCodeGroup').classList.add('hidden');
+          document.getElementById('phoneCode').value = '';
+          phoneConfirmationResult = null;
+          phoneVerifier = null;
+        }
+      });
+    } // Close initializeApp function
 
-            setLoading(button, true);
-            clearMessages();
-
-            try {
-                if (!phoneConfirmationResult) {
-                    // First step: Send verification code
-                    if (!phoneVerifier) {
-                        phoneVerifier = new RecaptchaVerifier(auth, 'phoneForm', {
-                            'size': 'invisible'
-                        });
-                    }
-                    
-                    phoneConfirmationResult = await signInWithPhoneNumber(auth, phone, phoneVerifier);
-                    phoneCodeGroup.classList.remove('hidden');
-                    button.querySelector('.btn-text').textContent = 'Verify Code';
-                    showMessage('Verification code sent! Please check your phone.', 'success');
-                } else {
-                    // Second step: Verify code
-                    await phoneConfirmationResult.confirm(phoneCode);
-                    showMessage('Successfully signed in!', 'success');
-                    
-                    // Reset form
-                    phoneCodeGroup.classList.add('hidden');
-                    button.querySelector('.btn-text').textContent = 'Send Code';
-                    phoneConfirmationResult = null;
-                    document.getElementById('phoneCode').value = '';
-                }
-            } catch (error) {
-                console.error('Phone login error:', error);
-                let message = 'Phone authentication failed.';
-                
-                switch (error.code) {
-                    case 'auth/invalid-phone-number':
-                        message = 'Please enter a valid phone number.';
-                        break;
-                    case 'auth/invalid-verification-code':
-                        message = 'Invalid verification code. Please try again.';
-                        break;
-                    case 'auth/code-expired':
-                        message = 'Verification code has expired. Please request a new one.';
-                        phoneConfirmationResult = null;
-                        phoneCodeGroup.classList.add('hidden');
-                        button.querySelector('.btn-text').textContent = 'Send Code';
-                        break;
-                }
-                
-                showMessage(message, 'error');
-            } finally {
-                setLoading(button, false);
-            }
-        };
-
-        // Google Login
-        window.handleGoogleLogin = async function() {
-            const button = event.target;
-            setLoading(button, true);
-            clearMessages();
-
-            try {
-                const result = await signInWithPopup(auth, provider);
-                console.log('Google login successful:', result.user);
-                showMessage('Successfully signed in with Google!', 'success');
-            } catch (error) {
-                console.error('Google login error:', error);
-                let message = 'Google login failed.';
-                
-                switch (error.code) {
-                    case 'auth/popup-closed-by-user':
-                        message = 'Login was cancelled.';
-                        break;
-                    case 'auth/popup-blocked':
-                        message = 'Login popup was blocked. Please allow popups for this site.';
-                        break;
-                    case 'auth/unauthorized-domain':
-                        message = 'This domain is not authorized for Google login.';
-                        break;
-                }
-                
-                showMessage(message, 'error');
-            } finally {
-                setLoading(button, false);
-            }
-        };
-
-        // Logout
-        window.handleLogout = async function() {
-            const button = document.getElementById('logoutButton');
-            setLoading(button, true);
-
-            try {
-                // First, call server-side logout to revoke tokens
-                await apiClient.logout();
-                // Then, sign out from Firebase Auth
-                await signOut(auth);
-                console.log('Logout successful');
-                showMessage('Successfully signed out!', 'success');
-            } catch (error) {
-                console.error('Logout error:', error);
-                // Still try to sign out from Firebase Auth even if server logout fails
-                try {
-                    await signOut(auth);
-                } catch (signOutError) {
-                    console.error('Firebase sign out error:', signOutError);
-                }
-                showMessage('Logout failed: ' + error.message, 'error');
-            } finally {
-                setLoading(button, false);
-            }
-        };
-
-        // Auth state observer
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // User is signed in
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('logoutSection').classList.remove('hidden');
-                document.getElementById('userEmail').textContent = user.email || 'No email';
-                document.getElementById('userId').textContent = user.uid;
-                
-                // Create session cookie from JWT token
-                try {
-                    const token = await user.getIdToken();
-                    await apiClient.createSession(token);
-                    console.log('Session cookie created successfully');
-                } catch (error) {
-                    console.error('Error creating session cookie:', error);
-                    // Fallback to localStorage if session cookie creation fails
-                    try {
-                        const token = await user.getIdToken();
-                        localStorage.setItem('authToken', token);
-                        console.log('JWT token stored in localStorage as fallback');
-                    } catch (fallbackError) {
-                        console.error('Error setting up authentication fallback:', fallbackError);
-                    }
-                }
-            } else {
-                // User is signed out
-                document.getElementById('loginSection').classList.remove('hidden');
-                document.getElementById('logoutSection').classList.add('hidden');
-                localStorage.removeItem('authToken');
-                apiClient.clearSession();
-                console.log('User signed out, tokens and cookies cleared');
-                
-                // Reset phone form
-                document.getElementById('phoneCodeGroup').classList.add('hidden');
-                document.getElementById('phoneCode').value = '';
-                phoneConfirmationResult = null;
-                phoneVerifier = null;
-            }
-        });
-        } // Close initializeApp function
-        
-        // Start the app
-        initializeFirebase();
-    </script>
+    // Start the app
+    initializeFirebase();
+  </script>
 </body>
+
 </html>
