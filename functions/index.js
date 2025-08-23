@@ -160,10 +160,22 @@ const authenticateUser = async (req, res, next) => {
     // First try to authenticate with session cookie
     const sessionCookie = req.cookies?.session
     if (sessionCookie) {
+      logger.info('Session cookie found, attempting verification', {
+        cookieLength: sessionCookie.length,
+        cookieStart: sessionCookie.substring(0, 50),
+        cookieEnd: sessionCookie.substring(sessionCookie.length - 50)
+      })
+      
       try {
         const decodedClaims = await admin
           .auth()
           .verifySessionCookie(sessionCookie, true)
+
+        logger.info('Session cookie verified successfully', {
+          uid: decodedClaims.uid,
+          email: decodedClaims.email,
+          emailVerified: decodedClaims.email_verified
+        })
 
         // Check if user's email domain matches chrisvogt.me or chronogrove.com
         if (
@@ -171,11 +183,20 @@ const authenticateUser = async (req, res, next) => {
           (!decodedClaims.email.endsWith('@chrisvogt.me') && 
            !decodedClaims.email.endsWith('@chronogrove.com'))
         ) {
+          logger.warn('Email domain rejected', {
+            email: decodedClaims.email,
+            uid: decodedClaims.uid
+          })
           return res.status(403).json({
             ok: false,
             error: 'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
           })
         }
+
+        logger.info('User authenticated successfully via session cookie', {
+          uid: decodedClaims.uid,
+          email: decodedClaims.email
+        })
 
         // Only pass minimal user data to the request
         req.user = {
@@ -186,37 +207,74 @@ const authenticateUser = async (req, res, next) => {
         return next()
       } catch (error) {
         // Session cookie is invalid, try JWT token
-        logger.debug('Session cookie invalid, trying JWT token:', error.message)
+        logger.error('Session cookie verification failed', {
+          error: error.message,
+          code: error.code,
+          stack: error.stack
+        })
       }
     }
 
     // Fallback to JWT token authentication
     const authHeader = req.headers.authorization
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      logger.warn('No valid authorization header found', {
+        hasAuthHeader: !!req.headers.authorization,
+        authHeaderStart: req.headers.authorization?.substring(0, 20)
+      })
       return res.status(401).json({
         ok: false,
         error: 'No valid authorization header found',
       })
     }
 
+    logger.info('JWT token found, attempting verification')
     const token = authHeader.split('Bearer ')[1]
-    const decodedToken = await admin.auth().verifyIdToken(token)
+    
+    try {
+      const decodedToken = await admin.auth().verifyIdToken(token)
+      
+      logger.info('JWT token verified successfully', {
+        uid: decodedToken.uid,
+        email: decodedToken.email,
+        emailVerified: decodedToken.email_verified
+      })
 
-    // Check if user's email domain matches chrisvogt.me
-    if (!decodedToken.email || !decodedToken.email.endsWith('@chrisvogt.me')) {
-      return res.status(403).json({
+      // Check if user's email domain matches chrisvogt.me
+      if (!decodedToken.email || !decodedToken.email.endsWith('@chrisvogt.me')) {
+        logger.warn('JWT email domain rejected', {
+          email: decodedToken.email,
+          uid: decodedToken.uid
+        })
+        return res.status(403).json({
+          ok: false,
+          error: 'Access denied. Only chrisvogt.me domain users are allowed.',
+        })
+      }
+
+      logger.info('User authenticated successfully via JWT token', {
+        uid: decodedToken.uid,
+        email: decodedToken.email
+      })
+
+      // Only pass minimal user data to the request
+      req.user = {
+        uid: decodedToken.uid,
+        email: decodedToken.email,
+        emailVerified: decodedToken.email_verified
+      }
+      next()
+    } catch (error) {
+      // Log minimal info for security
+      logger.error('JWT token verification failed', {
+        error: error.message,
+        code: error.code
+      })
+      return res.status(401).json({
         ok: false,
-        error: 'Access denied. Only chrisvogt.me domain users are allowed.',
+        error: 'Invalid or expired JWT token',
       })
     }
-
-    // Only pass minimal user data to the request
-    req.user = {
-      uid: decodedToken.uid,
-      email: decodedToken.email,
-      emailVerified: decodedToken.email_verified
-    }
-    next()
   } catch (error) {
     // Log minimal info for security
     logger.error('Authentication error:', {
