@@ -41,7 +41,7 @@ const storageFirestoreDatabaseUrl = defineString(
 // Initialize Firebase Admin
 const adminConfig = {
   credential: admin.credential.cert(firebaseServiceAccountToken),
-  databaseURL: storageFirestoreDatabaseUrl.value(),
+  databaseURL: storageFirestoreDatabaseUrl,
   projectId: 'personal-stats-chrisvogt'
 }
 
