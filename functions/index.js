@@ -41,7 +41,7 @@ const storageFirestoreDatabaseUrl = defineString(
 // Initialize Firebase Admin
 const adminConfig = {
   credential: admin.credential.cert(firebaseServiceAccountToken),
-  databaseURL: storageFirestoreDatabaseUrl,
+  databaseURL: storageFirestoreDatabaseUrl.value(),
   projectId: 'personal-stats-chrisvogt'
 }
 
@@ -165,14 +165,15 @@ const authenticateUser = async (req, res, next) => {
           .auth()
           .verifySessionCookie(sessionCookie, true)
 
-        // Check if user's email domain matches chrisvogt.me
+        // Check if user's email domain matches chrisvogt.me or chronogrove.com
         if (
           !decodedClaims.email ||
-          !decodedClaims.email.endsWith('@chrisvogt.me')
+          (!decodedClaims.email.endsWith('@chrisvogt.me') && 
+           !decodedClaims.email.endsWith('@chronogrove.com'))
         ) {
           return res.status(403).json({
             ok: false,
-            error: 'Access denied. Only chrisvogt.me domain users are allowed.',
+            error: 'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
           })
         }
 
@@ -241,13 +242,16 @@ expressApp.use(cookieParser())
 const corsAllowList = [
   /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
   /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
-  /\.netlify\.app$/,
+  /^https?:\/\/([a-z0-9-]+--)?chrisvogt\.netlify\.app$/,
   /https?:\/\/([a-z0-9]+[.])*chronogrove[.]com$/,
   /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
-  /localhost:?(\d+)?$/,
   /^https?:\/\/8ms\.4a9\.mytemp\.website$/,
-  /^https?:\/\/metrics\.dev-chrisvogt\.me:?(\d+)?$/,
 ]
+
+// Add localhost only in development
+if (process.env.NODE_ENV !== 'production') {
+  corsAllowList.push(/localhost:?(\d+)?$/)
+}
 
 const corsOptions = {
   origin: corsAllowList,
@@ -369,11 +373,13 @@ expressApp.post('/api/auth/session', cors(corsOptions), async (req, res) => {
     // Verify the token first
     const decodedToken = await admin.auth().verifyIdToken(token)
 
-    // Check if user's email domain matches chrisvogt.me
-    if (!decodedToken.email || !decodedToken.email.endsWith('@chrisvogt.me')) {
+    // Check if user's email domain matches chrisvogt.me or chronogrove.com
+    if (!decodedToken.email || 
+        (!decodedToken.email.endsWith('@chrisvogt.me') && 
+         !decodedToken.email.endsWith('@chronogrove.com'))) {
       return res.status(403).json({
         ok: false,
-        error: 'Access denied. Only chrisvogt.me domain users are allowed.',
+        error: 'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
       })
     }
 

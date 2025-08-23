@@ -2,9 +2,9 @@
 
 ## Local Development
 
-1. Copy `env.template` to `.env`:
+1. Copy `.env.template` to `.env`:
    ```bash
-   cp env.template .env
+   cp .env.template .env
    ```
 2. Fill in your actual values in the `.env` file
 3. The `.env` file is already in `.gitignore` so it won't be committed
@@ -30,10 +30,10 @@ firebase functions:config:set storage.cloud_storage_images_bucket="your_value"
 
 ## Environment Variables Needed
 
-See `env.template` for the complete list of required environment variables.
+See `.env.template` for the complete list of required environment variables.
 
 ## After Setup
 
 1. Deploy your functions: `firebase deploy --only functions`
 2. You can safely delete `.runtimeconfig.json` if you want
-3. For local testing: `firebase emulators:start --only functions` 
+3. For local testing: `firebase emulators:start --only functions`
