@@ -1,6 +1,13 @@
 {
   "firebase": {
-    "database_url": "FIREBASE_DATABASE_URL"
+    "api_key": "YOUR_FIREBASE_API_KEY",
+    "auth_domain": "YOUR_PROJECT_ID.firebaseapp.com",
+    "project_id": "YOUR_PROJECT_ID",
+    "storage_bucket": "YOUR_PROJECT_ID.firebasestorage.app",
+    "messaging_sender_id": "YOUR_MESSAGING_SENDER_ID",
+    "app_id": "YOUR_APP_ID",
+    "database_url": "https://YOUR_PROJECT_ID.firebaseio.com",
+    "measurement_id": "YOUR_MEASUREMENT_ID"
   },
   "flickr": {
     "api_key": "FLICKR_API_KEY",
@@ -22,5 +29,10 @@
   "steam": {
     "user_id": "STEAM_NUMERIC_USERID",
     "api_key": "STEAM_API_KEY"
-  }
+  },
+  "storage": {
+    "firestore_database_url": "https://YOUR_PROJECT_ID.firebaseio.com",
+    "image_cdn_base_url": "https://YOUR_IMGIX_URL.imgix.net/",
+    "cloud_storage_images_bucket": "YOUR_STORAGE_BUCKET"
+  },
 }
