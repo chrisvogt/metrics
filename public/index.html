@@ -733,51 +733,124 @@
     }
     /* API Testing Interface Styles */
     .api-section-container {
-      background: #f8f9fa;
+      background: rgba(1, 1, 1, 0.30);
       border-radius: 8px;
-      padding: 20px;
-      margin: 20px 0;
+      padding: 2rem;
+      margin: 2rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* Two Column Layout */
+    .api-interface-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    @media (min-width: 1024px) {
+      .api-interface-layout {
+        flex-direction: row;
+        align-items: flex-end;
+      }
+      
+      .api-endpoints-column {
+        flex: 1;
+        min-width: 0;
+      }
+      
+      .test-results-column {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+
+    @media (min-width: 1280px) {
+      .api-endpoints-column {
+        flex: 0.8;
+      }
+      
+      .test-results-column {
+        flex: 1.2;
+      }
+    }
+
+    .api-section-container h2 {
+      color: #fff;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .auth-status {
-      background: white;
-      border: 1px solid #e9ecef;
-      border-radius: 6px;
-      padding: 20px;
-      margin-bottom: 20px;
+      background: rgba(30, 37, 48, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .auth-status h3 {
+      color: #fff;
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
     }
 
     .auth-status-content {
       display: flex;
       align-items: center;
       gap: 15px;
+      color: #fff;
     }
 
-    .api-endpoints {
-      background: white;
-      border: 1px solid #e9ecef;
-      border-radius: 6px;
-      padding: 20px;
-      margin-bottom: 20px;
+    .api-endpoints-column {
+      background: rgba(30, 37, 48, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .api-endpoints-column h3 {
+      color: #fff;
+      margin-bottom: 1.5rem;
+      font-size: 1.25rem;
     }
 
     .endpoint-group {
-      margin-bottom: 25px;
+      margin-bottom: 2rem;
     }
 
     .endpoint-group h4 {
-      color: #495057;
-      border-bottom: 2px solid #007bff;
-      padding-bottom: 8px;
-      margin-bottom: 15px;
+      color: #fff;
+      border-bottom: 2px solid #422EA3;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
     }
 
     .endpoint-item {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 6px;
-      padding: 15px;
-      margin-bottom: 15px;
+      background: rgba(66, 46, 163, 0.1);
+      border: 1px solid rgba(66, 46, 163, 0.3);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .endpoint-item:hover {
+      background: rgba(66, 46, 163, 0.2);
+      border-color: rgba(66, 46, 163, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(66, 46, 163, 0.2);
     }
 
     .endpoint-header {
@@ -788,44 +861,52 @@
     }
 
     .method {
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
       font-weight: bold;
       text-transform: uppercase;
       color: white;
-      min-width: 50px;
+      min-width: 60px;
       text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     .method.get {
-      background: #28a745;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     }
 
     .method.post {
-      background: #007bff;
+      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
     }
 
     .method.put {
-      background: #ffc107;
+      background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
       color: #212529;
     }
 
     .method.delete {
-      background: #dc3545;
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
     }
 
     .endpoint-url {
       font-family: 'Courier New', monospace;
-      background: #e9ecef;
-      padding: 4px 8px;
-      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
       font-size: 14px;
       flex: 1;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .endpoint-item p {
+      color: rgba(255, 255, 255, 0.8);
+      margin: 0.5rem 0;
     }
 
     .endpoint-params {
-      margin-top: 10px;
+      margin-top: 1rem;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -833,28 +914,221 @@
 
     .endpoint-params label {
       font-weight: 500;
-      color: #495057;
+      color: #fff;
       min-width: 80px;
     }
 
     .form-control {
-      padding: 6px 12px;
-      border: 1px solid #ced4da;
-      border-radius: 4px;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
       font-size: 14px;
       min-width: 150px;
+      background: rgba(30, 37, 48, 0.8);
+      color: #fff;
+      transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #422EA3;
+      box-shadow: 0 0 0 3px rgba(66, 46, 163, 0.1);
     }
 
     .btn-sm {
-      padding: 4px 8px;
+      padding: 6px 12px;
       font-size: 12px;
+      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
 
-    .test-results {
-      background: white;
-      border: 1px solid #e9ecef;
+    .btn-sm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(66, 46, 163, 0.3);
+    }
+
+    /* Button Loading States */
+    .btn-loading {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    /* Hidden class for loading states */
+    .hidden {
+      display: none !important;
+    }
+
+    /* Ensure button loading states work properly */
+    .btn .btn-loading.hidden {
+      display: none !important;
+    }
+
+    .btn .btn-text.hidden {
+      display: none !important;
+    }
+
+    /* Skeleton Loading Placeholder */
+    .skeleton-placeholder {
+      background: rgba(66, 46, 163, 0.1);
+      border: 1px solid rgba(66, 46, 163, 0.3);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      animation: skeletonPulse 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .skeleton-title {
+      height: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      width: 60%;
+      animation: skeletonPulse 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-status {
+      height: 24px;
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 6px;
-      padding: 20px;
+      width: 80px;
+      animation: skeletonPulse 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-url {
+      height: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      width: 80%;
+      margin-bottom: 0.5rem;
+      animation: skeletonPulse 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-details {
+      height: 100px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      animation: skeletonPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes skeletonPulse {
+      0%, 100% {
+        opacity: 0.6;
+      }
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    .test-results-column {
+      background: rgba(30, 37, 48, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .test-results-column h3 {
+      color: #fff;
+      margin-bottom: 1.5rem;
+      font-size: 1.25rem;
+    }
+
+    /* Instructions Panel */
+    .instructions-panel {
+      background: rgba(30, 37, 48, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .instructions-panel h3 {
+      color: #fff;
+      margin-bottom: 1.5rem;
+      font-size: 1.25rem;
+      text-align: center;
+      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .instructions-content {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .instruction-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .instruction-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .instruction-section h4 {
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+
+    .instruction-section p {
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+    }
+
+    .instruction-section ul {
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+    }
+
+    .instruction-section li {
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .instruction-section strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Test Results Section */
+    .test-results-section {
+      background: rgba(30, 37, 48, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .results-container {
@@ -862,18 +1136,24 @@
     }
 
     .no-results {
-      color: #6c757d;
+      color: rgba(255, 255, 255, 0.6);
       font-style: italic;
       text-align: center;
-      padding: 20px;
+      padding: 2rem;
     }
 
     .test-result {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 6px;
-      padding: 15px;
-      margin-bottom: 15px;
+      background: rgba(66, 46, 163, 0.1);
+      border: 1px solid rgba(66, 46, 163, 0.3);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .test-result:hover {
+      background: rgba(66, 46, 163, 0.2);
+      transform: translateY(-1px);
     }
 
     .test-result.success {
@@ -888,47 +1168,104 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 1rem;
     }
 
     .test-result-title {
       font-weight: 600;
-      color: #495057;
+      color: #fff;
+      font-size: 0.9rem;
     }
 
     .test-result-status {
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
       font-weight: bold;
       text-transform: uppercase;
     }
 
     .test-result-status.success {
-      background: #d4edda;
-      color: #155724;
+      background: rgba(40, 167, 69, 0.2);
+      color: #28a745;
+      border: 1px solid rgba(40, 167, 69, 0.3);
     }
 
     .test-result-status.error {
-      background: #f8d7da;
-      color: #721c24;
+      background: rgba(220, 53, 69, 0.2);
+      color: #dc3545;
+      border: 1px solid rgba(220, 53, 69, 0.3);
     }
 
     .test-result-details {
       font-family: 'Courier New', monospace;
-      background: #e9ecef;
-      padding: 10px;
-      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #fff;
+      padding: 1rem;
+      border-radius: 6px;
       font-size: 12px;
       white-space: pre-wrap;
       max-height: 200px;
       overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .test-result-url {
-      color: #007bff;
+      color: #422EA3;
       font-weight: 500;
-      margin-bottom: 5px;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .test-result p {
+      color: rgba(255, 255, 255, 0.8);
+      margin: 0.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    /* Button styles for the testing interface */
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(66, 46, 163, 0.3);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
     }
   </style>
 </head>
@@ -1099,8 +1436,7 @@
     </div>
 
     <div class="content-container api-section-container">
-      <div class="api-section">
-        <h2>API Testing Interface</h2>
+      <h2>API Testing Interface</h2>
         
         <!-- Authentication Status -->
         <div class="auth-status">
@@ -1111,76 +1447,126 @@
           </div>
         </div>
 
-        <!-- API Endpoints -->
-        <div class="api-endpoints">
-          <h3>Available Endpoints</h3>
-          
-          <!-- Widget Data Endpoints -->
-          <div class="endpoint-group">
-            <h4>Widget Data (No Auth Required)</h4>
-            <div class="endpoint-item">
-              <div class="endpoint-header">
-                <span class="method get">GET</span>
-                <span class="endpoint-url">/api/widgets/{provider}</span>
-                <button class="btn btn-sm btn-secondary" onclick="testEndpoint('widgets', false)">Test</button>
+        <!-- Two Column Layout Container -->
+        <div class="api-interface-layout">
+          <!-- Left Column: API Endpoints -->
+          <div class="api-endpoints-column">
+            <h3>Available Endpoints</h3>
+            
+            <!-- Widget Data Endpoints -->
+            <div class="endpoint-group">
+              <h4>Widget Data (No Auth Required)</h4>
+              <div class="endpoint-item">
+                <div class="endpoint-header">
+                  <span class="method get">GET</span>
+                  <span class="endpoint-url">/api/widgets/{provider}</span>
+                  <button class="btn btn-sm btn-secondary" onclick="testEndpoint('widgets', false)" data-endpoint="widgets">
+                    <span class="btn-text">Test</span>
+                    <span class="btn-loading hidden">
+                      <span class="spinner"></span> Testing...
+                    </span>
+                  </button>
+                </div>
+                <p>Get widget content for various platforms</p>
+                <div class="endpoint-params">
+                  <label>Provider:</label>
+                  <select id="widgetProvider" class="form-control">
+                    <option value="spotify">spotify</option>
+                    <option value="steam">steam</option>
+                    <option value="goodreads">goodreads</option>
+                    <option value="instagram">instagram</option>
+                    <option value="discogs">discogs</option>
+                    <option value="flickr">flickr</option>
+                  </select>
+                </div>
               </div>
-              <p>Get widget content for various platforms</p>
-              <div class="endpoint-params">
-                <label>Provider:</label>
-                <select id="widgetProvider" class="form-control">
-                  <option value="spotify">spotify</option>
-                  <option value="steam">steam</option>
-                  <option value="goodreads">goodreads</option>
-                  <option value="instagram">instagram</option>
-                  <option value="discogs">discogs</option>
-                  <option value="flickr">flickr</option>
-                </select>
+            </div>
+
+            <!-- Sync Data Endpoints -->
+            <div class="endpoint-group">
+              <h4>Sync Data (Authentication Required)</h4>
+              <div class="endpoint-item">
+                <div class="endpoint-header">
+                  <span class="method post">POST</span>
+                  <span class="endpoint-url">/api/auth/session</span>
+                  <button class="btn btn-sm btn-secondary" onclick="testEndpoint('session', true)" data-endpoint="session">
+                    <span class="btn-text">Test</span>
+                    <span class="btn-loading hidden">
+                      <span class="spinner"></span> Testing...
+                    </span>
+                  </button>
+                </div>
+                <p>Create session cookie from ID token</p>
+              </div>
+              
+              <div class="endpoint-item">
+                <div class="endpoint-header">
+                  <span class="method get">GET</span>
+                  <span class="endpoint-url">/api/widgets/sync/{provider}</span>
+                  <button class="btn btn-sm btn-secondary" onclick="testEndpoint('sync', true)" data-endpoint="sync">
+                    <span class="btn-text">Test</span>
+                    <span class="btn-loading hidden">
+                      <span class="spinner"></span> Testing...
+                    </span>
+                  </button>
+                </div>
+                <p>Trigger data sync for a specific provider</p>
+                <div class="endpoint-params">
+                  <label>Provider:</label>
+                  <select id="syncProvider" class="form-control">
+                    <option value="spotify">spotify</option>
+                    <option value="steam">steam</option>
+                    <option value="goodreads">goodreads</option>
+                    <option value="instagram">instagram</option>
+                    <option value="discogs">discogs</option>
+                    <option value="flickr">flickr</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Sync Data Endpoints -->
-          <div class="endpoint-group">
-            <h4>Sync Data (Authentication Required)</h4>
-            <div class="endpoint-item">
-              <div class="endpoint-header">
-                <span class="method post">POST</span>
-                <span class="endpoint-url">/api/auth/session</span>
-                <button class="btn btn-sm btn-secondary" onclick="testEndpoint('session', true)">Test</button>
+          <!-- Right Column: Instructions and Test Results -->
+          <div class="test-results-column">
+            <!-- Instructions Panel -->
+            <div class="instructions-panel">
+              <h3>Quick Guide</h3>
+              <div class="instructions-content">
+                <div class="instruction-section">
+                  <h4>🔐 Auth Required?</h4>
+                  <p>Sign in above, then click "Get Fresh ID Token" for protected endpoints.</p>
+                </div>
+                
+                <div class="instruction-section">
+                  <h4>🧪 Test Endpoints</h4>
+                  <p>Click "Test" buttons to make requests. Results appear below.</p>
+                </div>
+                
+                <div class="instruction-section">
+                  <h4>📊 Read Results</h4>
+                  <p>Green = success, red = error. Full response data shown below.</p>
+                </div>
+                
+                <div class="instruction-section">
+                  <h4>💡 Pro Tips</h4>
+                  <ul>
+                    <li>Test public endpoints first</li>
+                    <li>Use provider dropdowns</li>
+                    <li>Check console for debug info</li>
+                  </ul>
+                </div>
               </div>
-              <p>Create session cookie from ID token</p>
             </div>
             
-            <div class="endpoint-item">
-              <div class="endpoint-header">
-                <span class="method get">GET</span>
-                <span class="endpoint-url">/api/widgets/sync/{provider}</span>
-                <button class="btn btn-sm btn-secondary" onclick="testEndpoint('sync', true)">Test</button>
-              </div>
-              <p>Trigger data sync for a specific provider</p>
-              <div class="endpoint-params">
-                <label>Provider:</label>
-                <select id="syncProvider" class="form-control">
-                  <option value="spotify">spotify</option>
-                  <option value="steam">steam</option>
-                  <option value="goodreads">goodreads</option>
-                  <option value="instagram">instagram</option>
-                  <option value="discogs">discogs</option>
-                  <option value="flickr">flickr</option>
-                </select>
+            <!-- Test Results -->
+            <div class="test-results-section">
+              <h3>Test Results</h3>
+              <div id="testResults" class="results-container">
+                <p class="no-results">No tests run yet. Click "Test" buttons above to test endpoints.</p>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Test Results -->
-        <div class="test-results">
-          <h3>Test Results</h3>
-          <div id="testResults" class="results-container">
-            <p class="no-results">No tests run yet. Click "Test" buttons above to test endpoints.</p>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -1530,6 +1916,13 @@
           return;
         }
 
+        // Set button loading state
+        const button = event.target;
+        setButtonLoading(button, true);
+
+        // Add skeleton placeholder
+        const skeletonId = addSkeletonPlaceholder(endpointType);
+
         let url, method, body;
         // Detect current environment and use appropriate base URL
         const isDevelopment = window.location.hostname === 'localhost' || 
@@ -1559,6 +1952,8 @@
           
           default:
             showMessage('Unknown endpoint type', 'error');
+            setButtonLoading(button, false);
+            removeSkeletonPlaceholder(skeletonId);
             return;
         }
 
@@ -1604,6 +1999,8 @@
             data: responseData
           };
 
+          // Remove skeleton and add actual result
+          removeSkeletonPlaceholder(skeletonId);
           addTestResult(result, response.ok);
         } catch (error) {
           const result = {
@@ -1613,9 +2010,74 @@
             error: error.message,
             timestamp: new Date().toISOString()
           };
+          
+          // Remove skeleton and add error result
+          removeSkeletonPlaceholder(skeletonId);
           addTestResult(result, false);
+        } finally {
+          // Reset button loading state
+          setButtonLoading(button, false);
         }
       };
+
+      // Button loading state management
+      function setButtonLoading(button, loading) {
+        const btnText = button.querySelector('.btn-text');
+        const btnLoading = button.querySelector('.btn-loading');
+
+        console.log('Setting button loading state:', loading, button);
+
+        if (loading) {
+          btnText.classList.add('hidden');
+          btnLoading.classList.remove('hidden');
+          button.classList.add('loading');
+          button.disabled = true;
+          console.log('Button set to loading state');
+        } else {
+          btnText.classList.remove('hidden');
+          btnLoading.classList.add('hidden');
+          button.classList.remove('loading');
+          button.disabled = false;
+          console.log('Button set to normal state');
+        }
+      }
+
+      // Skeleton placeholder management
+      function addSkeletonPlaceholder(endpointType) {
+        const resultsContainer = document.getElementById('testResults');
+        const skeletonId = `skeleton-${Date.now()}`;
+        
+        const skeletonElement = document.createElement('div');
+        skeletonElement.className = 'skeleton-placeholder';
+        skeletonElement.id = skeletonId;
+        
+        skeletonElement.innerHTML = `
+          <div class="skeleton-header">
+            <div class="skeleton-title"></div>
+            <div class="skeleton-status"></div>
+          </div>
+          <div class="skeleton-url"></div>
+          <div class="skeleton-details"></div>
+        `;
+
+        // Remove "no results" message if it exists
+        const noResults = resultsContainer.querySelector('.no-results');
+        if (noResults) {
+          noResults.remove();
+        }
+
+        // Add skeleton at the bottom
+        resultsContainer.appendChild(skeletonElement);
+        
+        return skeletonId;
+      }
+
+      function removeSkeletonPlaceholder(skeletonId) {
+        const skeleton = document.getElementById(skeletonId);
+        if (skeleton) {
+          skeleton.remove();
+        }
+      }
 
       function addTestResult(result, success) {
         const resultsContainer = document.getElementById('testResults');
@@ -1649,8 +2111,8 @@
           noResults.remove();
         }
 
-        // Add new result at the top
-        resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
+        // Add new result at the bottom
+        resultsContainer.appendChild(resultElement);
       }
 
       // Update auth status when user signs in/out
@@ -1677,8 +2139,34 @@
       });
     } // Close initializeApp function
 
-    // Start the app
-    initializeFirebase();
+          // Reset all button states on page load
+      function resetAllButtonStates() {
+        const buttons = document.querySelectorAll('[data-endpoint]');
+        buttons.forEach(button => {
+          const btnText = button.querySelector('.btn-text');
+          const btnLoading = button.querySelector('.btn-loading');
+          
+          if (btnText && btnLoading) {
+            btnText.classList.remove('hidden');
+            btnLoading.classList.add('hidden');
+            button.classList.remove('loading');
+            button.disabled = false;
+          }
+        });
+      }
+
+      // Start the app
+      initializeFirebase();
+      
+      // Reset button states when DOM is ready
+      document.addEventListener('DOMContentLoaded', resetAllButtonStates);
+      
+      // Also reset immediately if DOM is already loaded
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', resetAllButtonStates);
+      } else {
+        resetAllButtonStates();
+      }
   </script>
 </body>
 
