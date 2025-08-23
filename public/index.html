@@ -430,8 +430,11 @@
         const auth = getAuth(app);
         
         // Connect to emulator in development
-        if (window.location.hostname === 'metrics.dev-chrisvogt.me') {
+        if (window.location.hostname === 'metrics.dev-chrisvogt.me' || 
+            window.location.hostname === 'localhost' || 
+            window.location.hostname === '127.0.0.1') {
           connectAuthEmulator(auth, 'http://127.0.0.1:9099');
+          console.log('Connected to Firebase Auth emulator');
         }
         
         const provider = new GoogleAuthProvider();
@@ -653,17 +656,21 @@
                 document.getElementById('userEmail').textContent = user.email || 'No email';
                 document.getElementById('userId').textContent = user.uid;
                 
-                // Store the JWT token (session cookies disabled for now)
+                // Create session cookie from JWT token
                 try {
                     const token = await user.getIdToken();
-                    localStorage.setItem('authToken', token);
-                    console.log('JWT token stored');
-                    
-                    // TODO: Re-enable session cookies once emulator issue is resolved
-                    // await apiClient.createSession(token);
-                    // console.log('Session cookie created');
+                    await apiClient.createSession(token);
+                    console.log('Session cookie created successfully');
                 } catch (error) {
-                    console.error('Error setting up authentication:', error);
+                    console.error('Error creating session cookie:', error);
+                    // Fallback to localStorage if session cookie creation fails
+                    try {
+                        const token = await user.getIdToken();
+                        localStorage.setItem('authToken', token);
+                        console.log('JWT token stored in localStorage as fallback');
+                    } catch (fallbackError) {
+                        console.error('Error setting up authentication fallback:', fallbackError);
+                    }
                 }
             } else {
                 // User is signed out

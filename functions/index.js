@@ -47,6 +47,23 @@ const adminConfig = {
 
 admin.initializeApp(adminConfig)
 
+// Connect to emulators in development mode
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    admin.auth().useEmulator('http://127.0.0.1:9099')
+    console.log('Connected to Firebase Auth emulator')
+  } catch {
+    console.log('Firebase Auth emulator already connected or not available')
+  }
+  
+  try {
+    admin.firestore().useEmulator('127.0.0.1', 8080)
+    console.log('Connected to Firestore emulator')
+  } catch {
+    console.log('Firestore emulator already connected or not available')
+  }
+}
+
 admin.firestore().settings({
   // Firestore throws when saving documents containing null values and the
   // Goodreads response object contains null values for unset fields. The
@@ -159,11 +176,16 @@ const authenticateUser = async (req, res, next) => {
           })
         }
 
-        req.user = decodedClaims
+        // Only pass minimal user data to the request
+        req.user = {
+          uid: decodedClaims.uid,
+          email: decodedClaims.email,
+          emailVerified: decodedClaims.email_verified
+        }
         return next()
-      } catch {
+      } catch (error) {
         // Session cookie is invalid, try JWT token
-        logger.debug('Session cookie invalid, trying JWT token')
+        logger.debug('Session cookie invalid, trying JWT token:', error.message)
       }
     }
 
@@ -187,10 +209,20 @@ const authenticateUser = async (req, res, next) => {
       })
     }
 
-    req.user = decodedToken
+    // Only pass minimal user data to the request
+    req.user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      emailVerified: decodedToken.email_verified
+    }
     next()
   } catch (error) {
-    logger.error('Authentication error:', error)
+    // Log minimal info for security
+    logger.error('Authentication error:', {
+      error: error.message,
+      code: error.code,
+      uid: req.user?.uid || 'unknown'
+    })
     return res.status(401).json({
       ok: false,
       error: 'Invalid or expired token',
@@ -219,6 +251,7 @@ const corsAllowList = [
 
 const corsOptions = {
   origin: corsAllowList,
+  credentials: true, // Required for cookies to be sent with cross-origin requests
 }
 
 const syncHandlersByProvider = {
@@ -344,7 +377,13 @@ expressApp.post('/api/auth/session', cors(corsOptions), async (req, res) => {
       })
     }
 
-    // Create a session cookie that expires in 5 days
+    // Log minimal info for security
+    logger.info('Creating session cookie for user', {
+      uid: decodedToken.uid,
+      email: decodedToken.email
+    })
+
+    // Create a Firebase session cookie that expires in 5 days
     const expiresIn = 60 * 60 * 24 * 5 * 1000 // 5 days in milliseconds
     const sessionCookie = await admin
       .auth()
@@ -355,7 +394,7 @@ expressApp.post('/api/auth/session', cors(corsOptions), async (req, res) => {
       maxAge: expiresIn,
       httpOnly: true, // Prevents XSS attacks
       secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-      sameSite: 'strict', // CSRF protection
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // CSRF protection
       path: '/',
     }
 
@@ -384,11 +423,13 @@ expressApp.post(
       // Revoke refresh tokens for the user
       await admin.auth().revokeRefreshTokens(req.user.uid)
 
+
+
       // Clear the session cookie
       res.clearCookie('session', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
         path: '/',
       })
 

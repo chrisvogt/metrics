@@ -9,11 +9,18 @@ class ApiClient {
     // First try to get from session cookie
     const sessionCookie = this.getSessionCookie();
     if (sessionCookie) {
+      console.log('Using session cookie for authentication');
       return sessionCookie;
     }
     
     // Fallback to localStorage
-    return localStorage.getItem('authToken');
+    const localToken = localStorage.getItem('authToken');
+    if (localToken) {
+      console.log('Using localStorage token for authentication (fallback)');
+    } else {
+      console.log('No authentication token found');
+    }
+    return localToken;
   }
 
   // Get session cookie if it exists
@@ -31,6 +38,7 @@ class ApiClient {
   // Create a session cookie from JWT token
   async createSession(token) {
     try {
+      console.log('Creating session cookie...');
       const response = await fetch(`${this.baseUrl}/api/auth/session`, {
         method: 'POST',
         headers: {
@@ -41,11 +49,18 @@ class ApiClient {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to create session: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Session creation failed:', response.status, errorText);
+        throw new Error(`Failed to create session: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
-      console.log('Session cookie created successfully');
+      console.log('Session cookie created successfully:', result);
+      
+      // Verify the cookie was set
+      const cookies = this.listAllCookies();
+      console.log('Current cookies after session creation:', cookies);
+      
       return result;
     } catch (error) {
       console.error('Error creating session cookie:', error);
