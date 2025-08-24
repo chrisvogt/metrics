@@ -3,17 +3,25 @@ import request from 'supertest'
 
 // Mock Firebase Admin
 const firestoreSettingsMock = vi.fn()
-const firestoreMock = () => ({
+const firestoreMock = vi.fn(() => ({
   settings: firestoreSettingsMock
-})
+}))
+
+const authMock = vi.fn(() => ({
+  useEmulator: vi.fn()
+}))
+
+const initializeAppMock = vi.fn()
+const credentialMock = {
+  cert: vi.fn(() => ({ mock: 'cert' }))
+}
 
 vi.mock('firebase-admin', () => ({
   default: {
-    initializeApp: vi.fn(),
-    credential: {
-      cert: vi.fn(() => ({ mock: 'cert' }))
-    },
-    firestore: firestoreMock
+    initializeApp: initializeAppMock,
+    credential: credentialMock,
+    firestore: firestoreMock,
+    auth: authMock
   }
 }))
 
@@ -27,9 +35,7 @@ vi.mock('firebase-functions/v2/scheduler', () => ({
 }))
 
 vi.mock('firebase-functions/params', () => ({
-  defineString: vi.fn(() => ({
-    value: () => 'mock-database-url'
-  }))
+  defineString: vi.fn(() => 'mock-database-url')
 }))
 
 // Mock file system
@@ -255,12 +261,13 @@ describe('index.js', () => {
       // Import index.js which will trigger the initialization
       await import('./index.js')
       
-      expect(admin.default.initializeApp).toHaveBeenCalledWith({
-        credential: expect.any(Object),
+      expect(initializeAppMock).toHaveBeenCalledWith({
+        credential: { mock: 'cert' },
         databaseURL: 'mock-database-url',
         projectId: 'personal-stats-chrisvogt'
       })
       
+      // Check that firestore settings were called
       expect(firestoreSettingsMock).toHaveBeenCalledWith({
         ignoreUndefinedProperties: true
       })
