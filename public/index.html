@@ -19,20 +19,20 @@
     .page-container {
       max-width: 100%;
       margin: 0 auto;
-      padding: 2rem;
+      padding: 1.5rem;
     }
 
     @media (min-width: 768px) {
       .page-container {
         max-width: 100%;
-        padding: 2rem 3rem;
+        padding: 2rem;
       }
     }
 
     @media (min-width: 1024px) {
       .page-container {
         max-width: 1200px;
-        padding: 2rem 4rem;
+        padding: 2rem 3rem;
       }
     }
 
@@ -44,18 +44,18 @@
     }
 
     .content-container {
-      background: rgba(1, 1, 1, 0.30);
-      border-radius: 8px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(1, 1, 1, 0.25);
+      border-radius: 16px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       overflow: hidden;
-      margin: 2rem 0;
+      margin: 1.5rem 0;
     }
 
     .content-container + .content-container {
-      margin-top: 3rem;
+      margin-top: 2rem;
     }
 
     .api-section-container {
@@ -65,31 +65,31 @@
     .futuristic-header {
       position: relative;
       text-align: center;
-      padding: 2rem 2rem 1.5rem;
+      padding: 3rem 2rem 2.5rem;
       background: linear-gradient(135deg, #422EA3 0%, #711E9B 25%, #4A148C 50%, #311B92 75%, #1A237E 100%);
       color: white;
-      border-radius: 0;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
       overflow: visible;
-      margin: 0 -2rem 2rem -2rem;
-      min-height: 150px;
+      margin: 0 0 3rem 0;
+      min-height: 180px;
     }
 
     @media (min-width: 768px) {
       .futuristic-header {
-        margin: 0 -3rem 2rem -3rem;
+        margin: 0 0 3rem 0;
       }
     }
 
     @media (min-width: 1024px) {
       .futuristic-header {
-        margin: 0 -4rem 2rem -4rem;
+        margin: 0 0 3rem 0;
       }
     }
 
     @media (min-width: 1280px) {
       .futuristic-header {
-        margin: 0 -6rem 2rem -6rem;
+        margin: 0 0 3rem 0;
       }
     }
 
@@ -143,16 +143,16 @@
     .metrics-text {
       position: relative;
       z-index: 10;
-      font-size: 4rem;
+      font-size: 3.5rem;
       font-family: -apple-system, BlinkMacSystemFont, 'avenir next', avenir, 'helvetica neue', helvetica, Ubuntu, roboto, noto, 'segoe ui', arial, sans-serif;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 0.05em;
-      text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+      gap: 0.08em;
+      text-shadow: 0 0 40px rgba(255, 255, 255, 0.6);
     }
 
     .metrics-text .letter {
@@ -181,14 +181,16 @@
     .subtitle {
       position: relative;
       z-index: 10;
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-family: -apple-system, BlinkMacSystemFont, 'avenir next', avenir, 'helvetica neue', helvetica, Ubuntu, roboto, noto, 'segoe ui', arial, sans-serif;
-      opacity: 0.9;
-      margin-bottom: 2rem;
+      opacity: 0.85;
+      margin-bottom: 0;
       display: flex;
       justify-content: center;
-      gap: 1rem;
+      gap: 1.5rem;
       flex-wrap: wrap;
+      font-weight: 500;
+      letter-spacing: 0.02em;
     }
 
     .subtitle-word {
@@ -327,56 +329,60 @@
 
     /* Auth Section */
     .auth-section {
-      padding: 2rem;
-      background: rgba(1, 1, 1, 0.30);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 8px;
-      margin: 2rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2.5rem;
+      background: rgba(1, 1, 1, 0.25);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
+      margin: 2rem auto;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      max-width: 500px;
+    }
+
+    @media (min-width: 768px) {
+      .auth-section {
+        max-width: 550px;
+      }
     }
 
     @media (min-width: 1024px) {
       .auth-section {
         max-width: 600px;
-        margin: 2rem auto;
-      }
-    }
-
-    @media (min-width: 1280px) {
-      .auth-section {
-        max-width: 700px;
-        margin: 2rem auto;
       }
     }
 
     .auth-tabs {
       display: flex;
-      margin-bottom: 2rem;
-      border-bottom: 2px solid #f0f0f0;
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      gap: 0.5rem;
     }
 
     .auth-tab {
       flex: 1;
-      padding: 1rem;
+      padding: 1rem 1.5rem;
       text-align: center;
       background: none;
       border: none;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #666;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.6);
       cursor: pointer;
-      transition: all 0.3s ease;
-      border-bottom: 3px solid transparent;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-bottom: 2px solid transparent;
+      border-radius: 8px 8px 0 0;
     }
 
     .auth-tab.active {
-      color: #667eea;
-      border-bottom-color: #667eea;
+      color: #fff;
+      border-bottom-color: #422EA3;
+      background: rgba(66, 46, 163, 0.1);
     }
 
     .auth-tab:hover {
-      color: #667eea;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .auth-content {
@@ -387,59 +393,129 @@
       display: block;
     }
 
+    /* Message handling */
+    .message {
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+      border: 1px solid transparent;
+    }
+
+    .message.error {
+      background: rgba(220, 53, 69, 0.1);
+      color: #ff6b6b;
+      border-color: rgba(220, 53, 69, 0.2);
+    }
+
+    .message.success {
+      background: rgba(40, 167, 69, 0.1);
+      color: #51cf66;
+      border-color: rgba(40, 167, 69, 0.2);
+    }
+
+    .message.info {
+      background: rgba(66, 46, 163, 0.1);
+      color: #a8a4ff;
+      border-color: rgba(66, 46, 163, 0.2);
+    }
+
+    /* Loading States */
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, .3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Hidden */
+    .hidden {
+      display: none !important;
+    }
+
     /* Form Styles */
     .form-group {
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
     }
 
     .form-label {
       display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-      color: #333;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
     }
 
     .form-input {
       width: 100%;
-      padding: 1rem;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
       font-size: 1rem;
-      font-family: 'Iowan Old Style', 'Apple Garamond', Georgia, Baskerville, 'Times New Roman', 'Droid Serif', Times, 'Source Serif Pro', serif;
-      transition: all 0.3s ease;
+      font-family: -apple-system, BlinkMacSystemFont, 'avenir next', avenir, 'helvetica neue', helvetica, Ubuntu, roboto, noto, 'segoe ui', arial, sans-serif;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-sizing: border-box;
-      background: rgba(30, 37, 48, 0.8);
+      background: rgba(255, 255, 255, 0.05);
       color: #fff;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .form-input:focus {
       outline: none;
       border-color: #422EA3;
-      box-shadow: 0 0 0 3px rgba(66, 46, 163, 0.1);
+      box-shadow: 0 0 0 4px rgba(66, 46, 163, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .form-input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
     }
 
     .form-button {
       width: 100%;
-      padding: 1rem;
+      padding: 1rem 1.5rem;
       border: none;
       border-radius: 12px;
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
-      margin-bottom: 1rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
     }
 
     .btn-primary {
-      background: linear-gradient(45deg, #4527a0 0%, #711e9b 100%);
+      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
       color: white;
-      border-radius: 8px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(66, 46, 163, 0.3);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(66, 46, 163, 0.3);
+      box-shadow: 0 8px 24px rgba(66, 46, 163, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 16px rgba(66, 46, 163, 0.3);
     }
 
     .btn-secondary {
@@ -454,18 +530,21 @@
     }
 
     .btn-google {
-      background: white;
+      background: rgba(255, 255, 255, 0.95);
       color: #333;
-      border: 2px solid #e1e5e9;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
+      gap: 0.75rem;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .btn-google:hover {
-      border-color: #4285f4;
-      box-shadow: 0 5px 15px rgba(66, 133, 244, 0.2);
+      background: rgba(255, 255, 255, 1);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     }
 
     .google-icon {
@@ -476,7 +555,7 @@
     /* Divider */
     .divider {
       text-align: center;
-      margin: 1.5rem 0;
+      margin: 2rem 0;
       position: relative;
     }
 
@@ -487,28 +566,33 @@
       left: 0;
       right: 0;
       height: 1px;
-      background: #e1e5e9;
+      background: rgba(255, 255, 255, 0.15);
     }
 
     .divider span {
-      background: white;
-      padding: 0 1rem;
-      color: #666;
+      background: rgba(1, 1, 1, 0.25);
+      padding: 0 1.5rem;
+      color: rgba(255, 255, 255, 0.6);
       font-size: 0.9rem;
+      font-weight: 500;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
 
     /* User Info */
     .user-info {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
       color: white;
       padding: 2rem;
-      border-radius: 12px;
-      margin-bottom: 1rem;
+      border-radius: 16px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 8px 24px rgba(66, 46, 163, 0.3);
     }
 
     .user-info h3 {
-      margin: 0 0 1rem 0;
-      font-size: 1.5rem;
+      margin: 0 0 1.5rem 0;
+      font-size: 1.4rem;
+      font-weight: 700;
     }
 
     .user-detail {
@@ -571,13 +655,14 @@
 
     /* API Section */
     .api-section {
-      background: rgba(1, 1, 1, 0.30);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      padding: 2rem;
-      border-radius: 8px;
-      margin: 2rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(1, 1, 1, 0.25);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 2.5rem;
+      border-radius: 20px;
+      margin: 2rem 0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
 
     .api-endpoint {
@@ -733,68 +818,350 @@
     }
     /* API Testing Interface Styles */
     .api-section-container {
-      background: rgba(1, 1, 1, 0.30);
-      border-radius: 8px;
-      padding: 2rem;
+      background: rgba(1, 1, 1, 0.25);
+      border-radius: 20px;
+      padding: 2.5rem;
       margin: 2rem 0;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Two Column Layout */
-    .api-interface-layout {
+    .api-section-container.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .api-section-container.hidden {
+      display: none;
+    }
+
+    /* Dashboard Layout */
+    .dashboard-container {
+      display: flex;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a3a 0%, #2d1b69 50%, #3d2b8a 100%);
+    }
+
+    /* Sidebar */
+    .dashboard-sidebar {
+      width: 280px;
+      background: linear-gradient(180deg, #2d1b69 0%, #4a2b8a 50%, #6b46c1 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.15);
       display: flex;
       flex-direction: column;
-      gap: 2rem;
+      position: fixed;
+      height: 100vh;
+      z-index: 1000;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    @media (min-width: 1024px) {
-      .api-interface-layout {
-        flex-direction: row;
-        align-items: flex-end;
-      }
-      
-      .api-endpoints-column {
-        flex: 1;
-        min-width: 0;
-      }
-      
-      .test-results-column {
-        flex: 1;
-        min-width: 0;
-      }
+    .dashboard-sidebar.collapsed {
+      transform: translateX(-100%);
     }
 
-    @media (min-width: 1280px) {
-      .api-endpoints-column {
-        flex: 0.8;
-      }
-      
-      .test-results-column {
-        flex: 1.2;
-      }
+    .sidebar-header {
+      padding: 2rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .api-section-container h2 {
+    .logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 800;
       color: #fff;
-      font-size: 2rem;
-      margin-bottom: 2rem;
-      text-align: center;
-      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
+      letter-spacing: 0.1em;
+      background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
-    .auth-status {
-      background: rgba(30, 37, 48, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .logo-subtitle {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 0.25rem;
+      font-weight: 500;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 2rem 1rem;
+    }
+
+    .nav-section {
+      margin-bottom: 2rem;
+    }
+
+    .nav-title {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+      padding-left: 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
       border-radius: 8px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      background: rgba(139, 92, 246, 0.2);
+      color: #fff;
+      border-left: 3px solid #8b5cf6;
+    }
+
+    .nav-icon {
+      font-size: 1.2rem;
+    }
+
+    .nav-text {
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .sidebar-footer {
       padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      background: rgba(66, 46, 163, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .user-details {
+      flex: 1;
+    }
+
+    .user-name {
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+    }
+
+    .logout-btn:hover {
+      color: #fff;
+    }
+
+    /* Main Content */
+    .dashboard-main {
+      flex: 1;
+      margin-left: 280px;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #2d1b69 0%, #3d2b8a 50%, #4a2b8a 100%);
+    }
+
+    .dashboard-header {
+      background: rgba(45, 27, 105, 0.4);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .page-title {
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+
+    .menu-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .dashboard-content {
+      padding: 2rem;
+    }
+
+    .content-section {
+      background: rgba(45, 27, 105, 0.3);
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(45, 27, 105, 0.4);
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .section-header h2 {
+      color: #fff;
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-header p {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .auth-container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .google-login-content {
+      text-align: center;
+      padding: 2rem 0;
+    }
+
+    .google-login-content p {
+      margin-bottom: 2rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .dashboard-sidebar {
+        transform: translateX(-100%);
+      }
+      
+      .dashboard-sidebar.mobile-open {
+        transform: translateX(0);
+      }
+      
+      .dashboard-main {
+        margin-left: 0;
+      }
+      
+      .menu-toggle {
+        display: block;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-content {
+        padding: 1rem;
+      }
+      
+      .content-section {
+        padding: 1.5rem;
+      }
+      
+      .section-header h2 {
+        font-size: 1.75rem;
+      }
+    }
+
+
+
+    /* API Endpoints Container */
+    .api-endpoints-container {
+      background: rgba(107, 70, 193, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      scroll-margin-top: 2rem;
+    }
+
+    .api-section-container h2 {
+      color: #fff;
+      font-size: 2.25rem;
+      margin-bottom: 2.5rem;
+      text-align: center;
+      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .auth-status {
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
 
     .auth-status h3 {
@@ -810,47 +1177,64 @@
       color: #fff;
     }
 
-    .api-endpoints-column {
-      background: rgba(30, 37, 48, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 1.5rem;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .api-endpoints-column h3 {
+    .api-endpoints-container h3 {
       color: #fff;
       margin-bottom: 1.5rem;
       font-size: 1.25rem;
     }
 
     .endpoint-group {
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
+      scroll-margin-top: 2rem;
     }
 
     .endpoint-group h4 {
       color: #fff;
-      border-bottom: 2px solid #422EA3;
-      padding-bottom: 0.5rem;
-      margin-bottom: 1rem;
-      font-size: 1.1rem;
+      border-bottom: 2px solid #8b5cf6;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    /* Highlight active section when navigating */
+    .endpoint-group:target {
+      animation: highlightSection 0.5s ease-out;
+    }
+
+    .endpoint-group:target h4 {
+      color: #8b5cf6;
+      text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+    }
+
+    @keyframes highlightSection {
+      0% {
+        background: rgba(139, 92, 246, 0.1);
+        transform: scale(1.02);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+      }
+      100% {
+        background: transparent;
+        transform: scale(1);
+        box-shadow: none;
+      }
     }
 
     .endpoint-item {
-      background: rgba(66, 46, 163, 0.1);
-      border: 1px solid rgba(66, 46, 163, 0.3);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-      transition: all 0.3s ease;
+      background: rgba(107, 70, 193, 0.1);
+      border: 1px solid rgba(107, 70, 193, 0.3);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .endpoint-item:hover {
-      background: rgba(66, 46, 163, 0.2);
-      border-color: rgba(66, 46, 163, 0.5);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(66, 46, 163, 0.2);
+      background: rgba(107, 70, 193, 0.2);
+      border-color: rgba(107, 70, 193, 0.5);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(107, 70, 193, 0.3);
     }
 
     .endpoint-header {
@@ -873,36 +1257,99 @@
     }
 
     .method.get {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
     }
 
     .method.post {
-      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
     }
 
     .method.put {
-      background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+      background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
       color: #212529;
     }
 
     .method.delete {
-      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
     }
 
     .endpoint-url {
-      font-family: 'Courier New', monospace;
-      background: rgba(255, 255, 255, 0.1);
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
+      background: rgba(139, 92, 246, 0.15);
       color: #fff;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
       flex: 1;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      letter-spacing: 0.02em;
     }
 
     .endpoint-item p {
       color: rgba(255, 255, 255, 0.8);
       margin: 0.5rem 0;
+    }
+
+    /* Inline Endpoint Results */
+    .endpoint-result {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      background: rgba(139, 92, 246, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .endpoint-result.hidden {
+      display: none;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .result-status {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .result-status.success {
+      color: #10b981;
+    }
+
+    .result-status.error {
+      color: #ef4444;
+    }
+
+    .result-status.info {
+      color: #3b82f6;
+    }
+
+    .result-time {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.8rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+
+    .result-content {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
     .endpoint-params {
@@ -919,36 +1366,41 @@
     }
 
     .form-control {
-      padding: 8px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
+      padding: 10px 14px;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 8px;
       font-size: 14px;
       min-width: 150px;
-      background: rgba(30, 37, 48, 0.8);
+      background: rgba(139, 92, 246, 0.1);
       color: #fff;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .form-control:focus {
       outline: none;
-      border-color: #422EA3;
-      box-shadow: 0 0 0 3px rgba(66, 46, 163, 0.1);
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+      background: rgba(139, 92, 246, 0.15);
     }
 
     .btn-sm {
-      padding: 6px 12px;
+      padding: 8px 16px;
       font-size: 12px;
-      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
+      font-weight: 600;
+      background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
     }
 
     .btn-sm:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(66, 46, 163, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
     }
 
     /* Button Loading States */
@@ -981,481 +1433,245 @@
       display: none !important;
     }
 
-    /* Skeleton Loading Placeholder */
-    .skeleton-placeholder {
-      background: rgba(66, 46, 163, 0.1);
-      border: 1px solid rgba(66, 46, 163, 0.3);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-      animation: skeletonPulse 1.5s ease-in-out infinite;
-    }
 
-    .skeleton-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
 
-    .skeleton-title {
-      height: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      width: 60%;
-      animation: skeletonPulse 1.5s ease-in-out infinite;
-    }
 
-    .skeleton-status {
-      height: 24px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
-      width: 80px;
-      animation: skeletonPulse 1.5s ease-in-out infinite;
-    }
-
-    .skeleton-url {
-      height: 16px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      width: 80%;
-      margin-bottom: 0.5rem;
-      animation: skeletonPulse 1.5s ease-in-out infinite;
-    }
-
-    .skeleton-details {
-      height: 100px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
-      animation: skeletonPulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes skeletonPulse {
-      0%, 100% {
-        opacity: 0.6;
-      }
-      50% {
-        opacity: 0.3;
-      }
-    }
-
-    .test-results-column {
-      background: rgba(30, 37, 48, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 1.5rem;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .test-results-column h3 {
-      color: #fff;
-      margin-bottom: 1.5rem;
-      font-size: 1.25rem;
-    }
-
-    /* Instructions Panel */
-    .instructions-panel {
-      background: rgba(30, 37, 48, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .instructions-panel h3 {
-      color: #fff;
-      margin-bottom: 1.5rem;
-      font-size: 1.25rem;
-      text-align: center;
-      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .instructions-content {
-      color: rgba(255, 255, 255, 0.9);
-    }
-
-    .instruction-section {
-      margin-bottom: 1.5rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .instruction-section:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    .instruction-section h4 {
-      color: #fff;
-      font-size: 1rem;
-      margin-bottom: 0.75rem;
-      font-weight: 600;
-    }
-
-    .instruction-section p {
-      color: rgba(255, 255, 255, 0.8);
-      line-height: 1.6;
-      margin-bottom: 0.5rem;
-    }
-
-    .instruction-section ul {
-      margin: 0.5rem 0;
-      padding-left: 1.5rem;
-    }
-
-    .instruction-section li {
-      color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 0.5rem;
-      line-height: 1.5;
-    }
-
-    .instruction-section strong {
-      color: #fff;
-      font-weight: 600;
-    }
-
-    /* Test Results Section */
-    .test-results-section {
-      background: rgba(30, 37, 48, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 1.5rem;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .results-container {
-      min-height: 100px;
-    }
-
-    .no-results {
-      color: rgba(255, 255, 255, 0.6);
-      font-style: italic;
-      text-align: center;
-      padding: 2rem;
-    }
-
-    .test-result {
-      background: rgba(66, 46, 163, 0.1);
-      border: 1px solid rgba(66, 46, 163, 0.3);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-      transition: all 0.3s ease;
-    }
-
-    .test-result:hover {
-      background: rgba(66, 46, 163, 0.2);
-      transform: translateY(-1px);
-    }
-
-    .test-result.success {
-      border-left: 4px solid #28a745;
-    }
-
-    .test-result.error {
-      border-left: 4px solid #dc3545;
-    }
-
-    .test-result-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .test-result-title {
-      font-weight: 600;
-      color: #fff;
-      font-size: 0.9rem;
-    }
-
-    .test-result-status {
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-
-    .test-result-status.success {
-      background: rgba(40, 167, 69, 0.2);
-      color: #28a745;
-      border: 1px solid rgba(40, 167, 69, 0.3);
-    }
-
-    .test-result-status.error {
-      background: rgba(220, 53, 69, 0.2);
-      color: #dc3545;
-      border: 1px solid rgba(220, 53, 69, 0.3);
-    }
-
-    .test-result-details {
-      font-family: 'Courier New', monospace;
-      background: rgba(0, 0, 0, 0.3);
-      color: #fff;
-      padding: 1rem;
-      border-radius: 6px;
-      font-size: 12px;
-      white-space: pre-wrap;
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .test-result-url {
-      color: #422EA3;
-      font-weight: 500;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    .test-result p {
-      color: rgba(255, 255, 255, 0.8);
-      margin: 0.5rem 0;
-      font-size: 0.9rem;
-    }
 
     /* Button styles for the testing interface */
     .btn {
-      padding: 8px 16px;
+      padding: 10px 20px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       text-decoration: none;
       display: inline-block;
       text-align: center;
+      position: relative;
+      overflow: hidden;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #422EA3 0%, #711E9B 100%);
+      background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
       color: white;
+      box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(66, 46, 163, 0.3);
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
     }
 
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.08);
       color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
     }
 
     .btn-success {
       background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
       color: white;
+      box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
     }
 
     .btn-success:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+      box-shadow: 0 8px 24px rgba(40, 167, 69, 0.4);
     }
   </style>
 </head>
 
 <body>
-  <div class="page-container">
-    <div class="futuristic-header">
-      <div class="cyber-grid"></div>
-      <div class="pulse-rings">
-        <div class="ring ring-1"></div>
-        <div class="ring ring-2"></div>
-        <div class="ring ring-3"></div>
-      </div>
-      <div class="metrics-text">
-        <span class="letter" data-letter="M">M</span>
-        <span class="letter" data-letter="E">E</span>
-        <span class="letter" data-letter="T">T</span>
-        <span class="letter" data-letter="R">R</span>
-        <span class="letter" data-letter="I">I</span>
-        <span class="letter" data-letter="C">C</span>
-        <span class="letter" data-letter="S">S</span>
-        <span class="space"></span>
-        <span class="letter" data-letter="A">A</span>
-        <span class="letter" data-letter="P">P</span>
-        <span class="letter" data-letter="I">I</span>
-      </div>
-      <div class="subtitle">
-        <span class="subtitle-word">Social</span>
-        <span class="subtitle-word">Provider</span>
-        <span class="subtitle-word">Data</span>
-      </div>
-      <div class="data-streams">
-        <div class="stream stream-1"></div>
-        <div class="stream stream-2"></div>
-        <div class="stream stream-3"></div>
-      </div>
-      <div class="particle-field">
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-      </div>
-    </div>
-
-    <div class="auth-section">
-      <div id="loginSection">
-        <div class="auth-tabs">
-          <button class="auth-tab active" onclick="switchTab('email')">Email</button>
-          <button class="auth-tab" onclick="switchTab('phone')">Phone</button>
-          <button class="auth-tab" onclick="switchTab('google')">Google</button>
+  <div class="dashboard-container">
+    <!-- Sidebar Navigation -->
+    <aside class="dashboard-sidebar" id="dashboardSidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-text">METRICS</span>
+          <span class="logo-subtitle">API</span>
         </div>
-
-        <!-- Email/Password Login -->
-        <div id="emailTab" class="auth-content active">
-          <form id="emailForm" onsubmit="handleEmailLogin(event)">
-            <div class="form-group">
-              <label class="form-label" for="email">Email</label>
-              <input type="email" id="email" class="form-input" placeholder="your@email.com" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="password">Password</label>
-              <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
-            </div>
-            <button type="submit" class="form-button btn-primary">
-              <span class="btn-text">Sign In</span>
-              <span class="btn-loading hidden"><span class="spinner"></span> Signing in...</span>
-            </button>
-          </form>
-
-          <div class="divider">
-            <span>or</span>
-          </div>
-
-          <button class="form-button btn-google" onclick="handleGoogleLogin()">
-            <svg class="google-icon" viewBox="0 0 24 24">
-              <path fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-              <path fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            Continue with Google
-          </button>
-        </div>
-
-        <!-- Phone Login -->
-        <div id="phoneTab" class="auth-content">
-          <form id="phoneForm" onsubmit="handlePhoneLogin(event)">
-            <div class="form-group">
-              <label class="form-label" for="phone">Phone Number</label>
-              <input type="tel" id="phone" class="form-input" placeholder="+1 (555) 123-4567" required>
-            </div>
-            <div id="phoneCodeGroup" class="form-group hidden">
-              <label class="form-label" for="phoneCode">Verification Code</label>
-              <input type="text" id="phoneCode" class="form-input" placeholder="Enter 6-digit code" maxlength="6">
-            </div>
-            <button type="submit" class="form-button btn-primary">
-              <span class="btn-text">Send Code</span>
-              <span class="btn-loading hidden"><span class="spinner"></span> Sending...</span>
-            </button>
-          </form>
-
-          <div class="divider">
-            <span>or</span>
-          </div>
-
-          <button class="form-button btn-google" onclick="handleGoogleLogin()">
-            <svg class="google-icon" viewBox="0 0 24 24">
-              <path fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-              <path fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            Continue with Google
-          </button>
-        </div>
-
-        <!-- Google Login -->
-        <div id="googleTab" class="auth-content">
-          <div style="text-align: center; padding: 2rem 0;">
-            <p style="margin-bottom: 2rem; color: #666;">Sign in with your Google account</p>
-            <button class="form-button btn-google" onclick="handleGoogleLogin()"
-              style="max-width: 300px; margin: 0 auto;">
-              <svg class="google-icon" viewBox="0 0 24 24">
-                <path fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                <path fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-              </svg>
-              Continue with Google
-            </button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <h3 class="nav-title">Authentication</h3>
+          <div class="nav-item active" data-section="auth">
+            <span class="nav-icon">🔐</span>
+            <span class="nav-text">Sign In</span>
           </div>
         </div>
-
-        <div id="messageContainer"></div>
-      </div>
-
-      <div id="logoutSection" class="hidden">
-        <div class="user-info">
-          <h3>Welcome back!</h3>
-          <div class="user-detail">
-            <strong>Email:</strong> <span id="userEmail"></span>
-          </div>
-          <div class="user-detail">
-            <strong>User ID:</strong> <span id="userId"></span>
-          </div>
-        </div>
-        <button id="logoutButton" class="form-button btn-secondary" onclick="handleLogout()">
-          <span class="btn-text">Sign Out</span>
-          <span class="btn-loading hidden"><span class="spinner"></span> Signing out...</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="content-container api-section-container">
-      <h2>API Testing Interface</h2>
         
-        <!-- Authentication Status -->
-        <div class="auth-status">
-          <h3>Authentication Status</h3>
-          <div id="authStatus" class="auth-status-content">
-            <p>Not authenticated</p>
-            <button id="getTokenBtn" class="btn btn-primary" onclick="getFreshToken()">Get Fresh ID Token</button>
+        <div class="nav-section" id="apiNavSection" style="display: none;">
+          <h3 class="nav-title">API Testing</h3>
+          <div class="nav-item" data-section="widget-data">
+            <span class="nav-icon">🔌</span>
+            <span class="nav-text">Widget Data</span>
+          </div>
+          <div class="nav-item" data-section="sync-data">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">Sync Data</span>
           </div>
         </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-profile" id="userProfile" style="display: none;">
+          <div class="user-avatar">👤</div>
+          <div class="user-details">
+            <div class="user-name" id="sidebarUserEmail">User</div>
+                            <button class="logout-btn" onclick="handleLogout(event)">Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </aside>
 
-        <!-- Two Column Layout Container -->
-        <div class="api-interface-layout">
-          <!-- Left Column: API Endpoints -->
-          <div class="api-endpoints-column">
-            <h3>Available Endpoints</h3>
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      <!-- Top Header -->
+      <header class="dashboard-header">
+        <div class="header-content">
+          <h1 class="page-title">Metrics API Dashboard</h1>
+          <div class="header-actions">
+            <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+              <span class="menu-icon">☰</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Sections -->
+      <div class="dashboard-content">
+
+        <!-- Authentication Section -->
+        <section class="content-section" id="authSection">
+          <div class="section-header">
+            <h2>Authentication</h2>
+            <p>Sign in to access the API testing interface</p>
+          </div>
+          
+          <div class="auth-container">
+            <div class="auth-tabs">
+              <button class="auth-tab active" onclick="switchTab('email', event)">Email</button>
+              <button class="auth-tab" onclick="switchTab('phone', event)">Phone</button>
+              <button class="auth-tab" onclick="switchTab('google', event)">Google</button>
+            </div>
+
+            <!-- Email/Password Login -->
+            <div id="emailTab" class="auth-content active">
+              <form id="emailForm" onsubmit="handleEmailLogin(event)">
+                <div class="form-group">
+                  <label class="form-label" for="email">Email</label>
+                  <input type="email" id="email" class="form-input" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="password">Password</label>
+                  <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="form-button btn-primary">
+                  <span class="btn-text">Sign In</span>
+                  <span class="btn-loading hidden"><span class="spinner"></span> Signing in...</span>
+                </button>
+              </form>
+
+              <div class="divider">
+                <span>or</span>
+              </div>
+
+              <button class="form-button btn-google" onclick="handleGoogleLogin()">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                Continue with Google
+              </button>
+            </div>
+
+            <!-- Phone Login -->
+            <div id="phoneTab" class="auth-content">
+              <form id="phoneForm" onsubmit="handlePhoneLogin(event)">
+                <div class="form-group">
+                  <label class="form-label" for="phone">Phone Number</label>
+                  <input type="tel" id="phone" class="form-input" placeholder="+1 (555) 123-4567" required>
+                </div>
+                <div id="phoneCodeGroup" class="form-group hidden">
+                  <label class="form-label" for="phoneCode">Verification Code</label>
+                  <input type="text" id="phoneCode" class="form-input" placeholder="Enter 6-digit code" maxlength="6">
+                </div>
+                <button type="submit" class="form-button btn-primary">
+                  <span class="btn-text">Send Code</span>
+                  <span class="btn-loading hidden"><span class="spinner"></span> Sending...</span>
+                </button>
+              </form>
+
+              <div class="divider">
+                <span>or</span>
+              </div>
+
+              <button class="form-button btn-google" onclick="handleGoogleLogin()">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                Continue with Google
+              </button>
+            </div>
+
+            <!-- Google Login -->
+            <div id="googleTab" class="auth-content">
+              <div class="google-login-content">
+                <p>Sign in with your Google account</p>
+                <button class="form-button btn-google" onclick="handleGoogleLogin()">
+                  <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  </svg>
+                  Continue with Google
+                </button>
+              </div>
+            </div>
+
+            <div id="messageContainer"></div>
+          </div>
+        </section>
+
+
+
+        <!-- API Testing Section -->
+        <section class="content-section hidden" id="apiTestingSection">
+          <div class="section-header">
+            <h2>API Testing Interface</h2>
+            <p>Test your API endpoints and view results</p>
+          </div>
+          
+          <!-- Authentication Status -->
+          <div class="auth-status">
+            <h3>Authentication Status</h3>
+            <div id="authStatus" class="auth-status-content">
+              <p>Not authenticated</p>
+              <button id="getTokenBtn" class="btn btn-primary" onclick="getFreshToken()">Get Fresh ID Token</button>
+            </div>
+          </div>
+
+          <!-- Widget Data Section -->
+          <div class="api-endpoints-container" id="widget-data">
+            <h3>Widget Data Endpoints (No Auth Required)</h3>
             
-            <!-- Widget Data Endpoints -->
             <div class="endpoint-group">
-              <h4>Widget Data (No Auth Required)</h4>
+              <h4>Get Widget Content</h4>
               <div class="endpoint-item">
                 <div class="endpoint-header">
                   <span class="method get">GET</span>
@@ -1479,12 +1695,24 @@
                     <option value="flickr">flickr</option>
                   </select>
                 </div>
+                <!-- Inline test result for this endpoint -->
+                <div id="widgets-result" class="endpoint-result hidden">
+                  <div class="result-header">
+                    <span class="result-status"></span>
+                    <span class="result-time"></span>
+                  </div>
+                  <div class="result-content"></div>
+                </div>
               </div>
             </div>
+          </div>
 
-            <!-- Sync Data Endpoints -->
+          <!-- Sync Data Section -->
+          <div class="api-endpoints-container" id="sync-data">
+            <h3>Sync Data Endpoints (Authentication Required)</h3>
+            
             <div class="endpoint-group">
-              <h4>Sync Data (Authentication Required)</h4>
+              <h4>Session Management</h4>
               <div class="endpoint-item">
                 <div class="endpoint-header">
                   <span class="method post">POST</span>
@@ -1497,8 +1725,19 @@
                   </button>
                 </div>
                 <p>Create session cookie from ID token</p>
+                <!-- Inline test result for this endpoint -->
+                <div id="session-result" class="endpoint-result hidden">
+                  <div class="result-header">
+                    <span class="result-status"></span>
+                    <span class="result-time"></span>
+                  </div>
+                  <div class="result-content"></div>
+                </div>
               </div>
-              
+            </div>
+            
+            <div class="endpoint-group">
+              <h4>Data Synchronization</h4>
               <div class="endpoint-item">
                 <div class="endpoint-header">
                   <span class="method get">GET</span>
@@ -1522,52 +1761,20 @@
                     <option value="flickr">flickr</option>
                   </select>
                 </div>
+                <!-- Inline test result for this endpoint -->
+                <div id="sync-result" class="endpoint-result hidden">
+                  <div class="result-header">
+                    <span class="result-status"></span>
+                    <span class="result-time"></span>
+                  </div>
+                  <div class="result-content"></div>
+                </div>
               </div>
             </div>
           </div>
-
-          <!-- Right Column: Instructions and Test Results -->
-          <div class="test-results-column">
-            <!-- Instructions Panel -->
-            <div class="instructions-panel">
-              <h3>Quick Guide</h3>
-              <div class="instructions-content">
-                <div class="instruction-section">
-                  <h4>🔐 Auth Required?</h4>
-                  <p>Sign in above, then click "Get Fresh ID Token" for protected endpoints.</p>
-                </div>
-                
-                <div class="instruction-section">
-                  <h4>🧪 Test Endpoints</h4>
-                  <p>Click "Test" buttons to make requests. Results appear below.</p>
-                </div>
-                
-                <div class="instruction-section">
-                  <h4>📊 Read Results</h4>
-                  <p>Green = success, red = error. Full response data shown below.</p>
-                </div>
-                
-                <div class="instruction-section">
-                  <h4>💡 Pro Tips</h4>
-                  <ul>
-                    <li>Test public endpoints first</li>
-                    <li>Use provider dropdowns</li>
-                    <li>Check console for debug info</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Test Results -->
-            <div class="test-results-section">
-              <h3>Test Results</h3>
-              <div id="testResults" class="results-container">
-                <p class="no-results">No tests run yet. Click "Test" buttons above to test endpoints.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-    </div>
+        </section>
+      </div>
+    </main>
   </div>
 
   <!-- Firebase SDK -->
@@ -1591,7 +1798,7 @@
     import { ApiClient } from './api-client.js';
 
     // Initialize Firebase with dynamic config
-    let app, auth;
+    let app, auth, apiClient;
 
     async function initializeFirebase() {
       try {
@@ -1621,17 +1828,19 @@
       });
 
       // Initialize API client
-      const apiClient = new ApiClient();
+      apiClient = new ApiClient();
 
       // Global variables
       let phoneVerifier = null;
       let phoneConfirmationResult = null;
 
       // Tab switching
-      window.switchTab = function (tabName) {
+      window.switchTab = function (tabName, event) {
         // Update tabs
         document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
-        event.target.classList.add('active');
+        if (event && event.target) {
+          event.target.classList.add('active');
+        }
 
         // Update content
         document.querySelectorAll('.auth-content').forEach(content => content.classList.remove('active'));
@@ -1768,7 +1977,7 @@
       };
 
       // Google Login
-      window.handleGoogleLogin = async function () {
+      window.handleGoogleLogin = async function (event) {
         const button = event.target;
         setLoading(button, true);
         clearMessages();
@@ -1801,12 +2010,26 @@
 
       // Logout
       window.handleLogout = async function () {
-        const button = document.getElementById('logoutButton');
-        setLoading(button, true);
+        console.log('Logout function called');
+        const button = event.target;
+        const originalText = button.textContent;
+        
+        // Simple loading state for logout button
+        button.textContent = 'Signing out...';
+        button.disabled = true;
 
         try {
+          console.log('Starting logout process...');
+          console.log('apiClient:', apiClient);
+          
           // First, call server-side logout to revoke tokens
-          await apiClient.logout();
+          if (apiClient && typeof apiClient.logout === 'function') {
+            await apiClient.logout();
+            console.log('Server logout successful');
+          } else {
+            console.warn('apiClient.logout not available, skipping server logout');
+          }
+          
           // Then, sign out from Firebase Auth
           await signOut(auth);
           console.log('Logout successful');
@@ -1821,18 +2044,37 @@
           }
           showMessage('Logout failed: ' + error.message, 'error');
         } finally {
-          setLoading(button, false);
+          // Restore button state
+          button.textContent = originalText;
+          button.disabled = false;
         }
       };
 
       // Auth state observer
       onAuthStateChanged(auth, async (user) => {
         if (user) {
-          // User is signed in
-          document.getElementById('loginSection').classList.add('hidden');
-          document.getElementById('logoutSection').classList.remove('hidden');
-          document.getElementById('userEmail').textContent = user.email || 'No email';
-          document.getElementById('userId').textContent = user.uid;
+          // User is signed in - hide auth section and show API testing
+          document.getElementById('authSection').classList.add('hidden');
+          const apiSection = document.getElementById('apiTestingSection');
+          apiSection.classList.remove('hidden');
+          // Add a small delay for smooth animation
+          setTimeout(() => {
+            apiSection.classList.add('visible');
+          }, 100);
+
+          // Update sidebar
+          document.getElementById('apiNavSection').style.display = 'block';
+          document.getElementById('userProfile').style.display = 'block';
+          document.getElementById('sidebarUserEmail').textContent = user.email;
+
+          // Update auth status
+          if (document.getElementById('authStatus')) {
+            document.getElementById('authStatus').innerHTML = `
+              <p><strong>Authenticated as:</strong> ${user.email}</p>
+              <p>Click "Get Fresh ID Token" to test authenticated endpoints</p>
+              <button class="btn btn-primary" onclick="getFreshToken()">Get Fresh ID Token</button>
+            `;
+          }
 
           // Create session cookie from JWT token
           try {
@@ -1851,9 +2093,26 @@
             }
           }
         } else {
-          // User is signed out
-          document.getElementById('loginSection').classList.remove('hidden');
-          document.getElementById('logoutSection').classList.add('hidden');
+          // User is signed out - show auth section and hide API testing
+          document.getElementById('authSection').classList.remove('hidden');
+          
+          // Hide API testing section
+          document.getElementById('apiTestingSection').classList.remove('visible');
+          document.getElementById('apiTestingSection').classList.add('hidden');
+          
+          // Update sidebar
+          document.getElementById('apiNavSection').style.display = 'none';
+          document.getElementById('userProfile').style.display = 'none';
+          
+          // Update auth status
+          if (document.getElementById('authStatus')) {
+            document.getElementById('authStatus').innerHTML = `
+              <p>Not authenticated</p>
+              <button id="getTokenBtn" class="btn btn-primary" onclick="getFreshToken()">Get Fresh ID Token</button>
+            `;
+          }
+          window.currentIdToken = null;
+          
           localStorage.removeItem('authToken');
           apiClient.clearSession();
           console.log('User signed out, tokens and cookies cleared');
@@ -1920,8 +2179,12 @@
         const button = event.target;
         setButtonLoading(button, true);
 
-        // Add skeleton placeholder
-        const skeletonId = addSkeletonPlaceholder(endpointType);
+        // Get the result container for this endpoint
+        const resultContainer = document.getElementById(`${endpointType}-result`);
+        if (resultContainer) {
+          resultContainer.classList.remove('hidden');
+          resultContainer.querySelector('.result-content').innerHTML = 'Testing endpoint...';
+        }
 
         let url, method, body;
         // Detect current environment and use appropriate base URL
@@ -1953,7 +2216,6 @@
           default:
             showMessage('Unknown endpoint type', 'error');
             setButtonLoading(button, false);
-            removeSkeletonPlaceholder(skeletonId);
             return;
         }
 
@@ -1999,9 +2261,8 @@
             data: responseData
           };
 
-          // Remove skeleton and add actual result
-          removeSkeletonPlaceholder(skeletonId);
-          addTestResult(result, response.ok);
+          // Update inline result
+          updateInlineResult(endpointType, result, response.ok);
         } catch (error) {
           const result = {
             endpoint: endpointType,
@@ -2011,9 +2272,8 @@
             timestamp: new Date().toISOString()
           };
           
-          // Remove skeleton and add error result
-          removeSkeletonPlaceholder(skeletonId);
-          addTestResult(result, false);
+          // Update inline result with error
+          updateInlineResult(endpointType, result, false);
         } finally {
           // Reset button loading state
           setButtonLoading(button, false);
@@ -2042,101 +2302,60 @@
         }
       }
 
-      // Skeleton placeholder management
-      function addSkeletonPlaceholder(endpointType) {
-        const resultsContainer = document.getElementById('testResults');
-        const skeletonId = `skeleton-${Date.now()}`;
-        
-        const skeletonElement = document.createElement('div');
-        skeletonElement.className = 'skeleton-placeholder';
-        skeletonElement.id = skeletonId;
-        
-        skeletonElement.innerHTML = `
-          <div class="skeleton-header">
-            <div class="skeleton-title"></div>
-            <div class="skeleton-status"></div>
-          </div>
-          <div class="skeleton-url"></div>
-          <div class="skeleton-details"></div>
-        `;
+      // Update inline result for endpoints
+      function updateInlineResult(endpointType, result, success) {
+        const resultContainer = document.getElementById(`${endpointType}-result`);
+        if (!resultContainer) return;
 
-        // Remove "no results" message if it exists
-        const noResults = resultsContainer.querySelector('.no-results');
-        if (noResults) {
-          noResults.remove();
-        }
+        const statusElement = resultContainer.querySelector('.result-status');
+        const timeElement = resultContainer.querySelector('.result-time');
+        const contentElement = resultContainer.querySelector('.result-content');
 
-        // Add skeleton at the bottom
-        resultsContainer.appendChild(skeletonElement);
-        
-        return skeletonId;
-      }
-
-      function removeSkeletonPlaceholder(skeletonId) {
-        const skeleton = document.getElementById(skeletonId);
-        if (skeleton) {
-          skeleton.remove();
-        }
-      }
-
-      function addTestResult(result, success) {
-        const resultsContainer = document.getElementById('testResults');
-        const resultElement = document.createElement('div');
-        resultElement.className = `test-result ${success ? 'success' : 'error'}`;
-        
-        const statusClass = success ? 'success' : 'error';
-        const statusText = success ? 'Success' : 'Error';
-        
-        let details = '';
-        if (result.error) {
-          details = `Error: ${result.error}`;
-        } else if (result.data) {
-          details = JSON.stringify(result.data, null, 2);
-        }
-
-        resultElement.innerHTML = `
-          <div class="test-result-header">
-            <span class="test-result-title">${result.endpoint.toUpperCase()} - ${result.method} ${result.url}</span>
-            <span class="test-result-status ${statusClass}">${statusText}</span>
-          </div>
-          <div class="test-result-url">${result.url}</div>
-          ${result.status ? `<p><strong>Status:</strong> ${result.status} ${result.statusText}</p>` : ''}
-          ${result.responseTime ? `<p><strong>Response Time:</strong> ${result.responseTime}</p>` : ''}
-          ${details ? `<div class="test-result-details">${details}</div>` : ''}
-        `;
-
-        // Remove "no results" message if it exists
-        const noResults = resultsContainer.querySelector('.no-results');
-        if (noResults) {
-          noResults.remove();
-        }
-
-        // Add new result at the bottom
-        resultsContainer.appendChild(resultElement);
-      }
-
-      // Update auth status when user signs in/out
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          // User is signed in - update auth status
-          if (document.getElementById('authStatus')) {
-            document.getElementById('authStatus').innerHTML = `
-              <p><strong>Authenticated as:</strong> ${user.email}</p>
-              <p>Click "Get Fresh ID Token" to test authenticated endpoints</p>
-              <button class="btn btn-primary" onclick="getFreshToken()">Get Fresh ID Token</button>
-            `;
-          }
+        // Update status
+        if (success) {
+          statusElement.textContent = `✅ ${result.status} ${result.statusText}`;
+          statusElement.className = 'result-status success';
         } else {
-          // User is signed out - clear auth status
-          if (document.getElementById('authStatus')) {
-            document.getElementById('authStatus').innerHTML = `
-              <p>Not authenticated</p>
-              <button id="getTokenBtn" class="btn btn-primary" onclick="getFreshToken()">Get Fresh ID Token</button>
-            `;
-          }
-          window.currentIdToken = null;
+          statusElement.textContent = `❌ ${result.error || `${result.status} ${result.statusText}`}`;
+          statusElement.className = 'result-status error';
         }
-      });
+
+        // Update time
+        if (result.responseTime) {
+          timeElement.textContent = result.responseTime;
+        } else {
+          timeElement.textContent = new Date().toLocaleTimeString();
+        }
+
+        // Update content
+        let content = '';
+        if (success) {
+          content += `URL: ${result.url}\n`;
+          content += `Method: ${result.method}\n`;
+          content += `Status: ${result.status} ${result.statusText}\n`;
+          content += `Response Time: ${result.responseTime}\n\n`;
+          content += 'Response Data:\n';
+          content += JSON.stringify(result.data, null, 2);
+        } else {
+          content += `URL: ${result.url}\n`;
+          content += `Method: ${result.method}\n`;
+          if (result.error) {
+            content += `Error: ${result.error}\n`;
+          } else {
+            content += `Status: ${result.status} ${result.statusText}\n`;
+          }
+          content += `Timestamp: ${result.timestamp}\n`;
+        }
+
+        contentElement.textContent = content;
+      }
+
+      // Skeleton placeholder management
+
+
+
+
+
     } // Close initializeApp function
 
           // Reset all button states on page load
@@ -2154,6 +2373,62 @@
           }
         });
       }
+
+      // Dashboard Functions
+      window.toggleSidebar = function() {
+        const sidebar = document.getElementById('dashboardSidebar');
+        sidebar.classList.toggle('mobile-open');
+      };
+
+      // Navigation handling
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('.nav-item')) {
+          const navItem = e.target.closest('.nav-item');
+          const section = navItem.dataset.section;
+          
+          // Update active nav item
+          document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+          navItem.classList.add('active');
+          
+          // Handle section navigation
+          if (section === 'auth') {
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('apiTestingSection').classList.add('hidden');
+            
+            // Scroll to top of page for authentication section
+            window.scrollTo({
+              top: 0,
+              behavior: 'smooth'
+            });
+          } else if (section === 'widget-data' || section === 'sync-data') {
+            // Show API testing section
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('apiTestingSection').classList.remove('hidden');
+            
+            // Scroll to specific section within API testing
+            setTimeout(() => {
+              const targetSection = document.getElementById(section);
+              if (targetSection) {
+                // Calculate scroll position to show the section with some space above
+                const headerHeight = 80; // Approximate header height
+                const offset = 40; // Additional space above the section
+                const targetPosition = targetSection.offsetTop - headerHeight - offset;
+                
+                // Smooth scroll to the calculated position
+                window.scrollTo({
+                  top: targetPosition,
+                  behavior: 'smooth'
+                });
+                
+                // Add highlight effect
+                targetSection.style.animation = 'none';
+                targetSection.offsetHeight; // Trigger reflow
+                targetSection.style.animation = 'highlightSection 0.5s ease-out';
+              }
+            }, 100);
+          }
+        }
+      });
 
       // Start the app
       initializeFirebase();
