@@ -11,7 +11,7 @@ vi.mock('./to-ig-destination-path.js', () => ({
   default: vi.fn((url, id) => `instagram/${id}.jpg`)
 }))
 
-import { IMAGE_CDN_BASE_URL } from '../constants.js'
+
 import toIGDestinationPath from './to-ig-destination-path.js'
 
 describe('transformInstagramMedia', () => {
@@ -197,6 +197,7 @@ describe('transformInstagramMedia', () => {
     const result = transformInstagramMedia(carouselMedia)
 
     // Should prefer thumbnail_url for children
+    expect(result.children[0].cdnMediaURL).toBe('https://cdn.example.cominstagram/child1.jpg')
     expect(toIGDestinationPath).toHaveBeenCalledWith('https://example.com/child1_thumb.jpg', 'child1')
   })
 

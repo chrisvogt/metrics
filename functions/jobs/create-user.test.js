@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
-import { Timestamp } from 'firebase-admin/firestore'
 
 import createUser from './create-user.js'
 import { DATABASE_COLLECTION_USERS } from '../constants.js'
