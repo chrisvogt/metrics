@@ -11,6 +11,11 @@ const { execSync } = require('child_process')
 
 // Environment variable mappings
 const envVarMappings = {
+  // Auth
+  'auth.client_api_key': 'FIREBASE_CLIENT_API_KEY',
+  'auth.client_auth_domain': 'FIREBASE_CLIENT_AUTH_DOMAIN',
+  'auth.client_project_id': 'FIREBASE_CLIENT_PROJECT_ID',
+
   // Gemini (via Firebase)
   'gemini.api_key': 'GEMINI_API_KEY',
   

@@ -14,7 +14,8 @@ const getPlayerSummary = async (apiKey, userId) => {
     },
   })
 
-  return player.length ? player[0] : player
+  // Return empty array if no players, otherwise return the first player
+  return player ? player : []
 }
 
 export default getPlayerSummary

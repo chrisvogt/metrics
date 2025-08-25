@@ -18,5 +18,24 @@
         "function": "app"
       }
     ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "hosting": {
+      "port": 8084,
+      "host": "metrics.dev-chrisvogt.me"
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    }
   }
 }

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.17.0
+
+- **FEATURE**: Added comprehensive Firebase Authentication system with secure session management
+- **BREAKING CHANGE**: Sync endpoints now require authentication (JWT token or session cookie)
+- New Firebase Auth integration with user creation/deletion triggers for automatic database management
+- Added secure session cookie support as primary authentication method (HTTP-only, secure, SameSite)
+- Implemented rate limiting middleware to prevent API abuse (10 sync requests per 15 minutes)
+- Added domain-based access control restricting access to @chrisvogt.me and @chronogrove.com users only
+- New protected endpoints: `/api/user/profile`, `/api/auth/session`, `/api/auth/logout`
+- Enhanced security with automatic token verification and refresh token management
+- Added comprehensive test coverage for all authentication flows (100% code coverage)
+- Updated CORS configuration to support credentials for cross-origin cookie handling
+- Added Firebase emulator support for development and testing environments
+- New user management jobs for automatic database synchronization with Firebase Auth
+- Enhanced logging and error handling throughout authentication system
+
 ## 0.16.0
 
 - **FEATURE**: Added comprehensive Discogs integration for vinyl record collection tracking

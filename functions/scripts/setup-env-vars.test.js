@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import fs from 'fs'
 import path from 'path'
-import { setupEnvVars, envVarMappings } from './setup-env-vars.js'
+import { setupEnvVars, envVarMappings } from './setup-env-vars.cjs'
 
 // Mock fs, path, and child_process
 vi.mock('fs')
