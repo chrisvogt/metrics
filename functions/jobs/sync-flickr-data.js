@@ -26,17 +26,19 @@ const syncFlickrData = async () => {
         fetchedAt: Timestamp.now()
       })
 
-    const photoCount = photosResponse.total
+    // Handle malformed responses gracefully
+    const photos = photosResponse?.photos || []
+    const photoCount = photosResponse?.total || 0
 
     const widgetContent = {
       collections: {
-        photos: photosResponse.photos
+        photos: photos
       },
       meta: {
         synced: Timestamp.now(),
       },
       metrics: [
-        ...(photoCount
+        ...(photoCount && typeof photoCount === 'number' && photoCount > 0
           ? [
             {
               displayName: 'Photos',
@@ -57,8 +59,8 @@ const syncFlickrData = async () => {
       .set(widgetContent),
 
     logger.info('Flickr data sync completed successfully', {
-      totalPhotos: photosResponse.total,
-      photosFetched: photosResponse.photos.length
+      totalPhotos: photoCount,
+      photosFetched: photos.length
     })
 
     return {
