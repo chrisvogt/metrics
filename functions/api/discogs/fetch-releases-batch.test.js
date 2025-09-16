@@ -73,7 +73,7 @@ describe('fetchReleasesBatch', () => {
       .mockReturnValueOnce(mockFilteredData1)
       .mockReturnValueOnce(mockFilteredData2)
 
-    pMap.mockImplementation(async (items, mapper, options) => {
+    pMap.mockImplementation(async (items, mapper) => {
       const results = []
       for (const item of items) {
         const result = await mapper(item)
@@ -135,7 +135,7 @@ describe('fetchReleasesBatch', () => {
 
     fetchReleaseDetails.mockResolvedValueOnce(null) // Simulate failed fetch
 
-    pMap.mockImplementation(async (items, mapper, options) => {
+    pMap.mockImplementation(async (items, mapper) => {
       const results = []
       for (const item of items) {
         const result = await mapper(item)
