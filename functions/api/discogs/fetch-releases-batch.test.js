@@ -186,4 +186,102 @@ describe('fetchReleasesBatch', () => {
     // When no releases, pMap should not be called
     expect(pMap).not.toHaveBeenCalled()
   })
+
+  it('should handle errors in the mapper function gracefully', async () => {
+    const fetchReleasesBatch = (await import('./fetch-releases-batch.js')).default
+    const fetchReleaseDetails = (await import('./fetch-release-details.js')).default
+    const pMap = (await import('p-map')).default
+
+    const mockReleases = [
+      {
+        id: 1,
+        basic_information: {
+          id: 1,
+          resource_url: 'https://api.discogs.com/releases/1',
+          title: 'Release 1'
+        }
+      }
+    ]
+
+    // Mock fetchReleaseDetails to throw an error
+    fetchReleaseDetails.mockRejectedValueOnce(new Error('Network error'))
+
+    pMap.mockImplementation(async (items, mapper) => {
+      const results = []
+      for (const item of items) {
+        const result = await mapper(item)
+        results.push(result)
+      }
+      return results
+    })
+
+    const result = await fetchReleasesBatch(mockReleases)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toEqual(mockReleases[0]) // Should return original release on error
+  })
+
+  it('should apply delay when index > 0 and delayMs > 0', async () => {
+    const fetchReleasesBatch = (await import('./fetch-releases-batch.js')).default
+    const fetchReleaseDetails = (await import('./fetch-release-details.js')).default
+    const filterDiscogsResource = (await import('../../transformers/filter-discogs-resource.js')).default
+    const pMap = (await import('p-map')).default
+
+    const mockReleases = [
+      {
+        id: 1,
+        basic_information: {
+          id: 1,
+          resource_url: 'https://api.discogs.com/releases/1',
+          title: 'Release 1'
+        }
+      },
+      {
+        id: 2,
+        basic_information: {
+          id: 2,
+          resource_url: 'https://api.discogs.com/releases/2',
+          title: 'Release 2'
+        }
+      }
+    ]
+
+    const mockDetailedData1 = { id: 1, title: 'Release 1', genres: ['Rock'] }
+    const mockDetailedData2 = { id: 2, title: 'Release 2', genres: ['Pop'] }
+    const mockFilteredData1 = { id: 1, title: 'Release 1', genres: ['Rock'] }
+    const mockFilteredData2 = { id: 2, title: 'Release 2', genres: ['Pop'] }
+
+    fetchReleaseDetails
+      .mockResolvedValueOnce(mockDetailedData1)
+      .mockResolvedValueOnce(mockDetailedData2)
+
+    filterDiscogsResource
+      .mockReturnValueOnce(mockFilteredData1)
+      .mockReturnValueOnce(mockFilteredData2)
+
+    // Use fake timers to test the delay
+    vi.useFakeTimers()
+
+    pMap.mockImplementation(async (items, mapper) => {
+      const results = []
+      for (const item of items) {
+        const result = await mapper(item)
+        results.push(result)
+      }
+      return results
+    })
+
+    const promise = fetchReleasesBatch(mockReleases, { delayMs: 1000 })
+    
+    // Fast-forward through any timers
+    await vi.runAllTimersAsync()
+    
+    const result = await promise
+
+    vi.useRealTimers()
+
+    expect(result).toHaveLength(2)
+    expect(result[0].resource).toEqual(mockFilteredData1)
+    expect(result[1].resource).toEqual(mockFilteredData2)
+  })
 })
