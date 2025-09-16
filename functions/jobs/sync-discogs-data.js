@@ -5,6 +5,7 @@ import pMap from 'p-map'
 
 import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import fetchDiscogsReleases from '../api/discogs/fetch-releases.js'
+import fetchReleasesBatch from '../api/discogs/fetch-releases-batch.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import toDiscogsDestinationPath from '../transformers/to-discogs-destination-path.js'
 import transformDiscogsRelease from '../transformers/transform-discogs-release.js'
@@ -79,23 +80,53 @@ const syncDiscogsData = async () => {
 
     const { releases, pagination } = discogsResponse
 
+    logger.info(`Starting Discogs sync for ${releases.length} releases`)
+
+    // Estimate completion time
+    const estimatedTimeSeconds = Math.ceil(releases.length / 2) // With concurrency=2
+    logger.info(`Estimated completion time: ~${estimatedTimeSeconds} seconds (with 1s delays)`)
+
+    // Fetch detailed data for all releases in parallel
+    const enhancedReleases = await fetchReleasesBatch(releases, {
+      concurrency: 2, // Small concurrency to balance speed vs rate limits
+      stopOnError: false,
+      delayMs: 1000 // 1 second delay between requests to respect rate limits
+    })
+
     const storedMediaFileNames = await listStoredMedia()
 
     const mediaReducer = getMediaReducer(storedMediaFileNames)
-    const mediaToDownload = releases.reduce(mediaReducer, [])
+    const mediaToDownload = enhancedReleases.reduce(mediaReducer, [])
 
     const db = admin.firestore()
 
-    // Save the raw Discogs response data
+    // Calculate document size before saving to Firestore
+    const documentToSave = {
+      ...discogsResponse,
+      releases: enhancedReleases, // Store enhanced releases
+      fetchedAt: Timestamp.now(),
+    }
+    
+    const documentSizeBytes = Buffer.byteLength(JSON.stringify(documentToSave), 'utf8')
+    const documentSizeKB = Math.round(documentSizeBytes / 1024)
+    const documentSizeMB = Math.round(documentSizeBytes / (1024 * 1024) * 100) / 100
+    
+    logger.info(`Document size before saving: ${documentSizeBytes} bytes (${documentSizeKB} KB, ${documentSizeMB} MB)`, {
+      totalReleases: enhancedReleases.length,
+      releasesWithResource: enhancedReleases.filter(r => r.resource).length,
+      releasesWithoutResource: enhancedReleases.filter(r => !r.resource).length,
+      firestoreLimit: 1048576, // 1MB in bytes
+      exceedsLimit: documentSizeBytes > 1048576,
+      sizeReduction: documentSizeBytes > 1048576 ? 'Filtered resource data to reduce size' : 'No filtering needed'
+    })
+
+    // Save the raw Discogs response data (with enhanced releases)
     await db
       .collection(DATABASE_COLLECTION_DISCOGS)
       .doc('last-response')
-      .set({
-        ...discogsResponse,
-        fetchedAt: Timestamp.now(),
-      })
+      .set(documentToSave)
 
-    const transformedReleases = releases.map(transformDiscogsRelease)
+    const transformedReleases = enhancedReleases.map(transformDiscogsRelease)
 
     const updatedWidgetContent = {
       collections: {

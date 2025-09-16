@@ -535,6 +535,7 @@ expressApp.get('*', (req, res) => {
 export const app = onRequest(
   {
     region: 'us-central1',
+    timeoutSeconds: 300, // 5 minutes timeout for long-running sync operations
   },
   expressApp
 )

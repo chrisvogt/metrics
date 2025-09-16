@@ -9,7 +9,8 @@ const transformDiscogsRelease = rawRelease => {
     rating,
     basic_information: basicInfo,
     folder_id: folderId,
-    notes
+    notes,
+    resource // Raw resource data from batch fetching
   } = rawRelease
 
   const {
@@ -31,6 +32,9 @@ const transformDiscogsRelease = rawRelease => {
   // Generate CDN URLs for both thumb and cover images
   const cdnThumbUrl = thumb ? `${IMAGE_CDN_BASE_URL}${toDiscogsDestinationPath(thumb, id, 'thumb')}` : null
   const cdnCoverUrl = coverImage ? `${IMAGE_CDN_BASE_URL}${toDiscogsDestinationPath(coverImage, id, 'cover')}` : null
+
+  // Include raw resource data if available (no transformations)
+  const resourceData = resource || null
 
   return {
     id,
@@ -55,7 +59,9 @@ const transformDiscogsRelease = rawRelease => {
       artists,
       genres,
       styles
-    }
+    },
+    // Include raw resource data if available
+    ...(resourceData && { resource: resourceData })
   }
 }
 
