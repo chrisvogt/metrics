@@ -262,10 +262,11 @@ describe('fetchReleasesBatch', () => {
     // Use fake timers to test the delay
     vi.useFakeTimers()
 
+    // Mock pMap to properly pass the index parameter to the mapper function
     pMap.mockImplementation(async (items, mapper) => {
       const results = []
-      for (const item of items) {
-        const result = await mapper(item)
+      for (let i = 0; i < items.length; i++) {
+        const result = await mapper(items[i], i) // Pass the index as second parameter
         results.push(result)
       }
       return results
