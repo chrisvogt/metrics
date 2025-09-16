@@ -82,11 +82,15 @@ const syncDiscogsData = async () => {
 
     logger.info(`Starting Discogs sync for ${releases.length} releases`)
 
+    // Estimate completion time
+    const estimatedTimeSeconds = Math.ceil(releases.length / 2) // With concurrency=2
+    logger.info(`Estimated completion time: ~${estimatedTimeSeconds} seconds (with 1s delays)`)
+
     // Fetch detailed data for all releases in parallel
     const enhancedReleases = await fetchReleasesBatch(releases, {
-      concurrency: 1, // Single request at a time to avoid 429 rate limiting
+      concurrency: 2, // Small concurrency to balance speed vs rate limits
       stopOnError: false,
-      delayMs: 500 // 500ms delay between requests to respect rate limits
+      delayMs: 1000 // 1 second delay between requests to respect rate limits
     })
 
     const storedMediaFileNames = await listStoredMedia()

@@ -20,6 +20,11 @@ vi.mock('./fetch-release-details.js', () => ({
   default: vi.fn()
 }))
 
+// Mock filterDiscogsResource
+vi.mock('../../transformers/filter-discogs-resource.js', () => ({
+  default: vi.fn()
+}))
+
 describe('fetchReleasesBatch', () => {
   beforeEach(() => {
     vi.resetModules()
@@ -33,6 +38,7 @@ describe('fetchReleasesBatch', () => {
   it('should fetch detailed data for all releases with URLs', async () => {
     const fetchReleasesBatch = (await import('./fetch-releases-batch.js')).default
     const fetchReleaseDetails = (await import('./fetch-release-details.js')).default
+    const filterDiscogsResource = (await import('../../transformers/filter-discogs-resource.js')).default
     const pMap = (await import('p-map')).default
 
     const mockReleases = [
@@ -48,7 +54,7 @@ describe('fetchReleasesBatch', () => {
         id: 2,
         basic_information: {
           id: 2,
-          master_url: 'https://api.discogs.com/masters/2',
+          resource_url: 'https://api.discogs.com/releases/2',
           title: 'Release 2'
         }
       }
@@ -56,10 +62,16 @@ describe('fetchReleasesBatch', () => {
 
     const mockDetailedData1 = { id: 1, title: 'Release 1', genres: ['Rock'] }
     const mockDetailedData2 = { id: 2, title: 'Release 2', genres: ['Pop'] }
+    const mockFilteredData1 = { id: 1, title: 'Release 1', genres: ['Rock'] }
+    const mockFilteredData2 = { id: 2, title: 'Release 2', genres: ['Pop'] }
 
     fetchReleaseDetails
       .mockResolvedValueOnce(mockDetailedData1)
       .mockResolvedValueOnce(mockDetailedData2)
+
+    filterDiscogsResource
+      .mockReturnValueOnce(mockFilteredData1)
+      .mockReturnValueOnce(mockFilteredData2)
 
     pMap.mockImplementation(async (items, mapper, options) => {
       const results = []
@@ -79,16 +91,8 @@ describe('fetchReleasesBatch', () => {
     )
 
     expect(result).toHaveLength(2)
-    expect(result[0].detailedData).toEqual({
-      type: 'release',
-      data: mockDetailedData1,
-      fetchedAt: expect.any(String)
-    })
-    expect(result[1].detailedData).toEqual({
-      type: 'master',
-      data: mockDetailedData2,
-      fetchedAt: expect.any(String)
-    })
+    expect(result[0].resource).toEqual(mockFilteredData1)
+    expect(result[1].resource).toEqual(mockFilteredData2)
   })
 
   it('should handle releases without URLs', async () => {
@@ -106,11 +110,10 @@ describe('fetchReleasesBatch', () => {
       }
     ]
 
-    pMap.mockResolvedValueOnce([])
-
     const result = await fetchReleasesBatch(mockReleases)
 
-    expect(pMap).toHaveBeenCalledWith([], expect.any(Function), expect.any(Object))
+    // When no releases have resource_url, pMap should not be called
+    expect(pMap).not.toHaveBeenCalled()
     expect(result).toEqual(mockReleases)
   })
 
@@ -144,7 +147,7 @@ describe('fetchReleasesBatch', () => {
     const result = await fetchReleasesBatch(mockReleases)
 
     expect(result).toHaveLength(1)
-    expect(result[0].detailedData).toBeUndefined()
+    expect(result[0].resource).toBeUndefined()
   })
 
   it('should use custom concurrency and stopOnError options', async () => {
@@ -177,11 +180,10 @@ describe('fetchReleasesBatch', () => {
     const fetchReleasesBatch = (await import('./fetch-releases-batch.js')).default
     const pMap = (await import('p-map')).default
 
-    pMap.mockResolvedValueOnce([])
-
     const result = await fetchReleasesBatch([])
 
     expect(result).toEqual([])
-    expect(pMap).toHaveBeenCalledWith([], expect.any(Function), expect.any(Object))
+    // When no releases, pMap should not be called
+    expect(pMap).not.toHaveBeenCalled()
   })
 })

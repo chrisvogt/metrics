@@ -9,13 +9,21 @@ vi.mock('firebase-functions', () => ({
   }
 }))
 
+// Mock fetch globally
+global.fetch = vi.fn()
+
 describe('fetchReleaseDetails', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
-    if (typeof global.fetch === 'function' && global.fetch.mockReset) {
-      global.fetch.mockReset()
-    }
+    global.fetch.mockReset()
+    
+    // Mock setTimeout to make tests run faster
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   afterEach(() => {
@@ -98,14 +106,77 @@ describe('fetchReleaseDetails', () => {
     expect(result).toBeNull()
   })
 
+  it('should retry on 429 rate limit errors with exponential backoff', async () => {
+    vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
+    
+    const fetchReleaseDetails = (await import('./fetch-release-details.js')).default
+    
+    const mockReleaseData = { id: 123, title: 'Test Release' }
+
+    // First two calls return 429, third call succeeds
+    fetch
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: 'Too Many Requests'
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: 'Too Many Requests'
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockReleaseData
+      })
+
+    const promise = fetchReleaseDetails('https://api.discogs.com/releases/123', '123')
+    
+    // Fast-forward through the delays
+    await vi.runAllTimersAsync()
+    
+    const result = await promise
+
+    expect(fetch).toHaveBeenCalledTimes(3)
+    expect(result).toEqual(mockReleaseData)
+  })
+
+  it('should return null after max retries on 429 errors', async () => {
+    vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
+    
+    const fetchReleaseDetails = (await import('./fetch-release-details.js')).default
+
+    // All calls return 429
+    fetch.mockResolvedValue({
+      ok: false,
+      status: 429,
+      statusText: 'Too Many Requests'
+    })
+
+    const promise = fetchReleaseDetails('https://api.discogs.com/releases/123', '123', 2)
+    
+    // Fast-forward through the delays
+    await vi.runAllTimersAsync()
+    
+    const result = await promise
+
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(result).toBeNull()
+  })
+
   it('should return null when fetch throws an error', async () => {
     vi.stubEnv('DISCOGS_API_KEY', 'test-api-key')
     
     const fetchReleaseDetails = (await import('./fetch-release-details.js')).default
 
-    fetch.mockRejectedValueOnce(new Error('Network error'))
+    fetch.mockRejectedValue(new Error('Network error'))
 
-    const result = await fetchReleaseDetails('https://api.discogs.com/releases/123', '123')
+    const promise = fetchReleaseDetails('https://api.discogs.com/releases/123', '123')
+    
+    // Fast-forward through the delays
+    await vi.runAllTimersAsync()
+    
+    const result = await promise
 
     expect(result).toBeNull()
   })

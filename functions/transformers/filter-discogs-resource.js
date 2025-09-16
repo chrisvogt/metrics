@@ -55,18 +55,36 @@ const filterDiscogsResource = (resourceData) => {
     main_release_url: true
   }
 
+  // Define allowed fields for nested objects (like tracklist items)
+  const nestedAllowedFields = {
+    // Common fields that should be allowed in nested objects
+    position: true,
+    title: true,
+    duration: true,
+    type: true,
+    // Add other common fields as needed
+  }
+
   // Recursively filter the object to only include allowed fields
-  const filterObject = (obj, allowedFields) => {
+  const filterObject = (obj, allowedFields, isNested = false) => {
     if (!obj || typeof obj !== 'object') return obj
     
     if (Array.isArray(obj)) {
-      return obj.map(item => filterObject(item, allowedFields))
+      return obj.map(item => filterObject(item, allowedFields, true))
     }
     
     const filtered = {}
+    const fieldsToCheck = isNested ? nestedAllowedFields : allowedFields
+    
     for (const [key, value] of Object.entries(obj)) {
-      if (allowedFields[key] === true) {
-        filtered[key] = filterObject(value, allowedFields)
+      if (fieldsToCheck[key] === true) {
+        if (isNested) {
+          // For nested objects, include the value as-is
+          filtered[key] = value
+        } else {
+          // For top-level objects, recursively filter
+          filtered[key] = filterObject(value, allowedFields, true)
+        }
       }
     }
     return filtered
