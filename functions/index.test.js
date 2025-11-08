@@ -90,7 +90,7 @@ vi.mock('./middleware/rate-limiter.js', () => ({
 // Mock the widget content module
 vi.mock('./lib/get-widget-content.js', () => ({
   getWidgetContent: vi.fn(() => Promise.resolve({ mock: 'widget-content' })),
-  validWidgetIds: ['spotify', 'goodreads', 'steam', 'instagram', 'flickr']
+  validWidgetIds: ['discogs', 'github', 'goodreads', 'instagram', 'spotify', 'steam', 'flickr']
 }))
 
 describe('index.js', () => {
