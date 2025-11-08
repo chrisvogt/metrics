@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.18.0
+
+- **FEATURE**: Added GitHub contribution graph data to GitHub widget
+- GitHub widget now includes `contributionsCollection` with contribution calendar data for the last 365 days
+- Added comprehensive test coverage for GitHub widget content function (100% code coverage)
+- GraphQL query now includes contribution calendar with total contributions, weeks, and daily contribution data
+- Added GitHub widget option to API dashboard dropdown for testing
+- Contribution data includes date, contribution count, and color for each day to enable flame graph visualization
+
 ## 0.17.0
 
 - **FEATURE**: Added comprehensive Firebase Authentication system with secure session management
