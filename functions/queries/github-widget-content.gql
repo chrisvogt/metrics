@@ -63,6 +63,18 @@ query GitHubWidgetQuery($username: String!) {
     repositories {
       totalCount
     }
+    contributionsCollection {
+      contributionCalendar {
+        totalContributions
+        weeks {
+          contributionDays {
+            date
+            contributionCount
+            color
+          }
+        }
+      }
+    }
     pullRequests(last: 1, states: MERGED) {
       nodes {
         labels(last: 10) {
