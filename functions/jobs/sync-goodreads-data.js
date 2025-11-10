@@ -152,8 +152,21 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
               return await fetchFn()
             } catch (error) {
               const statusCode = error.response?.statusCode || error.statusCode
+              const errorBody = error.response?.body ? (typeof error.response.body === 'string' ? JSON.parse(error.response.body) : error.response.body) : null
+              const isQuotaExceeded = errorBody?.error?.status === 'RESOURCE_EXHAUSTED' || 
+                                      (errorBody?.error?.code === 429 && 
+                                       errorBody?.error?.message?.includes('Quota exceeded'))
               
-              // Retry on 429 (Too Many Requests) or 503 (Service Unavailable)
+              // Don't retry on daily quota exceeded - it won't help
+              if (isQuotaExceeded) {
+                logger.error('Daily quota exceeded for Google Books API. Book fetch will be skipped.', {
+                  message: errorBody?.error?.message,
+                  quota_limit: errorBody?.error?.details?.[0]?.metadata?.quota_limit_value
+                })
+                throw error // Re-throw to be caught by outer try/catch
+              }
+              
+              // Retry on 429 (rate limit) or 503 (Service Unavailable) - but not quota exceeded
               if ((statusCode === 429 || statusCode === 503) && attempt < maxRetries) {
                 const waitTime = Math.pow(2, attempt) * 1000 // Exponential backoff: 2s, 4s, 8s
                 logger.warn(`Rate limited (${statusCode}) for book fetch, waiting ${waitTime}ms before retry ${attempt}/${maxRetries}`)
