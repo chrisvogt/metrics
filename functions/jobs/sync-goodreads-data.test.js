@@ -34,6 +34,34 @@ vi.mock('../api/goodreads/generate-goodreads-summary.js', () => ({
   default: vi.fn()
 }))
 
+vi.mock('p-map', () => ({
+  default: vi.fn()
+}))
+
+vi.mock('../api/google-books/fetch-book.js', () => ({
+  default: vi.fn()
+}))
+
+vi.mock('got', () => ({
+  default: vi.fn()
+}))
+
+vi.mock('../api/cloud-storage/list-stored-media.js', () => ({
+  default: vi.fn()
+}))
+
+vi.mock('../api/cloud-storage/fetch-and-upload-file.js', () => ({
+  default: vi.fn()
+}))
+
+vi.mock('firebase-functions', () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn()
+  }
+}))
+
 import fetchUser from '../api/goodreads/fetch-user.js'
 import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.js'
 import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summary.js'
@@ -44,7 +72,7 @@ describe('syncGoodreadsData', () => {
   let mockCollection
   let mockFirestore
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
     
     mockSet = vi.fn()
@@ -53,6 +81,20 @@ describe('syncGoodreadsData', () => {
     mockFirestore = vi.fn(() => ({ collection: mockCollection }))
     
     admin.firestore = mockFirestore
+
+    // Mock pMap to just execute the mapper function synchronously
+    const pMapModule = await import('p-map')
+    pMapModule.default.mockImplementation(async (items, mapper) => {
+      const results = []
+      for (const item of items) {
+        results.push(await mapper(item))
+      }
+      return results
+    })
+
+    // Mock listStoredMedia to return empty array
+    const listStoredMedia = await import('../api/cloud-storage/list-stored-media.js')
+    listStoredMedia.default.mockResolvedValue([])
   })
 
   it('should successfully sync Goodreads data and save to database', async () => {

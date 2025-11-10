@@ -35,6 +35,7 @@ const transformBookData = (book) => {
     } = {},
     rating,
     goodreadsDescription,
+    isbn,
   } = book
 
   const mediaDestinationPath = toBookMediaDestinationPath(id)
@@ -47,6 +48,7 @@ const transformBookData = (book) => {
     description: goodreadsDescription || description,
     id,
     infoLink: infoLink ? convertToHttps(infoLink) : '',
+    isbn, // Include ISBN for matching updates to books
     pageCount,
     previewLink,
     rating,
@@ -118,21 +120,35 @@ export default async () => {
   // information. The Google Books data is really clean and useful. So, I'm currently
   // using Goodreads to get my book review, and then returning the book data from
   // Google Books.
-  const bookPromises = bookReviews.map((book, index) => 
-    fetchBookFromGoogle(book).then(result => ({ 
-      googleBookResult: result, 
-      goodreadsData: book,
-      originalIndex: index 
-    }))
+  // Use pMap with concurrency control to avoid rate limiting
+  const bookResults = await pMap(
+    bookReviews,
+    async (book, index) => {
+      // Add a small delay between requests to avoid rate limiting (except for first request)
+      if (index > 0) {
+        await new Promise(resolve => setTimeout(resolve, 200)) // 200ms delay between requests
+      }
+      
+      const result = await fetchBookFromGoogle(book)
+      return {
+        googleBookResult: result,
+        goodreadsData: book,
+        originalIndex: index
+      }
+    },
+    {
+      concurrency: 3, // Limit concurrent requests to avoid rate limiting
+      stopOnError: false,
+    }
   )
-  const bookResults = await Promise.all(bookPromises)
   const books = bookResults
     .filter(
       (bookResult = {}) => Boolean(bookResult.googleBookResult) && Boolean(bookResult.googleBookResult.book)
     )
     .map(({ googleBookResult, goodreadsData }) => ({
       ...googleBookResult,
-      goodreadsDescription: goodreadsData.goodreadsDescription
+      goodreadsDescription: goodreadsData.goodreadsDescription,
+      isbn: goodreadsData.isbn // Store ISBN for matching updates to books
     }))
     .map(transformBookData)
 
