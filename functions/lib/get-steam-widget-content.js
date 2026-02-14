@@ -9,7 +9,12 @@ const getSteamWidgetContent = async () => {
     .doc('widget-content')
     .get()
 
-  const { meta = {}, ...responseData } = doc.data()
+  const data = doc.data()
+  if (!data) {
+    return { meta: { synced: new Date(0) } }
+  }
+
+  const { meta = {}, ...responseData } = data
 
   const transformedMeta = {
     ...meta,

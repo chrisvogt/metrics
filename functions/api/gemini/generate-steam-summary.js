@@ -1,10 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { logger } from 'firebase-functions'
-
-const extractJsonFromMarkdown = (str) => {
-  const match = str.match(/```json\s*({[\s\S]*?})\s*```/)
-  return match ? JSON.parse(match[1]) : null
-}
+import extractJsonFromGeminiResponse from '../../lib/extract-json-from-gemini-response.js'
 
 /**
  * Generate AI summary of Steam gaming data using Gemini
@@ -19,7 +15,7 @@ const generateSteamSummary = async (steamData) => {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
   const { collections, profile, metrics } = steamData
 
@@ -28,7 +24,7 @@ Hi — please analyze the following Steam gaming data and return a natural-sound
 
 Use this structure:
 {
-  "response": "<2-3 paragraphs in limited HTML with third-person summary of Chris Vogt's Steam activity. Mention recent games played, genre or playstyle trends, and any standout titles. Use natural and informativelanguage.>",
+  "response": "<2-3 paragraphs in limited HTML with third-person summary of Chris Vogt's Steam activity. Mention recent games played, genre or playstyle trends, and any standout titles. Use natural and informative language.>",
   "debug": {
     "recentlyPlayedGames": [...], // title, playTime2Weeks, playTimeForever
     "topPlayedGames": [...]       // title, playTimeForever
@@ -73,10 +69,11 @@ Total Games Owned: ${metrics.find(m => m.id === 'owned-games-count')?.value || 0
   try {
     const result = await model.generateContent(prompt)
     const response = await result.response
-    const { debug, response: sanitizedResponse = '' } = extractJsonFromMarkdown(
-      response.text()
-    )
-    logger.debug('Steam Summary [Gemini] Debug', debug)
+    const parsed = extractJsonFromGeminiResponse(response.text())
+    if (!parsed) {
+      throw new Error('Gemini response was not valid JSON (no markdown block or raw JSON)')
+    }
+    const { response: sanitizedResponse = '' } = parsed
     return sanitizedResponse
   } catch (error) {
     logger.error('Error generating Steam summary with Gemini:', error)

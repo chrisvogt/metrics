@@ -102,14 +102,8 @@ describe('generateGoodreadsSummary', () => {
     
     // Verify Google AI was initialized correctly
     expect(GoogleGenerativeAI).toHaveBeenCalledWith('test-api-key')
-    expect(mockGetGenerativeModel).toHaveBeenCalledWith({ model: 'gemini-1.5-flash' })
+    expect(mockGetGenerativeModel).toHaveBeenCalledWith({ model: 'gemini-2.0-flash' })
     expect(mockGenerateContent).toHaveBeenCalledWith(expect.stringContaining('please analyze the following Goodreads reading data'))
-    
-    // Verify debug logging
-    expect(logger.debug).toHaveBeenCalledWith('Goodreads Summary [Gemini] Debug', {
-      recentlyReadBooks: [{'title': 'The Great Gatsby', 'authors': ['F. Scott Fitzgerald'], 'rating': 4}],
-      readingPatterns: ['fiction', 'non-fiction']
-    })
   })
 
   it('should handle missing collections gracefully', async () => {
@@ -215,6 +209,26 @@ describe('generateGoodreadsSummary', () => {
     })
 
     await expect(generateGoodreadsSummary(mockGoodreadsData)).rejects.toThrow('Failed to generate AI summary')
+  })
+
+  it('should accept raw JSON response when Gemini does not wrap in markdown', async () => {
+    process.env.GEMINI_API_KEY = 'test-api-key'
+
+    const mockGoodreadsData = {
+      collections: { recentlyReadBooks: [] },
+      profile: { displayName: 'Chris Vogt' }
+    }
+
+    const mockResponseText = '{"response": "<p>Raw JSON summary.</p>", "debug": {}}'
+
+    mockGenerateContent.mockResolvedValue({
+      response: {
+        text: () => mockResponseText
+      }
+    })
+
+    const result = await generateGoodreadsSummary(mockGoodreadsData)
+    expect(result).toBe('<p>Raw JSON summary.</p>')
   })
 
   it('should handle Google AI API errors', async () => {
