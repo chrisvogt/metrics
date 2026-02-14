@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import request from 'supertest'
+import { logger } from 'firebase-functions'
 
 // Mock Firebase Admin
 const firestoreSettingsMock = vi.fn()
@@ -524,6 +525,28 @@ describe('index.js', () => {
         }
       })
 
+      it('should handle session cookie creation errors', async () => {
+        const mockVerifyIdToken = vi.fn().mockResolvedValue({
+          uid: 'test-uid',
+          email: 'test@chrisvogt.me',
+          email_verified: true
+        })
+        const mockCreateSessionCookie = vi.fn().mockRejectedValue(new Error('Session failed'))
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: mockVerifyIdToken,
+          createSessionCookie: mockCreateSessionCookie
+        }))
+
+        const response = await request(app)
+          .post('/api/auth/session')
+          .set('Authorization', 'Bearer valid-jwt-token')
+          .expect(500)
+
+        expect(response.body.ok).toBe(false)
+        expect(response.body.error).toBe('Failed to create session cookie')
+      })
+
       it('should handle token verification errors', async () => {
         // Mock token verification failure
         const mockVerifyIdToken = vi.fn().mockRejectedValue(new Error('Invalid token'))
@@ -551,6 +574,92 @@ describe('index.js', () => {
       })
     })
 
+    describe('DELETE /api/user/account', () => {
+      it('should delete account when authenticated', async () => {
+        const mockVerifyIdToken = vi.fn().mockResolvedValue({
+          uid: 'test-uid',
+          email: 'test@chrisvogt.me',
+          email_verified: true
+        })
+        const mockDeleteUser = vi.fn().mockResolvedValue(undefined)
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: mockVerifyIdToken,
+          deleteUser: mockDeleteUser
+        }))
+
+        const { default: deleteUserJob } = await import('./jobs/delete-user.js')
+        vi.mocked(deleteUserJob).mockResolvedValueOnce({ result: 'SUCCESS' })
+
+        const response = await request(app)
+          .delete('/api/user/account')
+          .set('Authorization', 'Bearer valid-jwt-token')
+          .expect(200)
+
+        expect(response.body.ok).toBe(true)
+        expect(response.body.payload.message).toBe('Account deleted')
+        expect(deleteUserJob).toHaveBeenCalledWith({ uid: 'test-uid' })
+        expect(mockDeleteUser).toHaveBeenCalledWith('test-uid')
+      })
+
+      it('should return 500 when deleteUser throws', async () => {
+        const mockVerifyIdToken = vi.fn().mockResolvedValue({
+          uid: 'test-uid',
+          email: 'test@chrisvogt.me',
+          email_verified: true
+        })
+        const mockDeleteUser = vi.fn().mockRejectedValue(new Error('Auth delete failed'))
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: mockVerifyIdToken,
+          deleteUser: mockDeleteUser
+        }))
+
+        const { default: deleteUserJob } = await import('./jobs/delete-user.js')
+        vi.mocked(deleteUserJob).mockResolvedValueOnce({ result: 'SUCCESS' })
+
+        const response = await request(app)
+          .delete('/api/user/account')
+          .set('Authorization', 'Bearer valid-jwt-token')
+          .expect(500)
+
+        expect(response.body.ok).toBe(false)
+      })
+
+      it('should require authentication', async () => {
+        const response = await request(app)
+          .delete('/api/user/account')
+          .expect(401)
+        expect(response.body.ok).toBe(false)
+      })
+
+      it('should still delete Auth user when Firestore cleanup fails (non-SUCCESS)', async () => {
+        const mockVerifyIdToken = vi.fn().mockResolvedValue({
+          uid: 'test-uid',
+          email: 'test@chrisvogt.me',
+          email_verified: true
+        })
+        const mockDeleteUser = vi.fn().mockResolvedValue(undefined)
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: mockVerifyIdToken,
+          deleteUser: mockDeleteUser
+        }))
+
+        const { default: deleteUserJob } = await import('./jobs/delete-user.js')
+        vi.mocked(deleteUserJob).mockResolvedValueOnce({ result: 'FAILURE', error: 'Doc missing' })
+
+        const response = await request(app)
+          .delete('/api/user/account')
+          .set('Authorization', 'Bearer valid-jwt-token')
+          .expect(200)
+
+        expect(response.body.ok).toBe(true)
+        expect(response.body.payload.message).toBe('Account deleted')
+        expect(mockDeleteUser).toHaveBeenCalledWith('test-uid')
+      })
+    })
+
     describe('POST /api/auth/logout', () => {
       it('should logout user and revoke refresh tokens', async () => {
         // Mock successful authentication
@@ -571,6 +680,26 @@ describe('index.js', () => {
 
         expect(response.body.ok).toBe(true)
         expect(response.body.message).toBe('User logged out successfully')
+      })
+
+      it('should return 500 when revokeRefreshTokens throws', async () => {
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: vi.fn().mockResolvedValue({
+            uid: 'test-uid',
+            email: 'test@chrisvogt.me',
+            email_verified: true
+          }),
+          revokeRefreshTokens: vi.fn().mockRejectedValue(new Error('Revoke failed'))
+        }))
+
+        const response = await request(app)
+          .post('/api/auth/logout')
+          .set('Authorization', 'Bearer valid-jwt-token')
+          .expect(500)
+
+        expect(response.body.ok).toBe(false)
+        expect(response.body.error).toBe('Logout failed')
       })
     })
   })
@@ -658,6 +787,31 @@ describe('index.js', () => {
       await mockHandleUserCreation(mockUser)
       
       expect(createUserJob).toHaveBeenCalledWith(mockUser)
+    })
+
+    it('should log error when handleUserCreation receives event with no data', async () => {
+      const { handleUserCreation } = await import('./index.js')
+      const logSpy = vi.spyOn(logger, 'error').mockImplementation(() => {})
+
+      await handleUserCreation({ data: undefined })
+
+      expect(logSpy).toHaveBeenCalledWith('handleUserCreation: event.data missing')
+      logSpy.mockRestore()
+    })
+
+    it('should log error when createUserJob returns FAILURE in handleUserCreation', async () => {
+      const { handleUserCreation } = await import('./index.js')
+      const { default: createUserJob } = await import('./jobs/create-user.js')
+      vi.mocked(createUserJob).mockResolvedValueOnce({ result: 'FAILURE', error: 'DB error' })
+      const logSpy = vi.spyOn(logger, 'error').mockImplementation(() => {})
+
+      await handleUserCreation({
+        data: { uid: 'u1', email: 'e@test.com', displayName: 'Test' },
+      })
+
+      expect(createUserJob).toHaveBeenCalledWith({ uid: 'u1', email: 'e@test.com', displayName: 'Test' })
+      expect(logSpy).toHaveBeenCalledWith('User creation trigger failed', { uid: 'u1', error: 'DB error' })
+      logSpy.mockRestore()
     })
   })
 
