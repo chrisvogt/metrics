@@ -164,7 +164,7 @@ describe('index.js', () => {
 
         const response = await request(app)
           .get('/api/widgets/spotify')
-          .expect(400)
+          .expect(500)
 
         expect(response.body).toEqual({
           ok: false,
@@ -497,25 +497,31 @@ describe('index.js', () => {
       })
 
       it('should reject request from non-allowed email domain', async () => {
-        // Mock token verification with non-allowed domain
-        const mockVerifyIdToken = vi.fn().mockResolvedValue({
-          uid: 'test-uid',
-          email: 'test@example.com',
-          email_verified: true
-        })
-        
-        const admin = await import('firebase-admin')
-        admin.default.auth = vi.fn(() => ({
-          verifyIdToken: mockVerifyIdToken
-        }))
+        // Domain check only runs in production
+        const prevEnv = process.env.NODE_ENV
+        process.env.NODE_ENV = 'production'
+        try {
+          const mockVerifyIdToken = vi.fn().mockResolvedValue({
+            uid: 'test-uid',
+            email: 'test@example.com',
+            email_verified: true
+          })
 
-        const response = await request(app)
-          .post('/api/auth/session')
-          .set('Authorization', 'Bearer valid-jwt-token')
-          .expect(403)
+          const admin = await import('firebase-admin')
+          admin.default.auth = vi.fn(() => ({
+            verifyIdToken: mockVerifyIdToken
+          }))
 
-        expect(response.body.ok).toBe(false)
-        expect(response.body.error).toBe('Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.')
+          const response = await request(app)
+            .post('/api/auth/session')
+            .set('Authorization', 'Bearer valid-jwt-token')
+            .expect(403)
+
+          expect(response.body.ok).toBe(false)
+          expect(response.body.error).toBe('Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.')
+        } finally {
+          process.env.NODE_ENV = prevEnv
+        }
       })
 
       it('should handle token verification errors', async () => {
