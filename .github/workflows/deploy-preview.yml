@@ -1,4 +1,4 @@
-# Deploys a preview channel for each PR. Requires FIREBASE_SERVICE_ACCOUNT secret.
+# Deploys a preview channel for each PR. Requires FIREBASE_SERVICE_ACCOUNT_PERSONAL_STATS_CHRISVOGT secret.
 # Set up via: firebase init hosting:github
 name: Deploy to Preview Channel
 
@@ -18,6 +18,6 @@ jobs:
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PERSONAL_STATS_CHRISVOGT }}"
           expires: 30d
           projectId: personal-stats-chrisvogt
