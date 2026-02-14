@@ -1,0 +1,23 @@
+# Deploys to live Hosting on push to main. Requires FIREBASE_SERVICE_ACCOUNT secret.
+# Set up via: firebase init hosting:github
+name: Deploy to Live Channel
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy_live_website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build (validate hosting assets)
+        run: npm run build
+
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+          projectId: personal-stats-chrisvogt
+          channelId: live
+          force: true
