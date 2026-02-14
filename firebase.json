@@ -6,7 +6,7 @@
   "functions": {
     "port": 5020,
     "predeploy": [],
-    "runtime": "nodejs20",
+    "runtime": "nodejs24",
     "source": "functions",
     "codebase": "default"
   },

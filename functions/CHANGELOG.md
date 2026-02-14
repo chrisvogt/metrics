@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0] - 2025-02-14
+
+### Changed
+
+- **Node.js 24** – Upgraded the project to Node 24 everywhere to address Firebase deprecation warnings and align with Firebase's full Node 24 support:
+  - Root `package.json` and `functions/package.json`: `engines.node` set to `>=24`
+  - `firebase.json`: Cloud Functions runtime set to `nodejs24`
+  - `.nvmrc`: set to `24` for local development
+  - GitHub Actions CI (`.github/workflows/ci.yml`): `node-version` set to `24`
+
 ## [0.19.0] - 2025-02-13
 
 ### Added
@@ -179,6 +189,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _This changelog was started with v0.8.0._
 
+[0.20.0]: https://github.com/chrisvogt/metrics/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/chrisvogt/metrics/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/chrisvogt/metrics/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/chrisvogt/metrics/compare/v0.16.0...v0.17.0
