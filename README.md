@@ -54,19 +54,11 @@ This repository contains a Firebase-backed service I use to fetch and sync data 
    npm install
    ```
 
-4. **Set up environment variables**
+4. **Set up environment variables (local only)**
    ```bash
-   # Copy the template file
-   cp env.template .env
-   
-   # Edit .env with your actual values
-   # See Environment Variables section below
-   ```
-
-5. **Download Firebase configuration**
-   ```bash
-   # Download runtime config (includes secrets for sync jobs)
-   firebase functions:config:get > .runtimeconfig.json
+   cd functions
+   cp .env.template .env
+   # Edit .env with your actual values (see Environment Variables section below)
    ```
 
 ### Environment Variables
@@ -75,8 +67,8 @@ For local development, you'll need to set up environment variables. Copy the tem
 
 ```bash
 # In the /functions directory
-cp env.template .env
-# Edit .env with your actual Firebase configuration
+cp .env.template .env
+# Edit .env with your actual values
 ```
 
 **Important:** Never commit the `.env` file to version control. It contains sensitive information like API keys.
@@ -96,25 +88,13 @@ The following variables are required for the authentication system to work:
 
 ### Firebase Configuration
 
-The Firebase configuration is now served dynamically from the backend to prevent hardcoding sensitive values in the client. You can set these values using either method:
+The Firebase client config (API key, auth domain, project ID) is served from the backend so it isn’t hardcoded in the client.
 
-#### Option 1: Local .env file (for development)
-Set these environment variables in your `functions/.env` file:
+#### Local (development)
+Set `CLIENT_API_KEY`, `CLIENT_AUTH_DOMAIN`, and `CLIENT_PROJECT_ID` in your `functions/.env` file.
 
-- `CLIENT_API_KEY` - Your Firebase API key
-- `CLIENT_AUTH_DOMAIN` - Your Firebase auth domain
-- `CLIENT_PROJECT_ID` - Your Firebase project ID
-
-#### Option 2: Firebase Runtime Config (recommended for production)
-Use Firebase's runtime configuration system:
-
-```bash
-firebase functions:config:set auth.client_api_key="your_api_key"
-firebase functions:config:set auth.client_auth_domain="your_project_id.firebaseapp.com"
-firebase functions:config:set auth.client_project_id="your_project_id"
-```
-
-Then download the config: `firebase functions:config:get > .runtimeconfig.json`
+#### Option 2: Production (Secret Manager)
+Production config lives in **Google Cloud Secret Manager** as the secret **`FUNCTIONS_CONFIG_EXPORT`** (one JSON object with all keys). To create or update it: run `firebase functions:config:export`, or in [Secret Manager](https://console.cloud.google.com/security/secret-manager) add a new version of that secret with JSON matching the shape in `functions/lib/exported-config.js` (e.g. `auth.client_api_key`, `github.access_token`, `spotify.client_id`, etc.).
 
 ## Development
 
