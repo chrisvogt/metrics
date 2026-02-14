@@ -107,12 +107,18 @@ describe('getGoodreadsWidgetContent', () => {
     })
   })
 
-  it('should throw error when data retrieval fails', async () => {
+  it('should return default widget content when doc does not exist', async () => {
     mockGet.mockResolvedValue({
-      data: () => null
+      data: () => undefined
     })
 
-    await expect(getGoodreadsWidgetContent()).rejects.toThrow()
+    const result = await getGoodreadsWidgetContent()
+
+    expect(result).toEqual({
+      meta: { synced: new Date(0) },
+      recentBooks: [],
+      summary: null,
+    })
   })
 
   it('should throw error when get() throws', async () => {

@@ -1,4 +1,4 @@
-# Environment Setup for Firebase Functions v2
+# Environment Setup for Firebase Functions
 
 ## Local Development
 
@@ -6,34 +6,46 @@
    ```bash
    cp .env.template .env
    ```
-2. Fill in your actual values in the `.env` file
-3. The `.env` file is already in `.gitignore` so it won't be committed
+2. Fill in your actual values in the `.env` file.
+3. The `.env` file is in `.gitignore` and is not committed.
 
-## Production Deployment
+When `NODE_ENV !== 'production'`, the app loads all config from `.env` (via dotenv). No other config files are used locally.
 
-### Option 1: Use the setup script
+## Production
+
+Production config is stored in **Google Cloud Secret Manager** as a single JSON secret:
+
+- **Secret name:** `FUNCTIONS_CONFIG_EXPORT`
+- **Location:** [Google Cloud Console → Secret Manager](https://console.cloud.google.com/security/secret-manager) (select your Firebase project).
+
+The app binds this secret to the HTTP and scheduled functions and, on each cold start, reads the JSON and applies it to `process.env` using the mapping in `lib/exported-config.js`.
+
+### Creating or updating the secret
+
+**Option A: Export from existing Firebase config (one-time migration)**  
+If you previously used `firebase functions:config:set`:
+
 ```bash
-node scripts/setup-env-vars.js
+firebase functions:config:export
 ```
 
-### Option 2: Manual setup
-Set each environment variable using Firebase CLI:
-```bash
-firebase functions:config:set storage.firestore_database_url="your_value"
-firebase functions:config:set storage.cloud_storage_images_bucket="your_value"
-# ... continue for all variables
-```
+Follow the prompts; the CLI creates or updates the `FUNCTIONS_CONFIG_EXPORT` secret with your current runtime config.
 
-### Option 3: Firebase Console
-1. Go to Firebase Console → Functions → Configuration
-2. Add environment variables under "Environment variables" section
+**Option B: Edit in Secret Manager**  
+1. Open Secret Manager in Cloud Console.  
+2. Open the secret **FUNCTIONS_CONFIG_EXPORT**.  
+3. **New version** → paste JSON that matches the shape expected by `lib/exported-config.js` (nested keys such as `github.access_token`, `spotify.client_id`, `auth.client_api_key`, etc.).  
+4. Save. New function instances will use the latest version.
 
-## Environment Variables Needed
+### Updating a single value
 
-See `.env.template` for the complete list of required environment variables.
+Edit **FUNCTIONS_CONFIG_EXPORT** in Secret Manager and add a new version with the full JSON (only the key you change needs a new value; the rest can be unchanged). Redeploy or wait for instances to recycle so they load the new version.
 
-## After Setup
+## Environment variables reference
 
-1. Deploy your functions: `firebase deploy --only functions`
-2. You can safely delete `.runtimeconfig.json` if you want
-3. For local testing: `firebase emulators:start --only functions`
+See `.env.template` for the full list of variable names. The same names are used in `.env` (local) and as the target of the mapping from the secret’s JSON paths in `lib/exported-config.js` (production).
+
+## After setup
+
+- **Deploy:** `firebase deploy --only functions`
+- **Local testing:** `firebase emulators:start --only functions` or `npm run serve` from `functions/`
