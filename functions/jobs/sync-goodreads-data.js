@@ -468,7 +468,7 @@ const syncGoodreadsData = async () => {
     aiSummary = await generateGoodreadsSummary(widgetContent)
     widgetContent.aiSummary = aiSummary
   } catch (error) {
-    logger.error('Failed to generate Goodreadsn AI summary:', error)
+    logger.error('Failed to generate Goodreads AI summary:', error)
     // Continue with sync even if AI summary fails
   }
 

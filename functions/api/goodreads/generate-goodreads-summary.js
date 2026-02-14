@@ -1,10 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { logger } from 'firebase-functions'
-
-const extractJsonFromMarkdown = (str) => {
-  const match = str.match(/```json\s*({[\s\S]*?})\s*```/)
-  return match ? JSON.parse(match[1]) : null
-}
+import extractJsonFromGeminiResponse from '../../lib/extract-json-from-gemini-response.js'
 
 /**
  * Generate AI summary of Goodreads reading data using Gemini
@@ -19,7 +15,7 @@ const generateGoodreadsSummary = async (goodreadsData) => {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
   const { collections, profile } = goodreadsData
 
@@ -71,10 +67,11 @@ Goodreads Profile: ${profile?.displayName || 'Chris Vogt'}
   try {
     const result = await model.generateContent(prompt)
     const response = await result.response
-    const { debug, response: sanitizedResponse = '' } = extractJsonFromMarkdown(
-      response.text()
-    )
-    logger.debug('Goodreads Summary [Gemini] Debug', debug)
+    const parsed = extractJsonFromGeminiResponse(response.text())
+    if (!parsed) {
+      throw new Error('Gemini response was not valid JSON (no markdown block or raw JSON)')
+    }
+    const { response: sanitizedResponse = '' } = parsed
     return sanitizedResponse
   } catch (error) {
     logger.error('Error generating Goodreads summary with Gemini:', error)
