@@ -555,7 +555,7 @@ expressApp.post(
   }
 )
 
-expressApp.get('*', (req, res) => {
+expressApp.get('/{*splat}', (req, res) => {
   res.sendStatus(404)
   return res.end()
 })

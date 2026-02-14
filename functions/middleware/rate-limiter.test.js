@@ -19,7 +19,7 @@ describe('rateLimiter', () => {
     // Setup mock request
     mockReq = {
       ip: '192.168.1.100',
-      connection: {
+      socket: {
         remoteAddress: '192.168.1.100'
       }
     }
@@ -64,7 +64,7 @@ describe('rateLimiter', () => {
       const middleware = rateLimiter(15 * 60 * 1000, 1)
       
       mockReq.ip = '10.0.0.1'
-      mockReq.connection.remoteAddress = '192.168.1.1'
+      mockReq.socket.remoteAddress = '192.168.1.1'
       
       // Should not crash and should call next
       expect(() => {
@@ -74,12 +74,12 @@ describe('rateLimiter', () => {
       expect(mockNext).toHaveBeenCalled()
     })
 
-    it('should fallback to req.connection.remoteAddress when req.ip is not available', () => {
+    it('should fallback to req.socket.remoteAddress when req.ip is not available', () => {
       const { default: rateLimiter } = require('./rate-limiter.js')
       const middleware = rateLimiter(15 * 60 * 1000, 1)
       
       delete mockReq.ip
-      mockReq.connection.remoteAddress = '172.16.0.1'
+      mockReq.socket.remoteAddress = '172.16.0.1'
       
       // Should not crash and should call next
       expect(() => {
@@ -94,7 +94,7 @@ describe('rateLimiter', () => {
       const middleware = rateLimiter(15 * 60 * 1000, 1)
       
       delete mockReq.ip
-      delete mockReq.connection.remoteAddress
+      delete mockReq.socket.remoteAddress
       
       // Should not crash
       expect(() => {
@@ -132,8 +132,8 @@ describe('rateLimiter', () => {
       const middleware = rateLimiter()
       
       const malformedReq = {
-        // Missing ip and connection properties
-        connection: {} // Empty connection object
+        // Missing ip and socket properties
+        socket: {} // Empty socket object
       }
       
       expect(() => {
