@@ -1,109 +1,197 @@
 # Changelog
 
-## 0.18.0
+All notable changes to this project will be documented in this file.
 
-- **FEATURE**: Added GitHub contribution graph data to GitHub widget
-- GitHub widget now includes `contributionsCollection` with contribution calendar data for the last 365 days
-- Added comprehensive test coverage for GitHub widget content function (100% code coverage)
-- GraphQL query now includes contribution calendar with total contributions, weeks, and daily contribution data
-- Added GitHub widget option to API dashboard dropdown for testing
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.19.0] - 2025-02-13
+
+### Added
+
+- Book cover images for Goodreads activity updates (userstatus and review types)
+- Automatic fetching of book metadata from Google Books API for updates without existing book data
+- Fallback search by title/author when ISBN lookup fails
+- Deduplication of book fetches for updates referencing the same book
+- Rate limiting protection with exponential backoff for Google Books API requests
+- Comprehensive test coverage for `processUpdatesWithMedia` function (97%+ coverage)
+
+### Changed
+
+- Enhanced `sync-goodreads-data` job to process updates and attach CDN media URLs
+- Improved error handling for Google Books API quota exceeded errors
+
+## [0.18.0] - 2024-12-XX
+
+### Added
+
+- GitHub contribution graph data to GitHub widget
+- `contributionsCollection` with contribution calendar data for the last 365 days
+- Comprehensive test coverage for GitHub widget content function (100% code coverage)
+- GitHub widget option to API dashboard dropdown for testing
 - Contribution data includes date, contribution count, and color for each day to enable flame graph visualization
 
-## 0.17.0
+### Changed
 
-- **FEATURE**: Added comprehensive Firebase Authentication system with secure session management
-- **BREAKING CHANGE**: Sync endpoints now require authentication (JWT token or session cookie)
-- New Firebase Auth integration with user creation/deletion triggers for automatic database management
-- Added secure session cookie support as primary authentication method (HTTP-only, secure, SameSite)
-- Implemented rate limiting middleware to prevent API abuse (10 sync requests per 15 minutes)
-- Added domain-based access control restricting access to @chrisvogt.me and @chronogrove.com users only
-- New protected endpoints: `/api/user/profile`, `/api/auth/session`, `/api/auth/logout`
-- Enhanced security with automatic token verification and refresh token management
-- Added comprehensive test coverage for all authentication flows (100% code coverage)
-- Updated CORS configuration to support credentials for cross-origin cookie handling
-- Added Firebase emulator support for development and testing environments
-- New user management jobs for automatic database synchronization with Firebase Auth
+- GraphQL query now includes contribution calendar with total contributions, weeks, and daily contribution data
+
+## [0.17.0] - 2024-XX-XX
+
+### Added
+
+- Comprehensive Firebase Authentication system with secure session management
+- Firebase Auth integration with user creation/deletion triggers for automatic database management
+- Secure session cookie support as primary authentication method (HTTP-only, secure, SameSite)
+- Rate limiting middleware to prevent API abuse (10 sync requests per 15 minutes)
+- Domain-based access control restricting access to @chrisvogt.me and @chronogrove.com users only
+- Protected endpoints: `/api/user/profile`, `/api/auth/session`, `/api/auth/logout`
+- Automatic token verification and refresh token management
+- Comprehensive test coverage for all authentication flows (100% code coverage)
+- Firebase emulator support for development and testing environments
+- User management jobs for automatic database synchronization with Firebase Auth
 - Enhanced logging and error handling throughout authentication system
 
-## 0.16.0
+### Changed
 
-- **FEATURE**: Added comprehensive Discogs integration for vinyl record collection tracking
-- New Discogs API integration to fetch user's vinyl record collection and releases
-- Added Discogs sync job to periodically update collection data from Discogs API
-- Created Discogs widget content function to serve collection data to frontend
-- Added data transformers for Discogs releases and destination path handling
+- Updated CORS configuration to support credentials for cross-origin cookie handling
+
+### Security
+
+- **BREAKING**: Sync endpoints now require authentication (JWT token or session cookie)
+
+## [0.16.0] - 2024-XX-XX
+
+### Added
+
+- Comprehensive Discogs integration for vinyl record collection tracking
+- Discogs API integration to fetch user's vinyl record collection and releases
+- Discogs sync job to periodically update collection data from Discogs API
+- Discogs widget content function to serve collection data to frontend
+- Data transformers for Discogs releases and destination path handling
 - Comprehensive test coverage for all Discogs functionality (100% code coverage)
-- Added Discogs API configuration and environment variables
+- Discogs API configuration and environment variables
 - Integration follows existing multi-tenant architecture patterns
 
-## 0.15.0
+## [0.15.0] - 2024-XX-XX
 
-- **FEATURE**: Added AI-powered reading summary to Goodreads widget using Google Gemini
-- Goodreads widget now includes intelligent 2-3 paragraph summaries of reading activity and patterns
-- AI analyzes recent books, identifies genre preferences, and highlights standout reads
+### Added
+
+- AI-powered reading summary to Goodreads widget using Google Gemini
+- Intelligent 2-3 paragraph summaries of reading activity and patterns
+- AI analysis of recent books, genre preferences, and standout reads
+- Comprehensive test coverage for new AI summary functionality (100% code coverage)
+- Graceful fallback handling when AI summary generation fails
+- AI summaries cached separately and can be regenerated independently of book data
+
+### Changed
+
 - Enhanced Goodreads sync job to generate and store AI summaries separately for widget consumption
 - Increased Goodreads API fetch limit from 18 to 100 books for better reading pattern analysis
-- Added comprehensive test coverage for new AI summary functionality (100% code coverage)
-- Graceful fallback handling when AI summary generation fails - sync continues without interruption
-- AI summaries are cached separately and can be regenerated independently of book data
 
-## 0.14.0
+## [0.14.0] - 2024-XX-XX
 
-- **FEATURE**: Added multi-tenant support for Instagram widget
+### Added
+
+- Multi-tenant support for Instagram widget
+- Hostname-based user detection in API endpoints (chronogrove.com → chronogrove, others → chrisvogt)
+- Comprehensive test coverage for Instagram widget (100% code coverage)
+
+### Changed
+
 - Instagram widget now supports dynamic user-based collection names (`users/{userId}/instagram`)
-- Added hostname-based user detection in API endpoints (chronogrove.com → chronogrove, others → chrisvogt)
-- Updated Instagram widget tests with comprehensive coverage (100% code coverage)
-- Fixed linter warnings and improved error handling in Instagram widget
-- Temporary solution for multi-tenant support while maintaining backward compatibility
 
-## 0.13.0
+### Fixed
 
-- **BREAKING CHANGE**: Migrates database structure to user-scoped collections for multi-tenant support
-- All database collections now use `users/chrisvogt/` prefix (e.g., `users/chrisvogt/spotify/widget-content`)
-- Storage paths updated to be user-scoped (e.g., `chrisvogt/spotify/playlists/`)
-- Added `CURRENT_USERNAME` constant for future multi-tenant configuration
-- Updated all sync jobs and widget content functions to use new user-scoped paths
-- No data loss - existing data remains in old collections while new data uses user-scoped structure
+- Linter warnings and improved error handling in Instagram widget
+
+## [0.13.0] - 2024-XX-XX
+
+### Added
+
+- `CURRENT_USERNAME` constant for future multi-tenant configuration
 - Foundation ready for Firebase Auth and OAuth integration for multiple users
 
-## 0.12.0
+### Changed
 
-- Uses Gemini via Firebase to add a new AI summary to the Steam widget content.
+- **BREAKING**: Migrated database structure to user-scoped collections for multi-tenant support
+- All database collections now use `users/chrisvogt/` prefix (e.g., `users/chrisvogt/spotify/widget-content`)
+- Storage paths updated to be user-scoped (e.g., `chrisvogt/spotify/playlists/`)
+- Updated all sync jobs and widget content functions to use new user-scoped paths
 
-## 0.11.2 — 0.11.5
+## [0.12.0] - 2024-XX-XX
 
-- Package dependency updates.
+### Added
 
-## 0.11.1
+- AI summary to the Steam widget content using Gemini via Firebase
 
-- Disables all sync/* endpoints for security. They can be added back once auth is implemented.
+## [0.11.2] - [0.11.5] - 2024-XX-XX
 
-## 0.11.0
+### Changed
 
-- Update package from CommonJS to ESM.
+- Package dependency updates
 
-## 0.10.1
+## [0.11.1] - 2024-XX-XX
 
-- Continue improving code coverage.
+### Security
 
-## 0.10.0
+- Disabled all sync/* endpoints until auth is implemented
 
-- Adds vitest and the first unit test spec file.
+## [0.11.0] - 2024-XX-XX
 
-## 0.9.1
+### Changed
 
-- Fix Steam icon URL to use https instead of http.
+- **BREAKING**: Updated package from CommonJS to ESM
 
-## 0.9.0
+## [0.10.1] - 2024-XX-XX
 
-- Adds "ownedGame" to the Steam widget API response.
+### Changed
 
-## 0.8.0
+- Improved code coverage
 
-- Fetches additional fields from the Instagram API: biography, followersCount.
-- Adds additional response information to the Instagram sync API response when no images were uploaded.
-- Adds this changelog.
+## [0.10.0] - 2024-XX-XX
 
-----
+### Added
 
-This changelog was started with v0.8.0.
+- Vitest testing framework
+- First unit test spec file
+
+## [0.9.1] - 2024-XX-XX
+
+### Fixed
+
+- Steam icon URL to use HTTPS instead of HTTP
+
+## [0.9.0] - 2024-XX-XX
+
+### Added
+
+- `ownedGames` to the Steam widget API response
+
+## [0.8.0] - 2024-XX-XX
+
+### Added
+
+- Additional fields from Instagram API: biography, followersCount
+- Additional response information to the Instagram sync API response when no images were uploaded
+- This changelog
+
+---
+
+_This changelog was started with v0.8.0._
+
+[0.19.0]: https://github.com/chrisvogt/metrics/compare/v0.18.0...v0.19.0
+[0.18.0]: https://github.com/chrisvogt/metrics/compare/v0.17.0...v0.18.0
+[0.17.0]: https://github.com/chrisvogt/metrics/compare/v0.16.0...v0.17.0
+[0.16.0]: https://github.com/chrisvogt/metrics/compare/v0.15.0...v0.16.0
+[0.15.0]: https://github.com/chrisvogt/metrics/compare/v0.14.0...v0.15.0
+[0.14.0]: https://github.com/chrisvogt/metrics/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/chrisvogt/metrics/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/chrisvogt/metrics/compare/v0.11.5...v0.12.0
+[0.11.2]: https://github.com/chrisvogt/metrics/compare/v0.11.1...v0.11.2
+[0.11.1]: https://github.com/chrisvogt/metrics/compare/v0.11.0...v0.11.1
+[0.11.0]: https://github.com/chrisvogt/metrics/compare/v0.10.1...v0.11.0
+[0.10.1]: https://github.com/chrisvogt/metrics/compare/v0.10.0...v0.10.1
+[0.10.0]: https://github.com/chrisvogt/metrics/compare/v0.9.1...v0.10.0
+[0.9.1]: https://github.com/chrisvogt/metrics/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/chrisvogt/metrics/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/chrisvogt/metrics/releases/tag/v0.8.0

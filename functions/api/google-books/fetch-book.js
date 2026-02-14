@@ -3,7 +3,7 @@ import got from 'got'
 
 const googleBooksAPIKey = process.env.GOOGLE_BOOKS_API_KEY
 
-const fetchBook = async (book) => {
+const fetchBook = async (book, maxRetries = 3) => {
   const { isbn, rating } = book
 
   if (!isbn) {
@@ -12,22 +12,57 @@ const fetchBook = async (book) => {
 
   const googleBooksVolumeURL = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${googleBooksAPIKey}&country=US`
 
-  try {
-    const { body } = await got(googleBooksVolumeURL)
-    const { items: [book] = [] } = JSON.parse(body)
+  // Retry with exponential backoff on rate limit errors
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { body } = await got(googleBooksVolumeURL)
+      const { items: [book] = [] } = JSON.parse(body)
 
-    if (!book) {
-      logger.error(`No result returned from Google Books for ISBN: ${isbn}.`)
-    }
+      if (!book) {
+        logger.error(`No result returned from Google Books for ISBN: ${isbn}.`)
+      }
 
-    return {
-      book,
-      rating,
+      return {
+        book,
+        rating,
+      }
+    } catch (error) {
+      const statusCode = error.response?.statusCode || error.statusCode
+      const errorBody = error.response?.body ? JSON.parse(error.response.body) : null
+      const isQuotaExceeded = errorBody?.error?.status === 'RESOURCE_EXHAUSTED' || 
+                              errorBody?.error?.code === 429 && 
+                              errorBody?.error?.message?.includes('Quota exceeded')
+      
+      // Don't retry on daily quota exceeded - it won't help
+      if (isQuotaExceeded) {
+        logger.error(`Daily quota exceeded for Google Books API. ISBN ${isbn} will not be fetched.`, {
+          message: errorBody?.error?.message,
+          quota_limit: errorBody?.error?.details?.[0]?.metadata?.quota_limit_value
+        })
+        return null
+      }
+      
+      // Retry on 429 (rate limit) or 503 (Service Unavailable) - but not quota exceeded
+      if ((statusCode === 429 || statusCode === 503) && attempt < maxRetries) {
+        const waitTime = Math.pow(2, attempt) * 1000 // Exponential backoff: 2s, 4s, 8s
+        logger.warn(`Rate limited (${statusCode}) for ISBN ${isbn}, waiting ${waitTime}ms before retry ${attempt}/${maxRetries}`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+        continue
+      }
+      
+      // For other errors or max retries reached, log and return null
+      if (attempt === maxRetries) {
+        logger.error(`Error fetching data Google Books API for ISBN ${isbn} after ${maxRetries} attempts.`, error)
+        return null
+      }
+      
+      // For non-rate-limit errors, don't retry
+      logger.error('Error fetching data Google Books API.', error)
+      return null
     }
-  } catch (error) {
-    logger.error('Error fetching data Google Books API.', error)
-    return null
   }
+
+  return null
 }
 
 export default fetchBook

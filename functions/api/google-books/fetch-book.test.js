@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+// Use fake timers for retry tests
+vi.useFakeTimers()
+
 // Mock dependencies
 vi.mock('got', () => ({
   default: vi.fn()
@@ -7,7 +10,8 @@ vi.mock('got', () => ({
 
 vi.mock('firebase-functions', () => ({
   logger: {
-    error: vi.fn()
+    error: vi.fn(),
+    warn: vi.fn()
   }
 }))
 
@@ -163,8 +167,166 @@ describe('fetchBook', () => {
 
     const result = await fetchBook(bookInput)
 
-    // Should log error and return null
+    // Should log error and return null (non-rate-limit errors don't retry)
     expect(mockLogger.error).toHaveBeenCalledWith('Error fetching data Google Books API.', mockError)
+    expect(result).toBeNull()
+  })
+
+  it('should retry on 429 rate limit errors with exponential backoff', async () => {
+    const bookInput = {
+      isbn: '9780143127550',
+      rating: '4'
+    }
+
+    const mockGoogleBooksResponse = {
+      items: [{
+        id: 'test-book-id',
+        volumeInfo: { title: 'Test Book' }
+      }]
+    }
+
+    // First two calls return 429, third call succeeds
+    const rateLimitError = {
+      response: {
+        statusCode: 429,
+        body: JSON.stringify({ error: { message: 'Rate limit exceeded' } })
+      }
+    }
+
+    mockGot
+      .mockRejectedValueOnce(rateLimitError)
+      .mockRejectedValueOnce(rateLimitError)
+      .mockResolvedValueOnce({ body: JSON.stringify(mockGoogleBooksResponse) })
+
+    const fetchPromise = fetchBook(bookInput)
+
+    // Fast-forward through delays
+    await vi.runAllTimersAsync()
+
+    const result = await fetchPromise
+
+    // Should have retried and eventually succeeded
+    expect(mockGot).toHaveBeenCalledTimes(3)
+    expect(mockLogger.warn).toHaveBeenCalledTimes(2)
+    expect(mockLogger.warn).toHaveBeenNthCalledWith(1, 'Rate limited (429) for ISBN 9780143127550, waiting 2000ms before retry 1/3')
+    expect(mockLogger.warn).toHaveBeenNthCalledWith(2, 'Rate limited (429) for ISBN 9780143127550, waiting 4000ms before retry 2/3')
+    expect(result).toEqual({
+      book: mockGoogleBooksResponse.items[0],
+      rating: '4'
+    })
+  })
+
+  it('should retry on 503 service unavailable errors with exponential backoff', async () => {
+    const bookInput = {
+      isbn: '9780143127550',
+      rating: '4'
+    }
+
+    const mockGoogleBooksResponse = {
+      items: [{
+        id: 'test-book-id',
+        volumeInfo: { title: 'Test Book' }
+      }]
+    }
+
+    const serviceUnavailableError = {
+      response: {
+        statusCode: 503,
+        body: JSON.stringify({ error: { message: 'Service temporarily unavailable' } })
+      }
+    }
+
+    mockGot
+      .mockRejectedValueOnce(serviceUnavailableError)
+      .mockResolvedValueOnce({ body: JSON.stringify(mockGoogleBooksResponse) })
+
+    const fetchPromise = fetchBook(bookInput)
+
+    // Fast-forward through delays
+    await vi.runAllTimersAsync()
+
+    const result = await fetchPromise
+
+    // Should have retried and eventually succeeded
+    expect(mockGot).toHaveBeenCalledTimes(2)
+    expect(mockLogger.warn).toHaveBeenCalledWith('Rate limited (503) for ISBN 9780143127550, waiting 2000ms before retry 1/3')
+    expect(result).toEqual({
+      book: mockGoogleBooksResponse.items[0],
+      rating: '4'
+    })
+  })
+
+  it('should not retry on daily quota exceeded errors', async () => {
+    const bookInput = {
+      isbn: '9780143127550',
+      rating: '4'
+    }
+
+    const quotaExceededError = {
+      response: {
+        statusCode: 429,
+        body: JSON.stringify({
+          error: {
+            code: 429,
+            status: 'RESOURCE_EXHAUSTED',
+            message: 'Quota exceeded for quota metric \'Queries\' and limit \'Queries per day\'',
+            details: [{
+              metadata: {
+                quota_limit_value: '1000'
+              }
+            }]
+          }
+        })
+      }
+    }
+
+    mockGot.mockRejectedValueOnce(quotaExceededError)
+
+    const result = await fetchBook(bookInput)
+
+    // Should not retry on quota exceeded
+    expect(mockGot).toHaveBeenCalledTimes(1)
+    expect(mockLogger.warn).not.toHaveBeenCalled()
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Daily quota exceeded for Google Books API. ISBN 9780143127550 will not be fetched.',
+      {
+        message: 'Quota exceeded for quota metric \'Queries\' and limit \'Queries per day\'',
+        quota_limit: '1000'
+      }
+    )
+    expect(result).toBeNull()
+  })
+
+  it('should stop retrying after max retries on rate limit errors', async () => {
+    const bookInput = {
+      isbn: '9780143127550',
+      rating: '4'
+    }
+
+    const rateLimitError = {
+      response: {
+        statusCode: 429,
+        body: JSON.stringify({ error: { message: 'Rate limit exceeded' } })
+      }
+    }
+
+    // All calls return 429
+    mockGot.mockRejectedValue(rateLimitError)
+
+    const fetchPromise = fetchBook(bookInput, 2) // Use maxRetries: 2
+
+    // Fast-forward through delays
+    await vi.runAllTimersAsync()
+
+    const result = await fetchPromise
+
+    // Should have retried maxRetries times
+    expect(mockGot).toHaveBeenCalledTimes(2)
+    expect(mockLogger.warn).toHaveBeenCalledTimes(1) // Only one retry attempt
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Error fetching data Google Books API for ISBN 9780143127550 after 2 attempts.',
+      rateLimitError
+    )
     expect(result).toBeNull()
   })
 
