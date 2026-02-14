@@ -6,7 +6,7 @@ const rateLimitStore = new Map()
 
 const rateLimiter = (windowMs = 15 * 60 * 1000, maxRequests = 100) => {
   return (req, res, next) => {
-    const key = req.ip || req.connection.remoteAddress
+    const key = req.ip || req.socket?.remoteAddress
     const now = Date.now()
     
     if (!rateLimitStore.has(key)) {

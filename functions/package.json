@@ -18,24 +18,24 @@
     "node": ">=24"
   },
   "dependencies": {
-    "@google-cloud/firestore": "^7.11.1",
-    "@google/generative-ai": "^0.21.0",
-    "axios": "^1.10.0",
-    "compression": "^1.8.0",
+    "@google-cloud/firestore": "^8.3.0",
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.5",
+    "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "express": "^4.18.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "firebase": "^12.9.0",
     "firebase-admin": "^13.6.1",
     "firebase-functions": "^7.0.5",
-    "got": "^14.4.7",
+    "got": "^14.6.6",
     "graphql-got": "^0.1.2",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "lodash.get": "^4.4.2",
     "lodash.isstring": "^4.0.1",
-    "moment": "^2.29.4",
-    "p-all": "^5.0.0",
-    "p-map": "^7.0.3",
+    "moment": "^2.30.1",
+    "p-all": "^5.0.1",
+    "p-map": "^7.0.4",
     "q-i": "^2.0.1",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
@@ -54,6 +54,5 @@
     "supertest": "^7.1.1",
     "vitest": "^3.2.4"
   },
-  "private": true,
-  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
+  "private": true
 }
