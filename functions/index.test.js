@@ -13,7 +13,8 @@ const authMock = vi.fn(() => ({
   verifySessionCookie: vi.fn(),
   createSessionCookie: vi.fn(),
   getUser: vi.fn(),
-  revokeRefreshTokens: vi.fn()
+  revokeRefreshTokens: vi.fn(),
+  deleteUser: vi.fn().mockResolvedValue(undefined)
 }))
 
 const initializeAppMock = vi.fn()
@@ -39,8 +40,14 @@ vi.mock('firebase-functions/v2/scheduler', () => ({
   onSchedule: vi.fn((config, handler) => handler)
 }))
 
+vi.mock('firebase-functions/v2/identity', () => ({
+  beforeUserCreated: vi.fn((optsOrHandler, handler) => (handler !== undefined ? handler : optsOrHandler))
+}))
+
 vi.mock('firebase-functions/params', () => ({
-  defineString: vi.fn(() => 'mock-database-url')
+  defineString: vi.fn(() => 'mock-database-url'),
+  defineSecret: vi.fn(() => ({ value: vi.fn(() => '') })),
+  defineJsonSecret: vi.fn(() => ({ value: vi.fn(() => ({})) }))
 }))
 
 // Mock file system
@@ -595,11 +602,6 @@ describe('index.js', () => {
       expect(typeof handleUserCreation).toBe('function')
     })
 
-    it('should export handleUserDeletion function', async () => {
-      const { handleUserDeletion } = await import('./index.js')
-      expect(typeof handleUserDeletion).toBe('function')
-    })
-
     it('should handle user creation successfully', async () => {
       const { default: createUserJob } = await import('./jobs/create-user.js')
       
@@ -650,58 +652,6 @@ describe('index.js', () => {
       await mockHandleUserCreation(mockUser)
       
       expect(createUserJob).toHaveBeenCalledWith(mockUser)
-    })
-
-    it('should handle user deletion successfully', async () => {
-      const { default: deleteUserJob } = await import('./jobs/delete-user.js')
-      
-      // Mock successful user deletion
-      vi.mocked(deleteUserJob).mockResolvedValueOnce({ result: 'SUCCESS' })
-      
-      // Mock user object
-      const mockUser = { uid: 'test-uid', email: 'test@chrisvogt.me' }
-      
-      // Mock the function to avoid Firebase Functions v1 issues
-      const mockHandleUserDeletion = vi.fn().mockImplementation(async (user) => {
-        const result = await deleteUserJob(user)
-        if (result.result === 'SUCCESS') {
-          console.log('User deletion trigger completed successfully', { uid: user.uid })
-        } else {
-          console.error('User deletion trigger failed', { uid: user.uid, error: result.error })
-        }
-        return result
-      })
-      
-      // Call the function
-      await mockHandleUserDeletion(mockUser)
-      
-      expect(deleteUserJob).toHaveBeenCalledWith(mockUser)
-    })
-
-    it('should handle user deletion failure', async () => {
-      const { default: deleteUserJob } = await import('./jobs/delete-user.js')
-      
-      // Mock failed user deletion
-      vi.mocked(deleteUserJob).mockResolvedValueOnce({ result: 'FAILED', error: 'Database error' })
-      
-      // Mock user object
-      const mockUser = { uid: 'test-uid', email: 'test@chrisvogt.me' }
-      
-      // Mock the function to avoid Firebase Functions v1 issues
-      const mockHandleUserDeletion = vi.fn().mockImplementation(async (user) => {
-        const result = await deleteUserJob(user)
-        if (result.result === 'SUCCESS') {
-          console.log('User deletion trigger completed successfully', { uid: user.uid })
-        } else {
-          console.error('User deletion trigger failed', { uid: user.uid, error: result.error })
-        }
-        return result
-      })
-      
-      // Call the function
-      await mockHandleUserDeletion(mockUser)
-      
-      expect(deleteUserJob).toHaveBeenCalledWith(mockUser)
     })
   })
 

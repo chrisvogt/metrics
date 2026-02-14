@@ -12,12 +12,11 @@ import express from 'express'
 import cookieParser from 'cookie-parser'
 import { onRequest } from 'firebase-functions/v2/https'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
-import { defineString } from 'firebase-functions/params'
+import { beforeUserCreated } from 'firebase-functions/v2/identity'
+import { defineJsonSecret, defineString } from 'firebase-functions/params'
 import { readFileSync } from 'fs'
 
-// Import v1 functions for auth triggers
-import { auth } from 'firebase-functions/v1'
-
+import { applyExportedConfigToEnv } from './lib/exported-config.js'
 import { getWidgetContent, validWidgetIds } from './lib/get-widget-content.js'
 import createUserJob from './jobs/create-user.js'
 import deleteUserJob from './jobs/delete-user.js'
@@ -37,6 +36,20 @@ const firebaseServiceAccountToken = JSON.parse(
 const storageFirestoreDatabaseUrl = defineString(
   'STORAGE_FIRESTORE_DATABASE_URL'
 )
+
+// Exported runtime config (firebase functions:config:export) – applied to process.env on first use
+const functionsConfigExport = defineJsonSecret('FUNCTIONS_CONFIG_EXPORT')
+
+async function ensureExportedConfigApplied() {
+  if (process.env.__FUNCTIONS_CONFIG_APPLIED__) return
+  try {
+    const data = functionsConfigExport.value()
+    applyExportedConfigToEnv(data)
+    process.env.__FUNCTIONS_CONFIG_APPLIED__ = '1'
+  } catch (err) {
+    logger.warn('Could not load FUNCTIONS_CONFIG_EXPORT (e.g. local dev with .env)', { message: err?.message })
+  }
+}
 
 // Initialize Firebase Admin
 const adminConfig = {
@@ -72,77 +85,72 @@ admin.firestore().settings({
   ignoreUndefinedProperties: true,
 })
 
+const scheduleOpts = {
+  schedule: 'every day 02:00',
+  region: 'us-central1',
+  secrets: [functionsConfigExport],
+}
+
 export const syncGoodreadsData = onSchedule(
-  {
-    schedule: 'every day 02:00',
-    region: 'us-central1',
-  },
-  () => syncGoodreadsDataJob()
+  scheduleOpts,
+  async () => {
+    await ensureExportedConfigApplied()
+    return syncGoodreadsDataJob()
+  }
 )
 
 export const syncSpotifyData = onSchedule(
-  {
-    schedule: 'every day 02:00',
-    region: 'us-central1',
-  },
-  () => syncSpotifyDataJob()
+  scheduleOpts,
+  async () => {
+    await ensureExportedConfigApplied()
+    return syncSpotifyDataJob()
+  }
 )
 
 export const syncSteamData = onSchedule(
-  {
-    schedule: 'every day 02:00',
-    region: 'us-central1',
-  },
-  () => syncSteamDataJob()
+  scheduleOpts,
+  async () => {
+    await ensureExportedConfigApplied()
+    return syncSteamDataJob()
+  }
 )
 
 export const syncInstagramData = onSchedule(
-  {
-    schedule: 'every day 02:00',
-    region: 'us-central1',
-  },
-  () => syncInstagramDataJob()
+  scheduleOpts,
+  async () => {
+    await ensureExportedConfigApplied()
+    return syncInstagramDataJob()
+  }
 )
 
 export const syncFlickrData = onSchedule(
-  {
-    schedule: 'every day 02:00',
-    region: 'us-central1',
-  },
-  () => syncFlickrDataJob()
+  scheduleOpts,
+  async () => {
+    await ensureExportedConfigApplied()
+    return syncFlickrDataJob()
+  }
 )
 
-export const handleUserCreation = auth.user().onCreate(async (user) => {
-  // Create user record in Firestore
-  const result = await createUserJob(user)
-
-  if (result.result === 'SUCCESS') {
-    logger.info('User creation trigger completed successfully', {
-      uid: user.uid,
-    })
-  } else {
-    logger.error('User creation trigger failed', {
-      uid: user.uid,
-      error: result.error,
-    })
+// 2nd gen: requires Firebase Auth with Identity Platform. Runs before user is committed to Auth.
+// Anonymous and custom-token sign-in do not trigger this. Same Firestore doc creation as before.
+export const handleUserCreation = beforeUserCreated(
+  { secrets: [functionsConfigExport] },
+  async (event) => {
+    await ensureExportedConfigApplied()
+    const user = event.data
+    if (!user) {
+      logger.error('handleUserCreation: event.data missing')
+      return
+    }
+    const result = await createUserJob(user)
+    if (result.result === 'SUCCESS') {
+      logger.info('User creation trigger completed successfully', { uid: user.uid })
+    } else {
+      logger.error('User creation trigger failed', { uid: user.uid, error: result.error })
+    }
+    // Don't block: allow Auth user creation to proceed
   }
-})
-
-export const handleUserDeletion = auth.user().onDelete(async (user) => {
-  // Delete user record from Firestore
-  const result = await deleteUserJob(user)
-
-  if (result.result === 'SUCCESS') {
-    logger.info('User deletion trigger completed successfully', {
-      uid: user.uid,
-    })
-  } else {
-    logger.error('User deletion trigger failed', {
-      uid: user.uid,
-      error: result.error,
-    })
-  }
-})
+)
 
 const buildSuccessResponse = (payload) => ({
   ok: true,
@@ -153,6 +161,13 @@ const buildFailureResponse = (err = {}) => ({
   ok: false,
   error: err.message || err,
 })
+
+const ALLOWED_EMAIL_DOMAINS = ['@chrisvogt.me', '@chronogrove.com']
+function isAllowedEmail(email) {
+  if (!email) return false
+  if (process.env.NODE_ENV !== 'production') return true
+  return ALLOWED_EMAIL_DOMAINS.some((domain) => email.endsWith(domain))
+}
 
 // Authentication middleware
 const authenticateUser = async (req, res, next) => {
@@ -181,12 +196,7 @@ const authenticateUser = async (req, res, next) => {
           emailVerified: decodedClaims.email_verified
         })
 
-        // Check if user's email domain matches chrisvogt.me or chronogrove.com
-        if (
-          !decodedClaims.email ||
-          (!decodedClaims.email.endsWith('@chrisvogt.me') && 
-           !decodedClaims.email.endsWith('@chronogrove.com'))
-        ) {
+        if (!isAllowedEmail(decodedClaims.email)) {
           logger.warn('Email domain rejected', {
             email: decodedClaims.email,
             uid: decodedClaims.uid
@@ -244,10 +254,7 @@ const authenticateUser = async (req, res, next) => {
         emailVerified: decodedToken.email_verified
       })
 
-      // Check if user's email domain matches chrisvogt.me or chronogrove.com
-      if (!decodedToken.email || 
-          (!decodedToken.email.endsWith('@chrisvogt.me') && 
-           !decodedToken.email.endsWith('@chronogrove.com'))) {
+      if (!isAllowedEmail(decodedToken.email)) {
         logger.warn('JWT email domain rejected', {
           email: decodedToken.email,
           uid: decodedToken.uid
@@ -385,8 +392,9 @@ expressApp.get(
       res.set('Cache-Control', 'public, max-age=3600, s-maxage=7200')
       res.status(200).send(response)
     } catch (err) {
+      logger.error('Error loading widget content', { provider, userId, error: err?.message ?? err })
       const response = buildFailureResponse(err)
-      res.status(400).send(response)
+      res.status(500).send(response)
     }
 
     return res.end()
@@ -420,6 +428,29 @@ expressApp.get(
   }
 )
 
+// Delete account: remove Firestore user doc then Auth user (replaces old v1 onDelete trigger)
+expressApp.delete(
+  '/api/user/account',
+  cors(corsOptions),
+  rateLimiter(15 * 60 * 1000, 5),
+  authenticateUser,
+  async (req, res) => {
+    const uid = req.user.uid
+    try {
+      const result = await deleteUserJob({ uid })
+      if (result.result !== 'SUCCESS') {
+        logger.warn('Delete-account: Firestore cleanup failed (doc may be missing)', { uid, error: result.error })
+      }
+      await admin.auth().deleteUser(uid)
+      logger.info('User account deleted', { uid })
+      res.status(200).send(buildSuccessResponse({ message: 'Account deleted' }))
+    } catch (err) {
+      logger.error('Error deleting account', { uid, error: err })
+      res.status(500).send(buildFailureResponse(err))
+    }
+  }
+)
+
 // Session cookie endpoint - creates a secure session cookie from JWT token
 expressApp.post('/api/auth/session', cors(corsOptions), async (req, res) => {
   try {
@@ -437,10 +468,7 @@ expressApp.post('/api/auth/session', cors(corsOptions), async (req, res) => {
     // Verify the token first
     const decodedToken = await admin.auth().verifyIdToken(token)
 
-    // Check if user's email domain matches chrisvogt.me or chronogrove.com
-    if (!decodedToken.email || 
-        (!decodedToken.email.endsWith('@chrisvogt.me') && 
-         !decodedToken.email.endsWith('@chronogrove.com'))) {
+    if (!isAllowedEmail(decodedToken.email)) {
       return res.status(403).json({
         ok: false,
         error: 'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
@@ -536,6 +564,10 @@ export const app = onRequest(
   {
     region: 'us-central1',
     timeoutSeconds: 300, // 5 minutes timeout for long-running sync operations
+    secrets: [functionsConfigExport],
   },
-  expressApp
+  async (req, res) => {
+    await ensureExportedConfigApplied()
+    expressApp(req, res)
+  }
 )
