@@ -512,7 +512,7 @@ describe('syncGoodreadsData', () => {
       mockListStoredMedia.mockResolvedValue([])
       
       // Mock pMap to execute the mapper function
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -570,7 +570,7 @@ describe('syncGoodreadsData', () => {
       mockGot.mockResolvedValue({ body: JSON.stringify(mockGoogleSearchResponse) })
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -634,7 +634,7 @@ describe('syncGoodreadsData', () => {
       mockGot.mockResolvedValue({ body: JSON.stringify(mockGoogleSearchResponse) })
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -685,7 +685,7 @@ describe('syncGoodreadsData', () => {
       mockGot.mockResolvedValue({ body: JSON.stringify({ items: [] }) })
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -736,7 +736,7 @@ describe('syncGoodreadsData', () => {
       mockGot.mockResolvedValue({ body: JSON.stringify({ items: [] }) })
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -804,7 +804,7 @@ describe('syncGoodreadsData', () => {
       mockListStoredMedia.mockResolvedValue([]) // No existing media
       mockFetchAndUploadFile.mockResolvedValue({ fileName: 'books/google-book-id-thumbnail.jpg' })
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -862,7 +862,7 @@ describe('syncGoodreadsData', () => {
       mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBookResult)
       mockListStoredMedia.mockResolvedValue(['books/google-book-id-thumbnail.jpg']) // Already exists
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -921,7 +921,7 @@ describe('syncGoodreadsData', () => {
       mockListStoredMedia.mockResolvedValue([])
       
       let pMapCallCount = 0
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         pMapCallCount++
         if (pMapCallCount === 1) {
           // First call: book fetching
@@ -974,7 +974,7 @@ describe('syncGoodreadsData', () => {
       mockFetchBookFromGoogle.mockResolvedValue(null)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1039,7 +1039,7 @@ describe('syncGoodreadsData', () => {
       mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBookResult)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1092,7 +1092,7 @@ describe('syncGoodreadsData', () => {
       mockGot.mockResolvedValue({ body: JSON.stringify({ items: [] }) })
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1158,7 +1158,7 @@ describe('syncGoodreadsData', () => {
         .mockResolvedValueOnce(mockGoogleBookResult)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1214,7 +1214,7 @@ describe('syncGoodreadsData', () => {
       mockFetchBookFromGoogle.mockRejectedValue(quotaExceededError)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1276,7 +1276,7 @@ describe('syncGoodreadsData', () => {
       mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBookResult)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1332,7 +1332,7 @@ describe('syncGoodreadsData', () => {
       mockGot.mockResolvedValue({ body: JSON.stringify(mockGoogleSearchResponse) })
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1386,7 +1386,7 @@ describe('syncGoodreadsData', () => {
       mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBookResult)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1432,7 +1432,7 @@ describe('syncGoodreadsData', () => {
       mockGot.mockRejectedValue(new Error('Network error'))
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1495,7 +1495,7 @@ describe('syncGoodreadsData', () => {
       mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBookResult)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1573,7 +1573,7 @@ describe('syncGoodreadsData', () => {
       fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1637,7 +1637,7 @@ describe('syncGoodreadsData', () => {
         .mockResolvedValueOnce(mockGoogleBookResult)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1693,7 +1693,7 @@ describe('syncGoodreadsData', () => {
       mockGot.mockResolvedValue({ body: JSON.stringify(mockGoogleSearchResponse) })
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1760,7 +1760,7 @@ describe('syncGoodreadsData', () => {
       mockGot.mockResolvedValue({ body: JSON.stringify({ items: [] }) })
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1823,7 +1823,7 @@ describe('syncGoodreadsData', () => {
       
       // Mock pMap to return results that will need link-based matching
       // The key is that the update object reference changes during the process
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1885,7 +1885,7 @@ describe('syncGoodreadsData', () => {
       mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBookResult)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1943,7 +1943,7 @@ describe('syncGoodreadsData', () => {
       mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBookResult)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -1999,7 +1999,7 @@ describe('syncGoodreadsData', () => {
       mockGot.mockResolvedValue({ body: JSON.stringify(mockGoogleSearchResponse) })
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
@@ -2059,7 +2059,7 @@ describe('syncGoodreadsData', () => {
       mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBookResult)
       mockListStoredMedia.mockResolvedValue([])
       
-      mockPMap.mockImplementation(async (items, mapper, options) => {
+      mockPMap.mockImplementation(async (items, mapper) => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
