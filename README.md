@@ -1,5 +1,3 @@
-# Social Metrics API
-
 <h1 align='center'>
   Social Metrics API (<a href='https://metrics.chrisvogt.me' title='metrics.chrisvogt.me'>metrics.chrisvogt.me</a>)
 </h1>
