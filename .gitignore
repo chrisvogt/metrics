@@ -48,7 +48,7 @@ build/Release
 # Dependency directories
 node_modules/
 
-# Turborepo
+# Turborepo (local task cache)
 .turbo
 
 # Hosting build output (built on deploy)

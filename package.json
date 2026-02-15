@@ -9,7 +9,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
-    "deploy": "pnpm run build && firebase deploy",
+    "deploy:all": "pnpm run build && firebase deploy",
     "deploy:hosting": "pnpm run build && firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions"
   },
