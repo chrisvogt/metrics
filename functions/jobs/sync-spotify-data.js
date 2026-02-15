@@ -121,7 +121,7 @@ const syncSpotifyTopTracks = async () => {
 
   let uploadResult
   try {
-    const uploadResult = await pMap(mediaToDownload, fetchAndUploadFile, {
+    uploadResult = await pMap(mediaToDownload, fetchAndUploadFile, {
       concurrency: 10,
       stopOnError: false,
     })

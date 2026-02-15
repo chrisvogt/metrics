@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import generateGoodreadsSummary from './generate-goodreads-summary.js'
 
-// Mock the Google Generative AI
+// Mock the Google Generative AI (use function so it's a constructor)
 vi.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: vi.fn(() => ({
-    getGenerativeModel: vi.fn(() => ({
-      generateContent: vi.fn()
-    }))
-  }))
+  GoogleGenerativeAI: vi.fn(function () {
+    return {
+      getGenerativeModel: vi.fn(() => ({
+        generateContent: vi.fn()
+      }))
+    }
+  })
 }))
 
 // Mock firebase functions logger
@@ -36,7 +38,7 @@ describe('generateGoodreadsSummary', () => {
     
     mockGenerateContent = vi.fn()
     mockGetGenerativeModel = vi.fn(() => ({ generateContent: mockGenerateContent }))
-    mockGoogleGenerativeAI = vi.fn(() => ({ getGenerativeModel: mockGetGenerativeModel }))
+    mockGoogleGenerativeAI = vi.fn(function () { return { getGenerativeModel: mockGetGenerativeModel } })
     
     GoogleGenerativeAI.mockImplementation(mockGoogleGenerativeAI)
   })
@@ -188,7 +190,13 @@ describe('generateGoodreadsSummary', () => {
       }
     })
 
-    await expect(generateGoodreadsSummary(mockGoodreadsData)).rejects.toThrow('Failed to generate AI summary')
+    try {
+      await generateGoodreadsSummary(mockGoodreadsData)
+      throw new Error('Expected rejection')
+    } catch (err) {
+      expect(err.message).toContain('Failed to generate AI summary')
+      expect(err.cause).toBeDefined()
+    }
     expect(logger.error).toHaveBeenCalledWith('Error generating Goodreads summary with Gemini:', expect.any(Error))
   })
 
@@ -208,7 +216,13 @@ describe('generateGoodreadsSummary', () => {
       }
     })
 
-    await expect(generateGoodreadsSummary(mockGoodreadsData)).rejects.toThrow('Failed to generate AI summary')
+    try {
+      await generateGoodreadsSummary(mockGoodreadsData)
+      throw new Error('Expected rejection')
+    } catch (err) {
+      expect(err.message).toContain('Failed to generate AI summary')
+      expect(err.cause).toBeDefined()
+    }
   })
 
   it('should accept raw JSON response when Gemini does not wrap in markdown', async () => {

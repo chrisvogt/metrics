@@ -14,7 +14,7 @@ import { onRequest } from 'firebase-functions/v2/https'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { beforeUserCreated } from 'firebase-functions/v2/identity'
 import { defineJsonSecret, defineString } from 'firebase-functions/params'
-import { readFileSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 
 import { applyExportedConfigToEnv } from './lib/exported-config.js'
 import { getWidgetContent, validWidgetIds } from './lib/get-widget-content.js'
@@ -28,10 +28,6 @@ import syncSteamDataJob from './jobs/sync-steam-data.js'
 import syncFlickrDataJob from './jobs/sync-flickr-data.js'
 import rateLimiter from './middleware/rate-limiter.js'
 
-const firebaseServiceAccountToken = JSON.parse(
-  readFileSync('./token.json', 'utf8')
-)
-
 // Define parameters for v2
 const storageFirestoreDatabaseUrl = defineString(
   'STORAGE_FIRESTORE_DATABASE_URL'
@@ -39,6 +35,17 @@ const storageFirestoreDatabaseUrl = defineString(
 
 // Exported runtime config (firebase functions:config:export) – applied to process.env on first use
 const functionsConfigExport = defineJsonSecret('FUNCTIONS_CONFIG_EXPORT')
+
+function getAdminCredential() {
+  if (process.env.NODE_ENV === 'production') {
+    return admin.credential.applicationDefault()
+  }
+  const tokenPath = './token.json'
+  if (existsSync(tokenPath)) {
+    return admin.credential.cert(JSON.parse(readFileSync(tokenPath, 'utf8')))
+  }
+  return admin.credential.applicationDefault()
+}
 
 async function ensureExportedConfigApplied() {
   if (process.env.__FUNCTIONS_CONFIG_APPLIED__) return
@@ -51,9 +58,9 @@ async function ensureExportedConfigApplied() {
   }
 }
 
-// Initialize Firebase Admin
+// Initialize Firebase Admin (production: ADC; local: token.json if present)
 const adminConfig = {
-  credential: admin.credential.cert(firebaseServiceAccountToken),
+  credential: getAdminCredential(),
   databaseURL: storageFirestoreDatabaseUrl,
   projectId: 'personal-stats-chrisvogt'
 }

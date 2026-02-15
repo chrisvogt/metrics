@@ -75,7 +75,7 @@ Goodreads Profile: ${profile?.displayName || 'Chris Vogt'}
     return sanitizedResponse
   } catch (error) {
     logger.error('Error generating Goodreads summary with Gemini:', error)
-    throw new Error(`Failed to generate AI summary: ${error.message}`)
+    throw new Error(`Failed to generate AI summary: ${error.message}`, { cause: error })
   }
 }
 

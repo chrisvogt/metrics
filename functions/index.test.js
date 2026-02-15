@@ -20,7 +20,8 @@ const authMock = vi.fn(() => ({
 
 const initializeAppMock = vi.fn()
 const credentialMock = {
-  cert: vi.fn(() => ({ mock: 'cert' }))
+  cert: vi.fn(() => ({ mock: 'cert' })),
+  applicationDefault: vi.fn(() => ({ mock: 'applicationDefault' }))
 }
 
 vi.mock('firebase-admin', () => ({
@@ -51,8 +52,10 @@ vi.mock('firebase-functions/params', () => ({
   defineJsonSecret: vi.fn(() => ({ value: vi.fn(() => ({})) }))
 }))
 
-// Mock file system
+// Mock file system (existsSync ref so tests can override for coverage)
+const existsSyncMock = vi.hoisted(() => vi.fn(() => true))
 vi.mock('fs', () => ({
+  existsSync: existsSyncMock,
   readFileSync: vi.fn(() => JSON.stringify({ mock: 'token' }))
 }))
 
@@ -837,6 +840,37 @@ describe('index.js', () => {
       expect(firestoreSettingsMock).toHaveBeenCalledWith({
         ignoreUndefinedProperties: true
       })
+    })
+
+    it('should use applicationDefault credential when NODE_ENV is production', async () => {
+      const prevEnv = process.env.NODE_ENV
+      process.env.NODE_ENV = 'production'
+      vi.clearAllMocks()
+      vi.resetModules()
+      await import('firebase-admin')
+      await import('./index.js')
+      expect(credentialMock.applicationDefault).toHaveBeenCalled()
+      expect(initializeAppMock).toHaveBeenCalledWith({
+        credential: { mock: 'applicationDefault' },
+        databaseURL: 'mock-database-url',
+        projectId: 'personal-stats-chrisvogt'
+      })
+      process.env.NODE_ENV = prevEnv
+    })
+
+    it('should use applicationDefault credential when token.json is missing', async () => {
+      existsSyncMock.mockReturnValue(false)
+      vi.clearAllMocks()
+      vi.resetModules()
+      await import('firebase-admin')
+      await import('./index.js')
+      expect(credentialMock.applicationDefault).toHaveBeenCalled()
+      expect(initializeAppMock).toHaveBeenCalledWith({
+        credential: { mock: 'applicationDefault' },
+        databaseURL: 'mock-database-url',
+        projectId: 'personal-stats-chrisvogt'
+      })
+      existsSyncMock.mockReturnValue(true)
     })
   })
 }) 

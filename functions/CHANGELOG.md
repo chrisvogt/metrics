@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependency upgrades** – Bumped to latest majors: ESLint 10, Vitest 4, dotenv 17, globals 17, requestretry 8. Adjusted for ESLint 10 (preserve-caught-error, no-unassigned-vars), Vitest 4 constructor mocks (use `function` not arrow in mocks), and sync-spotify-data `uploadResult` scope.
 - **Dependency cleanup** – Replaced deprecated packages: `lodash.get` → `lodash/get` (same API); Spotify token refresh now uses `got` instead of `request-promise` (and removed direct `request` / `request-promise` deps). No behavior change.
 
 ## [0.22.0] - 2025-02-14
