@@ -1,4 +1,4 @@
-import get from 'lodash.get'
+import _ from 'lodash'
 import graphqlGot from 'graphql-got'
 
 const query = `
@@ -55,7 +55,7 @@ const getPinnedRepositories = async ({ config }) => {
     }
   })
 
-  const pinnedRepositories = get(body, 'user.pinnedRepositories.nodes', [])
+  const pinnedRepositories = _.get(body, 'user.pinnedRepositories.nodes', [])
   return {
     pinnedRepositories
   }

@@ -1,6 +1,6 @@
 import { parseString } from 'xml2js'
 import convertToHttps from 'to-https'
-import get from 'lodash.get'
+import _ from 'lodash'
 import got from 'got'
 import isString from 'lodash.isstring'
 import { logger } from 'firebase-functions'
@@ -76,7 +76,7 @@ export default async () => {
         reject(error)
       }
 
-      const reviewsResponse = get(response, 'GoodreadsResponse.reviews[0].review', [])
+      const reviewsResponse = _.get(response, 'GoodreadsResponse.reviews[0].review', [])
       const transformedReviews = reviewsResponse.reduce((books, book) => {
         const {
           read_at: [date],
@@ -92,12 +92,12 @@ export default async () => {
         } = book
 
         const [firstBook = {}] = Array.isArray(bookData) ? bookData : [bookData]
-        const [goodreadsDescription] = get(firstBook, 'description', [])
-        const [isbn10] = get(firstBook, 'isbn', [])
-        const [isbn13] = get(firstBook, 'isbn13', [])
+        const [goodreadsDescription] = _.get(firstBook, 'description', [])
+        const [isbn10] = _.get(firstBook, 'isbn', [])
+        const [isbn13] = _.get(firstBook, 'isbn13', [])
         const isbn = isbn13 || isbn10
-        const title = get(firstBook, 'title.0')
-        const authorName = get(firstBook, 'authors.0.author.0.name.0')
+        const title = _.get(firstBook, 'title.0')
+        const authorName = _.get(firstBook, 'authors.0.author.0.name.0')
       
         if (Array.isArray(books) && isString(isbn)) {
           books.push({

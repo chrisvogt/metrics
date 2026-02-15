@@ -6,13 +6,13 @@ vi.mock('graphql-got', () => ({
   default: vi.fn()
 }))
 
-// Mock lodash.get
-vi.mock('lodash.get', () => ({
-  default: vi.fn()
+// Mock lodash (_.get is used)
+vi.mock('lodash', () => ({
+  default: { get: vi.fn() }
 }))
 
 import graphqlGot from 'graphql-got'
-import get from 'lodash.get'
+import _ from 'lodash'
 
 describe('getPinnedRepositories', () => {
   const mockConfig = {
@@ -49,7 +49,7 @@ describe('getPinnedRepositories', () => {
 
   it('should fetch pinned repositories successfully', async () => {
     graphqlGot.mockResolvedValue(mockResponse)
-    get.mockReturnValue(mockResponse.body.user.pinnedRepositories.nodes)
+    _.get.mockReturnValue(mockResponse.body.user.pinnedRepositories.nodes)
 
     const result = await getPinnedRepositories({ config: mockConfig })
 
@@ -62,7 +62,7 @@ describe('getPinnedRepositories', () => {
       }
     })
 
-    expect(get).toHaveBeenCalledWith(mockResponse.body, 'user.pinnedRepositories.nodes', [])
+    expect(_.get).toHaveBeenCalledWith(mockResponse.body, 'user.pinnedRepositories.nodes', [])
     expect(result).toEqual({
       pinnedRepositories: mockResponse.body.user.pinnedRepositories.nodes
     })
@@ -77,7 +77,7 @@ describe('getPinnedRepositories', () => {
     }
 
     graphqlGot.mockResolvedValue(mockResponse)
-    get.mockReturnValue([])
+    _.get.mockReturnValue([])
 
     await getPinnedRepositories({ config: configWithoutMax })
 
@@ -103,7 +103,7 @@ describe('getPinnedRepositories', () => {
     }
 
     graphqlGot.mockResolvedValue(emptyResponse)
-    get.mockReturnValue([])
+    _.get.mockReturnValue([])
 
     const result = await getPinnedRepositories({ config: mockConfig })
 
@@ -118,7 +118,7 @@ describe('getPinnedRepositories', () => {
     }
 
     graphqlGot.mockResolvedValue(noUserResponse)
-    get.mockReturnValue([])
+    _.get.mockReturnValue([])
 
     const result = await getPinnedRepositories({ config: mockConfig })
 
@@ -140,7 +140,7 @@ describe('getPinnedRepositories', () => {
     }
 
     graphqlGot.mockResolvedValue(malformedResponse)
-    get.mockReturnValue([])
+    _.get.mockReturnValue([])
 
     const result = await getPinnedRepositories({ config: mockConfig })
 

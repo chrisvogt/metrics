@@ -1,9 +1,9 @@
-import get from 'lodash.get'
+import _ from 'lodash'
 
 /**
  * Select the Google Books API Key.
  */
-const selectGoogleBooksAPIKey = config => get(config, 'google.books_api_key')
+const selectGoogleBooksAPIKey = config => _.get(config, 'google.books_api_key')
 
 /**
  * Select the Spotify Client ID.
@@ -11,7 +11,7 @@ const selectGoogleBooksAPIKey = config => get(config, 'google.books_api_key')
  * @param {object} config The current app configuration. 
  * @returns {string} The Spotify Client ID associated with your application.
  */
-const selectSpotifyClientId = config => get(config, 'spotify.client_id')
+const selectSpotifyClientId = config => _.get(config, 'spotify.client_id')
 
 /**
  * Select the Spotify client secret.
@@ -19,7 +19,7 @@ const selectSpotifyClientId = config => get(config, 'spotify.client_id')
  * @param {object} config The current app configuration. 
  * @returns {string} The Spotify Client Secret associated with your application.
  */
-const selectSpotifyClientSecret = config => get(config, 'spotify.client_secret')
+const selectSpotifyClientSecret = config => _.get(config, 'spotify.client_secret')
 
 /**
  * Select the Spotify redirect URI.
@@ -27,7 +27,7 @@ const selectSpotifyClientSecret = config => get(config, 'spotify.client_secret')
  * @param {object} config The current app configuration. 
  * @returns {string} Must match value set in your Spotify developer dashboard.
  */
-const selectSpotifyRedirectURI = config => get(config, 'spotify.redirect_uri')
+const selectSpotifyRedirectURI = config => _.get(config, 'spotify.redirect_uri')
 
 /**
  * Select the Spotify refresh token.
@@ -35,7 +35,7 @@ const selectSpotifyRedirectURI = config => get(config, 'spotify.redirect_uri')
  * @param {object} config The current app configuration. 
  * @returns {string} The latest Spotify Refresh Token. Used in place of an auth code.
  */
-const selectSpotifyRefreshToken = config => get(config, 'spotify.refresh_token')
+const selectSpotifyRefreshToken = config => _.get(config, 'spotify.refresh_token')
 
 /**
  * Select the Steam API key.
@@ -44,7 +44,7 @@ const selectSpotifyRefreshToken = config => get(config, 'spotify.refresh_token')
  * @param {object} config The current app configuration. 
  * @returns {string} The Steam API key.
  */
-const selectSteamAPIKey = config => get(config, 'steam.api_key')
+const selectSteamAPIKey = config => _.get(config, 'steam.api_key')
 
 /**
  * Select the Steam user identifier.
@@ -52,7 +52,7 @@ const selectSteamAPIKey = config => get(config, 'steam.api_key')
  * @param {object} config The current app configuration. 
  * @returns {string} The Steam user id. This numeric value is not the custom username.
  */
-const selectSteamUserId = config => get(config, 'steam.user_id')
+const selectSteamUserId = config => _.get(config, 'steam.user_id')
 
 export {
   selectGoogleBooksAPIKey,

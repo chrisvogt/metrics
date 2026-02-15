@@ -1,5 +1,5 @@
 import { logger } from 'firebase-functions'
-import get from 'lodash.get'
+import _ from 'lodash'
 import got from 'got'
 import xml2js from 'xml2js'
 
@@ -25,7 +25,7 @@ const parser = new xml2js.Parser({
 })
 
 const getProfileFromResponse = (result) => {
-  let userShelves = get(
+  let userShelves = _.get(
     result,
     'GoodreadsResponse.user.user_shelves.user_shelf',
     []
@@ -37,7 +37,7 @@ const getProfileFromResponse = (result) => {
   // Handle case where readShelf is undefined
   const bookCount = readShelf?.book_count?._ || ''
   
-  const rawProfile = get(result, 'GoodreadsResponse.user', {}) || {}
+  const rawProfile = _.get(result, 'GoodreadsResponse.user', {}) || {}
 
   const {
     name,
@@ -68,7 +68,7 @@ const getProfileFromResponse = (result) => {
 }
 
 const getUpdatesFromResponse = (result) => {
-  const rawUpdates = get(result, 'GoodreadsResponse.user.updates.update', [])
+  const rawUpdates = _.get(result, 'GoodreadsResponse.user.updates.update', [])
   const isDefined = (subject) => Boolean(subject)
   const validateUpdate = (update) =>
     update && (update.type === 'userstatus' || update.type === 'review')

@@ -1,4 +1,4 @@
-import request from 'request-promise'
+import got from 'got'
 
 const getAccessToken = async ({
   clientId,
@@ -6,11 +6,7 @@ const getAccessToken = async ({
   redirectURI,
   refreshToken
 }) => {
-  const {
-    access_token: accessToken,
-    expires_in: expiresInSec,
-    scope
-  } = await request.post({
+  const { body } = await got.post('https://accounts.spotify.com/api/token', {
     form: {
       client_id: clientId,
       client_secret: clientSecret,
@@ -18,11 +14,15 @@ const getAccessToken = async ({
       refresh_token: refreshToken,
       redirect_uri: redirectURI
     },
-    fullResponse: false,
-    json: true,
-    retryStrategy: err => !!err,
-    url: 'https://accounts.spotify.com/api/token'
+    responseType: 'json',
+    retry: { limit: 2 }
   })
+
+  const {
+    access_token: accessToken,
+    expires_in: expiresInSec,
+    scope
+  } = body
 
   const leadTimeSec = 300
   const expiresAt = new Date()
