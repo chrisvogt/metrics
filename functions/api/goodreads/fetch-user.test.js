@@ -7,7 +7,7 @@ vi.mock('firebase-functions', () => ({
   }
 }))
 
-vi.mock('lodash.get', () => ({
+vi.mock('lodash/get', () => ({
   default: vi.fn()
 }))
 
@@ -53,7 +53,7 @@ describe('fetchUser', () => {
 
     // Get mock functions
     mockGot = (await import('got')).default
-    mockGet = (await import('lodash.get')).default
+    mockGet = (await import('lodash/get')).default
     mockGetReview = (await import('../../lib/get-review.js')).default
     mockGetUserStatus = (await import('../../lib/get-user-status.js')).default
     mockLogger = (await import('firebase-functions')).logger

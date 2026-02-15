@@ -1,5 +1,5 @@
 import { logger } from 'firebase-functions'
-import get from 'lodash.get'
+import get from 'lodash/get'
 import got from 'got'
 import xml2js from 'xml2js'
 

@@ -1,6 +1,6 @@
 import { parseString } from 'xml2js'
 import convertToHttps from 'to-https'
-import get from 'lodash.get'
+import get from 'lodash/get'
 import got from 'got'
 import isString from 'lodash.isstring'
 import { logger } from 'firebase-functions'

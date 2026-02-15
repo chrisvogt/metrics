@@ -6,13 +6,13 @@ vi.mock('graphql-got', () => ({
   default: vi.fn()
 }))
 
-// Mock lodash.get
-vi.mock('lodash.get', () => ({
+// Mock lodash/get
+vi.mock('lodash/get', () => ({
   default: vi.fn()
 }))
 
 import graphqlGot from 'graphql-got'
-import get from 'lodash.get'
+import get from 'lodash/get'
 
 describe('getPinnedRepositories', () => {
   const mockConfig = {
