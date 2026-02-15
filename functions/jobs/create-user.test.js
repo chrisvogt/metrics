@@ -3,7 +3,7 @@ import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
 
 import createUser from './create-user.js'
-import { DATABASE_COLLECTION_USERS } from '../constants.js'
+import { DATABASE_COLLECTION_USERS } from '../lib/constants.js'
 
 // Mock Firebase Admin
 vi.mock('firebase-admin', () => ({

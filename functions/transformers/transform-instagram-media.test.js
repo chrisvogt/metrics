@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import transformInstagramMedia from './transform-instagram-media.js'
 
 // Mock constants
-vi.mock('../constants.js', () => ({
+vi.mock('../lib/constants.js', () => ({
   IMAGE_CDN_BASE_URL: 'https://cdn.example.com'
 }))
 

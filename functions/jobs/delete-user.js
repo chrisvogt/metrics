@@ -1,7 +1,7 @@
 import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
 
-import { DATABASE_COLLECTION_USERS } from '../constants.js'
+import { DATABASE_COLLECTION_USERS } from '../lib/constants.js'
 
 const deleteUser = async (userRecord) => {
   const { uid } = userRecord

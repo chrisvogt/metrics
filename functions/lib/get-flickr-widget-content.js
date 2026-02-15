@@ -1,6 +1,6 @@
 import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
-import { DATABASE_COLLECTION_FLICKR } from '../constants.js'
+import { DATABASE_COLLECTION_FLICKR } from './constants.js'
 
 const getFlickrWidgetContent = async () => {
   try {

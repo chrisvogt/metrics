@@ -16,7 +16,7 @@ import {
   CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH,
   DATABASE_COLLECTION_SPOTIFY,
   IMAGE_CDN_BASE_URL
-} from '../constants.js'
+} from '../lib/constants.js'
 
 const SPOTIFY_MOSAIC_BASE_URL = 'https://mosaic.scdn.co/300/'
 

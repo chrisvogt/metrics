@@ -7,7 +7,7 @@ import getPlayerSummary from '../api/steam/get-player-summary.js'
 import getRecentlyPlayedGames from '../api/steam/get-recently-played-games.js'
 import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
 
-import { DATABASE_COLLECTION_STEAM } from '../constants.js'
+import { DATABASE_COLLECTION_STEAM } from '../lib/constants.js'
 
 const transformSteamGame = (game) => {
   const {

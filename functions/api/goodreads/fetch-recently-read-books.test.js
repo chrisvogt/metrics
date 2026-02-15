@@ -30,7 +30,7 @@ vi.mock('../cloud-storage/list-stored-media.js', () => ({
   default: vi.fn()
 }))
 
-vi.mock('../../constants.js', () => ({
+vi.mock('../../lib/constants.js', () => ({
   CLOUD_STORAGE_IMAGES_BUCKET: 'test-bucket',
   IMAGE_CDN_BASE_URL: 'https://cdn.example.com/'
 }))

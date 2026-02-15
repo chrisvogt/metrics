@@ -1,5 +1,5 @@
 import admin from 'firebase-admin'
-import { DATABASE_COLLECTION_STEAM } from '../constants.js'
+import { DATABASE_COLLECTION_STEAM } from './constants.js'
 import { Timestamp } from 'firebase/firestore'
 
 const getSteamWidgetContent = async () => {

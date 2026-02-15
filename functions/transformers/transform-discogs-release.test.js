@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import transformDiscogsRelease from './transform-discogs-release.js'
 
 // Mock the constants
-vi.mock('../constants.js', () => ({
+vi.mock('../lib/constants.js', () => ({
   IMAGE_CDN_BASE_URL: 'https://cdn.example.com/'
 }))
 

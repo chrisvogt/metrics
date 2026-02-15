@@ -1,4 +1,4 @@
-import { IMAGE_CDN_BASE_URL } from '../constants.js'
+import { IMAGE_CDN_BASE_URL } from '../lib/constants.js'
 import toDiscogsDestinationPath from './to-discogs-destination-path.js'
 
 const transformDiscogsRelease = rawRelease => {

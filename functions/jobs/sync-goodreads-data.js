@@ -11,7 +11,7 @@ import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summar
 import fetchBookFromGoogle from '../api/google-books/fetch-book.js'
 import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
-import { DATABASE_COLLECTION_GOODREADS, IMAGE_CDN_BASE_URL, CLOUD_STORAGE_IMAGES_BUCKET } from '../constants.js'
+import { DATABASE_COLLECTION_GOODREADS, IMAGE_CDN_BASE_URL, CLOUD_STORAGE_IMAGES_BUCKET } from '../lib/constants.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 

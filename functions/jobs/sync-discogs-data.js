@@ -14,7 +14,7 @@ import {
   CLOUD_STORAGE_IMAGES_BUCKET, 
   DATABASE_COLLECTION_DISCOGS,
   DISCOGS_USERNAME
-} from '../constants.js'
+} from '../lib/constants.js'
 
 /*
 

@@ -2,7 +2,7 @@ import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
 import { Timestamp } from 'firebase-admin/firestore'
 
-import { DATABASE_COLLECTION_USERS } from '../constants.js'
+import { DATABASE_COLLECTION_USERS } from '../lib/constants.js'
 
 const createUser = async (userRecord) => {
   const { uid, email, displayName } = userRecord
