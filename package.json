@@ -3,9 +3,10 @@
   "private": true,
   "description": "Personal metrics – Firebase Hosting + Cloud Functions",
   "scripts": {
-    "build": "node -e \"require('fs').accessSync('public'); console.log('Hosting assets ready in public/');\"",
-    "deploy": "firebase deploy",
-    "deploy:hosting": "firebase deploy --only hosting",
+    "build": "npm run build:hosting",
+    "build:hosting": "cd hosting && npm ci && npm run build",
+    "deploy": "npm run build && firebase deploy",
+    "deploy:hosting": "npm run build:hosting && firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions"
   },
   "engines": {

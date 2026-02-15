@@ -26,44 +26,41 @@ This repository contains a Firebase-backed service I use to fetch and sync data 
 - **Real-time Data**: Live data fetching and caching for widget content
 - **Local Development**: Full Firebase emulator support for development
 
-## How To Install
+## How to install
 
 ### Prerequisites
 
-- Node.js (version specified in [.nvmrc](./.nvmrc))
-- Firebase CLI
-- Access to a Firebase project
+- **Node.js** (version in [.nvmrc](./.nvmrc), e.g. 24)
+- **Firebase CLI** (`npm install -g firebase-tools`)
+- **Firebase project** and `firebase login`
 
-### Setup Steps
+### Install steps
 
-1. **Clone the repository**
+1. **Clone and install backend**
    ```bash
    git clone git@github.com:chrisvogt/metrics.git
    cd metrics
-   ```
-
-2. **Install Firebase CLI and authenticate**
-   ```bash
-   npm install -g firebase-tools
-   firebase login
-   ```
-
-3. **Install dependencies**
-   ```bash
    cd functions
    npm install
    ```
 
-4. **Set up environment variables (local only)**
+2. **Install hosting app**
+   ```bash
+   cd ../hosting
+   npm install
+   ```
+
+3. **Configure environment (local development)**  
+   In `functions/`, copy the env template and set values (see [Environment variables](#environment-variables) below):
    ```bash
    cd functions
    cp .env.template .env
-   # Edit .env with your actual values (see Environment Variables section below)
+   # Edit .env (CLIENT_API_KEY, CLIENT_AUTH_DOMAIN, CLIENT_PROJECT_ID, etc.)
    ```
 
-### Environment Variables
+### Environment variables
 
-For local development, you'll need to set up environment variables. Copy the template file and fill in your values:
+For local development, copy the template and set your values:
 
 ```bash
 # In the /functions directory
@@ -98,23 +95,42 @@ Production config lives in **Google Cloud Secret Manager** as the secret **`FUNC
 
 ## Development
 
-### Starting the Local Development Server
+### Option A – Hosting app with hot reload (recommended)
+
+Run the React app and proxy API calls to the emulated backend:
 
 ```bash
-# Start Firebase emulators (Auth, Firestore, Functions, Hosting)
-firebase emulators:start
+# Terminal 1: start Functions + Auth emulators
+firebase emulators:start --only functions,auth
 
-# Or start just the functions emulator
-cd functions
-npm run serve
+# Terminal 2: start the hosting app (from repo root)
+cd hosting
+npm run dev
 ```
 
-The emulators will be available at:
-- **Emulator UI**: http://127.0.0.1:4000/
-- **Hosting**: http://127.0.0.1:8084
-- **Functions**: http://127.0.0.1:5001
-- **Auth**: http://127.0.0.1:9099
-- **Firestore**: http://127.0.0.1:8080
+Open **http://localhost:5173**. The Vite dev server proxies `/api` to the Functions emulator. Sign-in and API testing work against the emulators.
+
+### Option B – Full Firebase emulators (Hosting + Functions + Auth)
+
+Build the hosting app once, then run all emulators so the site is served like production:
+
+```bash
+# From repo root: build the React app, then start emulators
+npm run build
+firebase emulators:start --only hosting,functions,auth
+```
+
+Open the Hosting URL (e.g. **http://metrics.dev-chrisvogt.me:8084**). Same rewrites as production: `/api/**` → Cloud Function, `**` → SPA.
+
+### Emulator URLs
+
+| Service   | URL                    |
+|----------|------------------------|
+| Emulator UI | http://127.0.0.1:4000 |
+| Hosting  | http://127.0.0.1:8084 (or configured host) |
+| Functions| http://127.0.0.1:5001 |
+| Auth     | http://127.0.0.1:9099 |
+| Firestore| http://127.0.0.1:8080 |
 
 ### Authentication System
 
@@ -152,12 +168,15 @@ The following endpoints are available:
 
 ## Architecture
 
-### Frontend
-- **HTML/CSS/JavaScript**: Modern, responsive UI with authentication tabs
-- **Firebase SDK**: Client-side authentication and real-time updates
-- **Session Management**: Secure cookie-based sessions with fallback
+### Frontend (hosting)
+- **React + Vite** app in `hosting/`: sign-in (Google, email, phone) and API testing dashboard
+- **Firebase SDK**: Client-side auth; config loaded at runtime from `/api/firebase-config`
+- **Session**: Cookie-based sessions (created via `/api/auth/session`) with JWT fallback
+- **Build**: `npm run build` in `hosting/` (or root `npm run build`) → `hosting/dist`; Firebase Hosting serves that folder and rewrites `/api/**` to the Cloud Function and `**` to `/index.html` (SPA)
 
-### Backend
+See [hosting/README.md](hosting/README.md) for hosting-only scripts and local dev details.
+
+### Backend (functions)
 - **Firebase Functions**: Serverless backend with Express.js
 - **Firebase Auth**: User authentication and session management
 - **Firestore**: Data storage and caching
@@ -171,37 +190,45 @@ The following endpoints are available:
 
 ## Testing
 
+Tests live in `functions/`:
+
 ```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
+cd functions
+npm test              # run once
+npm run test:watch    # watch mode
+npm run test:coverage # with coverage
 ```
 
 ## Deployment
 
+The hosting app must be **built** before deploy (the root `deploy` script does this automatically).
+
 ```bash
-# Deploy to Firebase
-firebase deploy
+# From repo root
 
-# Deploy only functions
-firebase deploy --only functions
+# Build the hosting app (output: hosting/dist)
+npm run build
 
-# Deploy only hosting
-firebase deploy --only hosting
+# Deploy everything (build + hosting + functions + firestore rules, etc.)
+npm run deploy
+
+# Deploy only hosting (builds then deploys hosting)
+npm run deploy:hosting
+
+# Deploy only Cloud Functions (no hosting build)
+npm run deploy:functions
 ```
+
+**Note:** `npm run deploy` and `npm run deploy:hosting` run `npm run build` first, which does `cd hosting && npm ci && npm run build`. Ensure `hosting/package-lock.json` is committed so `npm ci` succeeds in CI or on other machines.
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Install and set up (see [How to install](#how-to-install) and [Environment variables](#environment-variables))
+4. Run tests: `cd functions && npm test`
+5. Ensure the hosting app builds: `npm run build` (from repo root)
+6. Commit your changes and open a Pull Request
 
 ## Copyright & License
 
