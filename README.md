@@ -31,31 +31,25 @@ This repository contains a Firebase-backed service I use to fetch and sync data 
 ### Prerequisites
 
 - **Node.js** (version in [.nvmrc](./.nvmrc), e.g. 24)
-- **Firebase CLI** (`npm install -g firebase-tools`)
+- **pnpm** (e.g. `corepack enable && corepack prepare pnpm@9.15.0 --activate`, or see [pnpm.io](https://pnpm.io/installation))
+- **Firebase CLI** (`pnpm add -g firebase-tools` or `npm install -g firebase-tools`)
 - **Firebase project** and `firebase login`
 
 ### Install steps
 
-1. **Clone and install backend**
+1. **Clone and install all dependencies**
    ```bash
    git clone git@github.com:chrisvogt/metrics.git
    cd metrics
-   cd functions
-   npm install
+   pnpm install
    ```
+   This installs dependencies for the root, `hosting/`, and `functions/` in one go (see [Monorepo](#monorepo) below).
 
-2. **Install hosting app**
-   ```bash
-   cd ../hosting
-   npm install
-   ```
-
-3. **Configure environment (local development)**  
+2. **Configure environment (local development)**  
    In `functions/`, copy the env template and set values (see [Environment variables](#environment-variables) below):
    ```bash
-   cd functions
-   cp .env.template .env
-   # Edit .env (CLIENT_API_KEY, CLIENT_AUTH_DOMAIN, CLIENT_PROJECT_ID, etc.)
+   cp functions/.env.template functions/.env
+   # Edit functions/.env (CLIENT_API_KEY, CLIENT_AUTH_DOMAIN, CLIENT_PROJECT_ID, etc.)
    ```
 
 ### Environment variables
@@ -68,7 +62,7 @@ cp .env.template .env
 # Edit .env with your actual values
 ```
 
-**Important:** Never commit the `.env` file to version control. It contains sensitive information like API keys.
+**Important:** Never commit `functions/.env` to version control. It contains sensitive information like API keys.
 
 #### Required Environment Variables
 
@@ -93,6 +87,28 @@ Set `CLIENT_API_KEY`, `CLIENT_AUTH_DOMAIN`, and `CLIENT_PROJECT_ID` in your `fun
 #### Option 2: Production (Secret Manager)
 Production config lives in **Google Cloud Secret Manager** as the secret **`FUNCTIONS_CONFIG_EXPORT`** (one JSON object with all keys). To create or update it: run `firebase functions:config:export`, or in [Secret Manager](https://console.cloud.google.com/security/secret-manager) add a new version of that secret with JSON matching the shape in `functions/lib/exported-config.js` (e.g. `auth.client_api_key`, `github.access_token`, `spotify.client_id`, etc.).
 
+## Monorepo
+
+This repo is a **pnpm workspace** with two packages: `hosting` (React app) and `functions` (Firebase Cloud Functions). **[Turborepo](https://turbo.build/repo)** runs tasks across the workspace: it only runs a script in packages that define it, caches outputs, and avoids redundant work.
+
+**Use the root for all commands.** Do not run `npm` or `pnpm install` inside `hosting/` or `functions/`; use `pnpm install` at the repo root once.
+
+### Commands (from repo root)
+
+| Command | What it does |
+|--------|----------------|
+| `pnpm install` | Install dependencies for root and all workspace packages (single lockfile: `pnpm-lock.yaml`). |
+| `pnpm run build` | Build the hosting app (Vite → `hosting/dist`). Only the hosting package has a `build` script. |
+| `pnpm run dev` | Start the hosting app’s Vite dev server (hot reload). Run with Functions + Auth emulators for a full local setup. |
+| `pnpm run lint` | Lint the functions package (ESLint). |
+| `pnpm run test` | Run functions unit tests (Vitest), single run. |
+| `pnpm run test:coverage` | Run functions tests with coverage. |
+| `pnpm run deploy:all` | Build hosting, then deploy everything (hosting + functions + Firestore rules, etc.) to Firebase. |
+| `pnpm run deploy:hosting` | Build hosting, then deploy only Firebase Hosting. |
+| `pnpm run deploy:functions` | Deploy only Cloud Functions (no build). |
+
+**Note:** Use `pnpm run deploy:all` (with **run**). The bare `pnpm deploy` is pnpm’s own command and is not our Firebase deploy.
+
 ## Development
 
 ### Option A – Hosting app with hot reload (recommended)
@@ -104,8 +120,7 @@ Run the React app and proxy API calls to the emulated backend:
 firebase emulators:start --only functions,auth
 
 # Terminal 2: start the hosting app (from repo root)
-cd hosting
-npm run dev
+pnpm run dev
 ```
 
 Open **http://localhost:5173**. The Vite dev server proxies `/api` to the Functions emulator. Sign-in and API testing work against the emulators.
@@ -116,7 +131,7 @@ Build the hosting app once, then run all emulators so the site is served like pr
 
 ```bash
 # From repo root: build the React app, then start emulators
-npm run build
+pnpm run build
 firebase emulators:start --only hosting,functions,auth
 ```
 
@@ -172,7 +187,7 @@ The following endpoints are available:
 - **React + Vite** app in `hosting/`: sign-in (Google, email, phone) and API testing dashboard
 - **Firebase SDK**: Client-side auth; config loaded at runtime from `/api/firebase-config`
 - **Session**: Cookie-based sessions (created via `/api/auth/session`) with JWT fallback
-- **Build**: `npm run build` in `hosting/` (or root `npm run build`) → `hosting/dist`; Firebase Hosting serves that folder and rewrites `/api/**` to the Cloud Function and `**` to `/index.html` (SPA)
+- **Build**: From repo root, `pnpm run build` → `hosting/dist`; Firebase Hosting serves that folder and rewrites `/api/**` to the Cloud Function and `**` to `/index.html` (SPA)
 
 See [hosting/README.md](hosting/README.md) for hosting-only scripts and local dev details.
 
@@ -190,44 +205,33 @@ See [hosting/README.md](hosting/README.md) for hosting-only scripts and local de
 
 ## Testing
 
-Tests live in `functions/`:
+Tests live in `functions/`. From repo root:
 
 ```bash
-cd functions
-npm test              # run once
-npm run test:watch    # watch mode
-npm run test:coverage # with coverage
+pnpm run test              # run once
+pnpm run test:coverage     # with coverage
 ```
+
+For watch mode, run from the functions package: `pnpm --filter personal-metrics run test:watch`.
 
 ## Deployment
 
-The hosting app must be **built** before deploy (the root `deploy:all` script does this automatically).
+The hosting app must be **built** before deploy (the root `deploy:all` script does this automatically). All commands from repo root; see [Monorepo](#monorepo) for the full command list.
 
 ```bash
-# From repo root (use pnpm; see [Monorepo](#monorepo) for setup)
-
-# Build the hosting app (output: hosting/dist)
-pnpm run build
-
-# Deploy everything (build + hosting + functions + firestore rules, etc.)
-pnpm run deploy:all
-
-# Deploy only hosting (builds then deploys hosting)
-pnpm run deploy:hosting
-
-# Deploy only Cloud Functions (no hosting build)
-pnpm run deploy:functions
+pnpm run build          # build hosting app only (output: hosting/dist)
+pnpm run deploy:all     # build + deploy everything (hosting + functions + Firestore, etc.)
+pnpm run deploy:hosting # build + deploy hosting only
+pnpm run deploy:functions # deploy Cloud Functions only (no build)
 ```
-
-**Note:** Use `pnpm run deploy:all` (with **run**). The bare command `pnpm deploy` is pnpm’s built-in command for workspace deployment and is not our Firebase deploy script. `deploy:all` and `deploy:hosting` run `pnpm run build` first.
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Install and set up (see [How to install](#how-to-install) and [Environment variables](#environment-variables))
-4. Run tests: `cd functions && npm test`
-5. Ensure the hosting app builds: `npm run build` (from repo root)
+4. Run tests: `pnpm run test` (from repo root)
+5. Ensure the hosting app builds: `pnpm run build` (from repo root)
 6. Commit your changes and open a Pull Request
 
 ## Copyright & License
