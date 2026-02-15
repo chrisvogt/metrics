@@ -141,4 +141,4 @@ describe('constants', () => {
       expect(constants).toHaveProperty('IMAGE_CDN_BASE_URL')
     })
   })
-}) 
+})

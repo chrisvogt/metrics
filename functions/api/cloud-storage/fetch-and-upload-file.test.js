@@ -8,7 +8,7 @@ vi.mock('https', () => ({
   default: { get: vi.fn() },
   get: vi.fn()
 }))
-vi.mock('../../constants.js', () => ({
+vi.mock('../../lib/constants.js', () => ({
   CLOUD_STORAGE_IMAGES_BUCKET: 'test-bucket'
 }))
 

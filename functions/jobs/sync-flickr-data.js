@@ -2,7 +2,7 @@ import admin from 'firebase-admin'
 import { Timestamp } from 'firebase-admin/firestore'
 import { logger } from 'firebase-functions'
 
-import { DATABASE_COLLECTION_FLICKR } from '../constants.js'
+import { DATABASE_COLLECTION_FLICKR } from '../lib/constants.js'
 import fetchPhotos from '../api/flickr/fetch-photos.js'
 
 /**

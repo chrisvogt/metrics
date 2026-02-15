@@ -1,6 +1,6 @@
 import path from 'path'
 
-import { CLOUD_STORAGE_DISCOGS_PATH } from '../constants.js'
+import { CLOUD_STORAGE_DISCOGS_PATH } from '../lib/constants.js'
 
 const toDiscogsDestinationPath = (imageURL, releaseId, imageType = 'thumb') => {
   const fileExtension = path.extname(new URL(imageURL).pathname)

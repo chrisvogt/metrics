@@ -1,6 +1,6 @@
 import admin from 'firebase-admin'
 
-import { CLOUD_STORAGE_IMAGES_BUCKET } from '../../constants.js'
+import { CLOUD_STORAGE_IMAGES_BUCKET } from '../../lib/constants.js'
 
 // TODO: RegEx every name to identify the media ID and return a list.
 

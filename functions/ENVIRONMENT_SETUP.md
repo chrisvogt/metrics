@@ -48,4 +48,4 @@ See `.env.template` for the full list of variable names. The same names are used
 ## After setup
 
 - **Deploy:** `firebase deploy --only functions`
-- **Local testing:** From repo root, `firebase emulators:start --only functions`, or `pnpm --filter personal-metrics run serve` (or from `functions/`, `pnpm run serve`)
+- **Local testing:** From repo root, `firebase emulators:start --only functions`, or `pnpm --filter metrics-functions run serve` (or from `functions/`, `pnpm run serve`)

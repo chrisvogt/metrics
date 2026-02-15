@@ -1,4 +1,4 @@
-import { IMAGE_CDN_BASE_URL } from '../constants.js'
+import { IMAGE_CDN_BASE_URL } from '../lib/constants.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 
 const transformInstagramMedia = rawMedia => {

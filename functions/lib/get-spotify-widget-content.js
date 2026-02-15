@@ -1,6 +1,6 @@
 import admin from 'firebase-admin'
 import { Timestamp } from 'firebase/firestore'
-import { DATABASE_COLLECTION_SPOTIFY } from '../constants.js'
+import { DATABASE_COLLECTION_SPOTIFY } from './constants.js'
 
 const getSpotifyWidgetContent = async () => {
   const db = admin.firestore()

@@ -9,7 +9,7 @@ import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
 
-import { CLOUD_STORAGE_IMAGES_BUCKET, DATABASE_COLLECTION_INSTAGRAM } from '../constants.js'
+import { CLOUD_STORAGE_IMAGES_BUCKET, DATABASE_COLLECTION_INSTAGRAM } from '../lib/constants.js'
 
 /*
 

@@ -8,7 +8,7 @@ describe('toIGDestinationPath', () => {
     originalEnv = { ...process.env }
     
     // Mock the constants module
-    vi.doMock('../constants.js', () => ({
+    vi.doMock('../lib/constants.js', () => ({
       CLOUD_STORAGE_INSTAGRAM_PATH: 'ig/'
     }))
     

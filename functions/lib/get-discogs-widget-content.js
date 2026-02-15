@@ -1,6 +1,6 @@
 import admin from 'firebase-admin'
 import { Timestamp } from 'firebase/firestore'
-import { DATABASE_COLLECTION_DISCOGS } from '../constants.js'
+import { DATABASE_COLLECTION_DISCOGS } from './constants.js'
 
 const getDiscogsWidgetContent = async () => {
   const db = admin.firestore()
