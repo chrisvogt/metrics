@@ -126,6 +126,36 @@ describe('transformDiscogsRelease', () => {
     })
   })
 
+  it('should include resource when present on raw release', () => {
+    const rawRelease = {
+      id: 123,
+      instance_id: 456,
+      date_added: '2025-01-01T00:00:00-00:00',
+      rating: 0,
+      basic_information: {
+        id: 123,
+        master_id: 789,
+        master_url: 'https://api.discogs.com/masters/789',
+        resource_url: 'https://api.discogs.com/releases/123',
+        thumb: null,
+        cover_image: null,
+        title: 'Test Album',
+        year: 2024,
+        formats: [],
+        labels: [],
+        artists: [],
+        genres: [],
+        styles: []
+      },
+      folder_id: 1,
+      resource: { tracks: [{ position: '1', title: 'Track One' }] }
+    }
+
+    const result = transformDiscogsRelease(rawRelease)
+
+    expect(result.resource).toEqual({ tracks: [{ position: '1', title: 'Track One' }] })
+  })
+
   it('should handle releases without notes', () => {
     const rawRelease = {
       id: 123,

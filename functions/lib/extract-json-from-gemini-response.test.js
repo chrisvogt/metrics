@@ -10,6 +10,12 @@ describe('extractJsonFromGeminiResponse', () => {
     expect(result).toEqual({ response: '<p>Hi</p>', debug: {} })
   })
 
+  it('returns null when markdown block contains invalid JSON', () => {
+    const str = '```json\n{ invalid }\n```'
+    const result = extractJsonFromGeminiResponse(str)
+    expect(result).toBeNull()
+  })
+
   it('parses raw JSON when no markdown block', () => {
     const str = '{"response": "<p>Raw</p>", "debug": {"key": "value"}}'
     const result = extractJsonFromGeminiResponse(str)
