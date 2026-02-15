@@ -48,6 +48,9 @@ build/Release
 # Dependency directories
 node_modules/
 
+# Turborepo
+.turbo
+
 # Hosting build output (built on deploy)
 hosting/dist
 

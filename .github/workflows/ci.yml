@@ -10,35 +10,33 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: Lint Firebase Functions
+  lint-and-test:
+    name: Lint & Test
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: functions/package-lock.json
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: |
-          cd functions
-          npm ci
+        run: pnpm install --frozen-lockfile
 
-      - name: Run ESLint
-        run: |
-          cd functions
-          npm run lint
+      - name: Lint
+        run: pnpm run lint
 
-      - name: Run unit tests
-        run: |
-          cd functions
-          npm run test:coverage
+      - name: Test (with coverage)
+        run: pnpm run test:coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -51,5 +49,5 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
-          fail_ci_if_error: true # optional (default = false)
+          fail_ci_if_error: true
           files: ./functions/coverage/junit.xml
