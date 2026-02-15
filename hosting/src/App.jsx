@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import { Layout } from './layout/Layout'
 import { AuthSection } from './sections/AuthSection'
 import { ApiTestingSection } from './sections/ApiTestingSection'
-import FloatingLines from './components/FloatingLines'
+
+const FloatingLines = lazy(() => import('./components/FloatingLines'))
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -41,15 +42,17 @@ function AppContent() {
             }}
             aria-hidden
           >
-            <FloatingLines
-              enabledWaves={['top', 'middle', 'bottom']}
-              lineCount={5}
-              lineDistance={5}
-              bendRadius={5}
-              bendStrength={-0.5}
-              interactive={true}
-              parallax={true}
-            />
+            <Suspense fallback={null}>
+              <FloatingLines
+                enabledWaves={['top', 'middle', 'bottom']}
+                lineCount={5}
+                lineDistance={5}
+                bendRadius={5}
+                bendStrength={-0.5}
+                interactive={true}
+                parallax={true}
+              />
+            </Suspense>
           </div>
           <div style={{ position: 'relative', zIndex: 1 }}>
             <AuthSection />
