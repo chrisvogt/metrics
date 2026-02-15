@@ -1,0 +1,21 @@
+# Metrics API dashboard – do not index
+# This is an admin/dashboard site, not for search or AI training.
+
+User-agent: *
+Disallow: /
+
+# Common LLM / AI crawlers (explicit opt-out)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Anthropic-AI
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
