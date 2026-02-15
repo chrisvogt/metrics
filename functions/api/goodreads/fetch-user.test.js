@@ -15,12 +15,15 @@ vi.mock('got', () => ({
   default: vi.fn()
 }))
 
-// Create a mock parser instance that we can control
-let mockParseString = vi.fn()
-const mockParserInstance = { parseString: mockParseString }
+// Create a mock parser instance (hoisted so vi.mock factory can use it)
+const { mockParseString, mockParserInstance } = vi.hoisted(() => {
+  const mockParseString = vi.fn()
+  const mockParserInstance = { parseString: mockParseString }
+  return { mockParseString, mockParserInstance }
+})
 
 vi.mock('xml2js', () => {
-  const Parser = vi.fn(() => mockParserInstance)
+  function Parser () { return mockParserInstance }
   return {
     default: { Parser },
     Parser,

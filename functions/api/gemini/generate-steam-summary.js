@@ -77,7 +77,7 @@ Total Games Owned: ${metrics.find(m => m.id === 'owned-games-count')?.value || 0
     return sanitizedResponse
   } catch (error) {
     logger.error('Error generating Steam summary with Gemini:', error)
-    throw new Error(`Failed to generate AI summary: ${error.message}`)
+    throw new Error(`Failed to generate AI summary: ${error.message}`, { cause: error })
   }
 }
 

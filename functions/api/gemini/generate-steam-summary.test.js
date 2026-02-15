@@ -1,25 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import generateSteamSummary from './generate-steam-summary.js'
 
-// Mock the GoogleGenerativeAI
+// Mock the GoogleGenerativeAI (use function so it's a constructor)
 vi.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-    getGenerativeModel: vi.fn().mockReturnValue({
-      generateContent: vi.fn().mockResolvedValue({
-        response: {
-          text: vi.fn().mockReturnValue(`\`\`\`json
-{
-  "response": "Mock AI summary of gaming activity",
-  "debug": {
-    "recentlyPlayedGames": [],
-    "topPlayedGames": []
-  }
-}
-\`\`\``)
-        }
+  GoogleGenerativeAI: vi.fn().mockImplementation(function () {
+    return {
+      getGenerativeModel: vi.fn().mockReturnValue({
+        generateContent: vi.fn().mockResolvedValue({
+          response: {
+            text: vi.fn().mockReturnValue(
+              '```json\n{"response": "Mock AI summary of gaming activity", "debug": {"recentlyPlayedGames": [], "topPlayedGames": []}}\n```'
+            )
+          }
+        })
       })
-    })
-  }))
+    }
+  })
 }))
 
 describe('generateSteamSummary', () => {
