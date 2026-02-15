@@ -30,11 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Firebase Hosting** – `firebase.json` now serves the built React app:
   - `hosting.public` set to `hosting/dist` (replaces legacy `public/` static files)
   - Rewrites: `/api/**` → Cloud Function `app`, `**` → `/index.html` (SPA fallback)
-- **Root scripts** – `npm run build` builds the hosting app; `npm run deploy` builds then deploys; `npm run deploy:hosting` builds and deploys hosting only
+- **Root scripts** – From repo root (pnpm + Turborepo): `pnpm run build` builds the hosting app; `pnpm run deploy:all` builds then deploys; `pnpm run deploy:hosting` builds and deploys hosting only.
 
 ### Developer experience
 
-- Local dev: run `npm run dev` in `hosting/` with Functions + Auth emulators, or build and use `firebase emulators:start --only hosting,functions,auth`. See root [README](../README.md) and [hosting/README.md](../hosting/README.md).
+- Local dev: from repo root run `pnpm run dev` with Functions + Auth emulators, or build and use `firebase emulators:start --only hosting,functions,auth`. See root [README](../README.md) and [hosting/README.md](../hosting/README.md).
 
 ## [0.20.2] - 2025-02-14
 

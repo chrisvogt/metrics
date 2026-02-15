@@ -18,7 +18,7 @@ Package-specific changes:
 
 - **pnpm workspaces** – Monorepo layout with `pnpm-workspace.yaml`; `hosting` and `functions` are workspace packages. Single `pnpm install` at root installs all dependencies; lockfile is `pnpm-lock.yaml`.
 - **Turborepo** – Task runner and caching for `build`, `dev`, `lint`, `test`, and `test:coverage`. Root scripts delegate to Turbo; only packages that define a script run it (e.g. only hosting has `build`).
-- **Root scripts** – `pnpm run build`, `pnpm run dev`, `pnpm run lint`, `pnpm run test`, `pnpm run test:coverage`, plus existing `deploy`, `deploy:hosting`, `deploy:functions`.
+- **Root scripts** – `pnpm run build`, `pnpm run dev`, `pnpm run lint`, `pnpm run test`, `pnpm run test:coverage`, plus `deploy:all`, `deploy:hosting`, `deploy:functions`.
 
 ### Changed
 
