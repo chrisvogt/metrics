@@ -190,7 +190,13 @@ describe('generateGoodreadsSummary', () => {
       }
     })
 
-    await expect(generateGoodreadsSummary(mockGoodreadsData)).rejects.toThrow('Failed to generate AI summary')
+    try {
+      await generateGoodreadsSummary(mockGoodreadsData)
+      throw new Error('Expected rejection')
+    } catch (err) {
+      expect(err.message).toContain('Failed to generate AI summary')
+      expect(err.cause).toBeDefined()
+    }
     expect(logger.error).toHaveBeenCalledWith('Error generating Goodreads summary with Gemini:', expect.any(Error))
   })
 
@@ -210,7 +216,13 @@ describe('generateGoodreadsSummary', () => {
       }
     })
 
-    await expect(generateGoodreadsSummary(mockGoodreadsData)).rejects.toThrow('Failed to generate AI summary')
+    try {
+      await generateGoodreadsSummary(mockGoodreadsData)
+      throw new Error('Expected rejection')
+    } catch (err) {
+      expect(err.message).toContain('Failed to generate AI summary')
+      expect(err.cause).toBeDefined()
+    }
   })
 
   it('should accept raw JSON response when Gemini does not wrap in markdown', async () => {
