@@ -13,6 +13,7 @@ vi.mock('got', () => ({
 vi.mock('firebase-functions', () => ({
   logger: {
     info: vi.fn(),
+    warn: vi.fn(),
     error: vi.fn()
   }
 }))
@@ -655,7 +656,102 @@ describe('fetchRecentlyReadBooks', () => {
 
     const result = await fetchRecentlyReadBooks()
 
-    // Should filter out null results
+    // Should filter out null results (no title/author in mock, so fallback not attempted)
     expect(result.books).toEqual([])
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      'Book not found by ISBN or title/author fallback: ISBN 1234567890'
+    )
+  })
+
+  it('should fall back to title/author search when ISBN lookup fails', async () => {
+    process.env.GOOGLE_BOOKS_API_KEY = 'test-google-books-api-key'
+    const mockGoodreadsResponse = `
+      <GoodreadsResponse>
+        <reviews>
+          <review>
+            <read_at>2023-01-01</read_at>
+            <book>
+              <title>Finding My Humanity</title>
+              <authors><author><name>Ryan Ubuntu Olson</name></author></authors>
+              <isbn>9798889269595</isbn>
+              <isbn13>9798889269595</isbn13>
+            </book>
+            <rating>4</rating>
+          </review>
+        </reviews>
+      </GoodreadsResponse>
+    `
+
+    const mockGoogleBookFromTitleSearch = {
+      items: [{
+        id: 'fallback-book-id',
+        volumeInfo: {
+          title: 'Finding My Humanity',
+          authors: ['Ryan Ubuntu Olson'],
+          imageLinks: {
+            smallThumbnail: 'http://example.com/small.jpg',
+            thumbnail: 'http://example.com/thumb.jpg'
+          },
+          infoLink: 'http://example.com/info',
+          pageCount: 200
+        }
+      }]
+    }
+
+    mockGot
+      .mockResolvedValueOnce({ body: mockGoodreadsResponse })
+      .mockResolvedValueOnce({ body: JSON.stringify(mockGoogleBookFromTitleSearch) })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{
+            review: [{
+              read_at: ['2023-01-01'],
+              book: [{
+                title: ['Finding My Humanity'],
+                authors: [{ author: [{ name: ['Ryan Ubuntu Olson'] }] }],
+                isbn: ['9798889269595'],
+                isbn13: ['9798889269595']
+              }],
+              rating: ['4']
+            }]
+          }]
+        }
+      })
+    })
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        const results = []
+        for (let i = 0; i < items.length; i++) {
+          const result = await mapper(items[i], i)
+          results.push(result)
+        }
+        return results
+      } else {
+        return [{ fileName: 'books/fallback-book-id-thumbnail.jpg' }]
+      }
+    })
+    mockFetchBookFromGoogle.mockResolvedValue(null) // ISBN lookup fails
+    mockListStoredMedia.mockResolvedValue([])
+    mockFetchAndUploadFile.mockResolvedValue({ fileName: 'books/fallback-book-id-thumbnail.jpg' })
+
+    const result = await fetchRecentlyReadBooks()
+
+    expect(result.books).toHaveLength(1)
+    expect(result.books[0].title).toBe('Finding My Humanity')
+    expect(result.books[0].authors).toEqual(['Ryan Ubuntu Olson'])
+    expect(result.books[0].id).toBe('fallback-book-id')
+    // Should have called Google Books volumes API for title/author search
+    expect(mockGot).toHaveBeenCalledWith(
+      'https://www.googleapis.com/books/v1/volumes',
+      expect.objectContaining({
+        searchParams: {
+          q: 'intitle:Finding My Humanity inauthor:Ryan Ubuntu Olson',
+          key: 'test-google-books-api-key',
+          country: 'US'
+        }
+      })
+    )
+    delete process.env.GOOGLE_BOOKS_API_KEY
   })
 }) 

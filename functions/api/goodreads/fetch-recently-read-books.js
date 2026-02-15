@@ -91,18 +91,21 @@ export default async () => {
           rating: [rating],
         } = book
 
-        const [{
-          description: [goodreadsDescription] = [],
-          isbn: [isbn10] = [],
-          isbn13: [isbn13] = [],
-        }] = bookData  
+        const [firstBook = {}] = Array.isArray(bookData) ? bookData : [bookData]
+        const [goodreadsDescription] = get(firstBook, 'description', [])
+        const [isbn10] = get(firstBook, 'isbn', [])
+        const [isbn13] = get(firstBook, 'isbn13', [])
         const isbn = isbn13 || isbn10
+        const title = get(firstBook, 'title.0')
+        const authorName = get(firstBook, 'authors.0.author.0.name.0')
       
         if (Array.isArray(books) && isString(isbn)) {
           books.push({
             isbn,
             rating,
             goodreadsDescription,
+            ...(isString(title) && { title }),
+            ...(isString(authorName) && { authorName }),
           })
         }
       
@@ -129,7 +132,73 @@ export default async () => {
         await new Promise(resolve => setTimeout(resolve, 200)) // 200ms delay between requests
       }
       
-      const result = await fetchBookFromGoogle(book)
+      let result = await fetchBookFromGoogle(book)
+
+      // If ISBN lookup failed, try searching by title and/or author
+      if ((!result || !result.book) && book.title) {
+        const searchQuery = book.authorName
+          ? `intitle:${book.title} inauthor:${book.authorName}`
+          : `intitle:${book.title}`
+        const maxRetries = 3
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            const googleBooksAPIKey = process.env.GOOGLE_BOOKS_API_KEY
+            const { body } = await got('https://www.googleapis.com/books/v1/volumes', {
+              searchParams: {
+                q: searchQuery,
+                key: googleBooksAPIKey,
+                country: 'US'
+              }
+            })
+            const { items: [foundBook] = [] } = JSON.parse(body)
+            if (foundBook) {
+              result = {
+                book: foundBook,
+                rating: book.rating,
+              }
+              logger.info(
+                `Found book by ${book.authorName ? 'title/author' : 'title'} for recently read: ${book.title}`
+              )
+              break
+            }
+          } catch (error) {
+            const statusCode = error.response?.statusCode || error.statusCode
+            const errorBody = error.response?.body
+              ? (typeof error.response.body === 'string' ? JSON.parse(error.response.body) : error.response.body)
+              : null
+            const isQuotaExceeded =
+              errorBody?.error?.status === 'RESOURCE_EXHAUSTED' ||
+              (errorBody?.error?.code === 429 && errorBody?.error?.message?.includes('Quota exceeded'))
+            if (isQuotaExceeded) {
+              logger.error(
+                'Daily quota exceeded for Google Books API. Title/author fallback skipped.',
+                { message: errorBody?.error?.message }
+              )
+              break
+            }
+            if ((statusCode === 429 || statusCode === 503) && attempt < maxRetries) {
+              const waitTime = Math.pow(2, attempt) * 1000
+              logger.warn(
+                `Rate limited (${statusCode}) for title search "${book.title}", waiting ${waitTime}ms before retry ${attempt}/${maxRetries}`
+              )
+              await new Promise(resolve => setTimeout(resolve, waitTime))
+              continue
+            }
+            logger.error(
+              `Error fetching book by ${book.authorName ? 'title/author' : 'title'} for recently read "${book.title}" after retries:`,
+              error
+            )
+            break
+          }
+        }
+      }
+
+      if (!result || !result.book) {
+        logger.warn(
+          `Book not found by ISBN or title/author fallback: ${book.title ? `"${book.title}"` : `ISBN ${book.isbn}`}`
+        )
+      }
+
       return {
         googleBookResult: result,
         goodreadsData: book,

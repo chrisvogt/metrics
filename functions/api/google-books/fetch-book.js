@@ -19,7 +19,7 @@ const fetchBook = async (book, maxRetries = 3) => {
       const { items: [book] = [] } = JSON.parse(body)
 
       if (!book) {
-        logger.error(`No result returned from Google Books for ISBN: ${isbn}.`)
+        logger.info(`No result from Google Books for ISBN: ${isbn}; title/author fallback may be used.`)
       }
 
       return {
