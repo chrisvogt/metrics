@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  checks: write  # required by Firebase action to create/update PR check runs
 
 jobs:
   build_and_preview:
