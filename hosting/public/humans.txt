@@ -1,0 +1,14 @@
+/* TEAM */
+Chris Vogt: https://www.chrisvogt.me
+
+/* SITE */
+Metrics API dashboard
+Last update: 2025
+Language: English
+Do not index: yes (admin/dashboard)
+
+/* REPOSITORY */
+https://github.com/chrisvogt/metrics
+
+/* LICENCE */
+MIT License – https://github.com/chrisvogt/metrics/blob/main/LICENSE
