@@ -1,4 +1,10 @@
-name: "CodeQL"
+# For most projects, this workflow file will not need changing; you simply need
+# to commit it to your repository.
+#
+# You may wish to alter this file to override the set of languages analyzed,
+# or to provide custom queries or build logic.
+#
+name: "CodeQL Advanced"
 
 on:
   push:
@@ -6,39 +12,55 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 2 * * 0' # Optional: weekly scan on Sundays at 2 AM UTC
+    - cron: '25 13 * * 1'
 
 jobs:
   analyze:
-    name: Analyze
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
-
     permissions:
+      security-events: write
+      packages: read
       actions: read
       contents: read
-      security-events: write
 
     strategy:
+      fail-fast: false
       matrix:
-        language: [javascript]
+        include:
+          - language: actions
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Install dependencies for both functions and hosting so CodeQL can resolve imports.
+      - name: Setup Node.js
+        if: matrix.language == 'javascript-typescript'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies (functions)
+        if: matrix.language == 'javascript-typescript'
+        run: |
+          cd functions && npm ci
+
+      - name: Install dependencies (hosting)
+        if: matrix.language == 'javascript-typescript'
+        run: |
+          cd hosting && npm ci
+
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          source-root: functions
-
-      - name: Install dependencies
-        run: |
-          cd functions
-          npm ci
-
-      - name: Build (not needed for plain JS)
-        run: echo "No build step defined, skipping."
+          build-mode: ${{ matrix.build-mode }}
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
