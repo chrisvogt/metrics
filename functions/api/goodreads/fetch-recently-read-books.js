@@ -1,8 +1,6 @@
 import { parseString } from 'xml2js'
 import convertToHttps from 'to-https'
-import _ from 'lodash'
 import got from 'got'
-import isString from 'lodash.isstring'
 import { logger } from 'firebase-functions'
 import pMap from 'p-map'
 
@@ -76,13 +74,13 @@ export default async () => {
         reject(error)
       }
 
-      const reviewsResponse = _.get(response, 'GoodreadsResponse.reviews[0].review', [])
+      const reviewsResponse = response?.GoodreadsResponse?.reviews?.[0]?.review ?? []
       const transformedReviews = reviewsResponse.reduce((books, book) => {
         const {
           read_at: [date],
         } = book
       
-        if (!isString(date) && date.length > 3) {
+        if (typeof date !== 'string' && date.length > 3) {
           return books
         }
       
@@ -92,20 +90,20 @@ export default async () => {
         } = book
 
         const [firstBook = {}] = Array.isArray(bookData) ? bookData : [bookData]
-        const [goodreadsDescription] = _.get(firstBook, 'description', [])
-        const [isbn10] = _.get(firstBook, 'isbn', [])
-        const [isbn13] = _.get(firstBook, 'isbn13', [])
+        const [goodreadsDescription] = firstBook?.description ?? []
+        const [isbn10] = firstBook?.isbn ?? []
+        const [isbn13] = firstBook?.isbn13 ?? []
         const isbn = isbn13 || isbn10
-        const title = _.get(firstBook, 'title.0')
-        const authorName = _.get(firstBook, 'authors.0.author.0.name.0')
+        const title = firstBook?.title?.[0]
+        const authorName = firstBook?.authors?.[0]?.author?.[0]?.name?.[0]
       
-        if (Array.isArray(books) && isString(isbn)) {
+        if (Array.isArray(books) && typeof isbn === 'string') {
           books.push({
             isbn,
             rating,
             goodreadsDescription,
-            ...(isString(title) && { title }),
-            ...(isString(authorName) && { authorName }),
+            ...(typeof title === 'string' && { title }),
+            ...(typeof authorName === 'string' && { authorName }),
           })
         }
       

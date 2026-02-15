@@ -7,10 +7,6 @@ vi.mock('firebase-functions', () => ({
   }
 }))
 
-vi.mock('lodash', () => ({
-  default: { get: vi.fn() }
-}))
-
 vi.mock('got', () => ({
   default: vi.fn()
 }))
@@ -41,7 +37,7 @@ vi.mock('../../lib/get-user-status.js', () => ({
 let fetchUser
 
 describe('fetchUser', () => {
-  let mockGot, mockGet, mockGetReview, mockGetUserStatus, mockLogger
+  let mockGot, mockGetReview, mockGetUserStatus, mockLogger
 
   beforeEach(async () => {
     // Set up environment variables
@@ -56,7 +52,6 @@ describe('fetchUser', () => {
 
     // Get mock functions
     mockGot = (await import('got')).default
-    mockGet = (await import('lodash')).default.get
     mockGetReview = (await import('../../lib/get-review.js')).default
     mockGetUserStatus = (await import('../../lib/get-user-status.js')).default
     mockLogger = (await import('firebase-functions')).logger
@@ -106,12 +101,6 @@ describe('fetchUser', () => {
     mockParseString.mockImplementation((xml, callback) => {
       callback(null, mockJsonResult)
     })
-
-    // Mock lodash.get responses
-    mockGet
-      .mockReturnValueOnce([{ name: 'read', book_count: { _: '50' } }]) // user_shelves
-      .mockReturnValueOnce(mockJsonResult.GoodreadsResponse.user) // user profile
-      .mockReturnValueOnce(mockJsonResult.GoodreadsResponse.user.updates.update) // updates
 
     // Mock helper functions
     mockGetUserStatus.mockReturnValue({ type: 'userstatus', transformed: true })
@@ -209,12 +198,6 @@ describe('fetchUser', () => {
       callback(null, mockJsonResult)
     })
 
-    // Mock lodash.get to return empty array for shelves, and valid user for profile
-    mockGet
-      .mockReturnValueOnce([]) // user_shelves
-      .mockReturnValueOnce(mockJsonResult.GoodreadsResponse.user) // user profile
-      .mockReturnValueOnce([]) // updates
-
     const result = await fetchUser()
 
     expect(result.profile?.readCount ?? 0).toBe(0)
@@ -240,12 +223,6 @@ describe('fetchUser', () => {
       callback(null, mockJsonResult)
     })
 
-    // Mock lodash.get to return array without 'read' shelf, and valid user for profile
-    mockGet
-      .mockReturnValueOnce([{ name: 'to-read', book_count: { _: '25' } }]) // user_shelves
-      .mockReturnValueOnce(mockJsonResult.GoodreadsResponse.user) // user profile
-      .mockReturnValueOnce([]) // updates
-
     const result = await fetchUser()
 
     expect(result.profile?.readCount ?? 0).toBe(0)
@@ -270,11 +247,6 @@ describe('fetchUser', () => {
     mockParseString.mockImplementation((xml, callback) => {
       callback(null, mockJsonResult)
     })
-
-    mockGet
-      .mockReturnValueOnce([{ name: 'read' }]) // user_shelves
-      .mockReturnValueOnce(mockJsonResult.GoodreadsResponse.user) // user profile
-      .mockReturnValueOnce([]) // updates
 
     const result = await fetchUser()
 
@@ -307,11 +279,6 @@ describe('fetchUser', () => {
     mockParseString.mockImplementation((xml, callback) => {
       callback(null, mockJsonResult)
     })
-
-    mockGet
-      .mockReturnValueOnce([{ name: 'read', book_count: { _: '50' } }]) // user_shelves
-      .mockReturnValueOnce(mockJsonResult.GoodreadsResponse.user) // user profile
-      .mockReturnValueOnce(mockJsonResult.GoodreadsResponse.user.updates.update) // updates
 
     // Mock helper functions - return null for invalid type
     mockGetUserStatus.mockReturnValue({ type: 'userstatus', transformed: true })
@@ -346,11 +313,6 @@ describe('fetchUser', () => {
     mockParseString.mockImplementation((xml, callback) => {
       callback(null, mockJsonResult)
     })
-
-    mockGet
-      .mockReturnValueOnce([{ name: 'read', book_count: { _: '50' } }]) // user_shelves
-      .mockReturnValueOnce(mockJsonResult.GoodreadsResponse.user) // user profile
-      .mockReturnValueOnce([mockJsonResult.GoodreadsResponse.user.updates.update]) // updates as array
 
     mockGetUserStatus.mockReturnValue({ type: 'userstatus', transformed: true })
 
