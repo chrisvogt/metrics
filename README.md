@@ -201,25 +201,25 @@ npm run test:coverage # with coverage
 
 ## Deployment
 
-The hosting app must be **built** before deploy (the root `deploy` script does this automatically).
+The hosting app must be **built** before deploy (the root `deploy:all` script does this automatically).
 
 ```bash
-# From repo root
+# From repo root (use pnpm; see [Monorepo](#monorepo) for setup)
 
 # Build the hosting app (output: hosting/dist)
-npm run build
+pnpm run build
 
 # Deploy everything (build + hosting + functions + firestore rules, etc.)
-npm run deploy
+pnpm run deploy:all
 
 # Deploy only hosting (builds then deploys hosting)
-npm run deploy:hosting
+pnpm run deploy:hosting
 
 # Deploy only Cloud Functions (no hosting build)
-npm run deploy:functions
+pnpm run deploy:functions
 ```
 
-**Note:** `npm run deploy` and `npm run deploy:hosting` run `npm run build` first, which does `cd hosting && npm ci && npm run build`. Ensure `hosting/package-lock.json` is committed so `npm ci` succeeds in CI or on other machines.
+**Note:** Use `pnpm run deploy:all` (with **run**). The bare command `pnpm deploy` is pnpm’s built-in command for workspace deployment and is not our Firebase deploy script. `deploy:all` and `deploy:hosting` run `pnpm run build` first.
 
 ## Contributing
 

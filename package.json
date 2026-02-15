@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npm run build:hosting",
     "build:hosting": "cd hosting && npm ci && npm run build",
-    "deploy": "npm run build && firebase deploy",
+    "deploy:all": "pnpm run build && firebase deploy",
     "deploy:hosting": "npm run build:hosting && firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions"
   },
