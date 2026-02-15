@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2025-02-14
+
+### Added
+
+- **React hosting app** – The metrics dashboard is now a Vite + React app in `hosting/`:
+  - Sign-in (Google, email/password, phone) and API testing UI
+  - Two pages when signed in: **API** (auth token, session, widget GET) and **Sync** (sync-by-provider)
+  - Firebase config loaded at runtime from `/api/firebase-config`; no client-side keys
+  - Dedicated `hosting/package.json` and build output in `hosting/dist`
+
+### Changed
+
+- **Firebase Hosting** – `firebase.json` now serves the built React app:
+  - `hosting.public` set to `hosting/dist` (replaces legacy `public/` static files)
+  - Rewrites: `/api/**` → Cloud Function `app`, `**` → `/index.html` (SPA fallback)
+- **Root scripts** – `npm run build` builds the hosting app; `npm run deploy` builds then deploys; `npm run deploy:hosting` builds and deploys hosting only
+
+### Developer experience
+
+- Local dev: run `npm run dev` in `hosting/` with Functions + Auth emulators, or build and use `firebase emulators:start --only hosting,functions,auth`. See root [README](../README.md) and [hosting/README.md](../hosting/README.md).
+
 ## [0.20.2] - 2025-02-14
 
 ### Fixed

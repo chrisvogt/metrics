@@ -48,6 +48,9 @@ build/Release
 # Dependency directories
 node_modules/
 
+# Hosting build output (built on deploy)
+hosting/dist
+
 # Optional npm cache directory
 .npm
 

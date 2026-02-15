@@ -11,11 +11,15 @@
     "codebase": "default"
   },
   "hosting": {
-    "public": "public",
+    "public": "hosting/dist",
     "rewrites": [
       {
-        "source": "**",
+        "source": "/api/**",
         "function": "app"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
       }
     ]
   },
