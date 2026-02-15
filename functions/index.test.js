@@ -53,6 +53,7 @@ vi.mock('firebase-functions/params', () => ({
 
 // Mock file system
 vi.mock('fs', () => ({
+  existsSync: vi.fn(() => true),
   readFileSync: vi.fn(() => JSON.stringify({ mock: 'token' }))
 }))
 
