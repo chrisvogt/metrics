@@ -212,7 +212,7 @@ pnpm run test              # run once
 pnpm run test:coverage     # with coverage
 ```
 
-For watch mode, run from the functions package: `pnpm --filter personal-metrics run test:watch`.
+For watch mode, run from the functions package: `pnpm --filter metrics-functions run test:watch`.
 
 ## Deployment
 
