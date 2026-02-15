@@ -2,12 +2,19 @@
   "name": "metrics",
   "private": true,
   "description": "Personal metrics – Firebase Hosting + Cloud Functions",
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "build": "npm run build:hosting",
-    "build:hosting": "cd hosting && npm ci && npm run build",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
     "deploy:all": "pnpm run build && firebase deploy",
-    "deploy:hosting": "npm run build:hosting && firebase deploy --only hosting",
+    "deploy:hosting": "pnpm run build && firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0"
   },
   "engines": {
     "node": ">=24"
