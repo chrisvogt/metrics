@@ -2,7 +2,7 @@
   "name": "metrics",
   "private": true,
   "description": "Personal metrics – Firebase Hosting + Cloud Functions",
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@10.29.2",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
