@@ -757,7 +757,7 @@ describe('fetchRecentlyReadBooks', () => {
 
   it('should fall back to title-only search when ISBN fails and no author in Goodreads data', async () => {
     process.env.GOOGLE_BOOKS_API_KEY = 'test-google-books-api-key'
-    const mockGoodreadsResponse = `<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><title>No Author Book</title><isbn13>9780000000000</isbn13></book><rating>3</rating></review></reviews></GoodreadsResponse>`
+    const mockGoodreadsResponse = '<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><title>No Author Book</title><isbn13>9780000000000</isbn13></book><rating>3</rating></review></reviews></GoodreadsResponse>'
     const mockGoogleBookFromTitleSearch = {
       items: [{ id: 'title-only-id', volumeInfo: { title: 'No Author Book', imageLinks: { thumbnail: 'http://x.com/t.jpg' } } }]
     }
@@ -912,7 +912,7 @@ describe('fetchRecentlyReadBooks', () => {
   })
 
   it('should add delay between requests when fetching multiple books (index > 0)', async () => {
-    const mockGoodreadsResponse = `<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><isbn13>9781111111111</isbn13></book><rating>4</rating></review><review><read_at>2023-01-02</read_at><book><isbn13>9782222222222</isbn13></book><rating>5</rating></review></reviews></GoodreadsResponse>`
+    const mockGoodreadsResponse = '<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><isbn13>9781111111111</isbn13></book><rating>4</rating></review><review><read_at>2023-01-02</read_at><book><isbn13>9782222222222</isbn13></book><rating>5</rating></review></reviews></GoodreadsResponse>'
     mockGot.mockResolvedValue({ body: mockGoodreadsResponse })
     mockParseString.mockImplementation((xml, callback) => {
       callback(null, {
