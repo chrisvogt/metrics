@@ -11,6 +11,7 @@ vi.mock('got', () => ({
 vi.mock('firebase-functions', () => ({
   logger: {
     error: vi.fn(),
+    info: vi.fn(),
     warn: vi.fn()
   }
 }))
@@ -125,8 +126,8 @@ describe('fetchBook', () => {
 
     const result = await fetchBook(bookInput)
 
-    // Should log error but return object with undefined book
-    expect(mockLogger.error).toHaveBeenCalledWith('No result returned from Google Books for ISBN: 9780143127550.')
+    // Should log info (no result for ISBN) but return object with undefined book
+    expect(mockLogger.info).toHaveBeenCalledWith('No result from Google Books for ISBN: 9780143127550; title/author fallback may be used.')
     expect(result).toEqual({
       book: undefined,
       rating: '4'
@@ -148,8 +149,8 @@ describe('fetchBook', () => {
 
     const result = await fetchBook(bookInput)
 
-    // Should log error but return object with undefined book
-    expect(mockLogger.error).toHaveBeenCalledWith('No result returned from Google Books for ISBN: 9780143127550.')
+    // Should log info (no result for ISBN) but return object with undefined book
+    expect(mockLogger.info).toHaveBeenCalledWith('No result from Google Books for ISBN: 9780143127550; title/author fallback may be used.')
     expect(result).toEqual({
       book: undefined,
       rating: '4'

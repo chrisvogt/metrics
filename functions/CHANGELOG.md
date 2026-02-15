@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0] - 2025-02-14
+
+### Added
+
+- **Goodreads recently-read fallback** – When Google Books returns no result for an ISBN, the recently-read flow now tries a title/author search (same behavior as profile updates), so more books are recovered (e.g. *Culture of Desire*, *Purposeful*, *Outliers*). Title and author are read from the Goodreads review list XML.
+
+### Changed
+
+- **Google Books “not found” logging** – A missing ISBN result is now logged at **info** (“No result from Google Books for ISBN: …; title/author fallback may be used.”) instead of an error. A **warning** is logged only when a book is not found by either ISBN or the title/author fallback.
+
 ## [0.21.0] - 2025-02-14
 
 ### Added
@@ -234,6 +244,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _This changelog was started with v0.8.0._
 
+[0.22.0]: https://github.com/chrisvogt/metrics/compare/v0.21.0...v0.22.0
+[0.21.0]: https://github.com/chrisvogt/metrics/compare/v0.20.2...v0.21.0
 [0.20.0]: https://github.com/chrisvogt/metrics/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/chrisvogt/metrics/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/chrisvogt/metrics/compare/v0.17.0...v0.18.0

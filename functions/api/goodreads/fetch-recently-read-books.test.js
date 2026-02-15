@@ -13,6 +13,7 @@ vi.mock('got', () => ({
 vi.mock('firebase-functions', () => ({
   logger: {
     info: vi.fn(),
+    warn: vi.fn(),
     error: vi.fn()
   }
 }))
@@ -655,7 +656,374 @@ describe('fetchRecentlyReadBooks', () => {
 
     const result = await fetchRecentlyReadBooks()
 
-    // Should filter out null results
+    // Should filter out null results (no title/author in mock, so fallback not attempted)
     expect(result.books).toEqual([])
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      'Book not found by ISBN or title/author fallback: ISBN 1234567890'
+    )
+  })
+
+  it('should fall back to title/author search when ISBN lookup fails', async () => {
+    process.env.GOOGLE_BOOKS_API_KEY = 'test-google-books-api-key'
+    const mockGoodreadsResponse = `
+      <GoodreadsResponse>
+        <reviews>
+          <review>
+            <read_at>2023-01-01</read_at>
+            <book>
+              <title>Finding My Humanity</title>
+              <authors><author><name>Ryan Ubuntu Olson</name></author></authors>
+              <isbn>9798889269595</isbn>
+              <isbn13>9798889269595</isbn13>
+            </book>
+            <rating>4</rating>
+          </review>
+        </reviews>
+      </GoodreadsResponse>
+    `
+
+    const mockGoogleBookFromTitleSearch = {
+      items: [{
+        id: 'fallback-book-id',
+        volumeInfo: {
+          title: 'Finding My Humanity',
+          authors: ['Ryan Ubuntu Olson'],
+          imageLinks: {
+            smallThumbnail: 'http://example.com/small.jpg',
+            thumbnail: 'http://example.com/thumb.jpg'
+          },
+          infoLink: 'http://example.com/info',
+          pageCount: 200
+        }
+      }]
+    }
+
+    mockGot
+      .mockResolvedValueOnce({ body: mockGoodreadsResponse })
+      .mockResolvedValueOnce({ body: JSON.stringify(mockGoogleBookFromTitleSearch) })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{
+            review: [{
+              read_at: ['2023-01-01'],
+              book: [{
+                title: ['Finding My Humanity'],
+                authors: [{ author: [{ name: ['Ryan Ubuntu Olson'] }] }],
+                isbn: ['9798889269595'],
+                isbn13: ['9798889269595']
+              }],
+              rating: ['4']
+            }]
+          }]
+        }
+      })
+    })
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        const results = []
+        for (let i = 0; i < items.length; i++) {
+          const result = await mapper(items[i], i)
+          results.push(result)
+        }
+        return results
+      } else {
+        return [{ fileName: 'books/fallback-book-id-thumbnail.jpg' }]
+      }
+    })
+    mockFetchBookFromGoogle.mockResolvedValue(null) // ISBN lookup fails
+    mockListStoredMedia.mockResolvedValue([])
+    mockFetchAndUploadFile.mockResolvedValue({ fileName: 'books/fallback-book-id-thumbnail.jpg' })
+
+    const result = await fetchRecentlyReadBooks()
+
+    expect(result.books).toHaveLength(1)
+    expect(result.books[0].title).toBe('Finding My Humanity')
+    expect(result.books[0].authors).toEqual(['Ryan Ubuntu Olson'])
+    expect(result.books[0].id).toBe('fallback-book-id')
+    // Should have called Google Books volumes API for title/author search
+    expect(mockGot).toHaveBeenCalledWith(
+      'https://www.googleapis.com/books/v1/volumes',
+      expect.objectContaining({
+        searchParams: {
+          q: 'intitle:Finding My Humanity inauthor:Ryan Ubuntu Olson',
+          key: 'test-google-books-api-key',
+          country: 'US'
+        }
+      })
+    )
+    delete process.env.GOOGLE_BOOKS_API_KEY
+  })
+
+  it('should fall back to title-only search when ISBN fails and no author in Goodreads data', async () => {
+    process.env.GOOGLE_BOOKS_API_KEY = 'test-google-books-api-key'
+    const mockGoodreadsResponse = '<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><title>No Author Book</title><isbn13>9780000000000</isbn13></book><rating>3</rating></review></reviews></GoodreadsResponse>'
+    const mockGoogleBookFromTitleSearch = {
+      items: [{ id: 'title-only-id', volumeInfo: { title: 'No Author Book', imageLinks: { thumbnail: 'http://x.com/t.jpg' } } }]
+    }
+    mockGot
+      .mockResolvedValueOnce({ body: mockGoodreadsResponse })
+      .mockResolvedValueOnce({ body: JSON.stringify(mockGoogleBookFromTitleSearch) })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{ review: [{ read_at: ['2023-01-01'], book: [{ title: ['No Author Book'], isbn13: ['9780000000000'] }], rating: ['3'] }] }]
+        }
+      })
+    })
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        const results = []
+        for (let i = 0; i < items.length; i++) results.push(await mapper(items[i], i))
+        return results
+      }
+      return []
+    })
+    mockFetchBookFromGoogle.mockResolvedValue(null)
+    mockListStoredMedia.mockResolvedValue([])
+
+    const result = await fetchRecentlyReadBooks()
+
+    expect(result.books).toHaveLength(1)
+    expect(result.books[0].title).toBe('No Author Book')
+    expect(mockGot).toHaveBeenCalledWith(
+      'https://www.googleapis.com/books/v1/volumes',
+      expect.objectContaining({ searchParams: { q: 'intitle:No Author Book', key: 'test-google-books-api-key', country: 'US' } })
+    )
+    expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining('Found book by title for recently read: No Author Book'))
+    delete process.env.GOOGLE_BOOKS_API_KEY
+  })
+
+  it('should log warning with title when fallback returns no items', async () => {
+    process.env.GOOGLE_BOOKS_API_KEY = 'test-google-books-api-key'
+    mockGot
+      .mockResolvedValueOnce({ body: '<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><title>Unknown Book</title><isbn13>9781111111111</isbn13></book><rating>4</rating></review></reviews></GoodreadsResponse>' })
+      .mockResolvedValueOnce({ body: JSON.stringify({ items: [] }) })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{ review: [{ read_at: ['2023-01-01'], book: [{ title: ['Unknown Book'], isbn13: ['9781111111111'] }], rating: ['4'] }] }]
+        }
+      })
+    })
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        const results = []
+        for (let i = 0; i < items.length; i++) results.push(await mapper(items[i], i))
+        return results
+      }
+      return []
+    })
+    mockFetchBookFromGoogle.mockResolvedValue(null)
+    mockListStoredMedia.mockResolvedValue([])
+
+    const result = await fetchRecentlyReadBooks()
+
+    expect(result.books).toEqual([])
+    expect(mockLogger.warn).toHaveBeenCalledWith('Book not found by ISBN or title/author fallback: "Unknown Book"')
+    delete process.env.GOOGLE_BOOKS_API_KEY
+  })
+
+  it('should handle quota exceeded during title/author fallback', async () => {
+    process.env.GOOGLE_BOOKS_API_KEY = 'test-google-books-api-key'
+    mockGot
+      .mockResolvedValueOnce({ body: '<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><title>Quota Book</title><isbn13>9782222222222</isbn13></book><rating>4</rating></review></reviews></GoodreadsResponse>' })
+      .mockRejectedValueOnce(
+        Object.assign(new Error('Quota exceeded'), {
+          response: {
+            statusCode: 429,
+            body: JSON.stringify({
+              error: { status: 'RESOURCE_EXHAUSTED', message: 'Quota exceeded' }
+            })
+          }
+        })
+      )
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{ review: [{ read_at: ['2023-01-01'], book: [{ title: ['Quota Book'], isbn13: ['9782222222222'] }], rating: ['4'] }] }]
+        }
+      })
+    })
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        const results = []
+        for (let i = 0; i < items.length; i++) results.push(await mapper(items[i], i))
+        return results
+      }
+      return []
+    })
+    mockFetchBookFromGoogle.mockResolvedValue(null)
+    mockListStoredMedia.mockResolvedValue([])
+
+    const result = await fetchRecentlyReadBooks()
+
+    expect(result.books).toEqual([])
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Daily quota exceeded for Google Books API. Title/author fallback skipped.',
+      { message: 'Quota exceeded' }
+    )
+    expect(mockLogger.warn).toHaveBeenCalledWith('Book not found by ISBN or title/author fallback: "Quota Book"')
+    delete process.env.GOOGLE_BOOKS_API_KEY
+  })
+
+  it('should retry on 429 during title fallback then succeed', async () => {
+    vi.useFakeTimers()
+    process.env.GOOGLE_BOOKS_API_KEY = 'test-google-books-api-key'
+    const goodreadsBody = '<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><title>Retry Book</title><isbn13>9783333333333</isbn13></book><rating>4</rating></review></reviews></GoodreadsResponse>'
+    const successResponse = { body: JSON.stringify({ items: [{ id: 'retry-id', volumeInfo: { title: 'Retry Book', imageLinks: { thumbnail: 'http://x.com/t.jpg' } } }] }) }
+    const rateLimitError = Object.assign(new Error('Rate limited'), {
+      response: { statusCode: 429, body: JSON.stringify({ error: { code: 429, message: 'Rate limit' } }) }
+    })
+    mockGot
+      .mockResolvedValueOnce({ body: goodreadsBody })
+      .mockRejectedValueOnce(rateLimitError)
+      .mockResolvedValueOnce(successResponse)
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{ review: [{ read_at: ['2023-01-01'], book: [{ title: ['Retry Book'], isbn13: ['9783333333333'] }], rating: ['4'] }] }]
+        }
+      })
+    })
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        const results = []
+        for (let i = 0; i < items.length; i++) results.push(await mapper(items[i], i))
+        return results
+      }
+      return [{ fileName: 'books/retry-id-thumbnail.jpg' }]
+    })
+    mockFetchBookFromGoogle.mockResolvedValue(null)
+    mockListStoredMedia.mockResolvedValue([])
+    mockFetchAndUploadFile.mockResolvedValue({ fileName: 'books/retry-id-thumbnail.jpg' })
+
+    const resultPromise = fetchRecentlyReadBooks()
+    await vi.advanceTimersByTimeAsync(2500)
+    const result = await resultPromise
+    vi.useRealTimers()
+
+    expect(result.books).toHaveLength(1)
+    expect(result.books[0].id).toBe('retry-id')
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/Rate limited \(429\) for title search "Retry Book"/)
+    )
+    delete process.env.GOOGLE_BOOKS_API_KEY
+  })
+
+  it('should add delay between requests when fetching multiple books (index > 0)', async () => {
+    const mockGoodreadsResponse = '<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><isbn13>9781111111111</isbn13></book><rating>4</rating></review><review><read_at>2023-01-02</read_at><book><isbn13>9782222222222</isbn13></book><rating>5</rating></review></reviews></GoodreadsResponse>'
+    mockGot.mockResolvedValue({ body: mockGoodreadsResponse })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{
+            review: [
+              { read_at: ['2023-01-01'], book: [{ isbn13: ['9781111111111'] }], rating: ['4'] },
+              { read_at: ['2023-01-02'], book: [{ isbn13: ['9782222222222'] }], rating: ['5'] }
+            ]
+          }]
+        }
+      })
+    })
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        const results = []
+        for (let i = 0; i < items.length; i++) results.push(await mapper(items[i], i))
+        return results
+      }
+      return []
+    })
+    mockFetchBookFromGoogle
+      .mockResolvedValueOnce({ book: { id: 'id1', volumeInfo: { title: 'Book 1', imageLinks: { thumbnail: 'http://x.com/1.jpg' } } }, rating: '4' })
+      .mockResolvedValueOnce({ book: { id: 'id2', volumeInfo: { title: 'Book 2', imageLinks: { thumbnail: 'http://x.com/2.jpg' } } }, rating: '5' })
+    mockListStoredMedia.mockResolvedValue(['books/id1-thumbnail.jpg', 'books/id2-thumbnail.jpg'])
+
+    const result = await fetchRecentlyReadBooks()
+
+    expect(result.books).toHaveLength(2)
+    expect(mockFetchBookFromGoogle).toHaveBeenCalledTimes(2)
+  })
+
+  it('should parse book data when book is single object (not array) in Goodreads XML', async () => {
+    mockGot.mockResolvedValue({ body: '<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><title>Single Object Book</title><isbn13>9785555555555</isbn13></book><rating>5</rating></review></reviews></GoodreadsResponse>' })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{
+            review: [{
+              read_at: ['2023-01-01'],
+              book: { title: ['Single Object Book'], isbn13: ['9785555555555'] },
+              rating: ['5']
+            }]
+          }]
+        }
+      })
+    })
+    const mockGoogleBook = {
+      book: {
+        id: 'single-obj-id',
+        volumeInfo: {
+          title: 'Single Object Book',
+          authors: ['Author'],
+          imageLinks: { thumbnail: 'http://example.com/t.jpg' }
+        }
+      },
+      rating: '5'
+    }
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        const results = []
+        for (let i = 0; i < items.length; i++) results.push(await mapper(items[i], i))
+        return results
+      }
+      return [{ fileName: 'books/single-obj-id-thumbnail.jpg' }]
+    })
+    mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBook)
+    mockListStoredMedia.mockResolvedValue([])
+    mockFetchAndUploadFile.mockResolvedValue({ fileName: 'books/single-obj-id-thumbnail.jpg' })
+
+    const result = await fetchRecentlyReadBooks()
+
+    expect(result.books).toHaveLength(1)
+    expect(result.books[0].title).toBe('Single Object Book')
+    expect(mockFetchBookFromGoogle).toHaveBeenCalledWith(
+      expect.objectContaining({ isbn: '9785555555555', title: 'Single Object Book', rating: '5' })
+    )
+  })
+
+  it('should log error and warning when fallback request fails after retries', async () => {
+    process.env.GOOGLE_BOOKS_API_KEY = 'test-google-books-api-key'
+    const networkError = new Error('Network failure')
+    mockGot
+      .mockResolvedValueOnce({ body: '<GoodreadsResponse><reviews><review><read_at>2023-01-01</read_at><book><title>Fail Book</title><authors><author><name>Fail Author</name></author></authors><isbn13>9784444444444</isbn13></book><rating>4</rating></review></reviews></GoodreadsResponse>' })
+      .mockRejectedValue(networkError)
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{ review: [{ read_at: ['2023-01-01'], book: [{ title: ['Fail Book'], authors: [{ author: [{ name: ['Fail Author'] }] }], isbn13: ['9784444444444'] }], rating: ['4'] }] }]
+        }
+      })
+    })
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        const results = []
+        for (let i = 0; i < items.length; i++) results.push(await mapper(items[i], i))
+        return results
+      }
+      return []
+    })
+    mockFetchBookFromGoogle.mockResolvedValue(null)
+    mockListStoredMedia.mockResolvedValue([])
+
+    const result = await fetchRecentlyReadBooks()
+
+    expect(result.books).toEqual([])
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Error fetching book by title/author for recently read "Fail Book" after retries:',
+      networkError
+    )
+    expect(mockLogger.warn).toHaveBeenCalledWith('Book not found by ISBN or title/author fallback: "Fail Book"')
+    delete process.env.GOOGLE_BOOKS_API_KEY
   })
 }) 
