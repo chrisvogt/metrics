@@ -361,7 +361,7 @@ expressApp.delete('/api/user/account', cors(corsOptions), rateLimiter(15 * 60 * 
         res.status(500).send(buildFailureResponse(err));
     }
 });
-expressApp.post('/api/auth/session', cors(corsOptions), async (req, res) => {
+expressApp.post('/api/auth/session', cors(corsOptions), rateLimiter(15 * 60 * 1000, 20), async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -419,7 +419,7 @@ expressApp.get('/api/firebase-config', cors(corsOptions), (_req, res) => {
     };
     res.json(config);
 });
-expressApp.post('/api/auth/logout', cors(corsOptions), authenticateUser, async (req, res) => {
+expressApp.post('/api/auth/logout', cors(corsOptions), rateLimiter(15 * 60 * 1000, 30), authenticateUser, async (req, res) => {
     if (!req.user)
         return;
     try {

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import rateLimiter from './rate-limiter.js'
+import { logger } from 'firebase-functions'
 
 // Mock Firebase Functions logger
 vi.mock('firebase-functions', () => ({
@@ -110,6 +111,47 @@ describe('rateLimiter', () => {
       
       expect(typeof middleware).toBe('function')
       expect(middleware.length).toBe(3)
+    })
+  })
+
+  describe('rate limit exceeded', () => {
+    it('should return 429 when maxRequests exceeded', () => {
+      const middleware = rateLimiter(15 * 60 * 1000, 2)
+      const uniqueReq = { ip: '192.168.1.200', socket: { remoteAddress: '192.168.1.200' } }
+
+      middleware(uniqueReq, mockRes, mockNext)
+      expect(mockNext).toHaveBeenCalledTimes(1)
+
+      middleware(uniqueReq, mockRes, mockNext)
+      expect(mockNext).toHaveBeenCalledTimes(2)
+
+      middleware(uniqueReq, mockRes, mockNext)
+      expect(mockNext).toHaveBeenCalledTimes(2)
+      expect(mockRes.status).toHaveBeenCalledWith(429)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        ok: false,
+        error: 'Too many requests. Please try again later.',
+      })
+      expect(vi.mocked(logger.warn)).toHaveBeenCalledWith('Rate limit exceeded for IP: 192.168.1.200')
+    })
+  })
+
+  describe('window reset', () => {
+    it('should reset count when window has expired', () => {
+      vi.useFakeTimers()
+      const middleware = rateLimiter(1000, 1)
+      const uniqueReq = { ip: '10.0.0.99', socket: { remoteAddress: '10.0.0.99' } }
+
+      middleware(uniqueReq, mockRes, mockNext)
+      expect(mockNext).toHaveBeenCalledTimes(1)
+
+      vi.advanceTimersByTime(1001)
+
+      middleware(uniqueReq, mockRes, mockNext)
+      expect(mockNext).toHaveBeenCalledTimes(2)
+      expect(mockRes.status).not.toHaveBeenCalled()
+
+      vi.useRealTimers()
     })
   })
 

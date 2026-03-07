@@ -150,6 +150,7 @@ describe('index.js', () => {
         })
       })
 
+
       it.skip('should return 404 for missing provider', async () => {
         // Skipped: Express will not match this route and will return an empty object
         const response = await request(app)
@@ -500,6 +501,17 @@ describe('index.js', () => {
         expect(response.body.error).toBe('No valid authorization token provided')
       })
 
+      it('should reject request when Bearer has no token', async () => {
+        const response = await request(app)
+          .post('/api/auth/session')
+          .set('Authorization', 'Bearer ')
+          .expect(401)
+
+        expect(response.body.ok).toBe(false)
+        // Empty token after "Bearer " yields "No token"; normalized header may yield the other message
+        expect(['No token', 'No valid authorization token provided']).toContain(response.body.error)
+      })
+
       it('should reject request from non-allowed email domain', async () => {
         // Domain check only runs in production
         const prevEnv = process.env.NODE_ENV
@@ -574,6 +586,124 @@ describe('index.js', () => {
         // This test just verifies the endpoint exists and is properly configured
         // The actual authentication and response testing is complex due to middleware
         expect(app).toBeDefined()
+      })
+
+      it('should return 200 with profile when authenticated', async () => {
+        const mockGetUser = vi.fn().mockResolvedValue({
+          uid: 'test-uid',
+          email: 'test@chrisvogt.me',
+          displayName: 'Test User',
+          photoURL: null,
+          emailVerified: true,
+          metadata: { creationTime: '2020-01-01', lastSignInTime: '2024-01-01' },
+        })
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: vi.fn().mockResolvedValue({
+            uid: 'test-uid',
+            email: 'test@chrisvogt.me',
+            email_verified: true,
+          }),
+          getUser: mockGetUser,
+        }))
+
+        const response = await request(app)
+          .get('/api/user/profile')
+          .set('Authorization', 'Bearer valid-jwt-token')
+          .expect(200)
+
+        expect(response.body.ok).toBe(true)
+        expect(response.body.payload.uid).toBe('test-uid')
+        expect(response.body.payload.email).toBe('test@chrisvogt.me')
+        expect(mockGetUser).toHaveBeenCalledWith('test-uid')
+      })
+
+      it('should return 500 when getUser throws', async () => {
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: vi.fn().mockResolvedValue({
+            uid: 'test-uid',
+            email: 'test@chrisvogt.me',
+            email_verified: true,
+          }),
+          getUser: vi.fn().mockRejectedValue(new Error('User not found')),
+        }))
+
+        const response = await request(app)
+          .get('/api/user/profile')
+          .set('Authorization', 'Bearer valid-jwt-token')
+          .expect(500)
+
+        expect(response.body.ok).toBe(false)
+        expect(response.body.error).toBe('User not found')
+      })
+
+      it('should allow auth via session cookie', async () => {
+        const mockVerifySessionCookie = vi.fn().mockResolvedValue({
+          uid: 'cookie-uid',
+          email: 'test@chrisvogt.me',
+          email_verified: true,
+        })
+        const mockGetUser = vi.fn().mockResolvedValue({
+          uid: 'cookie-uid',
+          email: 'test@chrisvogt.me',
+          displayName: 'Cookie User',
+          photoURL: null,
+          emailVerified: true,
+          metadata: { creationTime: '2020-01-01', lastSignInTime: '2024-01-01' },
+        })
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifySessionCookie: mockVerifySessionCookie,
+          getUser: mockGetUser,
+        }))
+
+        const response = await request(app)
+          .get('/api/user/profile')
+          .set('Cookie', 'session=valid-session-cookie')
+          .expect(200)
+
+        expect(response.body.ok).toBe(true)
+        expect(response.body.payload.uid).toBe('cookie-uid')
+        expect(mockVerifySessionCookie).toHaveBeenCalledWith('valid-session-cookie', true)
+      })
+
+      it('should reject session cookie with disallowed email in production', async () => {
+        const prevEnv = process.env.NODE_ENV
+        process.env.NODE_ENV = 'production'
+        const mockVerifySessionCookie = vi.fn().mockResolvedValue({
+          uid: 'cookie-uid',
+          email: 'test@example.com',
+          email_verified: true,
+        })
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifySessionCookie: mockVerifySessionCookie,
+        }))
+
+        const response = await request(app)
+          .get('/api/user/profile')
+          .set('Cookie', 'session=valid-session-cookie')
+          .expect(403)
+
+        expect(response.body.ok).toBe(false)
+        expect(response.body.error).toContain('Access denied')
+        process.env.NODE_ENV = prevEnv
+      })
+
+      it('should fall back to 401 when session cookie verification fails and no Bearer', async () => {
+        const mockVerifySessionCookie = vi.fn().mockRejectedValue(new Error('Invalid session'))
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifySessionCookie: mockVerifySessionCookie,
+        }))
+
+        const response = await request(app)
+          .get('/api/user/profile')
+          .set('Cookie', 'session=invalid-cookie')
+          .expect(401)
+
+        expect(response.body.ok).toBe(false)
       })
     })
 
