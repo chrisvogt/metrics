@@ -192,6 +192,18 @@ describe('index.js', () => {
         })
       })
 
+      it('should handle getWidgetContent rejecting with value that has no .message (buildFailureResponse String fallback)', async () => {
+        const { getWidgetContent } = await import('./lib/get-widget-content.js')
+        vi.mocked(getWidgetContent).mockRejectedValueOnce({ code: 'UNKNOWN' })
+
+        const response = await request(app)
+          .get('/api/widgets/spotify')
+          .expect(500)
+
+        expect(response.body.ok).toBe(false)
+        expect(response.body.error).toBe('[object Object]')
+      })
+
       it('should use chronogrove userId for api.chronogrove.com hostname', async () => {
         const response = await request(app)
           .get('/api/widgets/spotify')
@@ -338,6 +350,26 @@ describe('index.js', () => {
 
         expect(response.body.apiKey).toBe('cached-key')
         expect(functionsConfigExportValueMock).not.toHaveBeenCalled()
+      })
+
+      it('should apply config from FUNCTIONS_CONFIG_EXPORT when first requested', async () => {
+        vi.resetModules()
+        delete process.env.__FUNCTIONS_CONFIG_APPLIED__
+        functionsConfigExportValueMock.mockReturnValue({
+          auth: {
+            client_api_key: 'from-secret',
+            client_auth_domain: 'secret.firebaseapp.com',
+            client_project_id: 'secret-project',
+          },
+        })
+
+        const { app: appWithFreshConfig } = await import('./index.js')
+        const response = await request(appWithFreshConfig)
+          .get('/api/firebase-config')
+          .expect(200)
+
+        expect(response.body.apiKey).toBe('from-secret')
+        expect(response.body.projectId).toBe('secret-project')
       })
     })
 
@@ -793,6 +825,24 @@ describe('index.js', () => {
           .expect(401)
 
         expect(response.body.ok).toBe(false)
+      })
+
+      it('should return 401 from outer catch when authenticateUser throws unexpectedly', async () => {
+        let callCount = 0
+        const logSpy = vi.spyOn(logger, 'info').mockImplementation((...args: unknown[]) => {
+          callCount += 1
+          if (callCount === 2) throw new Error('Unexpected auth error')
+          return undefined as void
+        })
+
+        const response = await request(app)
+          .get('/api/user/profile')
+          .set('Authorization', 'Bearer some-token')
+          .expect(401)
+
+        expect(response.body.ok).toBe(false)
+        expect(response.body.error).toBe('Invalid or expired token')
+        logSpy.mockRestore()
       })
     })
 
