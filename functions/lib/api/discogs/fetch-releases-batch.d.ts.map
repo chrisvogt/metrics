@@ -1,0 +1,1 @@
+{"version":3,"file":"fetch-releases-batch.d.ts","sourceRoot":"","sources":["../../../api/discogs/fetch-releases-batch.ts"],"names":[],"mappings":"AAKA;;;;;;;;GAQG;AACH,QAAA,MAAM,kBAAkB,GAAU,UAAU,OAAO,EAAE,EAAE,UAAS;IAAE,WAAW,CAAC,EAAE,MAAM,CAAC;IAAC,WAAW,CAAC,EAAE,OAAO,CAAC;IAAC,OAAO,CAAC,EAAE,MAAM,CAAA;CAAO,uBAqFrI,CAAA;AAED,eAAe,kBAAkB,CAAA"}

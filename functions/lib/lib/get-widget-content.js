@@ -1,0 +1,25 @@
+import getDiscogsWidgetContent from './get-discogs-widget-content.js';
+import getGitHubWidgetContent from './get-github-widget-content.js';
+import getGoodreadsWidgetContent from './get-goodreads-widget-content.js';
+import getInstagramWidgetContent from './get-instagram-widget-content.js';
+import getSpotifyWidgetContent from './get-spotify-widget-content.js';
+import getSteamWidgetContent from './get-steam-widget-content.js';
+import getFlickrWidgetContent from './get-flickr-widget-content.js';
+const widgetHandlerRegistry = {
+    discogs: getDiscogsWidgetContent,
+    github: getGitHubWidgetContent,
+    goodreads: getGoodreadsWidgetContent,
+    instagram: getInstagramWidgetContent,
+    spotify: getSpotifyWidgetContent,
+    steam: getSteamWidgetContent,
+    flickr: getFlickrWidgetContent,
+};
+export const validWidgetIds = Object.keys(widgetHandlerRegistry);
+export const getWidgetContent = async (widgetId, userId) => {
+    if (!validWidgetIds.includes(widgetId)) {
+        throw new Error(`Unrecognized widget type: ${widgetId}`);
+    }
+    const getContent = widgetHandlerRegistry[widgetId];
+    return getContent(userId);
+};
+//# sourceMappingURL=get-widget-content.js.map

@@ -1,7 +1,7 @@
 {
   "name": "metrics-hosting",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,10 @@
     "three": "^0.182.0"
   },
   "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.1.4",
+    "typescript": "^5.7.0",
     "vite": "^7.3.1"
   }
 }

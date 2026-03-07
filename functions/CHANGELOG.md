@@ -7,10 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
+
 ### Changed
 
 - **Dependency upgrades** – Bumped to latest majors: ESLint 10, Vitest 4, dotenv 17, globals 17, requestretry 8. Adjusted for ESLint 10 (preserve-caught-error, no-unassigned-vars), Vitest 4 constructor mocks (use `function` not arrow in mocks), and sync-spotify-data `uploadResult` scope.
 - **Dependency cleanup** – Replaced deprecated packages: `lodash.get` → `lodash/get` (same API); Spotify token refresh now uses `got` instead of `request-promise` (and removed direct `request` / `request-promise` deps). No behavior change.
+
+## [0.22.1] - 2026-03-06
+
+### Fixed
+
+- **Build** – Copy `queries/` (e.g. `github-widget-content.gql`) into `lib/queries/` during build so the GitHub widget loader finds the file at runtime in emulator and production.
 
 ## [0.22.0] - 2025-02-14
 

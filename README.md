@@ -97,7 +97,8 @@ This repo is a **pnpm workspace** with two packages: `hosting` (React app) and `
 |--------|----------------|
 | `pnpm install` | Install dependencies for root and all workspace packages (single lockfile: `pnpm-lock.yaml`). |
 | `pnpm run build` | Build the hosting app (Vite → `hosting/dist`). Only the hosting package has a `build` script. |
-| `pnpm run dev` | Start the hosting app’s Vite dev server (hot reload). Run with Functions + Auth emulators for a full local setup. |
+| `pnpm run dev` | Start the hosting app’s Vite dev server (hot reload). For API calls to work, also run the Functions + Auth emulators (see [Development](#development)). |
+| `pnpm run dev:full` | Start the Functions + Auth emulators and the Vite dev server in one command (recommended for local dev). |
 | `pnpm run lint` | Lint the functions package (ESLint). |
 | `pnpm run test` | Run functions unit tests (Vitest), single run. |
 | `pnpm run test:coverage` | Run functions tests with coverage. |
@@ -111,7 +112,13 @@ This repo is a **pnpm workspace** with two packages: `hosting` (React app) and `
 
 ### Option A – Hosting app with hot reload (recommended)
 
-Run the React app and proxy API calls to the emulated backend:
+**One command** (emulators + Vite together):
+
+```bash
+pnpm run dev:full
+```
+
+**Or** use two terminals:
 
 ```bash
 # Terminal 1: start Functions + Auth emulators
@@ -121,7 +128,7 @@ firebase emulators:start --only functions,auth
 pnpm run dev
 ```
 
-Open **http://localhost:5173**. The Vite dev server proxies `/api` to the Functions emulator. Sign-in and API testing work against the emulators.
+Open **http://localhost:5173**. The Vite dev server proxies `/api` to the Functions emulator. Sign-in and API testing work against the emulators. If you run only `pnpm run dev` without the emulators, API requests will receive a 503 with a message to start the backend.
 
 ### Option B – Full Firebase emulators (Hosting + Functions + Auth)
 
