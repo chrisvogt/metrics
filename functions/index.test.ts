@@ -46,10 +46,11 @@ vi.mock('firebase-functions/v2/identity', () => ({
   beforeUserCreated: vi.fn((optsOrHandler, handler) => (handler !== undefined ? handler : optsOrHandler))
 }))
 
+const functionsConfigExportValueMock = vi.hoisted(() => vi.fn(() => ({})))
 vi.mock('firebase-functions/params', () => ({
   defineString: vi.fn(() => 'mock-database-url'),
   defineSecret: vi.fn(() => ({ value: vi.fn(() => '') })),
-  defineJsonSecret: vi.fn(() => ({ value: vi.fn(() => ({})) }))
+  defineJsonSecret: vi.fn(() => ({ value: functionsConfigExportValueMock }))
 }))
 
 // Mock file system (existsSync ref so tests can override for coverage)
@@ -93,9 +94,9 @@ vi.mock('./jobs/delete-user.js', () => ({
   default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' }))
 }))
 
-// Mock middleware
-vi.mock('./middleware/rate-limiter.js', () => ({
-  default: vi.fn(() => (req, res, next) => next())
+// Mock express-rate-limit so CodeQL sees standard package; tests bypass limiting
+vi.mock('express-rate-limit', () => ({
+  rateLimit: vi.fn(() => (_req, _res, next) => next())
 }))
 
 // Mock the widget content module
@@ -293,6 +294,22 @@ describe('index.js', () => {
           projectId: 'test-project'
         })
       })
+
+      it('should still respond when FUNCTIONS_CONFIG_EXPORT fails to load', async () => {
+        delete process.env.__FUNCTIONS_CONFIG_APPLIED__
+        functionsConfigExportValueMock.mockImplementationOnce(() => {
+          throw new Error('Secret not available')
+        })
+        process.env.CLIENT_API_KEY = 'fallback-key'
+        process.env.CLIENT_AUTH_DOMAIN = 'fallback.firebaseapp.com'
+        process.env.CLIENT_PROJECT_ID = 'fallback-project'
+
+        const response = await request(app)
+          .get('/api/firebase-config')
+          .expect(200)
+
+        expect(response.body.projectId).toBe('fallback-project')
+      })
     })
 
     describe('GET * (catch-all)', () => {
@@ -305,6 +322,25 @@ describe('index.js', () => {
           .get('/some-random-path')
           .expect(404)
       })
+    })
+  })
+
+  describe('getSessionAuthError', () => {
+    it('should return "No token" when Bearer has no token', async () => {
+      const { getSessionAuthError } = await import('./index.js')
+      expect(getSessionAuthError('Bearer ')).toBe('No token')
+      expect(getSessionAuthError('Bearer  ')).toBe('No token')
+    })
+
+    it('should return "No valid authorization token provided" when header missing or invalid', async () => {
+      const { getSessionAuthError } = await import('./index.js')
+      expect(getSessionAuthError(undefined)).toBe('No valid authorization token provided')
+      expect(getSessionAuthError('Basic abc')).toBe('No valid authorization token provided')
+    })
+
+    it('should return null when header has valid Bearer token', async () => {
+      const { getSessionAuthError } = await import('./index.js')
+      expect(getSessionAuthError('Bearer jwt-token-here')).toBe(null)
     })
   })
 
@@ -508,7 +544,6 @@ describe('index.js', () => {
           .expect(401)
 
         expect(response.body.ok).toBe(false)
-        // Empty token after "Bearer " yields "No token"; normalized header may yield the other message
         expect(['No token', 'No valid authorization token provided']).toContain(response.body.error)
       })
 

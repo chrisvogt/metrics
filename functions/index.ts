@@ -26,7 +26,19 @@ import syncInstagramDataJob from './jobs/sync-instagram-data.js'
 import syncSpotifyDataJob from './jobs/sync-spotify-data.js'
 import syncSteamDataJob from './jobs/sync-steam-data.js'
 import syncFlickrDataJob from './jobs/sync-flickr-data.js'
-import rateLimiter from './middleware/rate-limiter.js'
+import { rateLimit } from 'express-rate-limit'
+
+const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
+
+function createRateLimiter(windowMs: number, max: number) {
+  return rateLimit({
+    windowMs,
+    limit: max,
+    message: rateLimitMessage,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+}
 
 // Define parameters for v2
 const storageFirestoreDatabaseUrl = defineString(
@@ -318,7 +330,7 @@ const syncHandlersByProvider: Record<string, () => Promise<unknown>> = {
 expressApp.get(
   '/api/widgets/sync/:provider',
   cors(corsOptions),
-  rateLimiter(15 * 60 * 1000, 10),
+  createRateLimiter(15 * 60 * 1000, 10),
   authenticateUser,
   async (req, res) => {
     const provider = req.params.provider as string
@@ -376,7 +388,7 @@ expressApp.get('/api/widgets/:provider', cors(corsOptions), async (req, res) => 
 expressApp.get(
   '/api/user/profile',
   cors(corsOptions),
-  rateLimiter(15 * 60 * 1000, 50),
+  createRateLimiter(15 * 60 * 1000, 50),
   authenticateUser,
   async (req, res) => {
     if (!req.user) return
@@ -402,7 +414,7 @@ expressApp.get(
 expressApp.delete(
   '/api/user/account',
   cors(corsOptions),
-  rateLimiter(15 * 60 * 1000, 5),
+  createRateLimiter(15 * 60 * 1000, 5),
   authenticateUser,
   async (req, res) => {
     if (!req.user) return
@@ -425,27 +437,29 @@ expressApp.delete(
   }
 )
 
+/** Returns session auth error message or null if header is valid. Exported for tests. */
+export function getSessionAuthError(authHeader: string | undefined): string | null {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return 'No valid authorization token provided'
+  }
+  const token = authHeader.split('Bearer ')[1]?.trim() || ''
+  if (!token) return 'No token'
+  return null
+}
+
 expressApp.post(
   '/api/auth/session',
   cors(corsOptions),
-  rateLimiter(15 * 60 * 1000, 20),
+  createRateLimiter(15 * 60 * 1000, 20),
   async (req, res) => {
     try {
-      const authHeader = req.headers.authorization
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        res.status(401).json({
-          ok: false,
-          error: 'No valid authorization token provided',
-        })
+      const authError = getSessionAuthError(req.headers.authorization)
+      if (authError) {
+        res.status(401).json({ ok: false, error: authError })
         return
       }
 
-      const token = authHeader.split('Bearer ')[1]
-      if (!token) {
-        res.status(401).json({ ok: false, error: 'No token' })
-        return
-      }
-
+      const token = (req.headers.authorization as string).split('Bearer ')[1]!.trim()
       const decodedToken = await admin.auth().verifyIdToken(token)
 
       if (!isAllowedEmail(decodedToken.email)) {
@@ -501,7 +515,7 @@ expressApp.get('/api/firebase-config', cors(corsOptions), (_req, res) => {
 expressApp.post(
   '/api/auth/logout',
   cors(corsOptions),
-  rateLimiter(15 * 60 * 1000, 30),
+  createRateLimiter(15 * 60 * 1000, 30),
   authenticateUser,
   async (req, res) => {
     if (!req.user) return
