@@ -425,64 +425,69 @@ expressApp.delete(
   }
 )
 
-expressApp.post('/api/auth/session', cors(corsOptions), async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({
-        ok: false,
-        error: 'No valid authorization token provided',
+expressApp.post(
+  '/api/auth/session',
+  cors(corsOptions),
+  rateLimiter(15 * 60 * 1000, 20),
+  async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        res.status(401).json({
+          ok: false,
+          error: 'No valid authorization token provided',
+        })
+        return
+      }
+
+      const token = authHeader.split('Bearer ')[1]
+      if (!token) {
+        res.status(401).json({ ok: false, error: 'No token' })
+        return
+      }
+
+      const decodedToken = await admin.auth().verifyIdToken(token)
+
+      if (!isAllowedEmail(decodedToken.email)) {
+        res.status(403).json({
+          ok: false,
+          error:
+            'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
+        })
+        return
+      }
+
+      logger.info('Creating session cookie for user', {
+        uid: decodedToken.uid,
+        email: decodedToken.email,
       })
-      return
-    }
 
-    const token = authHeader.split('Bearer ')[1]
-    if (!token) {
-      res.status(401).json({ ok: false, error: 'No token' })
-      return
-    }
+      const expiresIn = 60 * 60 * 24 * 5 * 1000
+      const sessionCookie = await admin.auth().createSessionCookie(token, { expiresIn })
 
-    const decodedToken = await admin.auth().verifyIdToken(token)
+      const options = {
+        maxAge: expiresIn,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as 'strict' | 'lax',
+        path: '/',
+      }
 
-    if (!isAllowedEmail(decodedToken.email)) {
-      res.status(403).json({
-        ok: false,
-        error:
-          'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
+      res.cookie('session', sessionCookie, options)
+
+      res.status(200).send({
+        ok: true,
+        message: 'Session cookie created successfully',
       })
-      return
+    } catch (err) {
+      logger.error('Error creating session cookie:', err)
+      res.status(500).send({
+        ok: false,
+        error: 'Failed to create session cookie',
+      })
     }
-
-    logger.info('Creating session cookie for user', {
-      uid: decodedToken.uid,
-      email: decodedToken.email,
-    })
-
-    const expiresIn = 60 * 60 * 24 * 5 * 1000
-    const sessionCookie = await admin.auth().createSessionCookie(token, { expiresIn })
-
-    const options = {
-      maxAge: expiresIn,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as 'strict' | 'lax',
-      path: '/',
-    }
-
-    res.cookie('session', sessionCookie, options)
-
-    res.status(200).send({
-      ok: true,
-      message: 'Session cookie created successfully',
-    })
-  } catch (err) {
-    logger.error('Error creating session cookie:', err)
-    res.status(500).send({
-      ok: false,
-      error: 'Failed to create session cookie',
-    })
   }
-})
+)
 
 expressApp.get('/api/firebase-config', cors(corsOptions), (_req, res) => {
   const config = {
@@ -496,6 +501,7 @@ expressApp.get('/api/firebase-config', cors(corsOptions), (_req, res) => {
 expressApp.post(
   '/api/auth/logout',
   cors(corsOptions),
+  rateLimiter(15 * 60 * 1000, 30),
   authenticateUser,
   async (req, res) => {
     if (!req.user) return
