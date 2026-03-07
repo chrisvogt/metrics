@@ -15,6 +15,7 @@ Package-specific changes:
 
 ### Changed
 
+- **Dependency updates** – Functions: axios, express-rate-limit 8.x, firebase, firebase-admin, firebase-functions, eslint, globals; @types/node kept at ^24 for Node 24. Hosting: react-router-dom, three 0.183.x (Clock → Timer in FloatingLines). See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Functions source layout** – Source previously under `functions/lib/` is now split by role into `config/`, `widgets/`, `utils/`, and `helpers/`. The `functions/lib/` directory is TypeScript build output only and is fully gitignored. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 
 ### Fixed

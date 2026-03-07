@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **lib/** – Now contains only `tsc` output; added to `.gitignore`. Run `pnpm run build` before deploy.
   - Imports updated across `index`, `api/`, `jobs/`, `transformers/`, and tests. README and ENVIRONMENT_SETUP.md now reference `config/exported-config.ts`.
 - **Dependency upgrades** – Bumped to latest majors: ESLint 10, Vitest 4, dotenv 17, globals 17, requestretry 8. Adjusted for ESLint 10 (preserve-caught-error, no-unassigned-vars), Vitest 4 constructor mocks (use `function` not arrow in mocks), and sync-spotify-data `uploadResult` scope.
+- **Dependency updates** – axios 1.13.6, express-rate-limit 8.3.0 (IPv6 subnet grouping; no API changes), firebase 12.10.0, firebase-admin 13.7.0, firebase-functions 7.1.0, eslint 10.0.3, globals 17.4.0. @types/node kept at ^24 for Node 24.
 - **Dependency cleanup** – Replaced deprecated packages: `lodash.get` → `lodash/get` (same API); Spotify token refresh now uses `got` instead of `request-promise` (and removed direct `request` / `request-promise` deps). No behavior change.
 
 ### Fixed
