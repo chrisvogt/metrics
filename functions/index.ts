@@ -143,10 +143,10 @@ export const handleUserCreation = beforeUserCreated(
       return
     }
     const result = await createUserJob(user)
-    if (result.result === 'SUCCESS') {
-      logger.info('User creation trigger completed successfully', { uid: user.uid })
-    } else {
+    if (result.result !== 'SUCCESS') {
       logger.error('User creation trigger failed', { uid: user.uid, error: result.error })
+    } else {
+      logger.info('User creation trigger completed successfully', { uid: user.uid })
     }
   }
 )

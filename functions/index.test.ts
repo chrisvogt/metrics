@@ -844,6 +844,46 @@ describe('index.js', () => {
         expect(response.body.error).toBe('Invalid or expired token')
         logSpy.mockRestore()
       })
+
+      it('should return 401 with Invalid or expired JWT token when Bearer token verification fails', async () => {
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: vi.fn().mockRejectedValue(new Error('Invalid token')),
+        }))
+
+        const response = await request(app)
+          .get('/api/user/profile')
+          .set('Authorization', 'Bearer invalid-token')
+          .expect(401)
+
+        expect(response.body.ok).toBe(false)
+        expect(response.body.error).toBe('Invalid or expired JWT token')
+      })
+
+      it('should return 403 when Bearer token has disallowed email domain in production', async () => {
+        const prevEnv = process.env.NODE_ENV
+        process.env.NODE_ENV = 'production'
+        try {
+          const admin = await import('firebase-admin')
+          admin.default.auth = vi.fn(() => ({
+            verifyIdToken: vi.fn().mockResolvedValue({
+              uid: 'test-uid',
+              email: 'test@example.com',
+              email_verified: true,
+            }),
+          }))
+
+          const response = await request(app)
+            .get('/api/user/profile')
+            .set('Authorization', 'Bearer valid-jwt-token')
+            .expect(403)
+
+          expect(response.body.ok).toBe(false)
+          expect(response.body.error).toContain('Access denied')
+        } finally {
+          process.env.NODE_ENV = prevEnv
+        }
+      })
     })
 
     describe('DELETE /api/user/account', () => {
@@ -1001,6 +1041,46 @@ describe('index.js', () => {
       const { syncFlickrData } = await import('./index.js')
       expect(typeof syncFlickrData).toBe('function')
     })
+
+    it('should run syncGoodreadsData handler', async () => {
+      const { syncGoodreadsData } = await import('./index.js')
+      const { default: syncGoodreadsDataJob } = await import('./jobs/sync-goodreads-data.js')
+      vi.mocked(syncGoodreadsDataJob).mockResolvedValueOnce(undefined)
+      await syncGoodreadsData()
+      expect(syncGoodreadsDataJob).toHaveBeenCalled()
+    })
+
+    it('should run syncSpotifyData handler', async () => {
+      const { syncSpotifyData } = await import('./index.js')
+      const { default: syncSpotifyDataJob } = await import('./jobs/sync-spotify-data.js')
+      vi.mocked(syncSpotifyDataJob).mockResolvedValueOnce(undefined)
+      await syncSpotifyData()
+      expect(syncSpotifyDataJob).toHaveBeenCalled()
+    })
+
+    it('should run syncSteamData handler', async () => {
+      const { syncSteamData } = await import('./index.js')
+      const { default: syncSteamDataJob } = await import('./jobs/sync-steam-data.js')
+      vi.mocked(syncSteamDataJob).mockResolvedValueOnce(undefined)
+      await syncSteamData()
+      expect(syncSteamDataJob).toHaveBeenCalled()
+    })
+
+    it('should run syncInstagramData handler', async () => {
+      const { syncInstagramData } = await import('./index.js')
+      const { default: syncInstagramDataJob } = await import('./jobs/sync-instagram-data.js')
+      vi.mocked(syncInstagramDataJob).mockResolvedValueOnce(undefined)
+      await syncInstagramData()
+      expect(syncInstagramDataJob).toHaveBeenCalled()
+    })
+
+    it('should run syncFlickrData handler', async () => {
+      const { syncFlickrData } = await import('./index.js')
+      const { default: syncFlickrDataJob } = await import('./jobs/sync-flickr-data.js')
+      vi.mocked(syncFlickrDataJob).mockResolvedValueOnce(undefined)
+      await syncFlickrData()
+      expect(syncFlickrDataJob).toHaveBeenCalled()
+    })
   })
 
   describe('Auth Triggers', () => {
@@ -1084,6 +1164,32 @@ describe('index.js', () => {
       expect(createUserJob).toHaveBeenCalledWith({ uid: 'u1', email: 'e@test.com', displayName: 'Test' })
       expect(logSpy).toHaveBeenCalledWith('User creation trigger failed', { uid: 'u1', error: 'DB error' })
       logSpy.mockRestore()
+    })
+
+    it('should run failure branch when createUserJob returns non-SUCCESS', async () => {
+      vi.resetModules()
+      const { default: createUserJob } = await import('./jobs/create-user.js')
+      vi.mocked(createUserJob).mockResolvedValue({ result: 'FAILURE', error: 'Database down' })
+      const { handleUserCreation } = await import('./index.js')
+
+      await handleUserCreation({
+        data: { uid: 'uid-fail', email: 'fail@test.com', displayName: 'Fail' },
+      })
+
+      expect(createUserJob).toHaveBeenCalledWith({ uid: 'uid-fail', email: 'fail@test.com', displayName: 'Fail' })
+    })
+
+    it('should run success branch when createUserJob returns SUCCESS', async () => {
+      vi.resetModules()
+      const { default: createUserJob } = await import('./jobs/create-user.js')
+      vi.mocked(createUserJob).mockResolvedValue({ result: 'SUCCESS' })
+      const { handleUserCreation } = await import('./index.js')
+
+      await handleUserCreation({
+        data: { uid: 'uid-ok', email: 'ok@chrisvogt.me', displayName: 'Ok' },
+      })
+
+      expect(createUserJob).toHaveBeenCalledWith({ uid: 'uid-ok', email: 'ok@chrisvogt.me', displayName: 'Ok' })
     })
   })
 
