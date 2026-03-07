@@ -1,3 +1,6 @@
 packages:
-  - "hosting"
-  - "functions"
+  - hosting
+  - functions
+
+onlyBuiltDependencies:
+  - '@firebase/util'

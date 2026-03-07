@@ -2,7 +2,7 @@
   "name": "metrics",
   "private": true,
   "description": "Personal metrics – Firebase Hosting + Cloud Functions",
-  "packageManager": "pnpm@10.29.2",
+  "packageManager": "pnpm@10.30.3+sha512.c961d1e0a2d8e354ecaa5166b822516668b7f44cb5bd95122d590dd81922f606f5473b6d23ec4a5be05e7fcd18e8488d47d978bbe981872f1145d06e9a740017",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -15,8 +15,8 @@
     "deploy:functions": "firebase deploy --only functions"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0",
-    "turbo": "^2.8.9"
+    "concurrently": "^9.2.1",
+    "turbo": "^2.8.14"
   },
   "engines": {
     "node": ">=24"

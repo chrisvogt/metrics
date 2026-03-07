@@ -8,7 +8,7 @@ import {
   ShaderMaterial,
   Vector3,
   Vector2,
-  Clock,
+  Timer,
 } from 'three'
 
 import './FloatingLines.css'
@@ -387,7 +387,7 @@ export default function FloatingLines({
     const mesh = new Mesh(geometry, material)
     scene.add(mesh)
 
-    const clock = new Clock()
+    const timer = new Timer()
 
     const setSize = () => {
       const el = containerRef.current
@@ -438,8 +438,9 @@ export default function FloatingLines({
     }
 
     let raf = 0
-    const renderLoop = () => {
-      uniforms.iTime.value = clock.getElapsedTime()
+    const renderLoop = (time: number) => {
+      timer.update(time)
+      uniforms.iTime.value = timer.getElapsed()
 
       if (interactive) {
         currentMouseRef.current.lerp(targetMouseRef.current, mouseDamping)
