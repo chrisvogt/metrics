@@ -13,6 +13,10 @@ Package-specific changes:
 
 ## [Unreleased]
 
+### Fixed
+
+- **Auth routes (functions)** – `POST /api/auth/session` and `POST /api/auth/logout` are now rate-limited so all authorization routes satisfy CodeQL; session allows 20 req/15 min, logout 30 req/15 min.
+
 ## [Hosting 0.3.0] - 2026-03-06
 
 ### Added
