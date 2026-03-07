@@ -66,8 +66,12 @@ export function AuthSection() {
 
   return (
     <section className={styles.section}>
+      <a href="https://www.chrisvogt.me" className={styles.siteLink} rel="noopener noreferrer">
+        ← Part of chrisvogt.me
+      </a>
       <div className={styles.card}>
         <h2 className={styles.heading}>Sign in</h2>
+        <p className={styles.adminNote}>Personal admin for metrics.chrisvogt.me / chrisvogt.me only.</p>
         <p className={styles.subheading}>Sign in to access the API testing interface.</p>
 
         <div className={styles.tabs}>

@@ -306,7 +306,6 @@ const corsAllowList: RegExp[] = [
   /^https?:\/\/([a-z0-9-]+--)?chrisvogt\.netlify\.app$/,
   /https?:\/\/([a-z0-9]+[.])*chronogrove[.]com$/,
   /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
-  /^https?:\/\/8ms\.4a9\.mytemp\.website$/,
 ]
 
 if (process.env.NODE_ENV !== 'production') {

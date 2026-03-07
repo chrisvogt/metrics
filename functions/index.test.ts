@@ -498,17 +498,6 @@ describe('index.js', () => {
       expect(response.body.ok).toBe(true)
     })
 
-    it('should allow requests from 8ms.4a9.mytemp.website', async () => {
-      const { app: expressApp } = await import('./index.js')
-      
-      const response = await request(expressApp)
-        .get('/api/widgets/spotify')
-        .set('Origin', 'https://8ms.4a9.mytemp.website')
-        .expect(200)
-
-      expect(response.body.ok).toBe(true)
-    })
-
     it('should allow localhost requests in development mode', async () => {
       // Set NODE_ENV to development to test localhost CORS
       process.env.NODE_ENV = 'development'
