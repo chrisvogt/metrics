@@ -24,6 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
 
+## [0.22.2] - 2026-03-07
+
+### Security
+
+- **CORS** – Removed temporary domain `8ms.4a9.mytemp.website` from the production CORS allowlist. Unit test for that origin removed.
+
+### Changed
+
+- **Hosting (sign-in page)** – Clarified that the app is a personal admin, not a general login service:
+  - Added line under “Sign in”: “Personal admin for metrics.chrisvogt.me / chrisvogt.me only.”
+  - Added “← Part of chrisvogt.me” link to chrisvogt.me above the sign-in card.
+  - Added meta description and Open Graph tags in `index.html`: “Personal Metrics API admin for chrisvogt.me. Not a general login service.”
+
 ## [0.22.1] - 2026-03-06
 
 ### Fixed
