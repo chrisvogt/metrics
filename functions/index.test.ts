@@ -100,7 +100,7 @@ vi.mock('express-rate-limit', () => ({
 }))
 
 // Mock the widget content module
-vi.mock('./lib/get-widget-content.js', () => ({
+vi.mock('./widgets/get-widget-content.js', () => ({
   getWidgetContent: vi.fn(() => Promise.resolve({ mock: 'widget-content' })),
   validWidgetIds: ['discogs', 'github', 'goodreads', 'instagram', 'spotify', 'steam', 'flickr']
 }))
@@ -165,7 +165,7 @@ describe('index.js', () => {
       })
 
       it('should handle errors from getWidgetContent', async () => {
-        const { getWidgetContent } = await import('./lib/get-widget-content.js')
+        const { getWidgetContent } = await import('./widgets/get-widget-content.js')
         vi.mocked(getWidgetContent).mockRejectedValueOnce(new Error('Widget content error'))
 
         const response = await request(app)
@@ -179,7 +179,7 @@ describe('index.js', () => {
       })
 
       it('should handle getWidgetContent rejecting with plain object (buildFailureResponse .message)', async () => {
-        const { getWidgetContent } = await import('./lib/get-widget-content.js')
+        const { getWidgetContent } = await import('./widgets/get-widget-content.js')
         vi.mocked(getWidgetContent).mockRejectedValueOnce({ message: 'Custom widget error' })
 
         const response = await request(app)
@@ -193,7 +193,7 @@ describe('index.js', () => {
       })
 
       it('should handle getWidgetContent rejecting with value that has no .message (buildFailureResponse String fallback)', async () => {
-        const { getWidgetContent } = await import('./lib/get-widget-content.js')
+        const { getWidgetContent } = await import('./widgets/get-widget-content.js')
         vi.mocked(getWidgetContent).mockRejectedValueOnce({ code: 'UNKNOWN' })
 
         const response = await request(app)

@@ -1,7 +1,7 @@
 import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
 
-import { DATABASE_COLLECTION_USERS } from '../lib/constants.js'
+import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
 
 interface UserRecord {
   uid: string

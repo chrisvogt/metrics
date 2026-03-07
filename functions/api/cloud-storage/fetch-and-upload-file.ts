@@ -1,6 +1,6 @@
 import admin from 'firebase-admin'
 import https from 'https'
-import { CLOUD_STORAGE_IMAGES_BUCKET } from '../../lib/constants.js'
+import { CLOUD_STORAGE_IMAGES_BUCKET } from '../../config/constants.js'
 
 const fetchAndUploadFile = ({ destinationPath, mediaURL, id }) => {
   return new Promise((resolve, reject) => {

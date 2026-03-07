@@ -2,8 +2,8 @@ import { logger } from 'firebase-functions'
 import got from 'got'
 import xml2js from 'xml2js'
 
-import getReview from '../../lib/get-review.js'
-import getUserStatus from '../../lib/get-user-status.js'
+import getReview from '../../helpers/get-review.js'
+import getUserStatus from '../../helpers/get-user-status.js'
 
 const transformUpdate = (update) => {
   if (update.type === 'userstatus') {

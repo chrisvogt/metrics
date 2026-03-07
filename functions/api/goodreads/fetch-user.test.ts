@@ -26,11 +26,11 @@ vi.mock('xml2js', () => {
   }
 })
 
-vi.mock('../../lib/get-review.js', () => ({
+vi.mock('../../helpers/get-review.js', () => ({
   default: vi.fn()
 }))
 
-vi.mock('../../lib/get-user-status.js', () => ({
+vi.mock('../../helpers/get-user-status.js', () => ({
   default: vi.fn()
 }))
 
@@ -52,8 +52,8 @@ describe('fetchUser', () => {
 
     // Get mock functions
     mockGot = (await import('got')).default
-    mockGetReview = (await import('../../lib/get-review.js')).default
-    mockGetUserStatus = (await import('../../lib/get-user-status.js')).default
+    mockGetReview = (await import('../../helpers/get-review.js')).default
+    mockGetUserStatus = (await import('../../helpers/get-user-status.js')).default
     mockLogger = (await import('firebase-functions')).logger
   })
 
