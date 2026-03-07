@@ -7,14 +7,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Package-specific changes:
 
 - **Functions** – [functions/CHANGELOG.md](functions/CHANGELOG.md)
+- **Hosting** – version in `hosting/package.json`; release notes below.
 
 ---
 
 ## [Unreleased]
 
+## [Hosting 0.3.0] - 2026-03-06
+
+### Added
+
+- **dev:full** – `pnpm run dev:full` starts Functions + Auth emulators and the Vite dev server in one command.
+
 ### Fixed
 
 - **API testing (hosting)** – Bypass browser cache for widget, session, and sync test requests so developers always see fresh responses when testing endpoints (no need to disable cache in DevTools).
+- **Vite proxy** – When the backend is not running, `/api` requests now return 503 with a JSON message instead of connection errors.
 
 ## [1.0.0] - 2025-02-14
 
