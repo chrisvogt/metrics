@@ -13,6 +13,10 @@ Package-specific changes:
 
 ## [Unreleased]
 
+### Changed
+
+- **Functions source layout** – Source previously under `functions/lib/` is now split by role into `config/`, `widgets/`, `utils/`, and `helpers/`. The `functions/lib/` directory is TypeScript build output only and is fully gitignored. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
+
 ### Fixed
 
 - **Auth routes (functions)** – `POST /api/auth/session` and `POST /api/auth/logout` are now rate-limited so all authorization routes satisfy CodeQL; session allows 20 req/15 min, logout 30 req/15 min.

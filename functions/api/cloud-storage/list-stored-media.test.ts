@@ -4,7 +4,7 @@ vi.mock('firebase-admin', () => ({
   default: { storage: vi.fn() },
   storage: vi.fn()
 }))
-vi.mock('../../lib/constants.js', () => ({
+vi.mock('../../config/constants.js', () => ({
   CLOUD_STORAGE_IMAGES_BUCKET: 'test-bucket'
 }))
 

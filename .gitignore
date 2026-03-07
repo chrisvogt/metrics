@@ -54,6 +54,9 @@ node_modules/
 # Hosting build output (built on deploy)
 hosting/dist
 
+# Functions TypeScript build output (tsc → lib/); source lives in config/, widgets/, utils/, helpers/
+functions/lib/
+
 # Optional npm cache directory
 .npm
 
