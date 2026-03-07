@@ -83,7 +83,7 @@ The Firebase client config (API key, auth domain, project ID) is served from the
 Set `CLIENT_API_KEY`, `CLIENT_AUTH_DOMAIN`, and `CLIENT_PROJECT_ID` in your `functions/.env` file.
 
 #### Option 2: Production (Secret Manager)
-Production config lives in **Google Cloud Secret Manager** as the secret **`FUNCTIONS_CONFIG_EXPORT`** (one JSON object with all keys). To create or update it: run `firebase functions:config:export`, or in [Secret Manager](https://console.cloud.google.com/security/secret-manager) add a new version of that secret with JSON matching the shape in `functions/lib/exported-config.js` (e.g. `auth.client_api_key`, `github.access_token`, `spotify.client_id`, etc.).
+Production config lives in **Google Cloud Secret Manager** as the secret **`FUNCTIONS_CONFIG_EXPORT`** (one JSON object with all keys). To create or update it: run `firebase functions:config:export`, or in [Secret Manager](https://console.cloud.google.com/security/secret-manager) add a new version of that secret with JSON matching the shape in `functions/config/exported-config.ts` (see `CONFIG_PATH_TO_ENV`; e.g. `auth.client_api_key`, `github.access_token`, `spotify.client_id`, etc.).
 
 ## Monorepo
 
@@ -197,10 +197,13 @@ The following endpoints are available:
 See [hosting/README.md](hosting/README.md) for hosting-only scripts and local dev details.
 
 ### Backend (functions)
-- **Firebase Functions**: Serverless backend with Express.js
+- **Firebase Functions**: Serverless backend with Express.js (written in **TypeScript**)
 - **Firebase Auth**: User authentication and session management
 - **Firestore**: Data storage and caching
 - **External APIs**: Integration with various platform APIs
+
+#### TypeScript
+The `functions/` package is TypeScript. Source lives in `functions/*.ts` and role-based dirs: `config/`, `widgets/`, `utils/`, `helpers/` (plus `api/`, `jobs/`, `transformers/`, etc.). `pnpm run build` (from repo root or from `functions/`) compiles with `tsc` and outputs only to `functions/lib/`; `lib/` is gitignored. Firebase deploys from `lib/`. Run `pnpm run build` before `pnpm run deploy:functions` if you’ve changed function code. Tests (`pnpm run test`) and lint (`pnpm run lint`) run against the TypeScript source.
 
 ### Security Features
 - **CORS Protection**: Configurable cross-origin resource sharing

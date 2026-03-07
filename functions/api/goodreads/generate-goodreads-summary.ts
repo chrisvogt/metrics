@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { logger } from 'firebase-functions'
-import extractJsonFromGeminiResponse from '../../lib/extract-json-from-gemini-response.js'
+import extractJsonFromGeminiResponse from '../../utils/extract-json-from-gemini-response.js'
 
 /**
  * Generate AI summary of Goodreads reading data using Gemini

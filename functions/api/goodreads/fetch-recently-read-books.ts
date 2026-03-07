@@ -11,7 +11,7 @@ import listStoredMedia from '../cloud-storage/list-stored-media.js'
 import {
   CLOUD_STORAGE_IMAGES_BUCKET,
   IMAGE_CDN_BASE_URL
-} from '../../lib/constants.js'
+} from '../../config/constants.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 

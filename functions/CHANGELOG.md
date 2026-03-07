@@ -7,14 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Source layout (config / widgets / utils / helpers)** – Source that lived under `lib/` has been moved into role-based directories so that `lib/` is build output only and can be fully gitignored:
+  - **config/** – `constants.ts`, `exported-config.ts` (and tests)
+  - **widgets/** – `get-widget-content.ts`, all provider-specific widget getters, `queries/github-widget-content.gql`, and widget tests
+  - **utils/** – `extract-json-from-gemini-response.ts` (and test)
+  - **helpers/** – `get-user-status.ts`, `get-review.ts` (and get-user-status test)
+  - **lib/** – Now contains only `tsc` output; added to `.gitignore`. Run `pnpm run build` before deploy.
+  - Imports updated across `index`, `api/`, `jobs/`, `transformers/`, and tests. README and ENVIRONMENT_SETUP.md now reference `config/exported-config.ts`.
+- **Dependency upgrades** – Bumped to latest majors: ESLint 10, Vitest 4, dotenv 17, globals 17, requestretry 8. Adjusted for ESLint 10 (preserve-caught-error, no-unassigned-vars), Vitest 4 constructor mocks (use `function` not arrow in mocks), and sync-spotify-data `uploadResult` scope.
+- **Dependency cleanup** – Replaced deprecated packages: `lodash.get` → `lodash/get` (same API); Spotify token refresh now uses `got` instead of `request-promise` (and removed direct `request` / `request-promise` deps). No behavior change.
+
 ### Fixed
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
-
-### Changed
-
-- **Dependency upgrades** – Bumped to latest majors: ESLint 10, Vitest 4, dotenv 17, globals 17, requestretry 8. Adjusted for ESLint 10 (preserve-caught-error, no-unassigned-vars), Vitest 4 constructor mocks (use `function` not arrow in mocks), and sync-spotify-data `uploadResult` scope.
-- **Dependency cleanup** – Replaced deprecated packages: `lodash.get` → `lodash/get` (same API); Spotify token refresh now uses `got` instead of `request-promise` (and removed direct `request` / `request-promise` deps). No behavior change.
 
 ## [0.22.1] - 2026-03-06
 
