@@ -178,6 +178,20 @@ describe('index.js', () => {
         })
       })
 
+      it('should handle getWidgetContent rejecting with plain object (buildFailureResponse .message)', async () => {
+        const { getWidgetContent } = await import('./lib/get-widget-content.js')
+        vi.mocked(getWidgetContent).mockRejectedValueOnce({ message: 'Custom widget error' })
+
+        const response = await request(app)
+          .get('/api/widgets/spotify')
+          .expect(500)
+
+        expect(response.body).toEqual({
+          ok: false,
+          error: 'Custom widget error'
+        })
+      })
+
       it('should use chronogrove userId for api.chronogrove.com hostname', async () => {
         const response = await request(app)
           .get('/api/widgets/spotify')
@@ -309,6 +323,21 @@ describe('index.js', () => {
           .expect(200)
 
         expect(response.body.projectId).toBe('fallback-project')
+      })
+
+      it('should skip config load when __FUNCTIONS_CONFIG_APPLIED__ is already set', async () => {
+        process.env.__FUNCTIONS_CONFIG_APPLIED__ = '1'
+        process.env.CLIENT_API_KEY = 'cached-key'
+        process.env.CLIENT_AUTH_DOMAIN = 'cached.firebaseapp.com'
+        process.env.CLIENT_PROJECT_ID = 'cached-project'
+        functionsConfigExportValueMock.mockClear()
+
+        const response = await request(app)
+          .get('/api/firebase-config')
+          .expect(200)
+
+        expect(response.body.apiKey).toBe('cached-key')
+        expect(functionsConfigExportValueMock).not.toHaveBeenCalled()
       })
     })
 
@@ -570,6 +599,31 @@ describe('index.js', () => {
 
           expect(response.body.ok).toBe(false)
           expect(response.body.error).toBe('Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.')
+        } finally {
+          process.env.NODE_ENV = prevEnv
+        }
+      })
+
+      it('should reject request when token has no email (isAllowedEmail falsy)', async () => {
+        const prevEnv = process.env.NODE_ENV
+        process.env.NODE_ENV = 'production'
+        try {
+          const admin = await import('firebase-admin')
+          admin.default.auth = vi.fn(() => ({
+            verifyIdToken: vi.fn().mockResolvedValue({
+              uid: 'test-uid',
+              email: null,
+              email_verified: false
+            })
+          }))
+
+          const response = await request(app)
+            .post('/api/auth/session')
+            .set('Authorization', 'Bearer valid-jwt-token')
+            .expect(403)
+
+          expect(response.body.ok).toBe(false)
+          expect(response.body.error).toContain('Access denied')
         } finally {
           process.env.NODE_ENV = prevEnv
         }
