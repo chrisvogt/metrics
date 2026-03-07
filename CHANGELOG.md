@@ -12,6 +12,10 @@ Package-specific changes:
 
 ## [Unreleased]
 
+### Fixed
+
+- **API testing (hosting)** – Bypass browser cache for widget, session, and sync test requests so developers always see fresh responses when testing endpoints (no need to disable cache in DevTools).
+
 ## [1.0.0] - 2025-02-14
 
 ### Added

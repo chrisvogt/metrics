@@ -6,6 +6,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:full": "concurrently -n emulators,vite -c blue,green \"firebase emulators:start\" \"pnpm run dev\"",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
@@ -14,6 +15,7 @@
     "deploy:functions": "firebase deploy --only functions"
   },
   "devDependencies": {
+    "concurrently": "^9.1.0",
     "turbo": "^2.8.9"
   },
   "engines": {

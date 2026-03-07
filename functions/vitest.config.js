@@ -13,7 +13,7 @@ export default defineConfig({
         '*.config.js'
       ]
     },
-    include: ['**/*.test.js', '**/*.spec.js'],
+    include: ['**/*.test.ts', '**/*.test.js', '**/*.spec.ts', '**/*.spec.js'],
     exclude: [
       'node_modules/**',
       'coverage/**',

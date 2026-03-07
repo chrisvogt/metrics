@@ -1,0 +1,9 @@
+import path from 'path';
+import { CLOUD_STORAGE_INSTAGRAM_PATH } from '../lib/constants.js';
+const toIGDestinationPath = (mediaURL, id) => {
+    const fileExtension = path.extname(new URL(mediaURL).pathname);
+    const destinationPath = `${CLOUD_STORAGE_INSTAGRAM_PATH}${id}${fileExtension}`;
+    return destinationPath;
+};
+export default toIGDestinationPath;
+//# sourceMappingURL=to-ig-destination-path.js.map
