@@ -51,7 +51,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: ${{ always() }}
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./functions/coverage/lcov.info
           flags: unittests
@@ -59,10 +59,11 @@ jobs:
 
       - name: Upload test results to Codecov
         if: ${{ always() && steps.junit.outputs.file != '' }}
-        uses: codecov/test-results-action@v1
+        uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
           files: ${{ steps.junit.outputs.file }}
+          report_type: test_results
 
       - name: Fail if tests failed
         if: ${{ steps.tests.outcome == 'failure' }}
