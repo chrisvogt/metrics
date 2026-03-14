@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   build_and_preview:
+    # Disabled while the Firebase account/project is unavailable for preview deployments.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
