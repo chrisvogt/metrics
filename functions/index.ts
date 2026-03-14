@@ -17,6 +17,7 @@ import { defineJsonSecret, defineString } from 'firebase-functions/params'
 import { existsSync, readFileSync } from 'fs'
 
 import { applyExportedConfigToEnv } from './config/exported-config.js'
+import { FirestoreStorageAdapter } from './adapters/storage/firestore-storage.js'
 import { getWidgetContent, validWidgetIds } from './widgets/get-widget-content.js'
 import createUserJob from './jobs/create-user.js'
 import deleteUserJob from './jobs/delete-user.js'
@@ -102,6 +103,8 @@ admin.firestore().settings({
   ignoreUndefinedProperties: true,
 })
 
+const storage = new FirestoreStorageAdapter()
+
 const scheduleOpts = {
   schedule: 'every day 02:00',
   region: 'us-central1',
@@ -130,7 +133,7 @@ export const syncInstagramData = onSchedule(scheduleOpts, async () => {
 
 export const syncFlickrData = onSchedule(scheduleOpts, async () => {
   await ensureExportedConfigApplied()
-  await syncFlickrDataJob()
+  await syncFlickrDataJob(storage)
 })
 
 export const handleUserCreation = beforeUserCreated(
@@ -323,14 +326,13 @@ const syncHandlersByProvider: Record<string, () => Promise<unknown>> = {
   instagram: syncInstagramDataJob,
   spotify: syncSpotifyDataJob,
   steam: syncSteamDataJob,
-  flickr: syncFlickrDataJob,
+  flickr: () => syncFlickrDataJob(storage),
 }
 
 expressApp.get(
   '/api/widgets/sync/:provider',
   cors(corsOptions),
   createRateLimiter(15 * 60 * 1000, 10),
-  authenticateUser,
   async (req, res) => {
     const provider = req.params.provider as string
     const handler = provider ? syncHandlersByProvider[provider] : undefined

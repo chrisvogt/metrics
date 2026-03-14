@@ -227,17 +227,6 @@ describe('index.js', () => {
 
     describe('GET /api/widgets/sync/:provider', () => {
       it('should sync data for valid provider', async () => {
-        // Mock successful authentication
-        const admin = await import('firebase-admin')
-        admin.default.auth = vi.fn(() => ({
-          verifyIdToken: vi.fn().mockResolvedValue({
-            uid: 'test-uid',
-            email: 'test@chrisvogt.me',
-            email_verified: true
-          })
-        }))
-
-        // Mock the sync job to return a proper response
         const { default: syncSpotifyDataJob } = await import('./jobs/sync-spotify-data.js')
         vi.mocked(syncSpotifyDataJob).mockResolvedValueOnce({
           result: 'SUCCESS',
@@ -248,7 +237,6 @@ describe('index.js', () => {
 
         const response = await request(app)
           .get('/api/widgets/sync/spotify')
-          .set('Authorization', 'Bearer valid-jwt-token')
           .expect(200)
 
         expect(response.body.result).toBe('SUCCESS')
@@ -257,48 +245,22 @@ describe('index.js', () => {
       })
 
       it('should return 400 for invalid provider', async () => {
-        // Mock successful authentication
-        const admin = await import('firebase-admin')
-        admin.default.auth = vi.fn(() => ({
-          verifyIdToken: vi.fn().mockResolvedValue({
-            uid: 'test-uid',
-            email: 'test@chrisvogt.me',
-            email_verified: true
-          })
-        }))
-
         const response = await request(app)
           .get('/api/widgets/sync/invalid-provider')
-          .set('Authorization', 'Bearer valid-jwt-token')
           .expect(400)
 
         expect(response.text).toBe('Unrecognized or unsupported provider.')
       })
 
       it('should handle sync errors gracefully', async () => {
-        // Mock successful authentication
-        const admin = await import('firebase-admin')
-        admin.default.auth = vi.fn(() => ({
-          verifyIdToken: vi.fn().mockResolvedValue({
-            uid: 'test-uid',
-            email: 'test@chrisvogt.me',
-            email_verified: true
-          })
-        }))
-
-        // Mock sync handler to throw an error
         const { default: syncSpotifyDataJob } = await import('./jobs/sync-spotify-data.js')
         vi.mocked(syncSpotifyDataJob).mockRejectedValueOnce(new Error('Sync failed'))
 
         const response = await request(app)
           .get('/api/widgets/sync/spotify')
-          .set('Authorization', 'Bearer valid-jwt-token')
           .expect(500)
 
-        // When sending Error objects via res.send(), they get serialized as empty objects
-        // The response body should contain an error property
         expect(response.body).toHaveProperty('error')
-        // Error objects don't serialize properly in Express, so just check the property exists
         expect(response.body.error).toBeDefined()
       })
     })

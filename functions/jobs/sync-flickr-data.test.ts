@@ -1,55 +1,33 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
 import syncFlickrData from './sync-flickr-data.js'
+import type { StoragePort } from '../ports/storage.js'
 
-// Mock firebase-admin
-vi.mock('firebase-admin', () => ({
-  default: {
-    firestore: vi.fn(() => ({
-      collection: vi.fn(() => ({
-        doc: vi.fn(() => ({
-          set: vi.fn()
-        }))
-      }))
-    })),
-    Timestamp: {
-      now: vi.fn(() => '2023-01-01T00:00:00Z')
-    }
-  }
-}))
-
-// Mock firebase-functions logger
 vi.mock('firebase-functions', () => ({
   logger: {
     info: vi.fn(),
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }))
 
-// Mock fetchPhotos
 vi.mock('../api/flickr/fetch-photos.js', () => ({
-  default: vi.fn()
+  default: vi.fn(),
 }))
 
-import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
 import fetchPhotos from '../api/flickr/fetch-photos.js'
 
 describe('syncFlickrData', () => {
-  let mockFirestore, mockCollection, mockDoc, mockSet
+  let storage: StoragePort
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
-    // Set environment variable
     process.env.FLICKR_USER_ID = 'testuser'
-    
-    mockSet = vi.fn()
-    mockDoc = vi.fn(() => ({ set: mockSet }))
-    mockCollection = vi.fn(() => ({ doc: mockDoc }))
-    mockFirestore = vi.fn(() => ({ collection: mockCollection }))
-    
-    admin.firestore = mockFirestore
-    admin.Timestamp.now = vi.fn(() => '2023-01-01T00:00:00Z')
+
+    storage = {
+      getDocument: vi.fn(),
+      setDocument: vi.fn().mockResolvedValue(undefined),
+    }
   })
 
   afterEach(() => {
@@ -61,105 +39,101 @@ describe('syncFlickrData', () => {
       total: 2,
       photos: [
         { id: '1', title: 'Photo 1' },
-        { id: '2', title: 'Photo 2' }
-      ]
+        { id: '2', title: 'Photo 2' },
+      ],
     }
 
-    fetchPhotos.mockResolvedValue(mockPhotosResponse)
+    vi.mocked(fetchPhotos).mockResolvedValue(mockPhotosResponse)
 
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(fetchPhotos).toHaveBeenCalled()
-    expect(admin.firestore).toHaveBeenCalled()
-    expect(mockCollection).toHaveBeenCalledWith('users/chrisvogt/flickr')
-    
-    // Check that last-response document is saved
-    expect(mockDoc).toHaveBeenCalledWith('last-response')
-    expect(mockSet).toHaveBeenCalledWith({
-      response: mockPhotosResponse,
-      fetchedAt: expect.any(Object) // Firestore Timestamp object
-    })
-    
-    // Check that widget-content document is saved
-    expect(mockDoc).toHaveBeenCalledWith('widget-content')
-    expect(mockSet).toHaveBeenCalledWith({
-      collections: {
-        photos: mockPhotosResponse.photos
-      },
-      meta: {
-        synced: expect.any(Object) // Firestore Timestamp object
-      },
-      metrics: [
-        {
-          displayName: 'Photos',
-          id: 'photos-count',
-          value: 2
-        }
-      ],
-      profile: {
-        displayName: 'testuser',
-        profileURL: 'https://www.flickr.com/photos/testuser/'
+    expect(storage.setDocument).toHaveBeenNthCalledWith(
+      1,
+      'users/chrisvogt/flickr/last-response',
+      {
+        response: mockPhotosResponse,
+        fetchedAt: expect.any(Object),
       }
-    })
-
-    expect(result).toEqual({
-      result: 'SUCCESS',
-      widgetContent: {
+    )
+    expect(storage.setDocument).toHaveBeenNthCalledWith(
+      2,
+      'users/chrisvogt/flickr/widget-content',
+      {
         collections: {
-          photos: mockPhotosResponse.photos
+          photos: mockPhotosResponse.photos,
         },
         meta: {
-          synced: expect.any(Object) // Firestore Timestamp object
+          synced: expect.any(Object),
         },
         metrics: [
           {
             displayName: 'Photos',
             id: 'photos-count',
-            value: 2
-          }
+            value: 2,
+          },
         ],
         profile: {
           displayName: 'testuser',
-          profileURL: 'https://www.flickr.com/photos/testuser/'
-        }
+          profileURL: 'https://www.flickr.com/photos/testuser/',
+        },
       }
+    )
+
+    expect(result).toEqual({
+      result: 'SUCCESS',
+      widgetContent: {
+        collections: {
+          photos: mockPhotosResponse.photos,
+        },
+        meta: {
+          synced: expect.any(Object),
+        },
+        metrics: [
+          {
+            displayName: 'Photos',
+            id: 'photos-count',
+            value: 2,
+          },
+        ],
+        profile: {
+          displayName: 'testuser',
+          profileURL: 'https://www.flickr.com/photos/testuser/',
+        },
+      },
     })
 
     expect(logger.info).toHaveBeenCalledWith('Flickr data sync completed successfully', {
       totalPhotos: 2,
-      photosFetched: 2
+      photosFetched: 2,
     })
   })
 
   it('should handle empty photos response', async () => {
-    const mockPhotosResponse = {
+    vi.mocked(fetchPhotos).mockResolvedValue({
       total: 0,
-      photos: []
-    }
+      photos: [],
+    })
 
-    fetchPhotos.mockResolvedValue(mockPhotosResponse)
-
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.metrics).toEqual([])
     expect(logger.info).toHaveBeenCalledWith('Flickr data sync completed successfully', {
       totalPhotos: 0,
-      photosFetched: 0
+      photosFetched: 0,
     })
   })
 
   it('should handle missing FLICKR_USER_ID environment variable', async () => {
     delete process.env.FLICKR_USER_ID
 
-    const mockPhotosResponse = {
+    vi.mocked(fetchPhotos).mockResolvedValue({
       total: 1,
-      photos: [{ id: '1', title: 'Photo 1' }]
-    }
+      photos: [{ id: '1', title: 'Photo 1' }],
+    })
 
-    fetchPhotos.mockResolvedValue(mockPhotosResponse)
-
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.profile.displayName).toBeUndefined()
@@ -168,9 +142,9 @@ describe('syncFlickrData', () => {
 
   it('should handle API errors gracefully', async () => {
     const apiError = new Error('Flickr API error')
-    fetchPhotos.mockRejectedValue(apiError)
+    vi.mocked(fetchPhotos).mockRejectedValue(apiError)
 
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(result.result).toBe('FAILURE')
     expect(result.error).toBe('Flickr API error')
@@ -179,9 +153,9 @@ describe('syncFlickrData', () => {
 
   it('should handle network errors gracefully', async () => {
     const networkError = new Error('Network timeout')
-    fetchPhotos.mockRejectedValue(networkError)
+    vi.mocked(fetchPhotos).mockRejectedValue(networkError)
 
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(result.result).toBe('FAILURE')
     expect(result.error).toBe('Network timeout')
@@ -189,14 +163,12 @@ describe('syncFlickrData', () => {
   })
 
   it('should handle malformed photos response', async () => {
-    const malformedResponse = {
-      total: 'invalid', // Should be number
-      photos: null // Should be array
-    }
+    vi.mocked(fetchPhotos).mockResolvedValue({
+      total: 'invalid',
+      photos: null,
+    })
 
-    fetchPhotos.mockResolvedValue(malformedResponse)
-
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.metrics).toEqual([])
@@ -204,14 +176,11 @@ describe('syncFlickrData', () => {
   })
 
   it('should handle photos response with missing total property', async () => {
-    const incompleteResponse = {
-      photos: [{ id: '1', title: 'Photo 1' }]
-      // Missing total property
-    }
+    vi.mocked(fetchPhotos).mockResolvedValue({
+      photos: [{ id: '1', title: 'Photo 1' }],
+    })
 
-    fetchPhotos.mockResolvedValue(incompleteResponse)
-
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.metrics).toEqual([])
@@ -219,14 +188,11 @@ describe('syncFlickrData', () => {
   })
 
   it('should handle photos response with missing photos property', async () => {
-    const incompleteResponse = {
-      total: 5
-      // Missing photos property
-    }
+    vi.mocked(fetchPhotos).mockResolvedValue({
+      total: 5,
+    })
 
-    fetchPhotos.mockResolvedValue(incompleteResponse)
-
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.collections.photos).toEqual([])
@@ -235,42 +201,35 @@ describe('syncFlickrData', () => {
         displayName: 'Photos',
         id: 'photos-count',
         value: 5,
-      }
+      },
     ])
   })
 
-  it('should handle Firestore save errors', async () => {
-    const mockPhotosResponse = {
+  it('should handle storage save errors', async () => {
+    vi.mocked(fetchPhotos).mockResolvedValue({
       total: 1,
-      photos: [{ id: '1', title: 'Photo 1' }]
-    }
+      photos: [{ id: '1', title: 'Photo 1' }],
+    })
 
-    fetchPhotos.mockResolvedValue(mockPhotosResponse)
-    
-    const firestoreError = new Error('Firestore save failed')
-    mockSet.mockRejectedValue(firestoreError)
+    vi.mocked(storage.setDocument).mockRejectedValueOnce(new Error('Storage save failed'))
 
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(result.result).toBe('FAILURE')
-    expect(result.error).toBe('Firestore save failed')
-    expect(logger.error).toHaveBeenCalledWith('Flickr data sync failed:', firestoreError)
+    expect(result.error).toBe('Storage save failed')
   })
 
-  it('should handle partial Firestore save errors', async () => {
-    const mockPhotosResponse = {
+  it('should handle partial storage save errors', async () => {
+    vi.mocked(fetchPhotos).mockResolvedValue({
       total: 1,
-      photos: [{ id: '1', title: 'Photo 1' }]
-    }
+      photos: [{ id: '1', title: 'Photo 1' }],
+    })
 
-    fetchPhotos.mockResolvedValue(mockPhotosResponse)
-    
-    // First save succeeds, second fails
-    mockSet
-      .mockResolvedValueOnce() // last-response save
-      .mockRejectedValueOnce(new Error('Widget content save failed')) // widget-content save
+    vi.mocked(storage.setDocument)
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('Widget content save failed'))
 
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(result.result).toBe('FAILURE')
     expect(result.error).toBe('Widget content save failed')
@@ -281,13 +240,13 @@ describe('syncFlickrData', () => {
       total: 2,
       photos: [
         { id: '1', title: 'Photo 1' },
-        { id: '2' } // Missing title
-      ]
+        { id: '2' },
+      ],
     }
 
-    fetchPhotos.mockResolvedValue(mockPhotosResponse)
+    vi.mocked(fetchPhotos).mockResolvedValue(mockPhotosResponse)
 
-    const result = await syncFlickrData()
+    const result = await syncFlickrData(storage)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.collections.photos).toEqual(mockPhotosResponse.photos)
