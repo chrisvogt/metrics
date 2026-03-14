@@ -32,12 +32,12 @@ const syncFlickrData = async (documentStore: DocumentStore) => {
       metrics: [
         ...(photoCount > 0
           ? [
-              {
-                displayName: 'Photos',
-                id: 'photos-count',
-                value: photoCount,
-              },
-            ]
+            {
+              displayName: 'Photos',
+              id: 'photos-count',
+              value: photoCount,
+            },
+          ]
           : []),
       ],
       profile: {

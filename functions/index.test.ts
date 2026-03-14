@@ -780,7 +780,7 @@ describe('index.js', () => {
 
       it('should return 401 from outer catch when authenticateUser throws unexpectedly', async () => {
         let callCount = 0
-        const logSpy = vi.spyOn(logger, 'info').mockImplementation((...args: unknown[]) => {
+        const logSpy = vi.spyOn(logger, 'info').mockImplementation((..._args: unknown[]) => {
           callCount += 1
           if (callCount === 2) throw new Error('Unexpected auth error')
           return undefined as void
