@@ -53,6 +53,7 @@ jobs:
         if: ${{ !cancelled() && hashFiles('functions/coverage/lcov.info') != '' }}
         uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: functions/coverage/lcov.info
           flags: unittests
           fail_ci_if_error: true
@@ -61,6 +62,7 @@ jobs:
         if: ${{ !cancelled() && steps.junit.outputs.file != '' }}
         uses: codecov/test-results-action@v1
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
 
       - name: Fail if tests failed
