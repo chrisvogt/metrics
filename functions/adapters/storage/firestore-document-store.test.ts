@@ -39,14 +39,14 @@ vi.mock('firebase-admin', () => ({
   },
 }))
 
-import { FirestoreStorageAdapter, toCollectionAndDocument } from './firestore-storage.js'
+import { FirestoreDocumentStore, toCollectionAndDocument } from './firestore-document-store.js'
 
-describe('FirestoreStorageAdapter', () => {
-  let adapter: FirestoreStorageAdapter
+describe('FirestoreDocumentStore', () => {
+  let adapter: FirestoreDocumentStore
 
   beforeEach(() => {
     vi.clearAllMocks()
-    adapter = new FirestoreStorageAdapter()
+    adapter = new FirestoreDocumentStore()
   })
 
   it('maps a document path to collection path and id', () => {

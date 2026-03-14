@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import syncFlickrData from './sync-flickr-data.js'
-import type { StoragePort } from '../ports/storage.js'
+import type { DocumentStore } from '../ports/document-store.js'
 
 vi.mock('firebase-functions', () => ({
   logger: {
@@ -18,13 +18,13 @@ import { logger } from 'firebase-functions'
 import fetchPhotos from '../api/flickr/fetch-photos.js'
 
 describe('syncFlickrData', () => {
-  let storage: StoragePort
+  let documentStore: DocumentStore
 
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.FLICKR_USER_ID = 'testuser'
 
-    storage = {
+    documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
     }
@@ -45,10 +45,10 @@ describe('syncFlickrData', () => {
 
     vi.mocked(fetchPhotos).mockResolvedValue(mockPhotosResponse)
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(fetchPhotos).toHaveBeenCalled()
-    expect(storage.setDocument).toHaveBeenNthCalledWith(
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
       1,
       'users/chrisvogt/flickr/last-response',
       {
@@ -56,7 +56,7 @@ describe('syncFlickrData', () => {
         fetchedAt: expect.any(Object),
       }
     )
-    expect(storage.setDocument).toHaveBeenNthCalledWith(
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
       2,
       'users/chrisvogt/flickr/widget-content',
       {
@@ -115,7 +115,7 @@ describe('syncFlickrData', () => {
       photos: [],
     })
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.metrics).toEqual([])
@@ -133,7 +133,7 @@ describe('syncFlickrData', () => {
       photos: [{ id: '1', title: 'Photo 1' }],
     })
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.profile.displayName).toBeUndefined()
@@ -144,7 +144,7 @@ describe('syncFlickrData', () => {
     const apiError = new Error('Flickr API error')
     vi.mocked(fetchPhotos).mockRejectedValue(apiError)
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(result.result).toBe('FAILURE')
     expect(result.error).toBe('Flickr API error')
@@ -155,7 +155,7 @@ describe('syncFlickrData', () => {
     const networkError = new Error('Network timeout')
     vi.mocked(fetchPhotos).mockRejectedValue(networkError)
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(result.result).toBe('FAILURE')
     expect(result.error).toBe('Network timeout')
@@ -168,7 +168,7 @@ describe('syncFlickrData', () => {
       photos: null,
     })
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.metrics).toEqual([])
@@ -180,7 +180,7 @@ describe('syncFlickrData', () => {
       photos: [{ id: '1', title: 'Photo 1' }],
     })
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.metrics).toEqual([])
@@ -192,7 +192,7 @@ describe('syncFlickrData', () => {
       total: 5,
     })
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.collections.photos).toEqual([])
@@ -211,9 +211,9 @@ describe('syncFlickrData', () => {
       photos: [{ id: '1', title: 'Photo 1' }],
     })
 
-    vi.mocked(storage.setDocument).mockRejectedValueOnce(new Error('Storage save failed'))
+    vi.mocked(documentStore.setDocument).mockRejectedValueOnce(new Error('Storage save failed'))
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(result.result).toBe('FAILURE')
     expect(result.error).toBe('Storage save failed')
@@ -225,11 +225,11 @@ describe('syncFlickrData', () => {
       photos: [{ id: '1', title: 'Photo 1' }],
     })
 
-    vi.mocked(storage.setDocument)
+    vi.mocked(documentStore.setDocument)
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error('Widget content save failed'))
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(result.result).toBe('FAILURE')
     expect(result.error).toBe('Widget content save failed')
@@ -246,7 +246,7 @@ describe('syncFlickrData', () => {
 
     vi.mocked(fetchPhotos).mockResolvedValue(mockPhotosResponse)
 
-    const result = await syncFlickrData(storage)
+    const result = await syncFlickrData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.collections.photos).toEqual(mockPhotosResponse.photos)

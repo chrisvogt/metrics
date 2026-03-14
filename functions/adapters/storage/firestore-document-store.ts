@@ -1,6 +1,6 @@
 import admin from 'firebase-admin'
 
-import type { StoragePort } from '../../ports/storage.js'
+import type { DocumentStore } from '../../ports/document-store.js'
 
 function toCollectionAndDocument(path: string): { collectionPath: string; documentId: string } {
   const segments = path.split('/').filter(Boolean)
@@ -15,7 +15,7 @@ function toCollectionAndDocument(path: string): { collectionPath: string; docume
   }
 }
 
-export class FirestoreStorageAdapter implements StoragePort {
+export class FirestoreDocumentStore implements DocumentStore {
   async getDocument<T>(path: string): Promise<T | null> {
     const { collectionPath, documentId } = toCollectionAndDocument(path)
     const snapshot = await admin.firestore().collection(collectionPath).doc(documentId).get()

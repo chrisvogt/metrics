@@ -17,7 +17,7 @@ import { defineJsonSecret, defineString } from 'firebase-functions/params'
 import { existsSync, readFileSync } from 'fs'
 
 import { applyExportedConfigToEnv } from './config/exported-config.js'
-import { FirestoreStorageAdapter } from './adapters/storage/firestore-storage.js'
+import { FirestoreDocumentStore } from './adapters/storage/firestore-document-store.js'
 import { getWidgetContent, validWidgetIds } from './widgets/get-widget-content.js'
 import createUserJob from './jobs/create-user.js'
 import deleteUserJob from './jobs/delete-user.js'
@@ -103,7 +103,7 @@ admin.firestore().settings({
   ignoreUndefinedProperties: true,
 })
 
-const storage = new FirestoreStorageAdapter()
+const documentStore = new FirestoreDocumentStore()
 
 const scheduleOpts = {
   schedule: 'every day 02:00',
@@ -133,7 +133,7 @@ export const syncInstagramData = onSchedule(scheduleOpts, async () => {
 
 export const syncFlickrData = onSchedule(scheduleOpts, async () => {
   await ensureExportedConfigApplied()
-  await syncFlickrDataJob(storage)
+  await syncFlickrDataJob(documentStore)
 })
 
 export const handleUserCreation = beforeUserCreated(
@@ -326,7 +326,7 @@ const syncHandlersByProvider: Record<string, () => Promise<unknown>> = {
   instagram: syncInstagramDataJob,
   spotify: syncSpotifyDataJob,
   steam: syncSteamDataJob,
-  flickr: () => syncFlickrDataJob(storage),
+  flickr: () => syncFlickrDataJob(documentStore),
 }
 
 expressApp.get(
