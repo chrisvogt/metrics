@@ -300,7 +300,7 @@ const authenticateUser = async (
   }
 }
 
-const expressApp = express()
+export const expressApp = express()
 
 expressApp.use(compression())
 expressApp.use(cookieParser())
@@ -506,7 +506,8 @@ expressApp.post(
   }
 )
 
-expressApp.get('/api/firebase-config', cors(corsOptions), (_req, res) => {
+expressApp.get('/api/firebase-config', cors(corsOptions), async (_req, res) => {
+  await ensureExportedConfigApplied()
   const config = {
     apiKey: process.env.CLIENT_API_KEY,
     authDomain: process.env.CLIENT_AUTH_DOMAIN,

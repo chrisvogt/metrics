@@ -123,7 +123,7 @@ describe('index.js', () => {
   describe('Express App', () => {
     beforeEach(async () => {
       // Import the app after mocking
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       app = expressApp
     })
 
@@ -317,6 +317,9 @@ describe('index.js', () => {
       it('should apply config from FUNCTIONS_CONFIG_EXPORT when first requested', async () => {
         vi.resetModules()
         delete process.env.__FUNCTIONS_CONFIG_APPLIED__
+        delete process.env.CLIENT_API_KEY
+        delete process.env.CLIENT_AUTH_DOMAIN
+        delete process.env.CLIENT_PROJECT_ID
         functionsConfigExportValueMock.mockReturnValue({
           auth: {
             client_api_key: 'from-secret',
@@ -325,7 +328,7 @@ describe('index.js', () => {
           },
         })
 
-        const { app: appWithFreshConfig } = await import('./index.js')
+        const { expressApp: appWithFreshConfig } = await import('./index.js')
         const response = await request(appWithFreshConfig)
           .get('/api/firebase-config')
           .expect(200)
@@ -369,7 +372,7 @@ describe('index.js', () => {
 
   describe('Helper Functions', () => {
     it('should build success response correctly', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       // Test the buildSuccessResponse function by making a request
       const response = await request(expressApp)
@@ -381,7 +384,7 @@ describe('index.js', () => {
     })
 
     it('should build failure response correctly', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       // Test the buildFailureResponse function by making a request with invalid provider
       const response = await request(expressApp)
@@ -395,7 +398,7 @@ describe('index.js', () => {
 
   describe('CORS Configuration', () => {
     it('should allow requests from chrisvogt.me domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -406,7 +409,7 @@ describe('index.js', () => {
     })
 
     it('should allow requests from dev-chrisvogt.me domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -417,7 +420,7 @@ describe('index.js', () => {
     })
 
     it('should allow requests from netlify.app domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -428,7 +431,7 @@ describe('index.js', () => {
     })
 
     it('should allow requests from chronogrove.com domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -439,7 +442,7 @@ describe('index.js', () => {
     })
 
     it('should allow requests from dev-chronogrove.com domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -450,7 +453,7 @@ describe('index.js', () => {
     })
 
     it('should allow requests from chrisvogt.netlify.app domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -464,7 +467,7 @@ describe('index.js', () => {
       // Set NODE_ENV to development to test localhost CORS
       process.env.NODE_ENV = 'development'
       
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -481,7 +484,7 @@ describe('index.js', () => {
       // Set NODE_ENV to production to test localhost CORS restriction
       process.env.NODE_ENV = 'production'
       
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -497,7 +500,7 @@ describe('index.js', () => {
 
   describe('Authentication Endpoints', () => {
     beforeEach(async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       app = expressApp
     })
 
