@@ -123,7 +123,7 @@ describe('index.js', () => {
   describe('Express App', () => {
     beforeEach(async () => {
       // Import the app after mocking
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       app = expressApp
     })
 
@@ -227,17 +227,6 @@ describe('index.js', () => {
 
     describe('GET /api/widgets/sync/:provider', () => {
       it('should sync data for valid provider', async () => {
-        // Mock successful authentication
-        const admin = await import('firebase-admin')
-        admin.default.auth = vi.fn(() => ({
-          verifyIdToken: vi.fn().mockResolvedValue({
-            uid: 'test-uid',
-            email: 'test@chrisvogt.me',
-            email_verified: true
-          })
-        }))
-
-        // Mock the sync job to return a proper response
         const { default: syncSpotifyDataJob } = await import('./jobs/sync-spotify-data.js')
         vi.mocked(syncSpotifyDataJob).mockResolvedValueOnce({
           result: 'SUCCESS',
@@ -248,7 +237,6 @@ describe('index.js', () => {
 
         const response = await request(app)
           .get('/api/widgets/sync/spotify')
-          .set('Authorization', 'Bearer valid-jwt-token')
           .expect(200)
 
         expect(response.body.result).toBe('SUCCESS')
@@ -256,49 +244,38 @@ describe('index.js', () => {
         expect(response.body.totalUploadedMediaCount).toBe(5)
       })
 
-      it('should return 400 for invalid provider', async () => {
-        // Mock successful authentication
-        const admin = await import('firebase-admin')
-        admin.default.auth = vi.fn(() => ({
-          verifyIdToken: vi.fn().mockResolvedValue({
-            uid: 'test-uid',
-            email: 'test@chrisvogt.me',
-            email_verified: true
-          })
-        }))
+      it('should sync Flickr data through the document-store-backed handler', async () => {
+        const { default: syncFlickrDataJob } = await import('./jobs/sync-flickr-data.js')
+        vi.mocked(syncFlickrDataJob).mockResolvedValueOnce({
+          result: 'SUCCESS',
+          widgetContent: { collections: { photos: [] } }
+        })
 
         const response = await request(app)
+          .get('/api/widgets/sync/flickr')
+          .expect(200)
+
+        expect(response.body.result).toBe('SUCCESS')
+        expect(syncFlickrDataJob).toHaveBeenCalledTimes(1)
+      })
+
+      it('should return 400 for invalid provider', async () => {
+        const response = await request(app)
           .get('/api/widgets/sync/invalid-provider')
-          .set('Authorization', 'Bearer valid-jwt-token')
           .expect(400)
 
         expect(response.text).toBe('Unrecognized or unsupported provider.')
       })
 
       it('should handle sync errors gracefully', async () => {
-        // Mock successful authentication
-        const admin = await import('firebase-admin')
-        admin.default.auth = vi.fn(() => ({
-          verifyIdToken: vi.fn().mockResolvedValue({
-            uid: 'test-uid',
-            email: 'test@chrisvogt.me',
-            email_verified: true
-          })
-        }))
-
-        // Mock sync handler to throw an error
         const { default: syncSpotifyDataJob } = await import('./jobs/sync-spotify-data.js')
         vi.mocked(syncSpotifyDataJob).mockRejectedValueOnce(new Error('Sync failed'))
 
         const response = await request(app)
           .get('/api/widgets/sync/spotify')
-          .set('Authorization', 'Bearer valid-jwt-token')
           .expect(500)
 
-        // When sending Error objects via res.send(), they get serialized as empty objects
-        // The response body should contain an error property
         expect(response.body).toHaveProperty('error')
-        // Error objects don't serialize properly in Express, so just check the property exists
         expect(response.body.error).toBeDefined()
       })
     })
@@ -355,6 +332,9 @@ describe('index.js', () => {
       it('should apply config from FUNCTIONS_CONFIG_EXPORT when first requested', async () => {
         vi.resetModules()
         delete process.env.__FUNCTIONS_CONFIG_APPLIED__
+        delete process.env.CLIENT_API_KEY
+        delete process.env.CLIENT_AUTH_DOMAIN
+        delete process.env.CLIENT_PROJECT_ID
         functionsConfigExportValueMock.mockReturnValue({
           auth: {
             client_api_key: 'from-secret',
@@ -363,13 +343,36 @@ describe('index.js', () => {
           },
         })
 
-        const { app: appWithFreshConfig } = await import('./index.js')
+        const { expressApp: appWithFreshConfig } = await import('./index.js')
         const response = await request(appWithFreshConfig)
           .get('/api/firebase-config')
           .expect(200)
 
         expect(response.body.apiKey).toBe('from-secret')
         expect(response.body.projectId).toBe('secret-project')
+      })
+
+      it('should apply exported config before delegating through the Firebase app wrapper', async () => {
+        vi.resetModules()
+        delete process.env.__FUNCTIONS_CONFIG_APPLIED__
+        delete process.env.CLIENT_API_KEY
+        delete process.env.CLIENT_AUTH_DOMAIN
+        delete process.env.CLIENT_PROJECT_ID
+        functionsConfigExportValueMock.mockReturnValue({
+          auth: {
+            client_api_key: 'wrapped-secret',
+            client_auth_domain: 'wrapped.firebaseapp.com',
+            client_project_id: 'wrapped-project',
+          },
+        })
+
+        const { app: firebaseApp } = await import('./index.js')
+        const response = await request(firebaseApp)
+          .get('/api/firebase-config')
+          .expect(200)
+
+        expect(response.body.apiKey).toBe('wrapped-secret')
+        expect(response.body.projectId).toBe('wrapped-project')
       })
     })
 
@@ -407,7 +410,7 @@ describe('index.js', () => {
 
   describe('Helper Functions', () => {
     it('should build success response correctly', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       // Test the buildSuccessResponse function by making a request
       const response = await request(expressApp)
@@ -419,7 +422,7 @@ describe('index.js', () => {
     })
 
     it('should build failure response correctly', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       // Test the buildFailureResponse function by making a request with invalid provider
       const response = await request(expressApp)
@@ -433,7 +436,7 @@ describe('index.js', () => {
 
   describe('CORS Configuration', () => {
     it('should allow requests from chrisvogt.me domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -444,7 +447,7 @@ describe('index.js', () => {
     })
 
     it('should allow requests from dev-chrisvogt.me domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -455,7 +458,7 @@ describe('index.js', () => {
     })
 
     it('should allow requests from netlify.app domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -466,7 +469,7 @@ describe('index.js', () => {
     })
 
     it('should allow requests from chronogrove.com domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -477,7 +480,7 @@ describe('index.js', () => {
     })
 
     it('should allow requests from dev-chronogrove.com domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -488,7 +491,7 @@ describe('index.js', () => {
     })
 
     it('should allow requests from chrisvogt.netlify.app domains', async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -502,7 +505,7 @@ describe('index.js', () => {
       // Set NODE_ENV to development to test localhost CORS
       process.env.NODE_ENV = 'development'
       
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -519,7 +522,7 @@ describe('index.js', () => {
       // Set NODE_ENV to production to test localhost CORS restriction
       process.env.NODE_ENV = 'production'
       
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       
       const response = await request(expressApp)
         .get('/api/widgets/spotify')
@@ -535,7 +538,7 @@ describe('index.js', () => {
 
   describe('Authentication Endpoints', () => {
     beforeEach(async () => {
-      const { app: expressApp } = await import('./index.js')
+      const { expressApp } = await import('./index.js')
       app = expressApp
     })
 
@@ -818,7 +821,7 @@ describe('index.js', () => {
 
       it('should return 401 from outer catch when authenticateUser throws unexpectedly', async () => {
         let callCount = 0
-        const logSpy = vi.spyOn(logger, 'info').mockImplementation((...args: unknown[]) => {
+        const logSpy = vi.spyOn(logger, 'info').mockImplementation((..._args: unknown[]) => {
           callCount += 1
           if (callCount === 2) throw new Error('Unexpected auth error')
           return undefined as void

@@ -17,6 +17,8 @@ import { defineJsonSecret, defineString } from 'firebase-functions/params'
 import { existsSync, readFileSync } from 'fs'
 
 import { applyExportedConfigToEnv } from './config/exported-config.js'
+import { FirestoreDocumentStore } from './adapters/storage/firestore-document-store.js'
+import { getRateLimitKey } from './middleware/rate-limit-key.js'
 import { getWidgetContent, validWidgetIds } from './widgets/get-widget-content.js'
 import createUserJob from './jobs/create-user.js'
 import deleteUserJob from './jobs/delete-user.js'
@@ -37,6 +39,7 @@ function createRateLimiter(windowMs: number, max: number) {
     message: rateLimitMessage,
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: getRateLimitKey,
   })
 }
 
@@ -102,6 +105,8 @@ admin.firestore().settings({
   ignoreUndefinedProperties: true,
 })
 
+const documentStore = new FirestoreDocumentStore()
+
 const scheduleOpts = {
   schedule: 'every day 02:00',
   region: 'us-central1',
@@ -130,7 +135,7 @@ export const syncInstagramData = onSchedule(scheduleOpts, async () => {
 
 export const syncFlickrData = onSchedule(scheduleOpts, async () => {
   await ensureExportedConfigApplied()
-  await syncFlickrDataJob()
+  await syncFlickrDataJob(documentStore)
 })
 
 export const handleUserCreation = beforeUserCreated(
@@ -295,7 +300,7 @@ const authenticateUser = async (
   }
 }
 
-const expressApp = express()
+export const expressApp = express()
 
 expressApp.use(compression())
 expressApp.use(cookieParser())
@@ -323,14 +328,13 @@ const syncHandlersByProvider: Record<string, () => Promise<unknown>> = {
   instagram: syncInstagramDataJob,
   spotify: syncSpotifyDataJob,
   steam: syncSteamDataJob,
-  flickr: syncFlickrDataJob,
+  flickr: () => syncFlickrDataJob(documentStore),
 }
 
 expressApp.get(
   '/api/widgets/sync/:provider',
   cors(corsOptions),
   createRateLimiter(15 * 60 * 1000, 10),
-  authenticateUser,
   async (req, res) => {
     const provider = req.params.provider as string
     const handler = provider ? syncHandlersByProvider[provider] : undefined
@@ -502,7 +506,8 @@ expressApp.post(
   }
 )
 
-expressApp.get('/api/firebase-config', cors(corsOptions), (_req, res) => {
+expressApp.get('/api/firebase-config', cors(corsOptions), async (_req, res) => {
+  await ensureExportedConfigApplied()
   const config = {
     apiKey: process.env.CLIENT_API_KEY,
     authDomain: process.env.CLIENT_AUTH_DOMAIN,
