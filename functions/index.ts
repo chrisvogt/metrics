@@ -18,6 +18,7 @@ import { existsSync, readFileSync } from 'fs'
 
 import { applyExportedConfigToEnv } from './config/exported-config.js'
 import { FirestoreDocumentStore } from './adapters/storage/firestore-document-store.js'
+import { getRateLimitKey } from './middleware/rate-limit-key.js'
 import { getWidgetContent, validWidgetIds } from './widgets/get-widget-content.js'
 import createUserJob from './jobs/create-user.js'
 import deleteUserJob from './jobs/delete-user.js'
@@ -38,6 +39,7 @@ function createRateLimiter(windowMs: number, max: number) {
     message: rateLimitMessage,
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: getRateLimitKey,
   })
 }
 
