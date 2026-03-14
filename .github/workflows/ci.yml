@@ -34,9 +34,23 @@ jobs:
         run: pnpm run lint
 
       - name: Test (with coverage)
+        id: tests
+        continue-on-error: true
         run: pnpm run test:coverage
 
+      - name: Locate JUnit report
+        id: junit
+        if: ${{ always() }}
+        run: |
+          if [ -f functions/coverage/junit.xml ]; then
+            echo "file=functions/coverage/junit.xml" >> "$GITHUB_OUTPUT"
+          else
+            echo "Expected JUnit report was not found."
+            find . -path '*coverage/junit.xml' -print || true
+          fi
+
       - name: Upload coverage to Codecov
+        if: ${{ always() }}
         uses: codecov/codecov-action@v4
         with:
           files: ./functions/coverage/lcov.info
@@ -44,8 +58,12 @@ jobs:
           fail_ci_if_error: true
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
+        if: ${{ always() && steps.junit.outputs.file != '' }}
         uses: codecov/test-results-action@v1
         with:
           fail_ci_if_error: true
-          files: ./functions/coverage/junit.xml
+          files: ${{ steps.junit.outputs.file }}
+
+      - name: Fail if tests failed
+        if: ${{ steps.tests.outcome == 'failure' }}
+        run: exit 1
