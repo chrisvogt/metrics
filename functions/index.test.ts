@@ -244,6 +244,21 @@ describe('index.js', () => {
         expect(response.body.totalUploadedMediaCount).toBe(5)
       })
 
+      it('should sync Flickr data through the document-store-backed handler', async () => {
+        const { default: syncFlickrDataJob } = await import('./jobs/sync-flickr-data.js')
+        vi.mocked(syncFlickrDataJob).mockResolvedValueOnce({
+          result: 'SUCCESS',
+          widgetContent: { collections: { photos: [] } }
+        })
+
+        const response = await request(app)
+          .get('/api/widgets/sync/flickr')
+          .expect(200)
+
+        expect(response.body.result).toBe('SUCCESS')
+        expect(syncFlickrDataJob).toHaveBeenCalledTimes(1)
+      })
+
       it('should return 400 for invalid provider', async () => {
         const response = await request(app)
           .get('/api/widgets/sync/invalid-provider')
@@ -335,6 +350,29 @@ describe('index.js', () => {
 
         expect(response.body.apiKey).toBe('from-secret')
         expect(response.body.projectId).toBe('secret-project')
+      })
+
+      it('should apply exported config before delegating through the Firebase app wrapper', async () => {
+        vi.resetModules()
+        delete process.env.__FUNCTIONS_CONFIG_APPLIED__
+        delete process.env.CLIENT_API_KEY
+        delete process.env.CLIENT_AUTH_DOMAIN
+        delete process.env.CLIENT_PROJECT_ID
+        functionsConfigExportValueMock.mockReturnValue({
+          auth: {
+            client_api_key: 'wrapped-secret',
+            client_auth_domain: 'wrapped.firebaseapp.com',
+            client_project_id: 'wrapped-project',
+          },
+        })
+
+        const { app: firebaseApp } = await import('./index.js')
+        const response = await request(firebaseApp)
+          .get('/api/firebase-config')
+          .expect(200)
+
+        expect(response.body.apiKey).toBe('wrapped-secret')
+        expect(response.body.projectId).toBe('wrapped-project')
       })
     })
 
