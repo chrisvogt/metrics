@@ -63,7 +63,7 @@ jobs:
           verbose: true
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() && steps.junit.outputs.file != '' }}
+        if: ${{ !cancelled() && steps.tests.outcome == 'success' && steps.junit.outputs.file != '' }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
