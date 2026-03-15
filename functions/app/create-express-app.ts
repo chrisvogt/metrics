@@ -2,6 +2,7 @@ import compression from 'compression'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
+import lusca from 'lusca'
 import path from 'path'
 import { rateLimit } from 'express-rate-limit'
 
@@ -21,6 +22,7 @@ import syncInstagramDataJob from '../jobs/sync-instagram-data.js'
 import syncSpotifyDataJob from '../jobs/sync-spotify-data.js'
 import syncSteamDataJob from '../jobs/sync-steam-data.js'
 import { getWidgetContent, validWidgetIds } from '../widgets/get-widget-content.js'
+import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 
 interface LoggerLike {
   error: (message: string, ...args: unknown[]) => void
@@ -63,6 +65,7 @@ const buildFailureResponse = (err: unknown = {}): { ok: false; error: string } =
 })
 
 const ALLOWED_EMAIL_DOMAINS = ['@chrisvogt.me', '@chronogrove.com']
+const CSRF_SECRET_COOKIE = '_csrfSecret'
 
 function isAllowedEmail(email: string | undefined | null): boolean {
   if (!email) return false
@@ -213,6 +216,24 @@ export function createExpressApp({
 
   expressApp.use(compression())
   expressApp.use(cookieParser())
+  expressApp.use(
+    lusca.csrf({
+      angular: true,
+      secret: CSRF_SECRET_COOKIE,
+      impl: createCookieBackedCsrfImpl({
+        httpOnly: true,
+        sameSite: isProductionEnvironment() ? 'strict' : 'lax',
+        secure: isProductionEnvironment(),
+      }),
+      cookie: {
+        options: {
+          httpOnly: false,
+          sameSite: isProductionEnvironment() ? 'strict' : 'lax',
+          secure: isProductionEnvironment(),
+        },
+      },
+    })
+  )
 
   const corsAllowList: RegExp[] = [
     /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
@@ -459,6 +480,13 @@ export function createExpressApp({
     res.json(config)
   })
 
+  expressApp.get('/api/csrf-token', cors(corsOptions), (_req, res) => {
+    res.json({
+      ok: true,
+      csrfToken: res.locals._csrf,
+    })
+  })
+
   expressApp.post(
     '/api/auth/logout',
     cors(corsOptions),
@@ -487,6 +515,18 @@ export function createExpressApp({
       }
     }
   )
+
+  expressApp.use((error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (error instanceof Error && error.message.startsWith('CSRF token')) {
+      res.status(403).json({
+        ok: false,
+        error: error.message,
+      })
+      return
+    }
+
+    next(error)
+  })
 
   expressApp.get('/{*splat}', (_req, res) => {
     res.sendStatus(404)

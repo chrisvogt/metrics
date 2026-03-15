@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { SectionId } from '../layout/Layout'
 import { useAuth } from '../auth/AuthContext'
+import { ApiClient } from '../auth/apiClient'
 import styles from './ApiTestingSection.module.css'
 
 const WIDGET_PROVIDERS = ['discogs', 'flickr', 'github', 'goodreads', 'instagram', 'spotify', 'steam'] as const
@@ -42,6 +43,7 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
   const [syncResult, setSyncResult] = useState<FetchResult | null>(null)
   const [loading, setLoading] = useState<LoadingState>({ widgets: false, session: false, sync: false })
   const baseUrl = useBaseUrl()
+  const apiClient = new ApiClient(baseUrl)
 
   const showApi = activeSection === 'api'
   const showSync = activeSection === 'sync'
@@ -87,18 +89,11 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
     setSessionResult(null)
     const start = Date.now()
     try {
-      const res = await fetch(`${baseUrl}/api/auth/session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-        credentials: 'include',
-        cache: 'no-store',
-      })
-      const data = await res.json().catch(() => ({}))
       setSessionResult({
-        ok: res.ok,
-        status: res.status,
+        ok: true,
+        status: 200,
         time: Date.now() - start,
-        data,
+        data: await apiClient.createSession(idToken),
       })
     } catch (err) {
       setSessionResult({

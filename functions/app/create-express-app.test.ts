@@ -232,6 +232,17 @@ describe('createExpressApp auth and session branches', () => {
     })
   }
 
+  async function getCsrfHeaders(app: Awaited<ReturnType<typeof buildApp>>) {
+    const agent = request.agent(app)
+    const response = await agent.get('/api/csrf-token').expect(200)
+
+    return {
+      agent,
+      csrfToken: response.body.csrfToken as string,
+      cookies: response.headers['set-cookie'] as string[],
+    }
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.NODE_ENV = 'test'
@@ -254,13 +265,20 @@ describe('createExpressApp auth and session branches', () => {
     })
     authMethods.createSessionCookie.mockResolvedValue('prod-session-cookie')
 
-    const response = await request(app)
+    const { agent, csrfToken, cookies } = await getCsrfHeaders(app)
+    const response = await agent
       .post('/api/auth/session')
+      .set('Cookie', cookies)
+      .set('X-XSRF-TOKEN', csrfToken)
       .set('Authorization', 'Bearer prod-token')
       .expect(200)
 
-    expect(response.headers['set-cookie'][0]).toContain('SameSite=Strict')
-    expect(response.headers['set-cookie'][0]).toContain('HttpOnly')
+    const sessionCookie = (response.headers['set-cookie'] as string[]).find((cookie) =>
+      cookie.startsWith('session=')
+    )
+
+    expect(sessionCookie).toContain('SameSite=Strict')
+    expect(sessionCookie).toContain('HttpOnly')
   })
 
   it('clears the session cookie with strict settings in production logout', async () => {
@@ -274,13 +292,20 @@ describe('createExpressApp auth and session branches', () => {
     })
     authMethods.revokeRefreshTokens.mockResolvedValue(undefined)
 
-    const response = await request(app)
+    const { agent, csrfToken, cookies } = await getCsrfHeaders(app)
+    const response = await agent
       .post('/api/auth/logout')
+      .set('Cookie', cookies)
+      .set('X-XSRF-TOKEN', csrfToken)
       .set('Authorization', 'Bearer prod-token')
       .expect(200)
 
-    expect(response.headers['set-cookie'][0]).toContain('SameSite=Strict')
-    expect(response.headers['set-cookie'][0]).toContain('session=')
+    const clearedSessionCookie = (response.headers['set-cookie'] as string[]).find((cookie) =>
+      cookie.startsWith('session=')
+    )
+
+    expect(clearedSessionCookie).toContain('SameSite=Strict')
+    expect(clearedSessionCookie).toContain('session=')
   })
 
   it('falls back cleanly when session-cookie verification rejects with a plain object', async () => {
@@ -327,5 +352,19 @@ describe('createExpressApp auth and session branches', () => {
       .expect(401)
 
     expect(response.body.error).toBe('Invalid or expired token')
+  })
+
+  it('rejects state-changing requests when the CSRF token is missing', async () => {
+    const app = await buildApp()
+
+    const response = await request(app)
+      .post('/api/auth/session')
+      .set('Authorization', 'Bearer token')
+      .expect(403)
+
+    expect(response.body).toEqual({
+      ok: false,
+      error: 'CSRF token missing',
+    })
   })
 })

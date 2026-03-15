@@ -117,6 +117,16 @@ vi.mock('./widgets/get-widget-content.js', () => ({
 describe('index.js', () => {
   let app
 
+  async function getCsrfHeaders(currentApp) {
+    const agent = request.agent(currentApp)
+    const response = await agent.get('/api/csrf-token').expect(200)
+
+    return {
+      agent,
+      csrfToken: response.body.csrfToken as string,
+    }
+  }
+
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks()
@@ -571,8 +581,10 @@ describe('index.js', () => {
           createSessionCookie: mockCreateSessionCookie
         }))
 
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .post('/api/auth/session')
+          .set('X-XSRF-TOKEN', csrfToken)
           .set('Authorization', 'Bearer valid-jwt-token')
           .expect(200)
 
@@ -583,8 +595,10 @@ describe('index.js', () => {
       })
 
       it('should reject request without authorization header', async () => {
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .post('/api/auth/session')
+          .set('X-XSRF-TOKEN', csrfToken)
           .expect(401)
 
         expect(response.body.ok).toBe(false)
@@ -592,8 +606,10 @@ describe('index.js', () => {
       })
 
       it('should reject request with invalid authorization format', async () => {
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .post('/api/auth/session')
+          .set('X-XSRF-TOKEN', csrfToken)
           .set('Authorization', 'InvalidFormat token')
           .expect(401)
 
@@ -602,8 +618,10 @@ describe('index.js', () => {
       })
 
       it('should reject request when Bearer has no token', async () => {
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .post('/api/auth/session')
+          .set('X-XSRF-TOKEN', csrfToken)
           .set('Authorization', 'Bearer ')
           .expect(401)
 
@@ -627,8 +645,10 @@ describe('index.js', () => {
             verifyIdToken: mockVerifyIdToken
           }))
 
-          const response = await request(app)
+          const { agent, csrfToken } = await getCsrfHeaders(app)
+          const response = await agent
             .post('/api/auth/session')
+            .set('X-XSRF-TOKEN', csrfToken)
             .set('Authorization', 'Bearer valid-jwt-token')
             .expect(403)
 
@@ -652,8 +672,10 @@ describe('index.js', () => {
             })
           }))
 
-          const response = await request(app)
+          const { agent, csrfToken } = await getCsrfHeaders(app)
+          const response = await agent
             .post('/api/auth/session')
+            .set('X-XSRF-TOKEN', csrfToken)
             .set('Authorization', 'Bearer valid-jwt-token')
             .expect(403)
 
@@ -677,8 +699,10 @@ describe('index.js', () => {
           createSessionCookie: mockCreateSessionCookie
         }))
 
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .post('/api/auth/session')
+          .set('X-XSRF-TOKEN', csrfToken)
           .set('Authorization', 'Bearer valid-jwt-token')
           .expect(500)
 
@@ -695,8 +719,10 @@ describe('index.js', () => {
           verifyIdToken: mockVerifyIdToken
         }))
 
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .post('/api/auth/session')
+          .set('X-XSRF-TOKEN', csrfToken)
           .set('Authorization', 'Bearer invalid-jwt-token')
           .expect(500)
 
@@ -906,8 +932,10 @@ describe('index.js', () => {
         const { default: deleteUserJob } = await import('./jobs/delete-user.js')
         vi.mocked(deleteUserJob).mockResolvedValueOnce({ result: 'SUCCESS' })
 
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .delete('/api/user/account')
+          .set('X-XSRF-TOKEN', csrfToken)
           .set('Authorization', 'Bearer valid-jwt-token')
           .expect(200)
 
@@ -933,8 +961,10 @@ describe('index.js', () => {
         const { default: deleteUserJob } = await import('./jobs/delete-user.js')
         vi.mocked(deleteUserJob).mockResolvedValueOnce({ result: 'SUCCESS' })
 
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .delete('/api/user/account')
+          .set('X-XSRF-TOKEN', csrfToken)
           .set('Authorization', 'Bearer valid-jwt-token')
           .expect(500)
 
@@ -942,8 +972,10 @@ describe('index.js', () => {
       })
 
       it('should require authentication', async () => {
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .delete('/api/user/account')
+          .set('X-XSRF-TOKEN', csrfToken)
           .expect(401)
         expect(response.body.ok).toBe(false)
       })
@@ -964,8 +996,10 @@ describe('index.js', () => {
         const { default: deleteUserJob } = await import('./jobs/delete-user.js')
         vi.mocked(deleteUserJob).mockResolvedValueOnce({ result: 'FAILURE', error: 'Doc missing' })
 
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .delete('/api/user/account')
+          .set('X-XSRF-TOKEN', csrfToken)
           .set('Authorization', 'Bearer valid-jwt-token')
           .expect(200)
 
@@ -988,8 +1022,10 @@ describe('index.js', () => {
           revokeRefreshTokens: vi.fn().mockResolvedValue()
         }))
 
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .post('/api/auth/logout')
+          .set('X-XSRF-TOKEN', csrfToken)
           .set('Authorization', 'Bearer valid-jwt-token')
           .expect(200)
 
@@ -1008,8 +1044,10 @@ describe('index.js', () => {
           revokeRefreshTokens: vi.fn().mockRejectedValue(new Error('Revoke failed'))
         }))
 
-        const response = await request(app)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
           .post('/api/auth/logout')
+          .set('X-XSRF-TOKEN', csrfToken)
           .set('Authorization', 'Bearer valid-jwt-token')
           .expect(500)
 

@@ -24,6 +24,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
 
+## [0.22.9] - 2026-03-15
+
+### Added
+
+- **CSRF protection** – Added cookie-backed CSRF protection to the functions app using `lusca`, plus a small `/api/csrf-token` helper endpoint so the hosting admin can fetch a token before state-changing requests.
+
+### Changed
+
+- **Admin client auth flow** – The hosting API client now fetches and forwards `X-XSRF-TOKEN` on session creation and logout calls, and the API testing screen now uses that same client path.
+- **Protected route handling** – State-changing auth routes now return structured `403` JSON errors when the CSRF token is missing or invalid instead of falling through to generic error handling.
+
+### Developer experience
+
+- **Coverage and tests** – Updated route tests to exercise the CSRF-protected flows and kept the full `functions` suite green after the security hardening.
+
 ## [0.22.8] - 2026-03-15
 
 ### Added
