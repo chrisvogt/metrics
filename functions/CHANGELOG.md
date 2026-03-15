@@ -24,6 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
 
+## [0.22.11] - 2026-03-15
+
+### Changed
+
+- **Backend document writes on `DocumentStore`** – User creation/deletion flows plus the Discogs, Goodreads, Instagram, Spotify, and Steam sync jobs now persist through the shared `DocumentStore` boundary instead of calling Firestore directly.
+- **Consistent document paths** – Remaining backend write paths now save user documents, raw provider responses, widget payloads, and generated summaries through the same provider-neutral path contract used by widget reads.
+
+### Developer experience
+
+- **Backend job coverage** – Reworked account-flow and sync-job tests to inject `DocumentStore` directly, and added focused Spotify and Steam sync coverage to keep the storage seam well-tested during the migration.
+
 ## [0.22.10] - 2026-03-15
 
 ### Changed

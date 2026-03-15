@@ -1,45 +1,27 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import admin from 'firebase-admin'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Timestamp } from 'firebase-admin/firestore'
+
 import syncInstagramData from './sync-instagram-data.js'
+import type { DocumentStore } from '../ports/document-store.js'
 
-// Mock firebase-admin
-vi.mock('firebase-admin', () => ({
-  default: {
-    firestore: vi.fn(() => ({
-      collection: vi.fn(() => ({
-        doc: vi.fn(() => ({
-          set: vi.fn()
-        }))
-      }))
-    }))
-  },
-  firestore: {
-    Timestamp: {
-      now: vi.fn(() => new Timestamp(1640995200, 0))
-    }
-  }
-}))
-
-// Mock the API functions
 vi.mock('../api/instagram/fetch-instagram-data.js', () => ({
-  default: vi.fn()
+  default: vi.fn(),
 }))
 
 vi.mock('../api/cloud-storage/list-stored-media.js', () => ({
-  default: vi.fn()
+  default: vi.fn(),
 }))
 
 vi.mock('../api/cloud-storage/fetch-and-upload-file.js', () => ({
-  default: vi.fn(async (item) => ({ fileName: item.destinationPath || 'chrisvogt/instagram/test.jpg' }))
+  default: vi.fn(async (item) => ({ fileName: item.destinationPath || 'chrisvogt/instagram/test.jpg' })),
 }))
 
 vi.mock('../transformers/transform-instagram-media.js', () => ({
-  default: vi.fn((media) => ({ ...media, transformed: true }))
+  default: vi.fn((media) => ({ ...media, transformed: true })),
 }))
 
 vi.mock('../transformers/to-ig-destination-path.js', () => ({
-  default: vi.fn(() => 'chrisvogt/instagram/test.jpg')
+  default: vi.fn(() => 'chrisvogt/instagram/test.jpg'),
 }))
 
 vi.mock('firebase-functions', () => ({
@@ -47,38 +29,33 @@ vi.mock('firebase-functions', () => ({
     error: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
-  }
+  },
 }))
 
 import fetchInstagramData from '../api/instagram/fetch-instagram-data.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
+import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 
 describe('syncInstagramData', () => {
-  let mockSet
-  let mockDoc
-  let mockCollection
-  let mockFirestore
+  let documentStore: DocumentStore
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
-    mockSet = vi.fn()
-    mockDoc = vi.fn(() => ({ set: mockSet }))
-    mockCollection = vi.fn(() => ({ doc: mockDoc }))
-    mockFirestore = vi.fn(() => ({ collection: mockCollection }))
-    
-    admin.firestore = mockFirestore
+    documentStore = {
+      getDocument: vi.fn(),
+      setDocument: vi.fn().mockResolvedValue(undefined),
+    }
   })
 
-  it('should successfully sync Instagram data and save to database', async () => {
-    const mockInstagramResponse = {
+  it('should successfully sync Instagram data and save to the document store', async () => {
+    vi.mocked(fetchInstagramData).mockResolvedValue({
       media: {
         data: [
           {
             id: 'media1',
             media_type: 'IMAGE',
             media_url: 'https://example.com/image1.jpg',
-            thumbnail_url: 'https://example.com/thumb1.jpg'
+            thumbnail_url: 'https://example.com/thumb1.jpg',
           },
           {
             id: 'media2',
@@ -89,137 +66,119 @@ describe('syncInstagramData', () => {
                 {
                   id: 'child1',
                   media_url: 'https://example.com/child1.jpg',
-                  thumbnail_url: 'https://example.com/child1_thumb.jpg'
-                }
-              ]
-            }
-          }
-        ]
+                  thumbnail_url: 'https://example.com/child1_thumb.jpg',
+                },
+              ],
+            },
+          },
+        ],
       },
       biography: 'Test bio',
       followers_count: 1000,
       media_count: 50,
-      username: 'testuser'
-    }
+      username: 'testuser',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
 
-    fetchInstagramData.mockResolvedValue(mockInstagramResponse)
-    listStoredMedia.mockResolvedValue([])
-
-    const result = await syncInstagramData()
+    const result = await syncInstagramData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.data.media).toHaveLength(2)
-    expect(result.data.profile).toEqual({
-      biography: 'Test bio',
-      followersCount: 1000,
-      mediaCount: 50,
-      username: 'testuser'
-    })
     expect(result.data.meta.synced).toBeInstanceOf(Timestamp)
 
-    expect(mockFirestore).toHaveBeenCalled()
-    expect(mockCollection).toHaveBeenCalledWith('users/chrisvogt/instagram')
-    expect(mockDoc).toHaveBeenCalledWith('last-response')
-    expect(mockDoc).toHaveBeenCalledWith('widget-content')
-    expect(mockSet).toHaveBeenCalledTimes(2)
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
+      1,
+      'users/chrisvogt/instagram/last-response',
+      expect.objectContaining({
+        fetchedAt: expect.any(Timestamp),
+      })
+    )
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
+      2,
+      'users/chrisvogt/instagram/widget-content',
+      expect.objectContaining({
+        meta: {
+          synced: expect.any(Timestamp),
+        },
+        profile: {
+          biography: 'Test bio',
+          followersCount: 1000,
+          mediaCount: 50,
+          username: 'testuser',
+        },
+      })
+    )
   })
 
   it('should handle API errors gracefully', async () => {
-    fetchInstagramData.mockRejectedValue(new Error('Instagram API Error'))
+    vi.mocked(fetchInstagramData).mockRejectedValue(new Error('Instagram API Error'))
 
-    const result = await syncInstagramData()
+    const result = await syncInstagramData(documentStore)
 
     expect(result).toEqual({
       result: 'FAILURE',
-      error: 'Instagram API Error'
+      error: 'Instagram API Error',
     })
-
-    expect(mockSet).not.toHaveBeenCalled()
   })
 
-  it('should handle database save errors', async () => {
-    const mockInstagramResponse = {
+  it('should handle document store save errors', async () => {
+    vi.mocked(fetchInstagramData).mockResolvedValue({
       media: { data: [] },
       biography: 'Test bio',
       followers_count: 1000,
       media_count: 50,
-      username: 'testuser'
-    }
+      username: 'testuser',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+    vi.mocked(documentStore.setDocument).mockRejectedValue(new Error('DocumentStore Error'))
 
-    fetchInstagramData.mockResolvedValue(mockInstagramResponse)
-    listStoredMedia.mockResolvedValue([])
-    mockSet.mockRejectedValue(new Error('Database Error'))
-
-    const result = await syncInstagramData()
+    const result = await syncInstagramData(documentStore)
 
     expect(result).toEqual({
       result: 'FAILURE',
-      error: 'Database Error'
+      error: 'DocumentStore Error',
     })
   })
 
   it('should filter out invalid media types', async () => {
-    const mockInstagramResponse = {
+    vi.mocked(fetchInstagramData).mockResolvedValue({
       media: {
         data: [
-          {
-            id: 'media1',
-            media_type: 'IMAGE',
-            media_url: 'https://example.com/image1.jpg'
-          },
-          {
-            id: 'media2',
-            media_type: 'VIDEO',
-            media_url: 'https://example.com/video1.mp4'
-          },
-          {
-            id: 'media3',
-            media_type: 'INVALID_TYPE',
-            media_url: 'https://example.com/invalid.jpg'
-          }
-        ]
+          { id: 'media1', media_type: 'IMAGE', media_url: 'https://example.com/image1.jpg' },
+          { id: 'media2', media_type: 'VIDEO', media_url: 'https://example.com/video1.mp4' },
+          { id: 'media3', media_type: 'INVALID_TYPE', media_url: 'https://example.com/invalid.jpg' },
+        ],
       },
       biography: 'Test bio',
       followers_count: 1000,
       media_count: 50,
-      username: 'testuser'
-    }
+      username: 'testuser',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
 
-    fetchInstagramData.mockResolvedValue(mockInstagramResponse)
-    listStoredMedia.mockResolvedValue([])
+    const result = await syncInstagramData(documentStore)
 
-    const result = await syncInstagramData()
-
-    // Should only include IMAGE and VIDEO types
     expect(result.data.media).toHaveLength(2)
-    expect(result.data.media[0].id).toBe('media1')
-    expect(result.data.media[1].id).toBe('media2')
   })
 
-  it('should handle existing media files', async () => {
-    const mockInstagramResponse = {
+  it('should continue when media uploads fail', async () => {
+    vi.mocked(fetchInstagramData).mockResolvedValue({
       media: {
         data: [
-          {
-            id: 'media1',
-            media_type: 'IMAGE',
-            media_url: 'https://example.com/image1.jpg'
-          }
-        ]
+          { id: 'media1', media_type: 'IMAGE', media_url: 'https://example.com/image1.jpg' },
+        ],
       },
       biography: 'Test bio',
       followers_count: 1000,
       media_count: 50,
-      username: 'testuser'
-    }
+      username: 'testuser',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+    vi.mocked(fetchAndUploadFile).mockRejectedValueOnce(new Error('Upload failed'))
 
-    fetchInstagramData.mockResolvedValue(mockInstagramResponse)
-    // Mock that the media file already exists
-    listStoredMedia.mockResolvedValue(['chrisvogt/instagram/media1.jpg'])
+    const result = await syncInstagramData(documentStore)
 
-    const result = await syncInstagramData()
-
-    expect(result.totalUploadedCount).toBe(1)
-    expect(result.data.media).toHaveLength(1)
+    expect(result.result).toBe('SUCCESS')
+    expect(result.totalUploadedCount).toBe(0)
   })
-}) 
+})

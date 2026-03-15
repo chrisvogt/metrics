@@ -1,7 +1,8 @@
-import admin from 'firebase-admin'
 import { Timestamp } from 'firebase-admin/firestore'
 import { logger } from 'firebase-functions'
 import pMap from 'p-map'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
+import type { DocumentStore } from '../ports/document-store.js'
 
 import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import fetchDiscogsReleases from '../api/discogs/fetch-releases.js'
@@ -74,7 +75,9 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, release) => {
   return acc
 }
 
-const syncDiscogsData = async () => {
+const defaultDocumentStore = new FirestoreDocumentStore()
+
+const syncDiscogsData = async (documentStore: DocumentStore = defaultDocumentStore) => {
   try {
     const discogsCollectionPath = toProviderCollectionPath('discogs')
     const mediaStore = getMediaStore()
@@ -100,8 +103,6 @@ const syncDiscogsData = async () => {
     const mediaReducer = getMediaReducer(storedMediaFileNames)
     const mediaToDownload = enhancedReleases.reduce(mediaReducer, [])
 
-    const db = admin.firestore()
-
     // Calculate document size before saving to Firestore
     const documentToSave = {
       ...discogsResponse,
@@ -124,10 +125,7 @@ const syncDiscogsData = async () => {
     })
 
     // Save the raw Discogs response data (with enhanced releases)
-    await db
-      .collection(discogsCollectionPath)
-      .doc('last-response')
-      .set(documentToSave)
+    await documentStore.setDocument(`${discogsCollectionPath}/last-response`, documentToSave)
 
     const transformedReleases = enhancedReleases.map(transformDiscogsRelease)
 
@@ -147,10 +145,7 @@ const syncDiscogsData = async () => {
     }
 
     // Save the widget content
-    await db
-      .collection(discogsCollectionPath)
-      .doc('widget-content')
-      .set(updatedWidgetContent)
+    await documentStore.setDocument(`${discogsCollectionPath}/widget-content`, updatedWidgetContent)
 
     const mediaToDownloadTyped = mediaToDownload as { destinationPath: string; id: string; mediaURL: string }[]
     if (!mediaToDownloadTyped.length) {

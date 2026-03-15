@@ -1,4 +1,3 @@
-import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
 import { Timestamp } from 'firebase-admin/firestore'
 import convertToHttps from 'to-https'
@@ -8,6 +7,8 @@ import pMap from 'p-map'
 import fetchUser from '../api/goodreads/fetch-user.js'
 import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.js'
 import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summary.js'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
+import type { DocumentStore } from '../ports/document-store.js'
 import fetchBookFromGoogle from '../api/google-books/fetch-book.js'
 import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
@@ -449,7 +450,9 @@ const fetchAllGoodreadsPromises = async (): Promise<{
 /**
  * Sync Goodreads Data
  */
-const syncGoodreadsData = async () => {
+const defaultDocumentStore = new FirestoreDocumentStore()
+
+const syncGoodreadsData = async (documentStore: DocumentStore = defaultDocumentStore) => {
   const goodreadsCollectionPath = toProviderCollectionPath('goodreads')
   const {
     collections = {},
@@ -484,39 +487,32 @@ const syncGoodreadsData = async () => {
     // Continue with sync even if AI summary fails
   }
 
-  const db = admin.firestore()
-
   const res = responses as { user?: unknown; reviews?: unknown }
-  const saveUserResponse = async () => await db
-    .collection(goodreadsCollectionPath)
-    .doc('last-response_user-show')
-    .set({
+  const saveUserResponse = async () => await documentStore.setDocument(
+    `${goodreadsCollectionPath}/last-response_user-show`,
+    {
       response: res.user,
       updated: Timestamp.now(),
-    })
+    }
+  )
 
-  const saveBookReviews = async () => await db
-    .collection(goodreadsCollectionPath)
-    .doc('last-response_book-reviews')
-    .set({
+  const saveBookReviews = async () => await documentStore.setDocument(
+    `${goodreadsCollectionPath}/last-response_book-reviews`,
+    {
       response: res.reviews,
       updated: Timestamp.now(),
-    })
+    }
+  )
 
-  const saveWidgetContent = async () => await db
-    .collection(goodreadsCollectionPath)
-    .doc('widget-content')
-    .set(widgetContent)
+  const saveWidgetContent = async () =>
+    await documentStore.setDocument(`${goodreadsCollectionPath}/widget-content`, widgetContent)
 
   const saveAISummary = async () => {
     if (aiSummary) {
-      await db
-        .collection(goodreadsCollectionPath)
-        .doc('last-response_ai-summary')
-        .set({
-          summary: aiSummary,
-          generatedAt: Timestamp.now(),
-        })
+      await documentStore.setDocument(`${goodreadsCollectionPath}/last-response_ai-summary`, {
+        summary: aiSummary,
+        generatedAt: Timestamp.now(),
+      })
     }
   }
 
