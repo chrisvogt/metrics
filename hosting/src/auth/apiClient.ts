@@ -18,8 +18,20 @@ export class ApiClient {
   getCookieValue(name: string): string | null {
     if (typeof document === 'undefined') return null
     for (const cookie of document.cookie.split(';')) {
-      const [cookieName, value] = cookie.trim().split('=')
-      if (cookieName === name) return value ?? null
+      const trimmedCookie = cookie.trim()
+      const separatorIndex = trimmedCookie.indexOf('=')
+      if (separatorIndex === -1) continue
+
+      const cookieName = trimmedCookie.slice(0, separatorIndex)
+      const value = trimmedCookie.slice(separatorIndex + 1)
+
+      if (cookieName === name) {
+        try {
+          return decodeURIComponent(value)
+        } catch {
+          return value
+        }
+      }
     }
     return null
   }

@@ -59,7 +59,14 @@ export function createCookieBackedCsrfImpl(cookieOptions: CookieOptions) {
           }
 
           const expectedToken = tokenize(submittedToken.slice(0, TOKEN_SALT_LENGTH), requestSecret)
-          return crypto.timingSafeEqual(Buffer.from(submittedToken), Buffer.from(expectedToken))
+          const submittedBuffer = Buffer.from(submittedToken)
+          const expectedBuffer = Buffer.from(expectedToken)
+
+          if (submittedBuffer.length !== expectedBuffer.length) {
+            return false
+          }
+
+          return crypto.timingSafeEqual(submittedBuffer, expectedBuffer)
         },
       }
     },
