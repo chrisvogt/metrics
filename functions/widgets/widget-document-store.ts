@@ -1,6 +1,10 @@
 import { Timestamp } from 'firebase/firestore'
 
+import { toUserCollectionPath } from '../config/backend-paths.js'
+
 export const toWidgetContentPath = (collectionPath: string) => `${collectionPath}/widget-content`
+export const toUserWidgetContentPath = (userId: string, provider: string) =>
+  toWidgetContentPath(toUserCollectionPath(userId, provider))
 
 export const toDateOrDefault = (value: unknown, fallback: Date = new Date(0)) => {
   if (value instanceof Date) {

@@ -46,7 +46,7 @@ describe('getFlickrWidgetContent', () => {
 
     const result = await getFlickrWidgetContent('user123', documentStore)
 
-    expect(documentStore.getDocument).toHaveBeenCalledWith('users/chrisvogt/flickr/widget-content')
+    expect(documentStore.getDocument).toHaveBeenCalledWith('users/user123/flickr/widget-content')
     expect(result).toEqual(mockData)
   })
 

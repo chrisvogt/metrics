@@ -21,6 +21,7 @@ import {
   loadLocalDevelopmentEnv,
   markRuntimeConfigApplied,
 } from './config/backend-config.js'
+import { getWidgetUserIdForHostname } from './config/backend-paths.js'
 import { FirestoreDocumentStore } from './adapters/storage/firestore-document-store.js'
 import { LocalDiskMediaStore } from './adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from './middleware/rate-limit-key.js'
@@ -425,7 +426,7 @@ expressApp.get('/api/widgets/:provider', cors(corsOptions), async (req, res) => 
   }
 
   const originalHostname = (req.headers['x-forwarded-host'] as string) || req.hostname
-  const userId = originalHostname === 'api.chronogrove.com' ? 'chronogrove' : 'chrisvogt'
+  const userId = getWidgetUserIdForHostname(originalHostname)
 
   try {
     const widgetContent = await getWidgetContent(provider, userId, documentStore)

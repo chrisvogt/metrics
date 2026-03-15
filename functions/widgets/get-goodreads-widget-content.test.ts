@@ -58,7 +58,7 @@ describe('getGoodreadsWidgetContent', () => {
       }
     })
 
-    expect(documentStore.getDocument).toHaveBeenCalledWith('users/chrisvogt/goodreads/widget-content')
+    expect(documentStore.getDocument).toHaveBeenCalledWith('users/user123/goodreads/widget-content')
   })
 
   it('should handle missing data gracefully', async () => {
