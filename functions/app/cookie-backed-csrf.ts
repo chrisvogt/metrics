@@ -30,7 +30,7 @@ function createRandomToken(length: number): string {
 }
 
 function tokenize(salt: string, secret: string): string {
-  return salt + crypto.createHash('sha1').update(`${salt}${secret}`).digest('base64')
+  return salt + crypto.createHmac('sha256', secret).update(salt).digest('base64')
 }
 
 export function createCookieBackedCsrfImpl(cookieOptions: CookieOptions) {
