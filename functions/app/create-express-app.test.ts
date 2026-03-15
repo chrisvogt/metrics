@@ -5,6 +5,7 @@ import os from 'os'
 import path from 'path'
 
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
+import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 
 const getMediaStoreMock = vi.hoisted(() => vi.fn())
 const isDiskMediaStoreSelectedMock = vi.hoisted(() => vi.fn(() => true))
@@ -234,13 +235,29 @@ describe('createExpressApp auth and session branches', () => {
 
   async function getCsrfHeaders(app: Awaited<ReturnType<typeof buildApp>>) {
     const agent = request.agent(app)
-    const response = await agent.get('/api/csrf-token').expect(200)
-    const cookies = (response.headers['set-cookie'] as string[]).map((cookie) => cookie.split(';', 1)[0]!)
+    const capturedCookies: string[] = []
+    const cookieBackedCsrf = createCookieBackedCsrfImpl({
+      httpOnly: true,
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    })
+
+    const csrfState = cookieBackedCsrf.create(
+      {
+        cookies: {},
+        res: {
+          cookie: (name: string, value: string) => {
+            capturedCookies.push(`${name}=${value}`)
+          },
+        },
+      } as never,
+      '_csrfSecret'
+    )
 
     return {
       agent,
-      csrfToken: response.body.csrfToken as string,
-      cookies,
+      csrfToken: csrfState.token,
+      cookies: capturedCookies,
     }
   }
 
