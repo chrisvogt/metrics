@@ -32,7 +32,7 @@ export class LocalDiskMediaStore implements MediaStore {
     try {
       return await listFilesRecursive(this.rootDirectory)
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      if ((error as { code?: string }).code === 'ENOENT') {
         return []
       }
 
@@ -41,13 +41,13 @@ export class LocalDiskMediaStore implements MediaStore {
   }
 
   fetchAndStore({ destinationPath, mediaURL, id }: MediaDescriptor): Promise<StoredMedia> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (!mediaURL) {
         reject(new Error(`Missing media to download for ${id}.`))
         return
       }
 
-      try {
+      void (async () => {
         const absoluteDestinationPath = this.resolveAbsolutePath(destinationPath)
 
         await fs.mkdir(path.dirname(absoluteDestinationPath), { recursive: true })
@@ -72,9 +72,9 @@ export class LocalDiskMediaStore implements MediaStore {
         }).on('error', (err) => {
           reject(new Error(`Failed to download media for ${id}: ${err.message}`))
         })
-      } catch (error) {
+      })().catch((error) => {
         reject(error)
-      }
+      })
     })
   }
 
