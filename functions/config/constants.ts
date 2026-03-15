@@ -1,4 +1,10 @@
 import { getDiscogsConfig, getStorageConfig } from './backend-config.js'
+import {
+  getDefaultWidgetUserId,
+  getUsersCollectionPath,
+  toMediaPrefix,
+  toUserCollectionPath,
+} from './backend-paths.js'
 
 const {
   cloudStorageImagesBucket: CLOUD_STORAGE_IMAGES_BUCKET,
@@ -7,29 +13,29 @@ const {
   mediaStoreBackend: MEDIA_STORE_BACKEND,
 } = getStorageConfig()
 
-const CURRENT_USERNAME = 'chrisvogt'
+const CURRENT_USERNAME = getDefaultWidgetUserId()
 
-const CLOUD_STORAGE_DISCOGS_PATH = `${CURRENT_USERNAME}/discogs/`
+const CLOUD_STORAGE_DISCOGS_PATH = toMediaPrefix(CURRENT_USERNAME, 'discogs')
 
-const CLOUD_STORAGE_INSTAGRAM_PATH = `${CURRENT_USERNAME}/instagram/`
+const CLOUD_STORAGE_INSTAGRAM_PATH = toMediaPrefix(CURRENT_USERNAME, 'instagram')
 
-const CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH = `${CURRENT_USERNAME}/spotify/playlists/`
+const CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH = toMediaPrefix(CURRENT_USERNAME, 'spotify', 'playlists/')
 
-const DATABASE_COLLECTION_DISCOGS = `users/${CURRENT_USERNAME}/discogs`
+const DATABASE_COLLECTION_DISCOGS = toUserCollectionPath(CURRENT_USERNAME, 'discogs')
 
-const DATABASE_COLLECTION_FLICKR = `users/${CURRENT_USERNAME}/flickr`
+const DATABASE_COLLECTION_FLICKR = toUserCollectionPath(CURRENT_USERNAME, 'flickr')
 
-const DATABASE_COLLECTION_SPOTIFY = `users/${CURRENT_USERNAME}/spotify`
+const DATABASE_COLLECTION_SPOTIFY = toUserCollectionPath(CURRENT_USERNAME, 'spotify')
 
-const DATABASE_COLLECTION_STEAM = `users/${CURRENT_USERNAME}/steam`
+const DATABASE_COLLECTION_STEAM = toUserCollectionPath(CURRENT_USERNAME, 'steam')
 
-const DATABASE_COLLECTION_INSTAGRAM = `users/${CURRENT_USERNAME}/instagram`
+const DATABASE_COLLECTION_INSTAGRAM = toUserCollectionPath(CURRENT_USERNAME, 'instagram')
 
-const DATABASE_COLLECTION_GOODREADS = `users/${CURRENT_USERNAME}/goodreads`
+const DATABASE_COLLECTION_GOODREADS = toUserCollectionPath(CURRENT_USERNAME, 'goodreads')
 
-const DATABASE_COLLECTION_GITHUB = `users/${CURRENT_USERNAME}/github`
+const DATABASE_COLLECTION_GITHUB = toUserCollectionPath(CURRENT_USERNAME, 'github')
 
-const DATABASE_COLLECTION_USERS = 'users'
+const DATABASE_COLLECTION_USERS = getUsersCollectionPath()
 
 const { username: DISCOGS_USERNAME } = getDiscogsConfig()
 

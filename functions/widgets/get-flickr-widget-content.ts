@@ -1,17 +1,17 @@
 import { logger } from 'firebase-functions'
 import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
-import { DATABASE_COLLECTION_FLICKR } from '../config/constants.js'
 import type { DocumentStore } from '../ports/document-store.js'
-import { toWidgetContentPath } from './widget-document-store.js'
+import { getDefaultWidgetUserId } from '../config/backend-paths.js'
+import { toUserWidgetContentPath } from './widget-document-store.js'
 
 const defaultDocumentStore = new FirestoreDocumentStore()
-const flickrWidgetContentPath = toWidgetContentPath(DATABASE_COLLECTION_FLICKR)
 
 const getFlickrWidgetContent = async (
-  _userId?: string,
+  userId: string = getDefaultWidgetUserId(),
   documentStore: DocumentStore = defaultDocumentStore
 ) => {
   try {
+    const flickrWidgetContentPath = toUserWidgetContentPath(userId, 'flickr')
     const widgetContent = await documentStore.getDocument(flickrWidgetContentPath)
 
     if (!widgetContent) {

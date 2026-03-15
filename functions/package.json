@@ -1,6 +1,6 @@
 {
   "name": "metrics-functions",
-  "version": "0.22.4",
+  "version": "0.22.5",
   "description": "Personal metrics API. A hobby project tracking my online metrics.",
   "type": "module",
   "main": "lib/index.js",

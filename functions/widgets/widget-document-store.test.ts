@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
-import { toDateOrDefault, toWidgetContentPath } from './widget-document-store.js'
+import { toDateOrDefault, toUserWidgetContentPath, toWidgetContentPath } from './widget-document-store.js'
 
 describe('widget-document-store helpers', () => {
   it('builds widget-content document paths', () => {
     expect(toWidgetContentPath('users/chrisvogt/flickr')).toBe(
       'users/chrisvogt/flickr/widget-content'
+    )
+  })
+
+  it('builds widget-content paths from user and provider', () => {
+    expect(toUserWidgetContentPath('chronogrove', 'instagram')).toBe(
+      'users/chronogrove/instagram/widget-content'
     )
   })
 
