@@ -1,10 +1,11 @@
 import { logger } from 'firebase-functions'
 import got from 'got'
 
-const googleBooksAPIKey = process.env.GOOGLE_BOOKS_API_KEY
+import { getGoogleBooksApiKey } from '../../config/backend-config.js'
 
 const fetchBook = async (book, maxRetries = 3) => {
   const { isbn, rating } = book
+  const googleBooksAPIKey = getGoogleBooksApiKey()
 
   if (!isbn) {
     throw new Error(`ISBN number required to search Google Books. You passed: ${isbn}`)

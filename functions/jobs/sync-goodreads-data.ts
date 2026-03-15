@@ -11,6 +11,7 @@ import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summar
 import fetchBookFromGoogle from '../api/google-books/fetch-book.js'
 import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
+import { getGoogleBooksApiKey } from '../config/backend-config.js'
 import { getMediaStore } from '../selectors/media-store.js'
 import { DATABASE_COLLECTION_GOODREADS, IMAGE_CDN_BASE_URL } from '../config/constants.js'
 
@@ -208,7 +209,7 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
             }
             
             try {
-              const googleBooksAPIKey = process.env.GOOGLE_BOOKS_API_KEY
+              const googleBooksAPIKey = getGoogleBooksApiKey()
               result = await fetchWithRetry(async () => {
                 const { body } = await got('https://www.googleapis.com/books/v1/volumes', {
                   searchParams: {

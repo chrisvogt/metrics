@@ -9,6 +9,7 @@ import getSpotifyPlaylists from '../api/spotify/get-playlists.js'
 import getSpotifyTopTracks from '../api/spotify/get-top-tracks.js'
 import getSpotifyUserProfile from '../api/spotify/get-user-profile.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
+import { getSpotifyConfig } from '../config/backend-config.js'
 import { getMediaStore } from '../selectors/media-store.js'
 import transformTrackToCollectionItem from '../transformers/track-to-collection-item.js'
 
@@ -58,11 +59,7 @@ const transformPlaylists = (playlists) => playlists.map(playlist => {
 
 const syncSpotifyTopTracks = async () => {
   const mediaStore = getMediaStore()
-  // In v2, we'll use environment variables directly instead of config()
-  const clientId = process.env.SPOTIFY_CLIENT_ID
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
-  const redirectURI = process.env.SPOTIFY_REDIRECT_URI
-  const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN
+  const { clientId, clientSecret, redirectUri: redirectURI, refreshToken } = getSpotifyConfig()
 
   const { accessToken } = await getSpotifyAccessToken({
     clientId,

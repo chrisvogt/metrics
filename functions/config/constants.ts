@@ -1,6 +1,11 @@
-const CLOUD_STORAGE_IMAGES_BUCKET = process.env.CLOUD_STORAGE_IMAGES_BUCKET
-const MEDIA_STORE_BACKEND = process.env.MEDIA_STORE_BACKEND
-const LOCAL_MEDIA_ROOT = process.env.LOCAL_MEDIA_ROOT
+import { getDiscogsConfig, getStorageConfig } from './backend-config.js'
+
+const {
+  cloudStorageImagesBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+  imageCdnBaseUrl: IMAGE_CDN_BASE_URL,
+  localMediaRoot: LOCAL_MEDIA_ROOT,
+  mediaStoreBackend: MEDIA_STORE_BACKEND,
+} = getStorageConfig()
 
 const CURRENT_USERNAME = 'chrisvogt'
 
@@ -26,9 +31,7 @@ const DATABASE_COLLECTION_GITHUB = `users/${CURRENT_USERNAME}/github`
 
 const DATABASE_COLLECTION_USERS = 'users'
 
-const IMAGE_CDN_BASE_URL = process.env.IMAGE_CDN_BASE_URL
-
-const DISCOGS_USERNAME = process.env.DISCOGS_USERNAME
+const { username: DISCOGS_USERNAME } = getDiscogsConfig()
 
 export {
   CLOUD_STORAGE_IMAGES_BUCKET,
