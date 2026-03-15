@@ -250,7 +250,10 @@ export function createExpressApp({
         return
       }
 
-      const mediaPath = req.params.mediaPath
+      const mediaPathParam = req.params.mediaPath
+      const mediaPath = Array.isArray(mediaPathParam)
+        ? mediaPathParam.join('/')
+        : mediaPathParam
       if (!mediaPath || typeof mediaPath !== 'string') {
         res.sendStatus(404)
         return
