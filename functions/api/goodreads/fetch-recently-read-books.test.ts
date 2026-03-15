@@ -30,6 +30,12 @@ vi.mock('../cloud-storage/list-stored-media.js', () => ({
   default: vi.fn()
 }))
 
+vi.mock('../../selectors/media-store.js', () => ({
+  getMediaStore: vi.fn(() => ({
+    describe: () => ({ backend: 'disk', target: '/tmp/test-media' }),
+  })),
+}))
+
 vi.mock('../../config/constants.js', () => ({
   CLOUD_STORAGE_IMAGES_BUCKET: 'test-bucket',
   IMAGE_CDN_BASE_URL: 'https://cdn.example.com/'
@@ -225,7 +231,7 @@ describe('fetchRecentlyReadBooks', () => {
         }],
         rating: ['4']
       }],
-      destinationBucket: 'test-bucket',
+      mediaStore: { backend: 'disk', target: '/tmp/test-media' },
       result: 'SUCCESS',
       totalUploadedCount: 1,
       uploadedFiles: ['books/test-book-id-thumbnail.jpg']
@@ -235,7 +241,7 @@ describe('fetchRecentlyReadBooks', () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       'Goodreads data sync finished successfully with media uploads.',
       {
-        destinationBucket: 'test-bucket',
+        mediaStore: { backend: 'disk', target: '/tmp/test-media' },
         totalUploadedCount: 1,
         uploadedFiles: ['books/test-book-id-thumbnail.jpg']
       }

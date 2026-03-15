@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 
 import {
   CLOUD_STORAGE_IMAGES_BUCKET,
+  LOCAL_MEDIA_ROOT,
+  MEDIA_STORE_BACKEND,
   CLOUD_STORAGE_DISCOGS_PATH,
   CLOUD_STORAGE_INSTAGRAM_PATH,
   CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH,
@@ -94,6 +96,14 @@ describe('constants', () => {
       expect(typeof CLOUD_STORAGE_IMAGES_BUCKET === 'string' || CLOUD_STORAGE_IMAGES_BUCKET === undefined).toBe(true)
     })
 
+    it('should have MEDIA_STORE_BACKEND as string or undefined', () => {
+      expect(typeof MEDIA_STORE_BACKEND === 'string' || MEDIA_STORE_BACKEND === undefined).toBe(true)
+    })
+
+    it('should have LOCAL_MEDIA_ROOT as string or undefined', () => {
+      expect(typeof LOCAL_MEDIA_ROOT === 'string' || LOCAL_MEDIA_ROOT === undefined).toBe(true)
+    })
+
     it('should have DISCOGS_USERNAME as string or undefined', () => {
       expect(typeof DISCOGS_USERNAME === 'string' || DISCOGS_USERNAME === undefined).toBe(true)
     })
@@ -107,6 +117,8 @@ describe('constants', () => {
     it('should export all expected constants', () => {
       const constants = {
         CLOUD_STORAGE_IMAGES_BUCKET,
+        LOCAL_MEDIA_ROOT,
+        MEDIA_STORE_BACKEND,
         CLOUD_STORAGE_DISCOGS_PATH,
         CLOUD_STORAGE_INSTAGRAM_PATH,
         CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH,
@@ -123,8 +135,10 @@ describe('constants', () => {
         IMAGE_CDN_BASE_URL
       }
 
-      expect(Object.keys(constants)).toHaveLength(15)
+      expect(Object.keys(constants)).toHaveLength(17)
       expect(constants).toHaveProperty('CLOUD_STORAGE_IMAGES_BUCKET')
+      expect(constants).toHaveProperty('LOCAL_MEDIA_ROOT')
+      expect(constants).toHaveProperty('MEDIA_STORE_BACKEND')
       expect(constants).toHaveProperty('CLOUD_STORAGE_DISCOGS_PATH')
       expect(constants).toHaveProperty('CLOUD_STORAGE_INSTAGRAM_PATH')
       expect(constants).toHaveProperty('CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH')

@@ -27,7 +27,9 @@ describe('setup-env-vars.js', () => {
       storage: {
         firestore_database_url: 'https://test.firebaseio.com',
         cloud_storage_images_bucket: 'test-bucket',
-        image_cdn_base_url: 'https://cdn.test.com'
+        image_cdn_base_url: 'https://cdn.test.com',
+        media_store_backend: 'disk',
+        local_media_root: '/tmp/metrics-media'
       },
       discogs: {
         api_key: 'test-discogs-key',

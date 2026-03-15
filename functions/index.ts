@@ -1,13 +1,9 @@
 import { logger } from 'firebase-functions'
 
-// Load environment variables from .env file in development
-if (process.env.NODE_ENV !== 'production') {
-  import('dotenv').then((dotenv) => dotenv.config())
-}
-
 import admin from 'firebase-admin'
 import compression from 'compression'
 import cors from 'cors'
+import * as dotenv from 'dotenv'
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import { onRequest } from 'firebase-functions/v2/https'
@@ -15,11 +11,15 @@ import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { beforeUserCreated } from 'firebase-functions/v2/identity'
 import { defineJsonSecret, defineString } from 'firebase-functions/params'
 import { existsSync, readFileSync } from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 import { applyExportedConfigToEnv } from './config/exported-config.js'
 import { FirestoreDocumentStore } from './adapters/storage/firestore-document-store.js'
+import { LocalDiskMediaStore } from './adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from './middleware/rate-limit-key.js'
 import { getWidgetContent, validWidgetIds } from './widgets/get-widget-content.js'
+import { getMediaStore, isDiskMediaStoreSelected } from './selectors/media-store.js'
 import createUserJob from './jobs/create-user.js'
 import deleteUserJob from './jobs/delete-user.js'
 import syncDiscogsDataJob from './jobs/sync-discogs-data.js'
@@ -29,6 +29,14 @@ import syncSpotifyDataJob from './jobs/sync-spotify-data.js'
 import syncSteamDataJob from './jobs/sync-steam-data.js'
 import syncFlickrDataJob from './jobs/sync-flickr-data.js'
 import { rateLimit } from 'express-rate-limit'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// Load environment variables from functions/.env synchronously in development.
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.resolve(__dirname, '../.env') })
+}
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
 
@@ -300,7 +308,7 @@ const authenticateUser = async (
   }
 }
 
-export const expressApp = express()
+export const expressApp: express.Express = express()
 
 expressApp.use(compression())
 expressApp.use(cookieParser())
@@ -330,6 +338,51 @@ const syncHandlersByProvider: Record<string, () => Promise<unknown>> = {
   steam: syncSteamDataJob,
   flickr: () => syncFlickrDataJob(documentStore),
 }
+
+expressApp.get(
+  '/api/media/{*mediaPath}',
+  cors(corsOptions),
+  createRateLimiter(15 * 60 * 1000, 100),
+  async (req, res) => {
+    if (!isDiskMediaStoreSelected()) {
+      res.sendStatus(404)
+      return
+    }
+
+    const mediaPath = req.params.mediaPath
+    if (!mediaPath || typeof mediaPath !== 'string') {
+      res.sendStatus(404)
+      return
+    }
+
+    const mediaStore = getMediaStore()
+    if (!(mediaStore instanceof LocalDiskMediaStore)) {
+      res.sendStatus(404)
+      return
+    }
+
+    const storeRoot = path.resolve(mediaStore.describe().target)
+    const absolutePath = path.resolve(mediaStore.resolveAbsolutePath(mediaPath))
+    const allowedPrefix = `${storeRoot}${path.sep}`
+
+    if (absolutePath !== storeRoot && !absolutePath.startsWith(allowedPrefix)) {
+      res.sendStatus(404)
+      return
+    }
+
+    res.sendFile(absolutePath, (error) => {
+      if (!error) {
+        return
+      }
+
+      const sendFileError = error as Error & { code?: string }
+
+      if (!res.headersSent) {
+        res.sendStatus(sendFileError.code === 'ENOENT' ? 404 : 500)
+      }
+    })
+  }
+)
 
 expressApp.get(
   '/api/widgets/sync/:provider',

@@ -24,6 +24,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
 
+## [0.22.4] - 2026-03-14
+
+### Added
+
+- **Media storage seam** – Added a provider-neutral `MediaStore` abstraction with GCS and local-disk adapters so media-heavy sync flows can switch storage backends without changing provider logic.
+- **Local media serving** – Added a local `/api/media/*` route for development so disk-backed uploads can be viewed through the same API surface used by widget media URLs.
+
+### Changed
+
+- **Media upload/list helpers** – Switched the shared cloud-storage helpers to delegate through the new media storage selector, preserving current GCS behavior in production while defaulting to disk in local development.
+- **Runtime config mapping** – Added `MEDIA_STORE_BACKEND` and `LOCAL_MEDIA_ROOT` support to exported-config/env setup so storage backend selection is environment-driven.
+
+### Fixed
+
+- **Local dotenv loading** – Functions now load `functions/.env` synchronously from a stable path in development so browser-triggered emulator requests use the same local storage/media settings consistently.
+
+### Developer experience
+
+- **Coverage** – Added focused adapter, selector, helper, and sync-job coverage for the new media storage seam and local-disk flow.
+
 ## [0.22.3] - 2026-03-14
 
 ### Changed

@@ -6,7 +6,9 @@ Firebase Cloud Functions backend for the Metrics API: an Express app that serves
 
 - **`lib/`** – Shared helpers and config: widget content getters, constants, exported-config mapping, utilities.
 - **`api/`** – External API clients (Goodreads, Spotify, Steam, Discogs, Instagram, Flickr, Google Books, Gemini, Cloud Storage).
+- **`adapters/`** – Concrete implementations for backend seams such as document storage and media storage.
 - **`jobs/`** – Sync jobs (e.g. `sync-spotify-data`, `sync-goodreads-data`) and user lifecycle (create-user, delete-user).
+- **`ports/`** – Provider-neutral interfaces for backend seams.
 - **`transformers/`** – Data shaping for storage and widgets (e.g. Discogs releases, Instagram media).
 - **`middleware/`** – Express middleware (e.g. rate limiter).
 - **`selectors/`** – Config selectors.

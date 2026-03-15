@@ -7,11 +7,11 @@ import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import fetchDiscogsReleases from '../api/discogs/fetch-releases.js'
 import fetchReleasesBatch from '../api/discogs/fetch-releases-batch.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
+import { getMediaStore } from '../selectors/media-store.js'
 import toDiscogsDestinationPath from '../transformers/to-discogs-destination-path.js'
 import transformDiscogsRelease from '../transformers/transform-discogs-release.js'
 
 import { 
-  CLOUD_STORAGE_IMAGES_BUCKET, 
   DATABASE_COLLECTION_DISCOGS,
   DISCOGS_USERNAME
 } from '../config/constants.js'
@@ -76,6 +76,7 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, release) => {
 
 const syncDiscogsData = async () => {
   try {
+    const mediaStore = getMediaStore()
     const discogsResponse = await fetchDiscogsReleases()
 
     const { releases, pagination } = discogsResponse
@@ -172,13 +173,13 @@ const syncDiscogsData = async () => {
     }
 
     logger.info('Discogs sync finished successfully.', {
-      destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+      mediaStore: mediaStore.describe(),
       totalUploadedCount: result.length,
       uploadedFiles: result.map(({ fileName }) => fileName),
     })
 
     return {
-      destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+      mediaStore: mediaStore.describe(),
       result: 'SUCCESS',
       totalUploadedCount: result.length,
       uploadedFiles: result.map(({ fileName }) => fileName),
