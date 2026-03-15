@@ -235,11 +235,12 @@ describe('createExpressApp auth and session branches', () => {
   async function getCsrfHeaders(app: Awaited<ReturnType<typeof buildApp>>) {
     const agent = request.agent(app)
     const response = await agent.get('/api/csrf-token').expect(200)
+    const cookies = (response.headers['set-cookie'] as string[]).map((cookie) => cookie.split(';', 1)[0]!)
 
     return {
       agent,
       csrfToken: response.body.csrfToken as string,
-      cookies: response.headers['set-cookie'] as string[],
+      cookies,
     }
   }
 
