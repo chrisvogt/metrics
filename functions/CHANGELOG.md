@@ -24,6 +24,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
 
+## [0.22.6] - 2026-03-15
+
+### Added
+
+- **Backend path config overrides** – Added `DEFAULT_WIDGET_USER_ID` and `WIDGET_USER_ID_BY_HOSTNAME` support so the default widget user and hostname-to-user routing can be configured without code changes.
+
+### Changed
+
+- **Provider path resolution** – Replaced precomputed per-user collection and media path constants with runtime path builders so sync jobs, widget reads, and media destination helpers no longer treat one hardcoded username as a structural constant.
+- **Provider sync persistence** – Discogs, Goodreads, Instagram, Spotify, Steam, and Flickr persistence paths now resolve through the shared backend path layer, preserving existing document layouts while making alternate deployments easier to configure.
+
+### Developer experience
+
+- **Coverage** – Added focused config/path override tests and updated transformer/widget coverage around the new runtime path resolution.
+
 ## [0.22.5] - 2026-03-15
 
 ### Added

@@ -2,12 +2,12 @@ import { Timestamp } from 'firebase-admin/firestore'
 import { logger } from 'firebase-functions'
 
 import type { DocumentStore } from '../../ports/document-store.js'
-import { DATABASE_COLLECTION_FLICKR } from '../../config/constants.js'
 import { getFlickrConfig } from '../../config/backend-config.js'
+import { toProviderCollectionPath } from '../../config/backend-paths.js'
 import fetchPhotos from '../../api/flickr/fetch-photos.js'
 
-export const FLICKR_LAST_RESPONSE_PATH = `${DATABASE_COLLECTION_FLICKR}/last-response`
-export const FLICKR_WIDGET_CONTENT_PATH = `${DATABASE_COLLECTION_FLICKR}/widget-content`
+export const toFlickrLastResponsePath = () => `${toProviderCollectionPath('flickr')}/last-response`
+export const toFlickrWidgetContentPath = () => `${toProviderCollectionPath('flickr')}/widget-content`
 
 const syncFlickrData = async (documentStore: DocumentStore) => {
   const { userId: flickrUsername } = getFlickrConfig()
@@ -15,7 +15,7 @@ const syncFlickrData = async (documentStore: DocumentStore) => {
   try {
     const photosResponse = await fetchPhotos()
 
-    await documentStore.setDocument(FLICKR_LAST_RESPONSE_PATH, {
+    await documentStore.setDocument(toFlickrLastResponsePath(), {
       response: photosResponse,
       fetchedAt: Timestamp.now(),
     })
@@ -47,7 +47,7 @@ const syncFlickrData = async (documentStore: DocumentStore) => {
       },
     }
 
-    await documentStore.setDocument(FLICKR_WIDGET_CONTENT_PATH, widgetContent)
+    await documentStore.setDocument(toFlickrWidgetContentPath(), widgetContent)
 
     logger.info('Flickr data sync completed successfully', {
       totalPhotos: photoCount,

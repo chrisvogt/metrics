@@ -29,6 +29,8 @@ describe('backend config', () => {
     delete process.env.SPOTIFY_REFRESH_TOKEN
     delete process.env.STEAM_API_KEY
     delete process.env.STEAM_USER_ID
+    delete process.env.DEFAULT_WIDGET_USER_ID
+    delete process.env.WIDGET_USER_ID_BY_HOSTNAME
   })
 
   it('detects production mode from NODE_ENV', async () => {
@@ -143,6 +145,14 @@ describe('backend config', () => {
     expect(storageConfig.localMediaRoot.endsWith('tmp/media')).toBe(true)
   })
 
+  it('defaults storage backend to gcs in production when unset', async () => {
+    process.env.NODE_ENV = 'production'
+
+    const { getStorageConfig } = await import('./backend-config.js')
+
+    expect(getStorageConfig().mediaStoreBackend).toBe('gcs')
+  })
+
   it('returns normalized storage config with explicit overrides', async () => {
     process.env.NODE_ENV = 'production'
     process.env.CLOUD_STORAGE_IMAGES_BUCKET = 'bucket-name'
@@ -156,6 +166,62 @@ describe('backend config', () => {
       imageCdnBaseUrl: undefined,
       localMediaRoot: '/tmp/media-root',
       mediaStoreBackend: 'disk',
+    })
+  })
+
+  it('returns normalized backend path config with env overrides', async () => {
+    process.env.DEFAULT_WIDGET_USER_ID = 'custom-user'
+    process.env.WIDGET_USER_ID_BY_HOSTNAME = JSON.stringify({
+      'api.custom.example': 'custom-user',
+      'api.secondary.example': 'secondary-user',
+    })
+
+    const { getBackendPathConfig } = await import('./backend-config.js')
+
+    expect(getBackendPathConfig()).toEqual({
+      defaultWidgetUserId: 'custom-user',
+      widgetUserIdByHostname: {
+        'api.custom.example': 'custom-user',
+        'api.secondary.example': 'secondary-user',
+      },
+    })
+  })
+
+  it('parses hostname mapping config from comma-separated env values', async () => {
+    process.env.WIDGET_USER_ID_BY_HOSTNAME =
+      'api.custom.example=custom-user, api.secondary.example=secondary-user'
+
+    const { getBackendPathConfig } = await import('./backend-config.js')
+
+    expect(getBackendPathConfig().widgetUserIdByHostname).toEqual({
+      'api.custom.example': 'custom-user',
+      'api.secondary.example': 'secondary-user',
+    })
+  })
+
+  it('filters invalid entries from JSON hostname mapping config', async () => {
+    process.env.WIDGET_USER_ID_BY_HOSTNAME = JSON.stringify({
+      'api.custom.example': 'custom-user',
+      '': 'missing-hostname',
+      'api.empty-user.example': '',
+      'api.invalid-user.example': 123,
+    })
+
+    const { getBackendPathConfig } = await import('./backend-config.js')
+
+    expect(getBackendPathConfig().widgetUserIdByHostname).toEqual({
+      'api.custom.example': 'custom-user',
+    })
+  })
+
+  it('ignores malformed entries in comma-separated hostname mapping config', async () => {
+    process.env.WIDGET_USER_ID_BY_HOSTNAME =
+      'api.custom.example=custom-user, invalid-entry, api.empty-user.example=, =missing-hostname'
+
+    const { getBackendPathConfig } = await import('./backend-config.js')
+
+    expect(getBackendPathConfig().widgetUserIdByHostname).toEqual({
+      'api.custom.example': 'custom-user',
     })
   })
 })

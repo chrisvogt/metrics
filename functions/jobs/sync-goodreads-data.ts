@@ -12,8 +12,9 @@ import fetchBookFromGoogle from '../api/google-books/fetch-book.js'
 import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import { getGoogleBooksApiKey } from '../config/backend-config.js'
+import { toProviderCollectionPath } from '../config/backend-paths.js'
 import { getMediaStore } from '../selectors/media-store.js'
-import { DATABASE_COLLECTION_GOODREADS, IMAGE_CDN_BASE_URL } from '../config/constants.js'
+import { IMAGE_CDN_BASE_URL } from '../config/constants.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
@@ -449,6 +450,7 @@ const fetchAllGoodreadsPromises = async (): Promise<{
  * Sync Goodreads Data
  */
 const syncGoodreadsData = async () => {
+  const goodreadsCollectionPath = toProviderCollectionPath('goodreads')
   const {
     collections = {},
     error,
@@ -486,7 +488,7 @@ const syncGoodreadsData = async () => {
 
   const res = responses as { user?: unknown; reviews?: unknown }
   const saveUserResponse = async () => await db
-    .collection(DATABASE_COLLECTION_GOODREADS)
+    .collection(goodreadsCollectionPath)
     .doc('last-response_user-show')
     .set({
       response: res.user,
@@ -494,7 +496,7 @@ const syncGoodreadsData = async () => {
     })
 
   const saveBookReviews = async () => await db
-    .collection(DATABASE_COLLECTION_GOODREADS)
+    .collection(goodreadsCollectionPath)
     .doc('last-response_book-reviews')
     .set({
       response: res.reviews,
@@ -502,14 +504,14 @@ const syncGoodreadsData = async () => {
     })
 
   const saveWidgetContent = async () => await db
-    .collection(DATABASE_COLLECTION_GOODREADS)
+    .collection(goodreadsCollectionPath)
     .doc('widget-content')
     .set(widgetContent)
 
   const saveAISummary = async () => {
     if (aiSummary) {
       await db
-        .collection(DATABASE_COLLECTION_GOODREADS)
+        .collection(goodreadsCollectionPath)
         .doc('last-response_ai-summary')
         .set({
           summary: aiSummary,

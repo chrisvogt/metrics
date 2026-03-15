@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -55,8 +56,11 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: functions/coverage/lcov.info
+          disable_search: true
+          name: functions-unit-coverage
           flags: unittests
           fail_ci_if_error: true
+          verbose: true
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() && steps.junit.outputs.file != '' }}
@@ -65,7 +69,10 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           files: ${{ steps.junit.outputs.file }}
+          disable_search: true
+          name: functions-unit-test-results
           report_type: test_results
+          verbose: true
 
       - name: Fail if tests failed
         if: ${{ steps.tests.outcome == 'failure' }}
