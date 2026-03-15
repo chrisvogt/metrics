@@ -1,131 +1,127 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import admin from 'firebase-admin'
-import { Timestamp } from 'firebase/firestore'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { DocumentStore } from '../ports/document-store.js'
 import getSpotifyWidgetContent from './get-spotify-widget-content.js'
 
-// Mock firebase-admin
-vi.mock('firebase-admin', () => ({
-  default: {
-    firestore: vi.fn(() => ({
-      collection: vi.fn(() => ({
-        doc: vi.fn(() => ({
-          get: vi.fn()
-        }))
-      }))
-    }))
-  }
-}))
-
 describe('getSpotifyWidgetContent', () => {
-  let mockGet
-  let mockDoc
-  let mockCollection
-  let mockFirestore
+  let documentStore: DocumentStore
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    
-    mockGet = vi.fn()
-    mockDoc = vi.fn(() => ({ get: mockGet }))
-    mockCollection = vi.fn(() => ({ doc: mockDoc }))
-    mockFirestore = vi.fn(() => ({ collection: mockCollection }))
-    
-    admin.firestore = mockFirestore
+    documentStore = {
+      getDocument: vi.fn(),
+      setDocument: vi.fn(),
+    }
   })
 
   it('should return properly formatted widget content', async () => {
-    const mockData = {
+    vi.mocked(documentStore.getDocument).mockResolvedValue({
       meta: {
         synced: {
           _seconds: 1640995200,
-          _nanoseconds: 0
-        }
+          _nanoseconds: 0,
+        },
       },
       collections: {
         playlists: [
           {
             id: 'playlist1',
             name: 'Test Playlist',
-            images: [{ url: 'https://example.com/image.jpg' }]
-          }
+            images: [{ url: 'https://example.com/image.jpg' }],
+          },
         ],
         topTracks: [
           {
             id: 'track1',
             name: 'Test Track',
-            artists: [{ name: 'Test Artist' }]
-          }
-        ]
+            artists: [{ name: 'Test Artist' }],
+          },
+        ],
       },
       metrics: [
         {
           displayName: 'Followers',
           id: 'followers-count',
-          value: 1000
-        }
+          value: 1000,
+        },
       ],
       profile: {
         displayName: 'Test User',
         id: 'user123',
-        profileURL: 'https://open.spotify.com/user/user123'
-      }
-    }
-
-    mockGet.mockResolvedValue({
-      data: () => mockData
+        profileURL: 'https://open.spotify.com/user/user123',
+      },
     })
 
-    const result = await getSpotifyWidgetContent()
+    const result = await getSpotifyWidgetContent('chrisvogt', documentStore)
 
     expect(result).toEqual({
-      collections: mockData.collections,
-      metrics: mockData.metrics,
-      profile: mockData.profile,
+      collections: {
+        playlists: [
+          {
+            id: 'playlist1',
+            name: 'Test Playlist',
+            images: [{ url: 'https://example.com/image.jpg' }],
+          },
+        ],
+        topTracks: [
+          {
+            id: 'track1',
+            name: 'Test Track',
+            artists: [{ name: 'Test Artist' }],
+          },
+        ],
+      },
+      metrics: [
+        {
+          displayName: 'Followers',
+          id: 'followers-count',
+          value: 1000,
+        },
+      ],
+      profile: {
+        displayName: 'Test User',
+        id: 'user123',
+        profileURL: 'https://open.spotify.com/user/user123',
+      },
       meta: {
-        synced: new Timestamp(1640995200, 0).toDate()
-      }
+        synced: new Date('2022-01-01T00:00:00.000Z'),
+      },
     })
 
-    expect(mockFirestore).toHaveBeenCalled()
-    expect(mockCollection).toHaveBeenCalledWith('users/chrisvogt/spotify')
-    expect(mockDoc).toHaveBeenCalledWith('widget-content')
-    expect(mockGet).toHaveBeenCalled()
+    expect(documentStore.getDocument).toHaveBeenCalledWith('users/chrisvogt/spotify/widget-content')
   })
 
   it('should handle missing data gracefully', async () => {
-    const mockData = {
+    vi.mocked(documentStore.getDocument).mockResolvedValue({
       meta: {
         synced: {
           _seconds: 1640995200,
-          _nanoseconds: 0
-        }
-      }
-    }
-
-    mockGet.mockResolvedValue({
-      data: () => mockData
+          _nanoseconds: 0,
+        },
+      },
     })
 
-    const result = await getSpotifyWidgetContent()
+    const result = await getSpotifyWidgetContent('chrisvogt', documentStore)
 
     expect(result).toEqual({
       meta: {
-        synced: new Timestamp(1640995200, 0).toDate()
-      }
+        synced: new Date('2022-01-01T00:00:00.000Z'),
+      },
     })
   })
 
   it('should throw error when data retrieval fails', async () => {
-    mockGet.mockResolvedValue({
-      data: () => null
-    })
+    vi.mocked(documentStore.getDocument).mockResolvedValue(null)
 
-    await expect(getSpotifyWidgetContent()).rejects.toThrow()
+    await expect(getSpotifyWidgetContent('chrisvogt', documentStore)).rejects.toThrow(
+      'No Spotify data found in DocumentStore'
+    )
   })
 
-  it('should throw error when get() throws', async () => {
-    mockGet.mockRejectedValue(new Error('Database error'))
+  it('should throw error when document store rejects', async () => {
+    vi.mocked(documentStore.getDocument).mockRejectedValue(new Error('Database error'))
 
-    await expect(getSpotifyWidgetContent()).rejects.toThrow('Database error')
+    await expect(getSpotifyWidgetContent('chrisvogt', documentStore)).rejects.toThrow(
+      'Database error'
+    )
   })
-}) 
+})

@@ -1,32 +1,31 @@
-import admin from 'firebase-admin'
-import { Timestamp } from 'firebase/firestore'
-import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
+import type { DocumentStore } from '../ports/document-store.js'
+import { getDefaultWidgetUserId } from '../config/backend-paths.js'
+import { toDateOrDefault, toUserWidgetContentPath } from './widget-document-store.js'
 
-const getSteamWidgetContent = async () => {
-  const db = admin.firestore()
-  const doc = await db
-    .collection(toProviderCollectionPath('steam'))
-    .doc('widget-content')
-    .get()
+const defaultDocumentStore = new FirestoreDocumentStore()
 
-  const data = doc.data()
+const getSteamWidgetContent = async (
+  userId: string = getDefaultWidgetUserId(),
+  documentStore: DocumentStore = defaultDocumentStore
+) => {
+  const steamWidgetContentPath = toUserWidgetContentPath(userId, 'steam')
+  const data = await documentStore.getDocument<{
+    meta?: { synced?: unknown }
+  } & Record<string, unknown>>(steamWidgetContentPath)
+
   if (!data) {
     return { meta: { synced: new Date(0) } }
   }
 
   const { meta = {}, ...responseData } = data
 
-  const transformedMeta = {
-    ...meta,
-    synced: new Timestamp(
-      meta.synced._seconds,
-      meta.synced._nanoseconds
-    ).toDate(),
-  }
-
   return {
     ...responseData,
-    meta: transformedMeta,
+    meta: {
+      ...meta,
+      synced: toDateOrDefault(meta.synced),
+    },
   }
 }
 

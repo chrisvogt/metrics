@@ -1,22 +1,35 @@
-import admin from 'firebase-admin'
-import { Timestamp } from 'firebase/firestore'
-import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
+import type { DocumentStore } from '../ports/document-store.js'
+import { getDefaultWidgetUserId } from '../config/backend-paths.js'
+import { toDateOrDefault, toUserWidgetContentPath } from './widget-document-store.js'
 
-const getDiscogsWidgetContent = async () => {
-  const db = admin.firestore()
-  const doc = await db.collection(toProviderCollectionPath('discogs')).doc('widget-content').get()
-  const { meta, ...responseData } = doc.data()
+const defaultDocumentStore = new FirestoreDocumentStore()
+
+const getDiscogsWidgetContent = async (
+  userId: string = getDefaultWidgetUserId(),
+  documentStore: DocumentStore = defaultDocumentStore
+) => {
+  const discogsWidgetContentPath = toUserWidgetContentPath(userId, 'discogs')
+  const data = await documentStore.getDocument<{
+    meta?: { synced?: unknown }
+  } & Record<string, unknown>>(discogsWidgetContentPath)
+
+  if (!data) {
+    return {
+      meta: {},
+    }
+  }
+
+  const { meta = {}, ...responseData } = data
 
   const transformedMeta = {
     ...meta,
-    ...(meta?.synced && {
-      synced: new Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate()
-    })
+    ...(meta.synced ? { synced: toDateOrDefault(meta.synced) } : {}),
   }
 
   return {
     ...responseData,
-    meta: transformedMeta
+    meta: transformedMeta,
   }
 }
 

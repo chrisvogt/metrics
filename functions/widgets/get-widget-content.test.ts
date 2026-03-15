@@ -142,6 +142,46 @@ describe('getWidgetContent', () => {
     expect(result).toEqual(mockContent)
   })
 
+  it('should pass the document store to discogs widget content when provided', async () => {
+    const mockContent = { collections: { releases: [] } }
+    getDiscogsWidgetContent.mockResolvedValue(mockContent)
+
+    const result = await getWidgetContent('discogs', 'user123', documentStore)
+
+    expect(getDiscogsWidgetContent).toHaveBeenCalledWith('user123', documentStore)
+    expect(result).toEqual(mockContent)
+  })
+
+  it('should pass the document store to instagram widget content when provided', async () => {
+    const mockContent = { collections: { media: [] } }
+    getInstagramWidgetContent.mockResolvedValue(mockContent)
+
+    const result = await getWidgetContent('instagram', 'user123', documentStore)
+
+    expect(getInstagramWidgetContent).toHaveBeenCalledWith('user123', documentStore)
+    expect(result).toEqual(mockContent)
+  })
+
+  it('should pass the document store to spotify widget content when provided', async () => {
+    const mockContent = { collections: { topTracks: [] } }
+    getSpotifyWidgetContent.mockResolvedValue(mockContent)
+
+    const result = await getWidgetContent('spotify', 'user123', documentStore)
+
+    expect(getSpotifyWidgetContent).toHaveBeenCalledWith('user123', documentStore)
+    expect(result).toEqual(mockContent)
+  })
+
+  it('should pass the document store to steam widget content when provided', async () => {
+    const mockContent = { collections: { recentlyPlayedGames: [] } }
+    getSteamWidgetContent.mockResolvedValue(mockContent)
+
+    const result = await getWidgetContent('steam', 'user123', documentStore)
+
+    expect(getSteamWidgetContent).toHaveBeenCalledWith('user123', documentStore)
+    expect(result).toEqual(mockContent)
+  })
+
   it('should throw error for unrecognized widget type', async () => {
     await expect(getWidgetContent('invalid', 'user123')).rejects.toThrow(
       'Unrecognized widget type: invalid'
