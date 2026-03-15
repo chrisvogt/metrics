@@ -1,20 +1,31 @@
-import admin from 'firebase-admin'
-import { Timestamp } from 'firebase/firestore'
-import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
+import type { DocumentStore } from '../ports/document-store.js'
+import { getDefaultWidgetUserId } from '../config/backend-paths.js'
+import { toDateOrDefault, toUserWidgetContentPath } from './widget-document-store.js'
 
-const getSpotifyWidgetContent = async () => {
-  const db = admin.firestore()
-  const doc = await db.collection(toProviderCollectionPath('spotify')).doc('widget-content').get()
-  const { meta, ...responseData } = doc.data()
+const defaultDocumentStore = new FirestoreDocumentStore()
 
-  const transformedMeta = {
-    ...meta,
-    synced: new Timestamp(meta.synced._seconds, meta.synced._nanoseconds).toDate()
+const getSpotifyWidgetContent = async (
+  userId: string = getDefaultWidgetUserId(),
+  documentStore: DocumentStore = defaultDocumentStore
+) => {
+  const spotifyWidgetContentPath = toUserWidgetContentPath(userId, 'spotify')
+  const data = await documentStore.getDocument<{
+    meta?: { synced?: unknown }
+  } & Record<string, unknown>>(spotifyWidgetContentPath)
+
+  if (!data) {
+    throw new Error('No Spotify data found in DocumentStore')
   }
+
+  const { meta = {}, ...responseData } = data
 
   return {
     ...responseData,
-    meta: transformedMeta
+    meta: {
+      ...meta,
+      synced: toDateOrDefault(meta.synced),
+    },
   }
 }
 

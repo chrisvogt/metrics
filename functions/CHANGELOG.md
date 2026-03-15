@@ -24,6 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
 
+## [0.22.10] - 2026-03-15
+
+### Changed
+
+- **Widget reads on `DocumentStore`** – Discogs, Instagram, Spotify, and Steam widget readers now load their `widget-content` documents through the shared `DocumentStore` boundary instead of reaching into Firestore directly.
+- **Consistent widget paths** – Provider widget reads now use the shared widget document path helpers so public widget loading follows the same provider-neutral storage contract across all supported providers.
+
+### Developer experience
+
+- **Widget reader coverage** – Replaced Firestore-specific widget reader tests with `DocumentStore`-backed coverage and added a dedicated Steam widget reader test to keep the provider read seam well-covered during the migration.
+
 ## [0.22.9] - 2026-03-15
 
 ### Added
