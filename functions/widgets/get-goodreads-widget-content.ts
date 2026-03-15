@@ -1,11 +1,18 @@
-import admin from 'firebase-admin'
-import { Timestamp } from 'firebase/firestore'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import { DATABASE_COLLECTION_GOODREADS } from '../config/constants.js'
+import type { DocumentStore } from '../ports/document-store.js'
+import { toDateOrDefault, toWidgetContentPath } from './widget-document-store.js'
 
-const getGoodreadsWidgetContent = async () => {
-  const db = admin.firestore()
-  const doc = await db.collection(DATABASE_COLLECTION_GOODREADS).doc('widget-content').get()
-  const data = doc.data()
+const defaultDocumentStore = new FirestoreDocumentStore()
+const goodreadsWidgetContentPath = toWidgetContentPath(DATABASE_COLLECTION_GOODREADS)
+
+const getGoodreadsWidgetContent = async (
+  _userId?: string,
+  documentStore: DocumentStore = defaultDocumentStore
+) => {
+  const data = await documentStore.getDocument<{
+    meta?: { synced?: unknown }
+  } & Record<string, unknown>>(goodreadsWidgetContentPath)
 
   if (!data) {
     return {
@@ -16,16 +23,10 @@ const getGoodreadsWidgetContent = async () => {
   }
 
   const { meta = {}, ...responseData } = data
-  const rawSynced = meta.synced
-  const syncedTimestamp = typeof rawSynced?.toDate === 'function'
-    ? rawSynced.toDate()
-    : rawSynced?._seconds != null
-      ? new Timestamp(rawSynced._seconds, rawSynced._nanoseconds ?? 0).toDate()
-      : new Date(0)
 
   const transformedMeta = {
     ...meta,
-    synced: syncedTimestamp,
+    synced: toDateOrDefault(meta.synced),
   }
 
   return {

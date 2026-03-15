@@ -1,12 +1,13 @@
+import type { DocumentStore } from '../ports/document-store.js'
 import getDiscogsWidgetContent from './get-discogs-widget-content.js'
+import getFlickrWidgetContent from './get-flickr-widget-content.js'
 import getGitHubWidgetContent from './get-github-widget-content.js'
 import getGoodreadsWidgetContent from './get-goodreads-widget-content.js'
 import getInstagramWidgetContent from './get-instagram-widget-content.js'
 import getSpotifyWidgetContent from './get-spotify-widget-content.js'
 import getSteamWidgetContent from './get-steam-widget-content.js'
-import getFlickrWidgetContent from './get-flickr-widget-content.js'
 
-type WidgetHandler = (userId: string) => Promise<unknown>
+type WidgetHandler = (userId: string, documentStore?: DocumentStore) => Promise<unknown>
 
 const widgetHandlerRegistry: Record<string, WidgetHandler> = {
   discogs: getDiscogsWidgetContent,
@@ -22,12 +23,13 @@ export const validWidgetIds = Object.keys(widgetHandlerRegistry)
 
 export const getWidgetContent = async (
   widgetId: string,
-  userId: string
+  userId: string,
+  documentStore?: DocumentStore
 ): Promise<unknown> => {
   if (!validWidgetIds.includes(widgetId)) {
     throw new Error(`Unrecognized widget type: ${widgetId}`)
   }
 
   const getContent = widgetHandlerRegistry[widgetId]!
-  return getContent(userId)
+  return documentStore ? getContent(userId, documentStore) : getContent(userId)
 }

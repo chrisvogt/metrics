@@ -371,7 +371,7 @@ expressApp.get('/api/widgets/:provider', cors(corsOptions), async (req, res) => 
   const userId = originalHostname === 'api.chronogrove.com' ? 'chronogrove' : 'chrisvogt'
 
   try {
-    const widgetContent = await getWidgetContent(provider, userId)
+    const widgetContent = await getWidgetContent(provider, userId, documentStore)
     const response = buildSuccessResponse(widgetContent)
     res.set('Cache-Control', 'public, max-age=3600, s-maxage=7200')
     res.status(200).send(response)

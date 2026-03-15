@@ -24,6 +24,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
 
+## [0.22.3] - 2026-03-14
+
+### Changed
+
+- **Widget read seam** – Moved Flickr and Goodreads widget document reads onto the `DocumentStore` boundary while keeping the existing Firestore document layout and API payload shapes unchanged.
+- **Widget loading path** – `getWidgetContent` now accepts an injected `DocumentStore` so the widget API route can pass the shared storage adapter through the read path instead of instantiating Firestore-specific readers.
+
+### Fixed
+
+- **Timestamp normalization** – Centralized widget read-side timestamp conversion for `meta.synced` values so Firestore timestamp-like objects and `toDate()` wrappers are handled consistently at the read boundary.
+
+### Developer experience
+
+- **Coverage** – Added focused tests for `DocumentStore`-backed widget readers and the shared widget document-store helper to keep the backend decoupling seam well covered.
+
 ## [0.22.2] - 2026-03-07
 
 ### Security

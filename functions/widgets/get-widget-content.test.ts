@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getWidgetContent, validWidgetIds } from './get-widget-content.js'
+import type { DocumentStore } from '../ports/document-store.js'
 
 // Mock all widget content functions
 vi.mock('./get-discogs-widget-content.js', () => ({
@@ -39,8 +40,14 @@ import getSteamWidgetContent from './get-steam-widget-content.js'
 import getFlickrWidgetContent from './get-flickr-widget-content.js'
 
 describe('getWidgetContent', () => {
+  let documentStore: DocumentStore
+
   beforeEach(() => {
     vi.clearAllMocks()
+    documentStore = {
+      getDocument: vi.fn(),
+      setDocument: vi.fn(),
+    }
   })
 
   it('should return valid widget IDs', () => {
@@ -119,9 +126,19 @@ describe('getWidgetContent', () => {
     const mockContent = { collections: { photos: [] } }
     getFlickrWidgetContent.mockResolvedValue(mockContent)
 
-    const result = await getWidgetContent('flickr', 'user123')
+    const result = await getWidgetContent('flickr', 'user123', documentStore)
 
-    expect(getFlickrWidgetContent).toHaveBeenCalledWith('user123')
+    expect(getFlickrWidgetContent).toHaveBeenCalledWith('user123', documentStore)
+    expect(result).toEqual(mockContent)
+  })
+
+  it('should pass the document store to goodreads widget content when provided', async () => {
+    const mockContent = { collections: { recentlyReadBooks: [] } }
+    getGoodreadsWidgetContent.mockResolvedValue(mockContent)
+
+    const result = await getWidgetContent('goodreads', 'user123', documentStore)
+
+    expect(getGoodreadsWidgetContent).toHaveBeenCalledWith('user123', documentStore)
     expect(result).toEqual(mockContent)
   })
 

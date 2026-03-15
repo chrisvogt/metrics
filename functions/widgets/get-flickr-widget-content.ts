@@ -1,20 +1,23 @@
-import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import { DATABASE_COLLECTION_FLICKR } from '../config/constants.js'
+import type { DocumentStore } from '../ports/document-store.js'
+import { toWidgetContentPath } from './widget-document-store.js'
 
-const getFlickrWidgetContent = async () => {
+const defaultDocumentStore = new FirestoreDocumentStore()
+const flickrWidgetContentPath = toWidgetContentPath(DATABASE_COLLECTION_FLICKR)
+
+const getFlickrWidgetContent = async (
+  _userId?: string,
+  documentStore: DocumentStore = defaultDocumentStore
+) => {
   try {
-    const db = admin.firestore()
-    const doc = await db
-      .collection(DATABASE_COLLECTION_FLICKR)
-      .doc('widget-content')
-      .get()
+    const widgetContent = await documentStore.getDocument(flickrWidgetContentPath)
 
-    if (!doc.exists) {
-      throw new Error('No Flickr data found in Firestore')
+    if (!widgetContent) {
+      throw new Error('No Flickr data found in DocumentStore')
     }
 
-    const widgetContent = doc.data()
     return widgetContent
   } catch (error) {
     logger.error('Error getting Flickr widget content:', error)
