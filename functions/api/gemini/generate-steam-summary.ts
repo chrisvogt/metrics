@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { logger } from 'firebase-functions'
+
+import { getGeminiApiKey } from '../../config/backend-config.js'
 import extractJsonFromGeminiResponse from '../../utils/extract-json-from-gemini-response.js'
 
 /**
@@ -8,7 +10,7 @@ import extractJsonFromGeminiResponse from '../../utils/extract-json-from-gemini-
  * @returns {Promise<string>} - The AI-generated summary
  */
 const generateSteamSummary = async (steamData) => {
-  const apiKey = process.env.GEMINI_API_KEY
+  const apiKey = getGeminiApiKey()
 
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY environment variable is required')

@@ -1,5 +1,7 @@
 import got from 'got'
 
+import { getInstagramAccessToken } from '../../config/backend-config.js'
+
 const defaultFields = [
   'account_type',
   'biography',
@@ -13,7 +15,7 @@ const defaultFields = [
 const INSTAGRAM_BASE_URL = 'https://graph.instagram.com'
 
 const fetchInstagramMedia = async () => {
-  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
+  const accessToken = getInstagramAccessToken()
 
   const { body } = await got('me', {
     responseType: 'json',

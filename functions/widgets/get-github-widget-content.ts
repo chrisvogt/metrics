@@ -3,6 +3,8 @@ import graphqlGot from 'graphql-got'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+import { getGitHubConfig } from '../config/backend-config.js'
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -12,8 +14,7 @@ const query = fs.readFileSync(
 )
 
 const getGitHubWidgetContent = async () => {
-  const accessToken = process.env.GITHUB_ACCESS_TOKEN
-  const username = process.env.GITHUB_USERNAME
+  const { accessToken, username } = getGitHubConfig()
 
   if (!accessToken || !username) {
     throw new Error('Missing required environment variables for GitHub widget (GITHUB_ACCESS_TOKEN or GITHUB_USERNAME).')

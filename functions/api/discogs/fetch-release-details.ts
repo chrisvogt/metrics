@@ -1,4 +1,5 @@
 import { logger } from 'firebase-functions'
+import { getDiscogsConfig } from '../../config/backend-config.js'
 
 /**
  * Fetches detailed release resource data from Discogs API with retry logic
@@ -8,7 +9,7 @@ import { logger } from 'firebase-functions'
  * @returns {Promise<Object|null>} The detailed release resource data or null if failed
  */
 const fetchReleaseDetails = async (resourceUrl, releaseId, maxRetries = 3) => {
-  const apiKey = process.env.DISCOGS_API_KEY
+  const { apiKey } = getDiscogsConfig()
 
   if (!apiKey) {
     throw new Error('Missing required environment variable: DISCOGS_API_KEY')

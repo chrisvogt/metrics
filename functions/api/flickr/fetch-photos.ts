@@ -1,6 +1,8 @@
 import { logger } from 'firebase-functions'
 import got from 'got'
 
+import { getFlickrConfig } from '../../config/backend-config.js'
+
 const FLICKR_API_BASE_URL = 'https://www.flickr.com/services/rest'
 
 /**
@@ -8,8 +10,7 @@ const FLICKR_API_BASE_URL = 'https://www.flickr.com/services/rest'
  * @see {@link https://www.flickr.com/services/api/flickr.people.getPhotos.html}
  */
 const fetchPhotos = async () => {
-  const apiKey = process.env.FLICKR_API_KEY
-  const userId = process.env.FLICKR_USER_ID
+  const { apiKey, userId } = getFlickrConfig()
 
   if (!apiKey || !userId) {
     throw new Error('Missing required Flickr configuration (FLICKR_API_KEY or FLICKR_USER_ID)')

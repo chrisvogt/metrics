@@ -3,7 +3,6 @@ import { logger } from 'firebase-functions'
 import admin from 'firebase-admin'
 import compression from 'compression'
 import cors from 'cors'
-import * as dotenv from 'dotenv'
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import { onRequest } from 'firebase-functions/v2/https'
@@ -15,6 +14,13 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 import { applyExportedConfigToEnv } from './config/exported-config.js'
+import {
+  getFirebaseClientConfig,
+  hasAppliedRuntimeConfig,
+  isProductionEnvironment,
+  loadLocalDevelopmentEnv,
+  markRuntimeConfigApplied,
+} from './config/backend-config.js'
 import { FirestoreDocumentStore } from './adapters/storage/firestore-document-store.js'
 import { LocalDiskMediaStore } from './adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from './middleware/rate-limit-key.js'
@@ -34,9 +40,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // Load environment variables from functions/.env synchronously in development.
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config({ path: path.resolve(__dirname, '../.env') })
-}
+loadLocalDevelopmentEnv(path.resolve(__dirname, '../.env'))
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
 
@@ -60,7 +64,7 @@ const storageFirestoreDatabaseUrl = defineString(
 const functionsConfigExport = defineJsonSecret('FUNCTIONS_CONFIG_EXPORT')
 
 function getAdminCredential(): admin.credential.Credential {
-  if (process.env.NODE_ENV === 'production') {
+  if (isProductionEnvironment()) {
     return admin.credential.applicationDefault()
   }
   const tokenPath = './token.json'
@@ -71,11 +75,11 @@ function getAdminCredential(): admin.credential.Credential {
 }
 
 async function ensureExportedConfigApplied(): Promise<void> {
-  if (process.env.__FUNCTIONS_CONFIG_APPLIED__) return
+  if (hasAppliedRuntimeConfig()) return
   try {
     const data = functionsConfigExport.value()
     applyExportedConfigToEnv(data as Record<string, string>)
-    process.env.__FUNCTIONS_CONFIG_APPLIED__ = '1'
+    markRuntimeConfigApplied()
   } catch (err) {
     logger.warn('Could not load FUNCTIONS_CONFIG_EXPORT (e.g. local dev with .env)', {
       message: err instanceof Error ? err.message : String(err),
@@ -93,7 +97,7 @@ const adminConfig: admin.AppOptions = {
 admin.initializeApp(adminConfig)
 
 // Connect to emulators in development mode
-if (process.env.NODE_ENV !== 'production') {
+if (!isProductionEnvironment()) {
   try {
     (admin.auth() as unknown as { useEmulator(url: string): void }).useEmulator('http://127.0.0.1:9099')
     console.log('Connected to Firebase Auth emulator')
@@ -180,7 +184,7 @@ const buildFailureResponse = (err: unknown = {}): { ok: false; error: string } =
 const ALLOWED_EMAIL_DOMAINS = ['@chrisvogt.me', '@chronogrove.com']
 function isAllowedEmail(email: string | undefined | null): boolean {
   if (!email) return false
-  if (process.env.NODE_ENV !== 'production') return true
+  if (!isProductionEnvironment()) return true
   return ALLOWED_EMAIL_DOMAINS.some((domain) => email.endsWith(domain))
 }
 
@@ -321,7 +325,7 @@ const corsAllowList: RegExp[] = [
   /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
 ]
 
-if (process.env.NODE_ENV !== 'production') {
+if (!isProductionEnvironment()) {
   corsAllowList.push(/localhost:?(\d+)?$/)
 }
 
@@ -538,8 +542,8 @@ expressApp.post(
       const options = {
         maxAge: expiresIn,
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as 'strict' | 'lax',
+        secure: isProductionEnvironment(),
+        sameSite: (isProductionEnvironment() ? 'strict' : 'lax') as 'strict' | 'lax',
         path: '/',
       }
 
@@ -561,11 +565,7 @@ expressApp.post(
 
 expressApp.get('/api/firebase-config', cors(corsOptions), async (_req, res) => {
   await ensureExportedConfigApplied()
-  const config = {
-    apiKey: process.env.CLIENT_API_KEY,
-    authDomain: process.env.CLIENT_AUTH_DOMAIN,
-    projectId: process.env.CLIENT_PROJECT_ID,
-  }
+  const config = getFirebaseClientConfig()
   res.json(config)
 })
 
@@ -580,8 +580,8 @@ expressApp.post(
       await admin.auth().revokeRefreshTokens(req.user.uid)
       res.clearCookie('session', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+        secure: isProductionEnvironment(),
+        sameSite: isProductionEnvironment() ? 'strict' : 'lax',
         path: '/',
       })
       res.status(200).send({

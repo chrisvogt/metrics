@@ -8,6 +8,10 @@ import fetchAndUploadFile from '../cloud-storage/fetch-and-upload-file.js'
 import fetchBookFromGoogle from '../google-books/fetch-book.js'
 import listStoredMedia from '../cloud-storage/list-stored-media.js'
 import { getMediaStore } from '../../selectors/media-store.js'
+import {
+  getGoodreadsConfig,
+  getGoogleBooksApiKey,
+} from '../../config/backend-config.js'
 
 import {
   IMAGE_CDN_BASE_URL
@@ -59,8 +63,7 @@ const transformBookData = (book) => {
 
 export default async () => {
   const mediaStore = getMediaStore()
-  const key = process.env.GOODREADS_API_KEY
-  const userID = process.env.GOODREADS_USER_ID
+  const { apiKey: key, userId: userID } = getGoodreadsConfig()
 
   const { body } = await got(
     `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read&per_page=100`
@@ -142,7 +145,7 @@ export default async () => {
         const maxRetries = 3
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
-            const googleBooksAPIKey = process.env.GOOGLE_BOOKS_API_KEY
+            const googleBooksAPIKey = getGoogleBooksApiKey()
             const { body } = await got('https://www.googleapis.com/books/v1/volumes', {
               searchParams: {
                 q: searchQuery,

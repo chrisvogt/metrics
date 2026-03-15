@@ -7,6 +7,7 @@ import getPlayerSummary from '../api/steam/get-player-summary.js'
 import getRecentlyPlayedGames from '../api/steam/get-recently-played-games.js'
 import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
 
+import { getSteamConfig } from '../config/backend-config.js'
 import { DATABASE_COLLECTION_STEAM } from '../config/constants.js'
 
 const transformSteamGame = (game) => {
@@ -51,8 +52,7 @@ const transformSteamGame = (game) => {
  *  - capsule_231x87.jpg
  */
 const syncSteamData = async () => {
-  const apiKey = process.env.STEAM_API_KEY
-  const userId = process.env.STEAM_USER_ID
+  const { apiKey, userId } = getSteamConfig()
 
   const [recentlyPlayedGames, ownedGames, playerSummary] = await Promise.all([
     getRecentlyPlayedGames(apiKey, userId),

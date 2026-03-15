@@ -1,0 +1,161 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+describe('backend config', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    delete process.env.NODE_ENV
+    delete process.env.__FUNCTIONS_CONFIG_APPLIED__
+    delete process.env.CLIENT_API_KEY
+    delete process.env.CLIENT_AUTH_DOMAIN
+    delete process.env.CLIENT_PROJECT_ID
+    delete process.env.CLOUD_STORAGE_IMAGES_BUCKET
+    delete process.env.MEDIA_STORE_BACKEND
+    delete process.env.LOCAL_MEDIA_ROOT
+    delete process.env.IMAGE_CDN_BASE_URL
+    delete process.env.DISCOGS_API_KEY
+    delete process.env.DISCOGS_USERNAME
+    delete process.env.FLICKR_API_KEY
+    delete process.env.FLICKR_USER_ID
+    delete process.env.GITHUB_ACCESS_TOKEN
+    delete process.env.GITHUB_USERNAME
+    delete process.env.GOODREADS_API_KEY
+    delete process.env.GOODREADS_USER_ID
+    delete process.env.GOOGLE_BOOKS_API_KEY
+    delete process.env.GEMINI_API_KEY
+    delete process.env.INSTAGRAM_ACCESS_TOKEN
+    delete process.env.SPOTIFY_CLIENT_ID
+    delete process.env.SPOTIFY_CLIENT_SECRET
+    delete process.env.SPOTIFY_REDIRECT_URI
+    delete process.env.SPOTIFY_REFRESH_TOKEN
+    delete process.env.STEAM_API_KEY
+    delete process.env.STEAM_USER_ID
+  })
+
+  it('detects production mode from NODE_ENV', async () => {
+    process.env.NODE_ENV = 'production'
+    const { isProductionEnvironment } = await import('./backend-config.js')
+
+    expect(isProductionEnvironment()).toBe(true)
+  })
+
+  it('loads local dotenv only outside production', async () => {
+    const dotenvConfig = vi.fn()
+    vi.doMock('dotenv', () => ({ config: dotenvConfig }))
+
+    const { loadLocalDevelopmentEnv } = await import('./backend-config.js')
+    loadLocalDevelopmentEnv('/tmp/test.env')
+
+    expect(dotenvConfig).toHaveBeenCalledWith({ path: '/tmp/test.env' })
+  })
+
+  it('skips local dotenv loading in production', async () => {
+    process.env.NODE_ENV = 'production'
+    const dotenvConfig = vi.fn()
+    vi.doMock('dotenv', () => ({ config: dotenvConfig }))
+
+    const { loadLocalDevelopmentEnv } = await import('./backend-config.js')
+    loadLocalDevelopmentEnv('/tmp/test.env')
+
+    expect(dotenvConfig).not.toHaveBeenCalled()
+  })
+
+  it('tracks whether runtime config was already applied', async () => {
+    const {
+      hasAppliedRuntimeConfig,
+      markRuntimeConfigApplied,
+    } = await import('./backend-config.js')
+
+    expect(hasAppliedRuntimeConfig()).toBe(false)
+    markRuntimeConfigApplied()
+    expect(hasAppliedRuntimeConfig()).toBe(true)
+  })
+
+  it('returns normalized firebase client config values', async () => {
+    process.env.CLIENT_API_KEY = 'api-key'
+    process.env.CLIENT_AUTH_DOMAIN = 'project.firebaseapp.com'
+    process.env.CLIENT_PROJECT_ID = 'project-id'
+
+    const { getFirebaseClientConfig } = await import('./backend-config.js')
+
+    expect(getFirebaseClientConfig()).toEqual({
+      apiKey: 'api-key',
+      authDomain: 'project.firebaseapp.com',
+      projectId: 'project-id',
+    })
+  })
+
+  it('returns normalized provider config values from env', async () => {
+    process.env.DISCOGS_API_KEY = 'discogs-key'
+    process.env.DISCOGS_USERNAME = 'discogs-user'
+    process.env.FLICKR_API_KEY = 'flickr-key'
+    process.env.FLICKR_USER_ID = 'flickr-user'
+    process.env.GITHUB_ACCESS_TOKEN = 'github-token'
+    process.env.GITHUB_USERNAME = 'github-user'
+    process.env.GOODREADS_API_KEY = 'goodreads-key'
+    process.env.GOODREADS_USER_ID = 'goodreads-user'
+    process.env.GOOGLE_BOOKS_API_KEY = 'google-key'
+    process.env.GEMINI_API_KEY = 'gemini-key'
+    process.env.INSTAGRAM_ACCESS_TOKEN = 'ig-token'
+    process.env.SPOTIFY_CLIENT_ID = 'spotify-id'
+    process.env.SPOTIFY_CLIENT_SECRET = 'spotify-secret'
+    process.env.SPOTIFY_REDIRECT_URI = 'https://example.com/callback'
+    process.env.SPOTIFY_REFRESH_TOKEN = 'spotify-refresh'
+    process.env.STEAM_API_KEY = 'steam-key'
+    process.env.STEAM_USER_ID = 'steam-user'
+
+    const {
+      getDiscogsConfig,
+      getFlickrConfig,
+      getGeminiApiKey,
+      getGitHubConfig,
+      getGoodreadsConfig,
+      getGoogleBooksApiKey,
+      getInstagramAccessToken,
+      getSpotifyConfig,
+      getSteamConfig,
+    } = await import('./backend-config.js')
+
+    expect(getDiscogsConfig()).toEqual({ apiKey: 'discogs-key', username: 'discogs-user' })
+    expect(getFlickrConfig()).toEqual({ apiKey: 'flickr-key', userId: 'flickr-user' })
+    expect(getGitHubConfig()).toEqual({ accessToken: 'github-token', username: 'github-user' })
+    expect(getGoodreadsConfig()).toEqual({ apiKey: 'goodreads-key', userId: 'goodreads-user' })
+    expect(getGoogleBooksApiKey()).toBe('google-key')
+    expect(getGeminiApiKey()).toBe('gemini-key')
+    expect(getInstagramAccessToken()).toBe('ig-token')
+    expect(getSpotifyConfig()).toEqual({
+      clientId: 'spotify-id',
+      clientSecret: 'spotify-secret',
+      redirectUri: 'https://example.com/callback',
+      refreshToken: 'spotify-refresh',
+    })
+    expect(getSteamConfig()).toEqual({ apiKey: 'steam-key', userId: 'steam-user' })
+  })
+
+  it('returns normalized storage config with development defaults', async () => {
+    process.env.NODE_ENV = 'development'
+    process.env.IMAGE_CDN_BASE_URL = '/api/media/'
+
+    const { getStorageConfig } = await import('./backend-config.js')
+    const storageConfig = getStorageConfig()
+
+    expect(storageConfig.mediaStoreBackend).toBe('disk')
+    expect(storageConfig.imageCdnBaseUrl).toBe('/api/media/')
+    expect(storageConfig.localMediaRoot.endsWith('tmp/media')).toBe(true)
+  })
+
+  it('returns normalized storage config with explicit overrides', async () => {
+    process.env.NODE_ENV = 'production'
+    process.env.CLOUD_STORAGE_IMAGES_BUCKET = 'bucket-name'
+    process.env.MEDIA_STORE_BACKEND = 'disk'
+    process.env.LOCAL_MEDIA_ROOT = '/tmp/media-root'
+
+    const { getStorageConfig } = await import('./backend-config.js')
+
+    expect(getStorageConfig()).toEqual({
+      cloudStorageImagesBucket: 'bucket-name',
+      imageCdnBaseUrl: undefined,
+      localMediaRoot: '/tmp/media-root',
+      mediaStoreBackend: 'disk',
+    })
+  })
+})

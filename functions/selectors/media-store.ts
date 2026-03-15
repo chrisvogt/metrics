@@ -1,16 +1,15 @@
-import path from 'path'
-
 import { GcsMediaStore } from '../adapters/storage/gcs-media-store.js'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
+import { getStorageConfig } from '../config/backend-config.js'
 import type { MediaStore } from '../ports/media-store.js'
 
 let defaultMediaStore: MediaStore | undefined
 
 export const resolveMediaStoreBackend = () =>
-  process.env.MEDIA_STORE_BACKEND ?? (process.env.NODE_ENV === 'production' ? 'gcs' : 'disk')
+  getStorageConfig().mediaStoreBackend
 
 export const resolveLocalMediaRoot = () =>
-  process.env.LOCAL_MEDIA_ROOT ?? path.resolve(process.cwd(), 'tmp/media')
+  getStorageConfig().localMediaRoot
 
 export const isDiskMediaStoreSelected = () => resolveMediaStoreBackend() === 'disk'
 

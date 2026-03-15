@@ -4,6 +4,7 @@ import xml2js from 'xml2js'
 
 import getReview from '../../helpers/get-review.js'
 import getUserStatus from '../../helpers/get-user-status.js'
+import { getGoodreadsConfig } from '../../config/backend-config.js'
 
 const transformUpdate = (update) => {
   if (update.type === 'userstatus') {
@@ -82,8 +83,7 @@ const getUpdatesFromResponse = (result) => {
 }
 
 const fetchUser = async () => {
-  const key = process.env.GOODREADS_API_KEY
-  const userID = process.env.GOODREADS_USER_ID
+  const { apiKey: key, userId: userID } = getGoodreadsConfig()
   const goodreadsURL = `https://www.goodreads.com/user/show/${userID}?format=xml&key=${key}`
 
   const response = await got(goodreadsURL)

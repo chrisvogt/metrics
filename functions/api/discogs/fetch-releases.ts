@@ -1,9 +1,8 @@
 import { logger } from 'firebase-functions'
-// Removed import { DISCOGS_USERNAME } from '../../constants.js'
+import { getDiscogsConfig } from '../../config/backend-config.js'
 
 const fetchDiscogsReleases = async () => {
-  const apiKey = process.env.DISCOGS_API_KEY
-  const username = process.env.DISCOGS_USERNAME // Read directly from env
+  const { apiKey, username } = getDiscogsConfig()
 
   if (!apiKey || !username) {
     throw new Error('Missing required environment variables: DISCOGS_API_KEY or DISCOGS_USERNAME')
