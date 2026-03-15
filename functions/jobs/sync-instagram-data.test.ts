@@ -42,6 +42,14 @@ vi.mock('../transformers/to-ig-destination-path.js', () => ({
   default: vi.fn(() => 'chrisvogt/instagram/test.jpg')
 }))
 
+vi.mock('firebase-functions', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
+}))
+
 import fetchInstagramData from '../api/instagram/fetch-instagram-data.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 
