@@ -8,23 +8,28 @@ import cookieParser from 'cookie-parser'
 import { onRequest } from 'firebase-functions/v2/https'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { beforeUserCreated } from 'firebase-functions/v2/identity'
-import { defineJsonSecret, defineString } from 'firebase-functions/params'
 import { existsSync, readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import { applyExportedConfigToEnv } from './config/exported-config.js'
 import {
   getFirebaseClientConfig,
-  hasAppliedRuntimeConfig,
   isProductionEnvironment,
-  loadLocalDevelopmentEnv,
-  markRuntimeConfigApplied,
 } from './config/backend-config.js'
 import { getWidgetUserIdForHostname } from './config/backend-paths.js'
+import {
+  bootstrapLocalRuntimeEnv,
+  ensureRuntimeConfigApplied,
+} from './config/runtime-config.js'
 import { FirestoreDocumentStore } from './adapters/storage/firestore-document-store.js'
 import { LocalDiskMediaStore } from './adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from './middleware/rate-limit-key.js'
+import {
+  firebaseRuntimeConfigSource,
+  getFirebaseFirestoreDatabaseUrl,
+  getFirebaseRuntimeSecrets,
+} from './runtime/firebase-runtime-config.js'
+import { connectFirebaseAdminEmulators } from './runtime/firebase-admin-emulators.js'
 import { getWidgetContent, validWidgetIds } from './widgets/get-widget-content.js'
 import { getMediaStore, isDiskMediaStoreSelected } from './selectors/media-store.js'
 import createUserJob from './jobs/create-user.js'
@@ -41,7 +46,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // Load environment variables from functions/.env synchronously in development.
-loadLocalDevelopmentEnv(path.resolve(__dirname, '../.env'))
+bootstrapLocalRuntimeEnv(path.resolve(__dirname, '../.env'))
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
 
@@ -56,14 +61,6 @@ function createRateLimiter(windowMs: number, max: number) {
   })
 }
 
-// Define parameters for v2
-const storageFirestoreDatabaseUrl = defineString(
-  'STORAGE_FIRESTORE_DATABASE_URL'
-)
-
-// Exported runtime config (firebase functions:config:export) – applied to process.env on first use
-const functionsConfigExport = defineJsonSecret('FUNCTIONS_CONFIG_EXPORT')
-
 function getAdminCredential(): admin.credential.Credential {
   if (isProductionEnvironment()) {
     return admin.credential.applicationDefault()
@@ -75,23 +72,10 @@ function getAdminCredential(): admin.credential.Credential {
   return admin.credential.applicationDefault()
 }
 
-async function ensureExportedConfigApplied(): Promise<void> {
-  if (hasAppliedRuntimeConfig()) return
-  try {
-    const data = functionsConfigExport.value()
-    applyExportedConfigToEnv(data as Record<string, string>)
-    markRuntimeConfigApplied()
-  } catch (err) {
-    logger.warn('Could not load FUNCTIONS_CONFIG_EXPORT (e.g. local dev with .env)', {
-      message: err instanceof Error ? err.message : String(err),
-    })
-  }
-}
-
 // Initialize Firebase Admin (production: ADC; local: token.json if present)
 const adminConfig: admin.AppOptions = {
   credential: getAdminCredential(),
-  databaseURL: storageFirestoreDatabaseUrl as unknown as string,
+  databaseURL: getFirebaseFirestoreDatabaseUrl(),
   projectId: 'personal-stats-chrisvogt',
 }
 
@@ -99,19 +83,7 @@ admin.initializeApp(adminConfig)
 
 // Connect to emulators in development mode
 if (!isProductionEnvironment()) {
-  try {
-    (admin.auth() as unknown as { useEmulator(url: string): void }).useEmulator('http://127.0.0.1:9099')
-    console.log('Connected to Firebase Auth emulator')
-  } catch {
-    console.log('Firebase Auth emulator already connected or not available')
-  }
-
-  try {
-    (admin.firestore() as unknown as { useEmulator(host: string, port: number): void }).useEmulator('127.0.0.1', 8080)
-    console.log('Connected to Firestore emulator')
-  } catch {
-    console.log('Firestore emulator already connected or not available')
-  }
+  connectFirebaseAdminEmulators(admin as Parameters<typeof connectFirebaseAdminEmulators>[0], console.log)
 }
 
 admin.firestore().settings({
@@ -123,38 +95,38 @@ const documentStore = new FirestoreDocumentStore()
 const scheduleOpts = {
   schedule: 'every day 02:00',
   region: 'us-central1',
-  secrets: [functionsConfigExport],
+  secrets: getFirebaseRuntimeSecrets(),
 }
 
 export const syncGoodreadsData = onSchedule(scheduleOpts, async () => {
-  await ensureExportedConfigApplied()
+  await ensureRuntimeConfigApplied(firebaseRuntimeConfigSource, logger.warn)
   await syncGoodreadsDataJob()
 })
 
 export const syncSpotifyData = onSchedule(scheduleOpts, async () => {
-  await ensureExportedConfigApplied()
+  await ensureRuntimeConfigApplied(firebaseRuntimeConfigSource, logger.warn)
   await syncSpotifyDataJob()
 })
 
 export const syncSteamData = onSchedule(scheduleOpts, async () => {
-  await ensureExportedConfigApplied()
+  await ensureRuntimeConfigApplied(firebaseRuntimeConfigSource, logger.warn)
   await syncSteamDataJob()
 })
 
 export const syncInstagramData = onSchedule(scheduleOpts, async () => {
-  await ensureExportedConfigApplied()
+  await ensureRuntimeConfigApplied(firebaseRuntimeConfigSource, logger.warn)
   await syncInstagramDataJob()
 })
 
 export const syncFlickrData = onSchedule(scheduleOpts, async () => {
-  await ensureExportedConfigApplied()
+  await ensureRuntimeConfigApplied(firebaseRuntimeConfigSource, logger.warn)
   await syncFlickrDataJob(documentStore)
 })
 
 export const handleUserCreation = beforeUserCreated(
-  { secrets: [functionsConfigExport] },
+  { secrets: getFirebaseRuntimeSecrets() },
   async (event) => {
-    await ensureExportedConfigApplied()
+    await ensureRuntimeConfigApplied(firebaseRuntimeConfigSource, logger.warn)
     const user = event.data
     if (!user) {
       logger.error('handleUserCreation: event.data missing')
@@ -565,7 +537,7 @@ expressApp.post(
 )
 
 expressApp.get('/api/firebase-config', cors(corsOptions), async (_req, res) => {
-  await ensureExportedConfigApplied()
+  await ensureRuntimeConfigApplied(firebaseRuntimeConfigSource, logger.warn)
   const config = getFirebaseClientConfig()
   res.json(config)
 })
@@ -608,10 +580,10 @@ export const app = onRequest(
   {
     region: 'us-central1',
     timeoutSeconds: 300,
-    secrets: [functionsConfigExport],
+    secrets: getFirebaseRuntimeSecrets(),
   },
   async (req, res) => {
-    await ensureExportedConfigApplied()
+    await ensureRuntimeConfigApplied(firebaseRuntimeConfigSource, logger.warn)
     expressApp(req, res)
   }
 )

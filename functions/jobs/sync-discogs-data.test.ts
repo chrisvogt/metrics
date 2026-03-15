@@ -42,6 +42,14 @@ vi.mock('../transformers/to-discogs-destination-path.js', () => ({
   default: vi.fn((imageURL, releaseId, imageType) => `chrisvogt/discogs/${releaseId}_${imageType}.jpg`)
 }))
 
+vi.mock('firebase-functions', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
+}))
+
 import fetchDiscogsReleases from '../api/discogs/fetch-releases.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 

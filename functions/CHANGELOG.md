@@ -24,6 +24,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
 
+## [0.22.7] - 2026-03-15
+
+### Added
+
+- **Runtime config boundary** – Added a provider-neutral runtime config loader in `config/runtime-config.ts` plus focused tests so runtime env/bootstrap behavior is owned by a dedicated seam instead of being embedded directly in the Firebase entrypoint.
+- **Firebase runtime adapters** – Added Firebase-specific runtime adapters for exported config loading, Firestore database URL resolution, and emulator wiring under `runtime/` so platform-specific config concerns are isolated from the service layer.
+
+### Changed
+
+- **Entrypoint config loading** – `index.ts` now consumes the runtime config boundary and Firebase adapter modules instead of importing Firebase params and exported-config helpers directly.
+
+### Developer experience
+
+- **Test noise** – Tightened index and sync-job tests to mock logger/console output more explicitly and added direct emulator helper coverage so Firebase-flavored bootstrap behavior is easier to reason about in unit tests.
+
 ## [0.22.6] - 2026-03-15
 
 ### Added

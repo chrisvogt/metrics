@@ -2,6 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import request from 'supertest'
 import { logger } from 'firebase-functions'
 
+vi.mock('firebase-functions', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
 // Mock Firebase Admin
 const firestoreSettingsMock = vi.fn()
 const firestoreMock = vi.fn(() => ({
@@ -111,7 +119,9 @@ describe('index.js', () => {
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks()
-    
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
     // Set NODE_ENV to test to avoid dotenv loading
     process.env.NODE_ENV = 'test'
   })
