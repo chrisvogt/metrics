@@ -169,6 +169,30 @@ describe('createExpressApp media route', () => {
       .get('/api/media/folder')
       .expect(500)
   })
+
+  it('does not overwrite the response when sendFile fails after headers are already sent', async () => {
+    const app = await buildApp()
+    const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'metrics-media-sent-'))
+    const mediaStore = new LocalDiskMediaStore(rootDir)
+    getMediaStoreMock.mockReturnValue(mediaStore)
+
+    fs.writeFileSync(path.join(rootDir, 'cover.jpg'), 'file-bytes')
+
+    const sendFileSpy = vi
+      .spyOn(app.response, 'sendFile')
+      .mockImplementation(function mockedSendFile(this: any, _filePath: string, callback?: any) {
+        this.status(200).send('already-sent')
+        callback?.(Object.assign(new Error('late sendFile failure'), { code: 'ENOENT' }))
+        return this
+      })
+
+    const response = await request(app)
+      .get('/api/media/cover.jpg')
+      .expect(200)
+
+    expect(response.text).toBe('already-sent')
+    sendFileSpy.mockRestore()
+  })
 })
 
 describe('createExpressApp auth and session branches', () => {
