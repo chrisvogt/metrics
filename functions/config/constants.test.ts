@@ -1,158 +1,24 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import {
   CLOUD_STORAGE_IMAGES_BUCKET,
-  LOCAL_MEDIA_ROOT,
-  MEDIA_STORE_BACKEND,
-  CLOUD_STORAGE_DISCOGS_PATH,
-  CLOUD_STORAGE_INSTAGRAM_PATH,
-  CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH,
-  CURRENT_USERNAME,
-  DATABASE_COLLECTION_DISCOGS,
-  DATABASE_COLLECTION_FLICKR,
-  DATABASE_COLLECTION_INSTAGRAM,
-  DATABASE_COLLECTION_SPOTIFY,
-  DATABASE_COLLECTION_STEAM,
-  DATABASE_COLLECTION_GOODREADS,
-  DATABASE_COLLECTION_GITHUB,
   DATABASE_COLLECTION_USERS,
   DISCOGS_USERNAME,
-  IMAGE_CDN_BASE_URL
+  IMAGE_CDN_BASE_URL,
+  LOCAL_MEDIA_ROOT,
+  MEDIA_STORE_BACKEND,
 } from './constants.js'
 
 describe('constants', () => {
-  describe('CURRENT_USERNAME', () => {
-    it('should be a string with the correct value', () => {
-      expect(CURRENT_USERNAME).toBe('chrisvogt')
-      expect(typeof CURRENT_USERNAME).toBe('string')
-    })
+  it('exports the shared users collection path', () => {
+    expect(DATABASE_COLLECTION_USERS).toBe('users')
   })
 
-  describe('CLOUD_STORAGE_DISCOGS_PATH', () => {
-    it('should be a string with the correct value', () => {
-      expect(CLOUD_STORAGE_DISCOGS_PATH).toBe(`${CURRENT_USERNAME}/discogs/`)
-      expect(typeof CLOUD_STORAGE_DISCOGS_PATH).toBe('string')
-    })
-  })
-
-  describe('CLOUD_STORAGE_INSTAGRAM_PATH', () => {
-    it('should be a string with the correct value', () => {
-      expect(CLOUD_STORAGE_INSTAGRAM_PATH).toBe(`${CURRENT_USERNAME}/instagram/`)
-      expect(typeof CLOUD_STORAGE_INSTAGRAM_PATH).toBe('string')
-    })
-  })
-
-  describe('CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH', () => {
-    it('should be a string with the correct value', () => {
-      expect(CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH).toBe(`${CURRENT_USERNAME}/spotify/playlists/`)
-      expect(typeof CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH).toBe('string')
-    })
-  })
-
-  describe('DATABASE_COLLECTION_DISCOGS', () => {
-    it('should be a string with the correct value', () => {
-      expect(DATABASE_COLLECTION_DISCOGS).toBe(`users/${CURRENT_USERNAME}/discogs`)
-      expect(typeof DATABASE_COLLECTION_DISCOGS).toBe('string')
-    })
-  })
-
-  describe('DATABASE_COLLECTION_FLICKR', () => {
-    it('should be a string with the correct value', () => {
-      expect(DATABASE_COLLECTION_FLICKR).toBe(`users/${CURRENT_USERNAME}/flickr`)
-      expect(typeof DATABASE_COLLECTION_FLICKR).toBe('string')
-    })
-  })
-
-  describe('DATABASE_COLLECTION_INSTAGRAM', () => {
-    it('should be a string with the correct value', () => {
-      expect(DATABASE_COLLECTION_INSTAGRAM).toBe(`users/${CURRENT_USERNAME}/instagram`)
-      expect(typeof DATABASE_COLLECTION_INSTAGRAM).toBe('string')
-    })
-  })
-
-  describe('DATABASE_COLLECTION_SPOTIFY', () => {
-    it('should be a string with the correct value', () => {
-      expect(DATABASE_COLLECTION_SPOTIFY).toBe(`users/${CURRENT_USERNAME}/spotify`)
-      expect(typeof DATABASE_COLLECTION_SPOTIFY).toBe('string')
-    })
-  })
-
-  describe('DATABASE_COLLECTION_STEAM', () => {
-    it('should be a string with the correct value', () => {
-      expect(DATABASE_COLLECTION_STEAM).toBe(`users/${CURRENT_USERNAME}/steam`)
-      expect(typeof DATABASE_COLLECTION_STEAM).toBe('string')
-    })
-  })
-
-  describe('DATABASE_COLLECTION_USERS', () => {
-    it('should be a string with the correct value', () => {
-      expect(DATABASE_COLLECTION_USERS).toBe('users')
-      expect(typeof DATABASE_COLLECTION_USERS).toBe('string')
-    })
-  })
-
-  describe('environment-dependent constants', () => {
-    it('should have CLOUD_STORAGE_IMAGES_BUCKET as string or undefined', () => {
-      expect(typeof CLOUD_STORAGE_IMAGES_BUCKET === 'string' || CLOUD_STORAGE_IMAGES_BUCKET === undefined).toBe(true)
-    })
-
-    it('should have MEDIA_STORE_BACKEND as string or undefined', () => {
-      expect(typeof MEDIA_STORE_BACKEND === 'string' || MEDIA_STORE_BACKEND === undefined).toBe(true)
-    })
-
-    it('should have LOCAL_MEDIA_ROOT as string or undefined', () => {
-      expect(typeof LOCAL_MEDIA_ROOT === 'string' || LOCAL_MEDIA_ROOT === undefined).toBe(true)
-    })
-
-    it('should have DISCOGS_USERNAME as string or undefined', () => {
-      expect(typeof DISCOGS_USERNAME === 'string' || DISCOGS_USERNAME === undefined).toBe(true)
-    })
-
-    it('should have IMAGE_CDN_BASE_URL as string or undefined', () => {
-      expect(typeof IMAGE_CDN_BASE_URL === 'string' || IMAGE_CDN_BASE_URL === undefined).toBe(true)
-    })
-  })
-
-  describe('all constants', () => {
-    it('should export all expected constants', () => {
-      const constants = {
-        CLOUD_STORAGE_IMAGES_BUCKET,
-        LOCAL_MEDIA_ROOT,
-        MEDIA_STORE_BACKEND,
-        CLOUD_STORAGE_DISCOGS_PATH,
-        CLOUD_STORAGE_INSTAGRAM_PATH,
-        CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH,
-        CURRENT_USERNAME,
-        DATABASE_COLLECTION_DISCOGS,
-        DATABASE_COLLECTION_FLICKR,
-        DATABASE_COLLECTION_INSTAGRAM,
-        DATABASE_COLLECTION_SPOTIFY,
-        DATABASE_COLLECTION_STEAM,
-        DATABASE_COLLECTION_GOODREADS,
-        DATABASE_COLLECTION_GITHUB,
-        DATABASE_COLLECTION_USERS,
-        DISCOGS_USERNAME,
-        IMAGE_CDN_BASE_URL
-      }
-
-      expect(Object.keys(constants)).toHaveLength(17)
-      expect(constants).toHaveProperty('CLOUD_STORAGE_IMAGES_BUCKET')
-      expect(constants).toHaveProperty('LOCAL_MEDIA_ROOT')
-      expect(constants).toHaveProperty('MEDIA_STORE_BACKEND')
-      expect(constants).toHaveProperty('CLOUD_STORAGE_DISCOGS_PATH')
-      expect(constants).toHaveProperty('CLOUD_STORAGE_INSTAGRAM_PATH')
-      expect(constants).toHaveProperty('CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH')
-      expect(constants).toHaveProperty('CURRENT_USERNAME')
-      expect(constants).toHaveProperty('DATABASE_COLLECTION_DISCOGS')
-      expect(constants).toHaveProperty('DATABASE_COLLECTION_FLICKR')
-      expect(constants).toHaveProperty('DATABASE_COLLECTION_INSTAGRAM')
-      expect(constants).toHaveProperty('DATABASE_COLLECTION_SPOTIFY')
-      expect(constants).toHaveProperty('DATABASE_COLLECTION_STEAM')
-      expect(constants).toHaveProperty('DATABASE_COLLECTION_GOODREADS')
-      expect(constants).toHaveProperty('DATABASE_COLLECTION_GITHUB')
-      expect(constants).toHaveProperty('DATABASE_COLLECTION_USERS')
-      expect(constants).toHaveProperty('DISCOGS_USERNAME')
-      expect(constants).toHaveProperty('IMAGE_CDN_BASE_URL')
-    })
+  it('exports environment-backed values without throwing', () => {
+    expect(typeof CLOUD_STORAGE_IMAGES_BUCKET === 'string' || CLOUD_STORAGE_IMAGES_BUCKET === undefined).toBe(true)
+    expect(typeof MEDIA_STORE_BACKEND === 'string' || MEDIA_STORE_BACKEND === undefined).toBe(true)
+    expect(typeof LOCAL_MEDIA_ROOT === 'string' || LOCAL_MEDIA_ROOT === undefined).toBe(true)
+    expect(typeof DISCOGS_USERNAME === 'string' || DISCOGS_USERNAME === undefined).toBe(true)
+    expect(typeof IMAGE_CDN_BASE_URL === 'string' || IMAGE_CDN_BASE_URL === undefined).toBe(true)
   })
 })

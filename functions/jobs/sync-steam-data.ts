@@ -7,8 +7,8 @@ import getPlayerSummary from '../api/steam/get-player-summary.js'
 import getRecentlyPlayedGames from '../api/steam/get-recently-played-games.js'
 import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
 
+import { toProviderCollectionPath } from '../config/backend-paths.js'
 import { getSteamConfig } from '../config/backend-config.js'
-import { DATABASE_COLLECTION_STEAM } from '../config/constants.js'
 
 const transformSteamGame = (game) => {
   const {
@@ -53,6 +53,7 @@ const transformSteamGame = (game) => {
  */
 const syncSteamData = async () => {
   const { apiKey, userId } = getSteamConfig()
+  const steamCollectionPath = toProviderCollectionPath('steam')
 
   const [recentlyPlayedGames, ownedGames, playerSummary] = await Promise.all([
     getRecentlyPlayedGames(apiKey, userId),
@@ -63,7 +64,7 @@ const syncSteamData = async () => {
   const db = admin.firestore()
 
   const saveOwnedGames = async () => await db
-    .collection(DATABASE_COLLECTION_STEAM)
+    .collection(steamCollectionPath)
     .doc('last-response_owned-games')
     .set({
       response: ownedGames,
@@ -71,7 +72,7 @@ const syncSteamData = async () => {
     })
 
   const savePlayerSummary = async () => await db
-    .collection(DATABASE_COLLECTION_STEAM)
+    .collection(steamCollectionPath)
     .doc('last-response_player-summary')
     .set({
       response: playerSummary,
@@ -79,7 +80,7 @@ const syncSteamData = async () => {
     })
 
   const saveRecentlyPlayedGames = async () => await db
-    .collection(DATABASE_COLLECTION_STEAM)
+    .collection(steamCollectionPath)
     .doc('last-response_recently-played-games')
     .set({
       response: recentlyPlayedGames,
@@ -135,14 +136,14 @@ const syncSteamData = async () => {
   }
 
   const saveWidgetContent = async () => await db
-    .collection(DATABASE_COLLECTION_STEAM)
+    .collection(steamCollectionPath)
     .doc('widget-content')
     .set(widgetContent)
 
   const saveAISummary = async () => {
     if (aiSummary) {
       await db
-        .collection(DATABASE_COLLECTION_STEAM)
+        .collection(steamCollectionPath)
         .doc('last-response_ai-summary')
         .set({
           summary: aiSummary,

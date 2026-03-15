@@ -9,8 +9,7 @@ import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import { getMediaStore } from '../selectors/media-store.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
-
-import { DATABASE_COLLECTION_INSTAGRAM } from '../config/constants.js'
+import { toProviderCollectionPath } from '../config/backend-paths.js'
 
 /*
 
@@ -79,6 +78,7 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
 
 const syncInstagramData = async () => {
   try {
+    const instagramCollectionPath = toProviderCollectionPath('instagram')
     const mediaStore = getMediaStore()
     const instagramResponse = (await fetchInstagramData()) as {
       media?: { data?: unknown[] }
@@ -102,7 +102,7 @@ const syncInstagramData = async () => {
 
     // Save the raw Instagram response data
     await db
-      .collection(DATABASE_COLLECTION_INSTAGRAM)
+      .collection(instagramCollectionPath)
       .doc('last-response')
       .set({
         ...instagramResponse,
@@ -128,7 +128,7 @@ const syncInstagramData = async () => {
 
     // Save the widget content
     await db
-      .collection(DATABASE_COLLECTION_INSTAGRAM)
+      .collection(instagramCollectionPath)
       .doc('widget-content')
       .set(updatedWidgetContent)
 

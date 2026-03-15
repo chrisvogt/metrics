@@ -10,9 +10,9 @@ import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import { getMediaStore } from '../selectors/media-store.js'
 import toDiscogsDestinationPath from '../transformers/to-discogs-destination-path.js'
 import transformDiscogsRelease from '../transformers/transform-discogs-release.js'
+import { toProviderCollectionPath } from '../config/backend-paths.js'
 
 import { 
-  DATABASE_COLLECTION_DISCOGS,
   DISCOGS_USERNAME
 } from '../config/constants.js'
 
@@ -76,6 +76,7 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, release) => {
 
 const syncDiscogsData = async () => {
   try {
+    const discogsCollectionPath = toProviderCollectionPath('discogs')
     const mediaStore = getMediaStore()
     const discogsResponse = await fetchDiscogsReleases()
 
@@ -124,7 +125,7 @@ const syncDiscogsData = async () => {
 
     // Save the raw Discogs response data (with enhanced releases)
     await db
-      .collection(DATABASE_COLLECTION_DISCOGS)
+      .collection(discogsCollectionPath)
       .doc('last-response')
       .set(documentToSave)
 
@@ -147,7 +148,7 @@ const syncDiscogsData = async () => {
 
     // Save the widget content
     await db
-      .collection(DATABASE_COLLECTION_DISCOGS)
+      .collection(discogsCollectionPath)
       .doc('widget-content')
       .set(updatedWidgetContent)
 

@@ -2,6 +2,10 @@ import * as dotenv from 'dotenv'
 import path from 'path'
 
 const FUNCTIONS_CONFIG_APPLIED_ENV = '__FUNCTIONS_CONFIG_APPLIED__'
+const DEFAULT_WIDGET_USER_ID = 'chrisvogt'
+const DEFAULT_WIDGET_HOSTNAME_USER_MAP = {
+  'api.chronogrove.com': 'chronogrove',
+} as const
 
 export const isProductionEnvironment = () => process.env.NODE_ENV === 'production'
 
@@ -70,4 +74,39 @@ export const getSpotifyConfig = () => ({
 export const getSteamConfig = () => ({
   apiKey: process.env.STEAM_API_KEY,
   userId: process.env.STEAM_USER_ID,
+})
+
+const parseWidgetUserMap = (
+  rawValue: string | undefined
+): Record<string, string> => {
+  if (!rawValue) {
+    return { ...DEFAULT_WIDGET_HOSTNAME_USER_MAP }
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as Record<string, unknown>
+    return Object.entries(parsed).reduce<Record<string, string>>((acc, [hostname, userId]) => {
+      if (hostname.length > 0 && typeof userId === 'string' && userId.length > 0) {
+        acc[hostname] = userId
+      }
+      return acc
+    }, {})
+  } catch {
+    return rawValue
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .reduce<Record<string, string>>((acc, entry) => {
+        const [hostname, userId] = entry.split('=').map((part) => part?.trim())
+        if (hostname && userId) {
+          acc[hostname] = userId
+        }
+        return acc
+      }, {})
+  }
+}
+
+export const getBackendPathConfig = () => ({
+  defaultWidgetUserId: process.env.DEFAULT_WIDGET_USER_ID ?? DEFAULT_WIDGET_USER_ID,
+  widgetUserIdByHostname: parseWidgetUserMap(process.env.WIDGET_USER_ID_BY_HOSTNAME),
 })

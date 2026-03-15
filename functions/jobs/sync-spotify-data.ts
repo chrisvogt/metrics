@@ -9,13 +9,12 @@ import getSpotifyPlaylists from '../api/spotify/get-playlists.js'
 import getSpotifyTopTracks from '../api/spotify/get-top-tracks.js'
 import getSpotifyUserProfile from '../api/spotify/get-user-profile.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
+import { toProviderCollectionPath, toProviderMediaPrefix } from '../config/backend-paths.js'
 import { getSpotifyConfig } from '../config/backend-config.js'
 import { getMediaStore } from '../selectors/media-store.js'
 import transformTrackToCollectionItem from '../transformers/track-to-collection-item.js'
 
 import {
-  CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH,
-  DATABASE_COLLECTION_SPOTIFY,
   IMAGE_CDN_BASE_URL
 } from '../config/constants.js'
 
@@ -34,7 +33,7 @@ const getMediaToDownloadReducer = (storedMediaFileNames = []) => (acc, playlist)
   // I'm using the media filename — a hash — to identify the media file in GCP Storage because I assume the
   // images on mosaic.scdn.co rotate and change over time based on the playlist.
   const id = mediaURL.replace(SPOTIFY_MOSAIC_BASE_URL, '')
-  const destinationPath = `${CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH}${id}.jpg`
+  const destinationPath = `${toProviderMediaPrefix('spotify', undefined, 'playlists/')}${id}.jpg`
   const isAlreadyDownloaded = storedMediaFileNames.includes(destinationPath)
 
   if (!isAlreadyDownloaded) {
@@ -50,7 +49,7 @@ const getMediaToDownloadReducer = (storedMediaFileNames = []) => (acc, playlist)
 
 const transformPlaylists = (playlists) => playlists.map(playlist => {
   const id = getMediaURLFromPlaylist(playlist)?.replace(SPOTIFY_MOSAIC_BASE_URL, '')
-  const cdnImageURL = `${IMAGE_CDN_BASE_URL}${CLOUD_STORAGE_SPOTIFY_PLAYLISTS_PATH}${id}.jpg`
+  const cdnImageURL = `${IMAGE_CDN_BASE_URL}${toProviderMediaPrefix('spotify', undefined, 'playlists/')}${id}.jpg`
   return {
     ...playlist,
     cdnImageURL
@@ -58,6 +57,7 @@ const transformPlaylists = (playlists) => playlists.map(playlist => {
 })
 
 const syncSpotifyTopTracks = async () => {
+  const spotifyCollectionPath = toProviderCollectionPath('spotify')
   const mediaStore = getMediaStore()
   const { clientId, clientSecret, redirectUri: redirectURI, refreshToken } = getSpotifyConfig()
 
@@ -179,7 +179,7 @@ const syncSpotifyTopTracks = async () => {
   const db = admin.firestore()
 
   const savePlaylists = async () => await db
-    .collection(DATABASE_COLLECTION_SPOTIFY)
+    .collection(spotifyCollectionPath)
     .doc('last-response_playlists')
     .set({
       response: playlistsResponse,
@@ -187,7 +187,7 @@ const syncSpotifyTopTracks = async () => {
     })
 
   const saveTopTracksResponse = async () => await db
-    .collection(DATABASE_COLLECTION_SPOTIFY)
+    .collection(spotifyCollectionPath)
     .doc('last-response_top-tracks')
     .set({
       response: topTracks,
@@ -195,7 +195,7 @@ const syncSpotifyTopTracks = async () => {
     })
 
   const saveUserProfileResponse = async () => await db
-    .collection(DATABASE_COLLECTION_SPOTIFY)
+    .collection(spotifyCollectionPath)
     .doc('last-response_user-profile')
     .set({
       response: userProfile,
@@ -204,7 +204,7 @@ const syncSpotifyTopTracks = async () => {
 
   const saveWidgetContent = async () => {
     return await db
-      .collection(DATABASE_COLLECTION_SPOTIFY)
+      .collection(spotifyCollectionPath)
       .doc('widget-content')
       .set(widgetContent)
   }

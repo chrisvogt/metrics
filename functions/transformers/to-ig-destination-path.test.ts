@@ -7,9 +7,9 @@ describe('toIGDestinationPath', () => {
   beforeEach(async () => {
     originalEnv = { ...process.env }
     
-    // Mock the constants module
-    vi.doMock('../config/constants.js', () => ({
-      CLOUD_STORAGE_INSTAGRAM_PATH: 'ig/'
+    // Mock the backend path builder
+    vi.doMock('../config/backend-paths.js', () => ({
+      toProviderMediaPrefix: vi.fn(() => 'ig/'),
     }))
     
     // Clear module cache to ensure fresh import

@@ -56,6 +56,7 @@ hosting/dist
 
 # Functions TypeScript build output (tsc → lib/); source lives in config/, widgets/, utils/, helpers/
 functions/lib/
+local-media/
 
 # Optional npm cache directory
 .npm

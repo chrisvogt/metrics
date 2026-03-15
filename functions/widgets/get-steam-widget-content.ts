@@ -1,11 +1,11 @@
 import admin from 'firebase-admin'
-import { DATABASE_COLLECTION_STEAM } from '../config/constants.js'
 import { Timestamp } from 'firebase/firestore'
+import { toProviderCollectionPath } from '../config/backend-paths.js'
 
 const getSteamWidgetContent = async () => {
   const db = admin.firestore()
   const doc = await db
-    .collection(DATABASE_COLLECTION_STEAM)
+    .collection(toProviderCollectionPath('steam'))
     .doc('widget-content')
     .get()
 
