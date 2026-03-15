@@ -1,6 +1,7 @@
-import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
 import { Timestamp } from 'firebase-admin/firestore'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
+import type { DocumentStore } from '../ports/document-store.js'
 
 import getOwnedGames from '../api/steam/get-owned-games.js'
 import getPlayerSummary from '../api/steam/get-player-summary.js'
@@ -51,7 +52,9 @@ const transformSteamGame = (game) => {
  *  - header.jpg
  *  - capsule_231x87.jpg
  */
-const syncSteamData = async () => {
+const defaultDocumentStore = new FirestoreDocumentStore()
+
+const syncSteamData = async (documentStore: DocumentStore = defaultDocumentStore) => {
   const { apiKey, userId } = getSteamConfig()
   const steamCollectionPath = toProviderCollectionPath('steam')
 
@@ -61,31 +64,29 @@ const syncSteamData = async () => {
     getPlayerSummary(apiKey, userId),
   ])
 
-  const db = admin.firestore()
-
-  const saveOwnedGames = async () => await db
-    .collection(steamCollectionPath)
-    .doc('last-response_owned-games')
-    .set({
+  const saveOwnedGames = async () => await documentStore.setDocument(
+    `${steamCollectionPath}/last-response_owned-games`,
+    {
       response: ownedGames,
       fetchedAt: Timestamp.now(),
-    })
+    }
+  )
 
-  const savePlayerSummary = async () => await db
-    .collection(steamCollectionPath)
-    .doc('last-response_player-summary')
-    .set({
+  const savePlayerSummary = async () => await documentStore.setDocument(
+    `${steamCollectionPath}/last-response_player-summary`,
+    {
       response: playerSummary,
       fetchedAt: Timestamp.now(),
-    })
+    }
+  )
 
-  const saveRecentlyPlayedGames = async () => await db
-    .collection(steamCollectionPath)
-    .doc('last-response_recently-played-games')
-    .set({
+  const saveRecentlyPlayedGames = async () => await documentStore.setDocument(
+    `${steamCollectionPath}/last-response_recently-played-games`,
+    {
       response: recentlyPlayedGames,
       fetchedAt: Timestamp.now(),
-    })
+    }
+  )
 
   const ownedGamesObj = ownedGames as { game_count?: number; games?: unknown[] }
   const playerSummaryObj = playerSummary as { avatarfull?: string; profileurl?: string; personaname?: string }
@@ -135,20 +136,15 @@ const syncSteamData = async () => {
     // Continue with sync even if AI summary fails
   }
 
-  const saveWidgetContent = async () => await db
-    .collection(steamCollectionPath)
-    .doc('widget-content')
-    .set(widgetContent)
+  const saveWidgetContent = async () =>
+    await documentStore.setDocument(`${steamCollectionPath}/widget-content`, widgetContent)
 
   const saveAISummary = async () => {
     if (aiSummary) {
-      await db
-        .collection(steamCollectionPath)
-        .doc('last-response_ai-summary')
-        .set({
-          summary: aiSummary,
-          generatedAt: Timestamp.now(),
-        })
+      await documentStore.setDocument(`${steamCollectionPath}/last-response_ai-summary`, {
+        summary: aiSummary,
+        generatedAt: Timestamp.now(),
+      })
     }
   }
 

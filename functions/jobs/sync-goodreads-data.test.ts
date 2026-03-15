@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import admin from 'firebase-admin'
 import { Timestamp } from 'firebase-admin/firestore'
 import syncGoodreadsData from './sync-goodreads-data.js'
+import type { DocumentStore } from '../ports/document-store.js'
 
 // Use fake timers for retry/delay tests
 vi.useFakeTimers()
@@ -70,20 +70,14 @@ import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.j
 import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summary.js'
 
 describe('syncGoodreadsData', () => {
-  let mockSet
-  let mockDoc
-  let mockCollection
-  let mockFirestore
+  let documentStore: DocumentStore
 
   beforeEach(async () => {
     vi.clearAllMocks()
-    
-    mockSet = vi.fn()
-    mockDoc = vi.fn(() => ({ set: mockSet }))
-    mockCollection = vi.fn(() => ({ doc: mockDoc }))
-    mockFirestore = vi.fn(() => ({ collection: mockCollection }))
-    
-    admin.firestore = mockFirestore
+    documentStore = {
+      getDocument: vi.fn(),
+      setDocument: vi.fn().mockResolvedValue(undefined),
+    }
 
     // Mock pMap to just execute the mapper function synchronously
     const pMapModule = await import('p-map')
@@ -134,7 +128,7 @@ describe('syncGoodreadsData', () => {
     fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
     generateGoodreadsSummary.mockResolvedValue(mockAISummary)
 
-    const result = await syncGoodreadsData()
+    const result = await syncGoodreadsData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.data.collections).toEqual({
@@ -145,27 +139,48 @@ describe('syncGoodreadsData', () => {
     expect(result.data.meta.synced).toBeInstanceOf(Timestamp)
     expect(result.data.aiSummary).toBe(mockAISummary)
 
-    expect(mockFirestore).toHaveBeenCalled()
-    expect(mockCollection).toHaveBeenCalledWith('users/chrisvogt/goodreads')
-    expect(mockDoc).toHaveBeenCalledWith('last-response_user-show')
-    expect(mockDoc).toHaveBeenCalledWith('last-response_book-reviews')
-    expect(mockDoc).toHaveBeenCalledWith('widget-content')
-    expect(mockDoc).toHaveBeenCalledWith('last-response_ai-summary')
-    expect(mockSet).toHaveBeenCalledTimes(4)
+    expect(documentStore.setDocument).toHaveBeenCalledTimes(4)
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/goodreads/last-response_user-show',
+      expect.objectContaining({
+        response: { user: 'data' },
+        updated: expect.any(Timestamp),
+      })
+    )
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/goodreads/last-response_book-reviews',
+      expect.objectContaining({
+        response: { reviews: 'data' },
+        updated: expect.any(Timestamp),
+      })
+    )
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/goodreads/widget-content',
+      expect.objectContaining({
+        aiSummary: mockAISummary,
+      })
+    )
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/goodreads/last-response_ai-summary',
+      expect.objectContaining({
+        summary: mockAISummary,
+        generatedAt: expect.any(Timestamp),
+      })
+    )
   })
 
   it('should handle API errors gracefully', async () => {
     fetchUser.mockRejectedValue(new Error('API Error'))
     fetchRecentlyReadBooks.mockResolvedValue({ books: [], rawReviewsResponse: {} })
 
-    const result = await syncGoodreadsData()
+    const result = await syncGoodreadsData(documentStore)
 
     expect(result).toEqual({
       result: 'FAILURE',
       error: 'API Error'
     })
 
-    expect(mockSet).not.toHaveBeenCalled()
+    expect(documentStore.setDocument).not.toHaveBeenCalled()
   })
 
   it('should handle database save errors', async () => {
@@ -182,9 +197,9 @@ describe('syncGoodreadsData', () => {
 
     fetchUser.mockResolvedValue(mockUserData)
     fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
-    mockSet.mockRejectedValue(new Error('Database Error'))
+    vi.mocked(documentStore.setDocument).mockRejectedValue(new Error('Database Error'))
 
-    const result = await syncGoodreadsData()
+    const result = await syncGoodreadsData(documentStore)
 
     expect(result).toEqual({
       result: 'FAILURE',
@@ -200,7 +215,7 @@ describe('syncGoodreadsData', () => {
     })
     fetchRecentlyReadBooks.mockRejectedValue(new Error('Reviews API Error'))
 
-    const result = await syncGoodreadsData()
+    const result = await syncGoodreadsData(documentStore)
 
     expect(result).toEqual({
       result: 'FAILURE',
@@ -224,17 +239,25 @@ describe('syncGoodreadsData', () => {
     fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
     generateGoodreadsSummary.mockRejectedValue(new Error('AI API Error'))
 
-    const result = await syncGoodreadsData()
+    const result = await syncGoodreadsData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.data.aiSummary).toBeUndefined()
     
     // Should still save other data
-    expect(mockSet).toHaveBeenCalledTimes(3) // user, reviews, widget (no AI summary)
-    expect(mockDoc).toHaveBeenCalledWith('last-response_user-show')
-    expect(mockDoc).toHaveBeenCalledWith('last-response_book-reviews')
-    expect(mockDoc).toHaveBeenCalledWith('widget-content')
-    expect(mockDoc).not.toHaveBeenCalledWith('last-response_ai-summary')
+    expect(documentStore.setDocument).toHaveBeenCalledTimes(3)
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/goodreads/last-response_user-show',
+      expect.any(Object)
+    )
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/goodreads/last-response_book-reviews',
+      expect.any(Object)
+    )
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/goodreads/widget-content',
+      expect.any(Object)
+    )
   })
 
   it('should save AI summary separately when generated successfully', async () => {
@@ -255,17 +278,19 @@ describe('syncGoodreadsData', () => {
     fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
     generateGoodreadsSummary.mockResolvedValue(mockAISummary)
 
-    const result = await syncGoodreadsData()
+    const result = await syncGoodreadsData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
     expect(result.data.aiSummary).toBe(mockAISummary)
     
     // Verify AI summary was saved separately
-    expect(mockDoc).toHaveBeenCalledWith('last-response_ai-summary')
-    expect(mockSet).toHaveBeenCalledWith({
-      summary: mockAISummary,
-      generatedAt: expect.any(Timestamp)
-    })
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/goodreads/last-response_ai-summary',
+      {
+        summary: mockAISummary,
+        generatedAt: expect.any(Timestamp)
+      }
+    )
   })
 
   describe('processUpdatesWithMedia', () => {
@@ -303,7 +328,7 @@ describe('syncGoodreadsData', () => {
       fetchUser.mockResolvedValue(mockUserData)
       fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
 
-      const result = await syncGoodreadsData()
+      const result = await syncGoodreadsData(documentStore)
 
       expect(result.result).toBe('SUCCESS')
       expect(result.data.collections.updates).toEqual([])
@@ -343,7 +368,7 @@ describe('syncGoodreadsData', () => {
       fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
       mockListStoredMedia.mockResolvedValue([])
 
-      const result = await syncGoodreadsData()
+      const result = await syncGoodreadsData(documentStore)
 
       expect(result.result).toBe('SUCCESS')
       expect(result.data.collections.updates[0].cdnMediaURL).toBe('https://cdn.example.com/books/book1-thumbnail.jpg')
@@ -384,7 +409,7 @@ describe('syncGoodreadsData', () => {
       fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
       mockListStoredMedia.mockResolvedValue([])
 
-      const result = await syncGoodreadsData()
+      const result = await syncGoodreadsData(documentStore)
 
       expect(result.result).toBe('SUCCESS')
       expect(result.data.collections.updates[0].cdnMediaURL).toBe('https://cdn.example.com/books/book1-thumbnail.jpg')
@@ -423,7 +448,7 @@ describe('syncGoodreadsData', () => {
       fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
       mockListStoredMedia.mockResolvedValue([])
 
-      const result = await syncGoodreadsData()
+      const result = await syncGoodreadsData(documentStore)
 
       expect(result.result).toBe('SUCCESS')
       expect(result.data.collections.updates[0].cdnMediaURL).toBe('https://cdn.example.com/books/book1-thumbnail.jpg')
@@ -462,7 +487,7 @@ describe('syncGoodreadsData', () => {
       fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
       mockListStoredMedia.mockResolvedValue([])
 
-      const result = await syncGoodreadsData()
+      const result = await syncGoodreadsData(documentStore)
 
       expect(result.result).toBe('SUCCESS')
       expect(result.data.collections.updates[0].cdnMediaURL).toBe('https://cdn.example.com/books/book1-thumbnail.jpg')
@@ -521,7 +546,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -579,7 +604,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -643,7 +668,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -694,7 +719,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -745,7 +770,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -813,7 +838,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -871,7 +896,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -937,7 +962,7 @@ describe('syncGoodreadsData', () => {
         }
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -983,7 +1008,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1048,7 +1073,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1101,7 +1126,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1167,7 +1192,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1223,7 +1248,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1285,7 +1310,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1341,7 +1366,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1395,7 +1420,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1441,7 +1466,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1504,7 +1529,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1545,7 +1570,7 @@ describe('syncGoodreadsData', () => {
       fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
       mockListStoredMedia.mockResolvedValue([])
 
-      const result = await syncGoodreadsData()
+      const result = await syncGoodreadsData(documentStore)
 
       expect(result.result).toBe('SUCCESS')
       expect(result.data.collections.updates[0].cdnMediaURL).toBe('https://cdn.example.com/books/book1-thumbnail.jpg')
@@ -1582,7 +1607,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1646,7 +1671,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1702,7 +1727,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1727,7 +1752,7 @@ describe('syncGoodreadsData', () => {
       fetchUser.mockResolvedValue(mockUserData)
       fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
 
-      const result = await syncGoodreadsData()
+      const result = await syncGoodreadsData(documentStore)
 
       expect(result.result).toBe('SUCCESS')
       expect(result.data.collections.updates).toBeNull()
@@ -1769,7 +1794,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1832,7 +1857,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1894,7 +1919,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -1952,7 +1977,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -2008,7 +2033,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 
@@ -2068,7 +2093,7 @@ describe('syncGoodreadsData', () => {
         return results
       })
 
-      const resultPromise = syncGoodreadsData()
+      const resultPromise = syncGoodreadsData(documentStore)
       await vi.runAllTimersAsync()
       const result = await resultPromise
 

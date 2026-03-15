@@ -1,6 +1,7 @@
-import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
 import { Timestamp } from 'firebase-admin/firestore'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
+import type { DocumentStore } from '../ports/document-store.js'
 
 import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
 
@@ -16,10 +17,13 @@ interface CreateUserResult {
   error?: string
 }
 
-const createUser = async (userRecord: UserRecord): Promise<CreateUserResult> => {
-  const { uid, email, displayName } = userRecord
+const defaultDocumentStore = new FirestoreDocumentStore()
 
-  const db = admin.firestore()
+const createUser = async (
+  userRecord: UserRecord,
+  documentStore: DocumentStore = defaultDocumentStore
+): Promise<CreateUserResult> => {
+  const { uid, email, displayName } = userRecord
 
   const userData = {
     uid,
@@ -35,10 +39,7 @@ const createUser = async (userRecord: UserRecord): Promise<CreateUserResult> => 
   }
 
   try {
-    await db
-      .collection(DATABASE_COLLECTION_USERS)
-      .doc(uid)
-      .set(userData)
+    await documentStore.setDocument(`${DATABASE_COLLECTION_USERS}/${uid}`, userData)
 
     logger.info('User created successfully in database.', {
       uid,

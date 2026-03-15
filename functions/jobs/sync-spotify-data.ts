@@ -1,7 +1,8 @@
-import admin from 'firebase-admin'
 import { logger } from 'firebase-functions'
 import { Timestamp } from 'firebase-admin/firestore'
 import pMap from 'p-map'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
+import type { DocumentStore } from '../ports/document-store.js'
 
 import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import getSpotifyAccessToken from '../api/spotify/get-access-token.js'
@@ -56,7 +57,9 @@ const transformPlaylists = (playlists) => playlists.map(playlist => {
   }
 })
 
-const syncSpotifyTopTracks = async () => {
+const defaultDocumentStore = new FirestoreDocumentStore()
+
+const syncSpotifyTopTracks = async (documentStore: DocumentStore = defaultDocumentStore) => {
   const spotifyCollectionPath = toProviderCollectionPath('spotify')
   const mediaStore = getMediaStore()
   const { clientId, clientSecret, redirectUri: redirectURI, refreshToken } = getSpotifyConfig()
@@ -176,38 +179,32 @@ const syncSpotifyTopTracks = async () => {
     },
   }
 
-  const db = admin.firestore()
-
-  const savePlaylists = async () => await db
-    .collection(spotifyCollectionPath)
-    .doc('last-response_playlists')
-    .set({
+  const savePlaylists = async () => await documentStore.setDocument(
+    `${spotifyCollectionPath}/last-response_playlists`,
+    {
       response: playlistsResponse,
       fetchedAt: Timestamp.now(),
-    })
+    }
+  )
 
-  const saveTopTracksResponse = async () => await db
-    .collection(spotifyCollectionPath)
-    .doc('last-response_top-tracks')
-    .set({
+  const saveTopTracksResponse = async () => await documentStore.setDocument(
+    `${spotifyCollectionPath}/last-response_top-tracks`,
+    {
       response: topTracks,
       fetchedAt: Timestamp.now(),
-    })
+    }
+  )
 
-  const saveUserProfileResponse = async () => await db
-    .collection(spotifyCollectionPath)
-    .doc('last-response_user-profile')
-    .set({
+  const saveUserProfileResponse = async () => await documentStore.setDocument(
+    `${spotifyCollectionPath}/last-response_user-profile`,
+    {
       response: userProfile,
       fetchedAt: Timestamp.now(),
-    })
+    }
+  )
 
-  const saveWidgetContent = async () => {
-    return await db
-      .collection(spotifyCollectionPath)
-      .doc('widget-content')
-      .set(widgetContent)
-  }
+  const saveWidgetContent = async () =>
+    await documentStore.setDocument(`${spotifyCollectionPath}/widget-content`, widgetContent)
 
   try {
     await Promise.all([

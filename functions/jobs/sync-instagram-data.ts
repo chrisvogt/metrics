@@ -1,7 +1,8 @@
-import admin from 'firebase-admin'
 import { Timestamp } from 'firebase-admin/firestore'
 import { logger } from 'firebase-functions'
 import pMap from 'p-map'
+import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
+import type { DocumentStore } from '../ports/document-store.js'
 
 import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import fetchInstagramData from '../api/instagram/fetch-instagram-data.js'
@@ -76,7 +77,9 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
   return acc
 }
 
-const syncInstagramData = async () => {
+const defaultDocumentStore = new FirestoreDocumentStore()
+
+const syncInstagramData = async (documentStore: DocumentStore = defaultDocumentStore) => {
   try {
     const instagramCollectionPath = toProviderCollectionPath('instagram')
     const mediaStore = getMediaStore()
@@ -98,16 +101,11 @@ const syncInstagramData = async () => {
       [] as { destinationPath: string; id: string; mediaURL: string }[]
     )
 
-    const db = admin.firestore()
-
     // Save the raw Instagram response data
-    await db
-      .collection(instagramCollectionPath)
-      .doc('last-response')
-      .set({
-        ...instagramResponse,
-        fetchedAt: Timestamp.now(),
-      })
+    await documentStore.setDocument(`${instagramCollectionPath}/last-response`, {
+      ...instagramResponse,
+      fetchedAt: Timestamp.now(),
+    })
 
     const filteredMedia = rawMedia.filter((item: { media_type?: string }) =>
       validMediaTypes.includes(item.media_type!)
@@ -127,10 +125,7 @@ const syncInstagramData = async () => {
     }
 
     // Save the widget content
-    await db
-      .collection(instagramCollectionPath)
-      .doc('widget-content')
-      .set(updatedWidgetContent)
+    await documentStore.setDocument(`${instagramCollectionPath}/widget-content`, updatedWidgetContent)
 
     type MediaItem = { destinationPath: string; id: string; mediaURL: string }
     if ((mediaToDownload as MediaItem[]).length === 0) {
