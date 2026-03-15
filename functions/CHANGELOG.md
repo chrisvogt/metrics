@@ -24,6 +24,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
 
+## [0.22.8] - 2026-03-15
+
+### Added
+
+- **Firebase runtime wrappers** – Added dedicated runtime adapters for Firebase Admin initialization and Firebase Functions registration so admin bootstrap, emulator wiring, and trigger registration are owned outside the service entrypoint.
+- **App factory seam** – Added `app/create-express-app.ts` so the API surface can be composed from injected runtime dependencies instead of being defined inline in the Firebase bootstrap file.
+
+### Changed
+
+- **Thin entrypoint** – `index.ts` now acts as a composition layer that wires together runtime config, Firebase runtime adapters, the shared document store, and the Express app factory.
+- **Trigger registration** – Scheduled jobs, the HTTP app wrapper, and the before-user-created trigger now register through shared Firebase runtime helpers instead of calling Firebase Functions APIs directly in the entrypoint.
+
+### Developer experience
+
+- **Runtime coverage** – Added focused tests for Firebase admin bootstrap and Firebase Functions registration wrappers while keeping the full `index` and `functions` suites green after the extraction.
+
 ## [0.22.7] - 2026-03-15
 
 ### Added
