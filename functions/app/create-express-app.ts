@@ -480,10 +480,12 @@ export function createExpressApp({
     res.json(config)
   })
 
-  expressApp.get('/api/csrf-token', cors(corsOptions), (_req, res) => {
+  expressApp.get('/api/csrf-token', cors(corsOptions), (req, res) => {
+    const csrfToken = typeof req.csrfToken === 'function' ? req.csrfToken() : res.locals._csrf
+
     res.json({
       ok: true,
-      csrfToken: res.locals._csrf,
+      csrfToken,
     })
   })
 
