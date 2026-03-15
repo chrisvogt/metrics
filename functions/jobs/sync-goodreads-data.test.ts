@@ -287,8 +287,8 @@ describe('syncGoodreadsData', () => {
     expect(documentStore.setDocument).toHaveBeenCalledWith(
       'users/chrisvogt/goodreads/last-response_ai-summary',
       {
-      summary: mockAISummary,
-      generatedAt: expect.any(Timestamp)
+        summary: mockAISummary,
+        generatedAt: expect.any(Timestamp)
       }
     )
   })
