@@ -342,6 +342,7 @@ const syncHandlersByProvider: Record<string, () => Promise<unknown>> = {
 expressApp.get(
   '/api/media/{*mediaPath}',
   cors(corsOptions),
+  createRateLimiter(15 * 60 * 1000, 100),
   async (req, res) => {
     if (!isDiskMediaStoreSelected()) {
       res.sendStatus(404)
