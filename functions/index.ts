@@ -370,7 +370,7 @@ expressApp.get(
     const handler = provider ? syncHandlersByProvider[provider] : undefined
 
     if (!handler) {
-      logger.log(`Attempted to sync an unrecognized provider: ${provider}`)
+      logger.info(`Attempted to sync an unrecognized provider: ${provider}`)
       res.status(400).send('Unrecognized or unsupported provider.')
       return
     }

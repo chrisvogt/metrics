@@ -4,6 +4,7 @@ import { logger } from 'firebase-functions'
 
 vi.mock('firebase-functions', () => ({
   logger: {
+    log: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
