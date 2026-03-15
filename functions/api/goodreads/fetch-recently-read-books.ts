@@ -7,9 +7,9 @@ import pMap from 'p-map'
 import fetchAndUploadFile from '../cloud-storage/fetch-and-upload-file.js'
 import fetchBookFromGoogle from '../google-books/fetch-book.js'
 import listStoredMedia from '../cloud-storage/list-stored-media.js'
+import { getMediaStore } from '../../selectors/media-store.js'
 
 import {
-  CLOUD_STORAGE_IMAGES_BUCKET,
   IMAGE_CDN_BASE_URL
 } from '../../config/constants.js'
 
@@ -58,6 +58,7 @@ const transformBookData = (book) => {
 }
 
 export default async () => {
+  const mediaStore = getMediaStore()
   const key = process.env.GOODREADS_API_KEY
   const userID = process.env.GOODREADS_USER_ID
 
@@ -246,7 +247,7 @@ export default async () => {
 
   if (!mediaToDownload.length) {
     logger.info('Goodreads data sync finished successfully without media uploads.', {
-      destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+      mediaStore: mediaStore.describe(),
       totalUploadedCount: 0,
       uploadedFiles: [],
     })
@@ -271,7 +272,7 @@ export default async () => {
   }
 
   logger.info('Goodreads data sync finished successfully with media uploads.', {
-    destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+    mediaStore: mediaStore.describe(),
     totalUploadedCount: result?.length,
     uploadedFiles: result?.map(({ fileName }) => fileName),
   })
@@ -279,7 +280,7 @@ export default async () => {
   return {
     books,
     rawReviewsResponse,
-    destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+    mediaStore: mediaStore.describe(),
     result: 'SUCCESS',
     totalUploadedCount: result?.length,
     uploadedFiles: result?.map(({ fileName }) => fileName),

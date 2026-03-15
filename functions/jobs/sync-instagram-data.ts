@@ -6,10 +6,11 @@ import pMap from 'p-map'
 import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import fetchInstagramData from '../api/instagram/fetch-instagram-data.js'
 import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
+import { getMediaStore } from '../selectors/media-store.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
 
-import { CLOUD_STORAGE_IMAGES_BUCKET, DATABASE_COLLECTION_INSTAGRAM } from '../config/constants.js'
+import { DATABASE_COLLECTION_INSTAGRAM } from '../config/constants.js'
 
 /*
 
@@ -78,6 +79,7 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
 
 const syncInstagramData = async () => {
   try {
+    const mediaStore = getMediaStore()
     const instagramResponse = (await fetchInstagramData()) as {
       media?: { data?: unknown[] }
       biography?: string
@@ -156,13 +158,13 @@ const syncInstagramData = async () => {
     }
 
     logger.info('Instagram sync finished successfully.', {
-      destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+      mediaStore: mediaStore.describe(),
       totalUploadedCount: result.length,
       uploadedFiles: result.map(({ fileName }) => fileName),
     })
 
     return {
-      destinationBucket: CLOUD_STORAGE_IMAGES_BUCKET,
+      mediaStore: mediaStore.describe(),
       result: 'SUCCESS',
       totalUploadedCount: result.length,
       uploadedFiles: result.map(({ fileName }) => fileName),

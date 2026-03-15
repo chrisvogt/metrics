@@ -11,6 +11,20 @@
 
 When `NODE_ENV !== 'production'`, the app loads all config from `.env` (via dotenv). No other config files are used locally.
 
+### Local media storage
+
+For local development, media storage now defaults to disk unless you explicitly set `MEDIA_STORE_BACKEND=gcs`.
+
+Useful local settings:
+
+```bash
+MEDIA_STORE_BACKEND=disk
+LOCAL_MEDIA_ROOT=/absolute/path/to/metrics-local-media
+IMAGE_CDN_BASE_URL=/api/media/
+```
+
+With that setup, uploaded media is written under `LOCAL_MEDIA_ROOT` and served by the Functions app at `/api/media/*`.
+
 ## Production
 
 Production config is stored in **Google Cloud Secret Manager** as a single JSON secret:

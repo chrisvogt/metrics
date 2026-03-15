@@ -1,27 +1,25 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-vi.mock('firebase-admin', () => ({
-  default: { storage: vi.fn() },
-  storage: vi.fn()
-}))
-vi.mock('../../config/constants.js', () => ({
-  CLOUD_STORAGE_IMAGES_BUCKET: 'test-bucket'
+vi.mock('../../selectors/media-store.js', () => ({
+  getMediaStore: vi.fn(),
 }))
 
 let listStoredMedia
 
 describe('listStoredMedia', () => {
-  let mockStorage, mockBucket, mockGetFiles
+  let getMediaStore
+  let mediaStore
 
   beforeEach(async () => {
     listStoredMedia = (await import('./list-stored-media.js')).default
+    getMediaStore = (await import('../../selectors/media-store.js')).getMediaStore
     vi.clearAllMocks()
-    mockGetFiles = vi.fn()
-    mockBucket = vi.fn(() => ({ getFiles: mockGetFiles }))
-    mockStorage = vi.fn(() => ({ bucket: mockBucket }))
-    const admin = await import('firebase-admin')
-    admin.default.storage.mockImplementation(mockStorage)
-    admin.storage.mockImplementation(mockStorage)
+    mediaStore = {
+      fetchAndStore: vi.fn(),
+      listFiles: vi.fn(),
+      describe: vi.fn(),
+    }
+    vi.mocked(getMediaStore).mockReturnValue(mediaStore)
   })
 
   afterEach(() => {
@@ -29,16 +27,15 @@ describe('listStoredMedia', () => {
   })
 
   it('returns a list of file names from the bucket', async () => {
-    const files = [ { name: 'foo.jpg' }, { name: 'bar.jpg' } ]
-    mockGetFiles.mockResolvedValue([files])
+    vi.mocked(mediaStore.listFiles).mockResolvedValue(['foo.jpg', 'bar.jpg'])
     const result = await listStoredMedia()
     expect(result).toEqual(['foo.jpg', 'bar.jpg'])
-    expect(mockGetFiles).toHaveBeenCalled()
+    expect(mediaStore.listFiles).toHaveBeenCalled()
   })
 
   it('returns an empty list if no files are present', async () => {
-    mockGetFiles.mockResolvedValue([[]])
+    vi.mocked(mediaStore.listFiles).mockResolvedValue([])
     const result = await listStoredMedia()
     expect(result).toEqual([])
   })
-}) 
+})
