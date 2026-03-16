@@ -6,8 +6,7 @@ import lusca from 'lusca'
 import path from 'path'
 import { rateLimit } from 'express-rate-limit'
 
-import type firebaseAdmin from 'firebase-admin'
-
+import type { AuthService } from '../ports/auth-service.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import { getWidgetUserIdForHostname } from '../config/backend-paths.js'
 import { isProductionEnvironment } from '../config/backend-config.js'
@@ -31,7 +30,7 @@ interface LoggerLike {
 }
 
 interface CreateExpressAppOptions {
-  admin: typeof firebaseAdmin
+  authService: AuthService
   documentStore: DocumentStore
   ensureRuntimeConfigApplied: () => Promise<void>
   getFirebaseClientConfig: () => Record<string, string | undefined>
@@ -83,7 +82,7 @@ export function getSessionAuthError(authHeader: string | undefined): string | nu
 }
 
 export function createExpressApp({
-  admin,
+  authService,
   documentStore,
   ensureRuntimeConfigApplied,
   getFirebaseClientConfig,
@@ -110,12 +109,12 @@ export function createExpressApp({
         })
 
         try {
-          const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true)
+          const decodedClaims = await authService.verifySessionCookie(sessionCookie)
 
           logger.info('Session cookie verified successfully', {
             uid: decodedClaims.uid,
             email: decodedClaims.email,
-            emailVerified: decodedClaims.email_verified,
+            emailVerified: decodedClaims.emailVerified,
           })
 
           if (!isAllowedEmail(decodedClaims.email)) {
@@ -134,7 +133,7 @@ export function createExpressApp({
           req.user = {
             uid: decodedClaims.uid,
             email: decodedClaims.email,
-            emailVerified: decodedClaims.email_verified,
+            emailVerified: decodedClaims.emailVerified,
           }
           next()
           return
@@ -164,12 +163,12 @@ export function createExpressApp({
       const token = authHeader.split('Bearer ')[1]
 
       try {
-        const decodedToken = await admin.auth().verifyIdToken(token!)
+        const decodedToken = await authService.verifyIdToken(token!)
 
         logger.info('JWT token verified successfully', {
           uid: decodedToken.uid,
           email: decodedToken.email,
-          emailVerified: decodedToken.email_verified,
+          emailVerified: decodedToken.emailVerified,
         })
 
         if (!isAllowedEmail(decodedToken.email)) {
@@ -188,7 +187,7 @@ export function createExpressApp({
         req.user = {
           uid: decodedToken.uid,
           email: decodedToken.email,
-          emailVerified: decodedToken.email_verified,
+          emailVerified: decodedToken.emailVerified,
         }
         next()
       } catch (error) {
@@ -374,16 +373,8 @@ export function createExpressApp({
     async (req, res) => {
       if (!req.user) return
       try {
-        const userRecord = await admin.auth().getUser(req.user.uid)
-        const response = buildSuccessResponse({
-          uid: userRecord.uid,
-          email: userRecord.email,
-          displayName: userRecord.displayName,
-          photoURL: userRecord.photoURL,
-          emailVerified: userRecord.emailVerified,
-          creationTime: userRecord.metadata.creationTime,
-          lastSignInTime: userRecord.metadata.lastSignInTime,
-        })
+        const userRecord = await authService.getUser(req.user.uid)
+        const response = buildSuccessResponse(userRecord)
         res.status(200).send(response)
       } catch (err) {
         logger.error('Error fetching user profile:', err)
@@ -408,7 +399,7 @@ export function createExpressApp({
             error: result.error,
           })
         }
-        await admin.auth().deleteUser(uid)
+        await authService.deleteUser(uid)
         logger.info('User account deleted', { uid })
         res.status(200).send(buildSuccessResponse({ message: 'Account deleted' }))
       } catch (err) {
@@ -431,7 +422,7 @@ export function createExpressApp({
         }
 
         const token = (req.headers.authorization as string).split('Bearer ')[1]!.trim()
-        const decodedToken = await admin.auth().verifyIdToken(token)
+        const decodedToken = await authService.verifyIdToken(token)
 
         if (!isAllowedEmail(decodedToken.email)) {
           res.status(403).json({
@@ -448,7 +439,7 @@ export function createExpressApp({
         })
 
         const expiresIn = 60 * 60 * 24 * 5 * 1000
-        const sessionCookie = await admin.auth().createSessionCookie(token, { expiresIn })
+        const sessionCookie = await authService.createSessionCookie(token, { expiresIn })
 
         const options = {
           maxAge: expiresIn,
@@ -497,7 +488,7 @@ export function createExpressApp({
     async (req, res) => {
       if (!req.user) return
       try {
-        await admin.auth().revokeRefreshTokens(req.user.uid)
+        await authService.revokeRefreshTokens(req.user.uid)
         res.clearCookie('session', {
           httpOnly: true,
           secure: isProductionEnvironment(),
