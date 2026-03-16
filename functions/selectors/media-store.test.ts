@@ -55,4 +55,35 @@ describe('media-store selector', () => {
 
     expect(() => getMediaStore()).toThrow('Unsupported media store backend: s3')
   })
+
+  it('creates the gcs store when the gcs backend is selected', async () => {
+    process.env.MEDIA_STORE_BACKEND = 'gcs'
+
+    const { getMediaStore } = await import('./media-store.js')
+
+    expect(getMediaStore().describe().backend).toBe('gcs')
+  })
+
+  it('caches the selected store until reset and then re-resolves from env', async () => {
+    process.env.MEDIA_STORE_BACKEND = 'disk'
+    process.env.LOCAL_MEDIA_ROOT = '/tmp/first-media-root'
+
+    const { getMediaStore, resetMediaStoreForTests } = await import('./media-store.js')
+
+    const initialStore = getMediaStore()
+    const cachedStore = getMediaStore()
+    expect(initialStore).toBe(cachedStore)
+    expect(initialStore.describe()).toEqual({
+      backend: 'disk',
+      target: '/tmp/first-media-root',
+    })
+
+    process.env.LOCAL_MEDIA_ROOT = '/tmp/second-media-root'
+    resetMediaStoreForTests()
+
+    const resetStore = getMediaStore()
+    expect(resetStore.describe().backend).toBe('disk')
+    expect(resetStore).not.toBe(initialStore)
+    expect(resetStore.describe().target).toBe('/tmp/second-media-root')
+  })
 })
