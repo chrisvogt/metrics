@@ -1,14 +1,16 @@
-import { Timestamp } from 'firebase-admin/firestore'
-import { logger } from 'firebase-functions'
 import pMap from 'p-map'
-import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
-import { listStoredMedia, storeRemoteMedia } from '../services/media/media-service.js'
+import {
+  describeMediaStore,
+  listStoredMedia,
+  storeRemoteMedia,
+} from '../services/media/media-service.js'
 
 import fetchInstagramData from '../api/instagram/fetch-instagram-data.js'
-import { getMediaStore } from '../selectors/media-store.js'
+import { getLogger } from '../services/logger.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
+import { toStoredDateTime } from '../utils/time.js'
 import { toProviderCollectionPath } from '../config/backend-paths.js'
 
 /*
@@ -76,12 +78,10 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
   return acc
 }
 
-const defaultDocumentStore = new FirestoreDocumentStore()
-
-const syncInstagramData = async (documentStore: DocumentStore = defaultDocumentStore) => {
+const syncInstagramData = async (documentStore: DocumentStore) => {
+  const logger = getLogger()
   try {
     const instagramCollectionPath = toProviderCollectionPath('instagram')
-    const mediaStore = getMediaStore()
     const instagramResponse = (await fetchInstagramData()) as {
       media?: { data?: unknown[] }
       biography?: string
@@ -103,7 +103,7 @@ const syncInstagramData = async (documentStore: DocumentStore = defaultDocumentS
     // Save the raw Instagram response data
     await documentStore.setDocument(`${instagramCollectionPath}/last-response`, {
       ...instagramResponse,
-      fetchedAt: Timestamp.now(),
+      fetchedAt: toStoredDateTime(),
     })
 
     const filteredMedia = rawMedia.filter((item: { media_type?: string }) =>
@@ -113,7 +113,7 @@ const syncInstagramData = async (documentStore: DocumentStore = defaultDocumentS
     const updatedWidgetContent = {
       media: filteredMedia.map(transformInstagramMedia),
       meta: {
-        synced: Timestamp.now(),
+        synced: toStoredDateTime(),
       },
       profile: {
         biography: instagramResponse.biography,
@@ -152,13 +152,13 @@ const syncInstagramData = async (documentStore: DocumentStore = defaultDocumentS
     }
 
     logger.info('Instagram sync finished successfully.', {
-      mediaStore: mediaStore.describe(),
+      mediaStore: describeMediaStore(),
       totalUploadedCount: result.length,
       uploadedFiles: result.map(({ fileName }) => fileName),
     })
 
     return {
-      mediaStore: mediaStore.describe(),
+      mediaStore: describeMediaStore(),
       result: 'SUCCESS',
       totalUploadedCount: result.length,
       uploadedFiles: result.map(({ fileName }) => fileName),

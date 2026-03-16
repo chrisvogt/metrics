@@ -8,11 +8,11 @@ import { rateLimit } from 'express-rate-limit'
 
 import type { AuthService } from '../ports/auth-service.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import type { MediaStore } from '../ports/media-store.js'
 import { getWidgetUserIdForHostname } from '../config/backend-paths.js'
 import { isProductionEnvironment } from '../config/backend-config.js'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
-import { getMediaStore, isDiskMediaStoreSelected } from '../selectors/media-store.js'
 import deleteUserJob from '../jobs/delete-user.js'
 import syncDiscogsDataJob from '../jobs/sync-discogs-data.js'
 import syncFlickrDataJob from '../jobs/sync-flickr-data.js'
@@ -33,8 +33,9 @@ interface CreateExpressAppOptions {
   authService: AuthService
   documentStore: DocumentStore
   ensureRuntimeConfigApplied: () => Promise<void>
-  getFirebaseClientConfig: () => Record<string, string | undefined>
+  getClientAuthConfig: () => Record<string, string | undefined>
   logger: LoggerLike
+  mediaStore: MediaStore
 }
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
@@ -85,8 +86,9 @@ export function createExpressApp({
   authService,
   documentStore,
   ensureRuntimeConfigApplied,
-  getFirebaseClientConfig,
+  getClientAuthConfig,
   logger,
+  mediaStore,
 }: CreateExpressAppOptions): express.Express {
   const expressApp = express()
 
@@ -252,11 +254,11 @@ export function createExpressApp({
   }
 
   const syncHandlersByProvider: Record<string, () => Promise<unknown>> = {
-    discogs: syncDiscogsDataJob,
-    goodreads: syncGoodreadsDataJob,
-    instagram: syncInstagramDataJob,
-    spotify: syncSpotifyDataJob,
-    steam: syncSteamDataJob,
+    discogs: () => syncDiscogsDataJob(documentStore),
+    goodreads: () => syncGoodreadsDataJob(documentStore),
+    instagram: () => syncInstagramDataJob(documentStore),
+    spotify: () => syncSpotifyDataJob(documentStore),
+    steam: () => syncSteamDataJob(documentStore),
     flickr: () => syncFlickrDataJob(documentStore),
   }
 
@@ -265,7 +267,7 @@ export function createExpressApp({
     cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 100),
     async (req, res) => {
-      if (!isDiskMediaStoreSelected()) {
+      if (!(mediaStore instanceof LocalDiskMediaStore)) {
         res.sendStatus(404)
         return
       }
@@ -275,12 +277,6 @@ export function createExpressApp({
         ? mediaPathParam.join('/')
         : mediaPathParam
       if (!mediaPath || typeof mediaPath !== 'string') {
-        res.sendStatus(404)
-        return
-      }
-
-      const mediaStore = getMediaStore()
-      if (!(mediaStore instanceof LocalDiskMediaStore)) {
         res.sendStatus(404)
         return
       }
@@ -392,7 +388,7 @@ export function createExpressApp({
       if (!req.user) return
       const uid = req.user.uid
       try {
-        const result = await deleteUserJob({ uid })
+        const result = await deleteUserJob({ uid }, documentStore)
         if (result.result !== 'SUCCESS') {
           logger.warn('Delete-account: Firestore cleanup failed (doc may be missing)', {
             uid,
@@ -465,10 +461,18 @@ export function createExpressApp({
     }
   )
 
-  expressApp.get('/api/firebase-config', cors(corsOptions), async (_req, res) => {
+  const sendClientAuthConfig = async (res: express.Response) => {
     await ensureRuntimeConfigApplied()
-    const config = getFirebaseClientConfig()
+    const config = getClientAuthConfig()
     res.json(config)
+  }
+
+  expressApp.get('/api/client-auth-config', cors(corsOptions), async (_req, res) => {
+    await sendClientAuthConfig(res)
+  })
+
+  expressApp.get('/api/firebase-config', cors(corsOptions), async (_req, res) => {
+    await sendClientAuthConfig(res)
   })
 
   expressApp.get('/api/csrf-token', cors(corsOptions), (req, res) => {

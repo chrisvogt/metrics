@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { Timestamp } from 'firebase-admin/firestore'
 
 import syncDiscogsData from './sync-discogs-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { configureLogger } from '../services/logger.js'
 
 vi.mock('../api/discogs/fetch-releases.js', () => ({
   default: vi.fn(),
@@ -13,6 +13,7 @@ vi.mock('../api/discogs/fetch-releases-batch.js', () => ({
 }))
 
 vi.mock('../services/media/media-service.js', () => ({
+  describeMediaStore: vi.fn(() => ({ backend: 'disk', target: '/tmp/media' })),
   listStoredMedia: vi.fn(),
   storeRemoteMedia: vi.fn(async (item) => ({
     fileName: item.destinationPath || 'chrisvogt/discogs/test.jpg',
@@ -28,22 +29,20 @@ vi.mock('../transformers/to-discogs-destination-path.js', () => ({
   default: vi.fn((imageURL, releaseId, imageType) => `chrisvogt/discogs/${releaseId}_${imageType}.jpg`),
 }))
 
-vi.mock('firebase-functions', () => ({
-  logger: {
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
-}))
-
 import fetchDiscogsReleases from '../api/discogs/fetch-releases.js'
 import { listStoredMedia, storeRemoteMedia } from '../services/media/media-service.js'
 
 describe('syncDiscogsData', () => {
   let documentStore: DocumentStore
+  const logger = {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    configureLogger(logger)
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
@@ -78,13 +77,13 @@ describe('syncDiscogsData', () => {
 
     expect(result.result).toBe('SUCCESS')
     expect(result.data.metrics['LPs Owned']).toBe(2)
-    expect(result.data.meta.synced).toBeInstanceOf(Timestamp)
+    expect(result.data.meta.synced).toEqual(expect.any(String))
 
     expect(documentStore.setDocument).toHaveBeenNthCalledWith(
       1,
       'users/chrisvogt/discogs/last-response',
       expect.objectContaining({
-        fetchedAt: expect.any(Timestamp),
+        fetchedAt: expect.any(String),
       })
     )
     expect(documentStore.setDocument).toHaveBeenNthCalledWith(
@@ -92,7 +91,7 @@ describe('syncDiscogsData', () => {
       'users/chrisvogt/discogs/widget-content',
       expect.objectContaining({
         meta: {
-          synced: expect.any(Timestamp),
+          synced: expect.any(String),
         },
       })
     )

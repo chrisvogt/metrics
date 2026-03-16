@@ -1,6 +1,5 @@
-import { logger } from 'firebase-functions'
-import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { getLogger } from '../services/logger.js'
 
 import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
 
@@ -13,12 +12,11 @@ interface DeleteUserResult {
   error?: string
 }
 
-const defaultDocumentStore = new FirestoreDocumentStore()
-
 const deleteUser = async (
   userRecord: UserRecord,
-  documentStore: DocumentStore = defaultDocumentStore
+  documentStore: DocumentStore
 ): Promise<DeleteUserResult> => {
+  const logger = getLogger()
   const { uid } = userRecord
 
   try {

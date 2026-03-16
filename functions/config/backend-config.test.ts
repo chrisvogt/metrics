@@ -73,14 +73,14 @@ describe('backend config', () => {
     expect(hasAppliedRuntimeConfig()).toBe(true)
   })
 
-  it('returns normalized firebase client config values', async () => {
+  it('returns normalized client auth config values', async () => {
     process.env.CLIENT_API_KEY = 'api-key'
     process.env.CLIENT_AUTH_DOMAIN = 'project.firebaseapp.com'
     process.env.CLIENT_PROJECT_ID = 'project-id'
 
-    const { getFirebaseClientConfig } = await import('./backend-config.js')
+    const { getClientAuthConfig } = await import('./backend-config.js')
 
-    expect(getFirebaseClientConfig()).toEqual({
+    expect(getClientAuthConfig()).toEqual({
       apiKey: 'api-key',
       authDomain: 'project.firebaseapp.com',
       projectId: 'project-id',

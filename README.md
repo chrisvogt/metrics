@@ -14,7 +14,7 @@
   </a>
 </p>
 
-This repository contains a Firebase-backed service I use to fetch and sync data for widgets on my personal website, [www.chrisvogt.me](https://www.chrisvogt.me).
+This repository contains a portable metrics service I use to fetch and sync data for widgets on my personal website, [www.chrisvogt.me](https://www.chrisvogt.me). Firebase remains the current reference provider, but the backend is being refactored to stay open to self-hosted, containerized, and serverless runtime choices.
 
 ## Features
 
@@ -75,9 +75,9 @@ The following variables are required for the authentication system to work:
 - `NODE_ENV` - Set to `development` for local development
 - `GEMINI_API_KEY` - For AI-powered summaries (if using Gemini integration)
 
-### Firebase Configuration
+### Client Auth Configuration
 
-The Firebase client config (API key, auth domain, project ID) is served from the backend so it isn’t hardcoded in the client.
+The current client auth config payload (still Firebase-shaped while auth migration is deferred) is served from the backend so it isn’t hardcoded in the client.
 
 #### Local (development)
 Set `CLIENT_API_KEY`, `CLIENT_AUTH_DOMAIN`, and `CLIENT_PROJECT_ID` in your `functions/.env` file.
@@ -184,22 +184,23 @@ The following endpoints are available:
 ### Authentication Endpoints
 
 - `/api/auth/session` - Create session cookies (POST)
-- `/api/firebase-config` - Get Firebase client configuration (GET)
+- `/api/client-auth-config` - Get client auth configuration (GET)
+- `/api/firebase-config` - Compatibility alias for the current Firebase-based client auth flow (GET)
 
 ## Architecture
 
 ### Frontend (hosting)
 - **React + Vite** app in `hosting/`: sign-in (Google, email, phone) and API testing dashboard
-- **Firebase SDK**: Client-side auth; config loaded at runtime from `/api/firebase-config`
+- **Firebase SDK**: Client-side auth for the current auth provider; config loaded at runtime from `/api/client-auth-config`
 - **Session**: Cookie-based sessions (created via `/api/auth/session`) with JWT fallback
 - **Build**: From repo root, `pnpm run build` → `hosting/dist`; Firebase Hosting serves that folder and rewrites `/api/**` to the Cloud Function and `**` to `/index.html` (SPA)
 
 See [hosting/README.md](hosting/README.md) for hosting-only scripts and local dev details.
 
 ### Backend (functions)
-- **Firebase Functions**: Serverless backend with Express.js (written in **TypeScript**)
-- **Firebase Auth**: User authentication and session management
-- **Firestore**: Data storage and caching
+- **Provider-neutral bootstrap**: Backend composition selects runtime, config source, document store, media store, auth service, and clock from a single bootstrap layer
+- **Firebase runtime/auth/document adapters**: Current reference provider implementations
+- **Firestore-compatible document layout**: Existing data remains readable while new timestamps are written in a portable format
 - **External APIs**: Integration with various platform APIs
 
 #### TypeScript

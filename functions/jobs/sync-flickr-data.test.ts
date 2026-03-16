@@ -2,26 +2,25 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import syncFlickrData from './sync-flickr-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
-
-vi.mock('firebase-functions', () => ({
-  logger: {
-    info: vi.fn(),
-    error: vi.fn(),
-  },
-}))
+import { configureLogger } from '../services/logger.js'
 
 vi.mock('../api/flickr/fetch-photos.js', () => ({
   default: vi.fn(),
 }))
 
-import { logger } from 'firebase-functions'
 import fetchPhotos from '../api/flickr/fetch-photos.js'
 
 describe('syncFlickrData', () => {
   let documentStore: DocumentStore
+  const logger = {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    configureLogger(logger)
     process.env.FLICKR_USER_ID = 'testuser'
 
     documentStore = {
@@ -53,7 +52,7 @@ describe('syncFlickrData', () => {
       'users/chrisvogt/flickr/last-response',
       {
         response: mockPhotosResponse,
-        fetchedAt: expect.any(Object),
+        fetchedAt: expect.any(String),
       }
     )
     expect(documentStore.setDocument).toHaveBeenNthCalledWith(
@@ -64,7 +63,7 @@ describe('syncFlickrData', () => {
           photos: mockPhotosResponse.photos,
         },
         meta: {
-          synced: expect.any(Object),
+          synced: expect.any(String),
         },
         metrics: [
           {
@@ -87,7 +86,7 @@ describe('syncFlickrData', () => {
           photos: mockPhotosResponse.photos,
         },
         meta: {
-          synced: expect.any(Object),
+          synced: expect.any(String),
         },
         metrics: [
           {

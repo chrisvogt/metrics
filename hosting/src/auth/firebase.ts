@@ -10,8 +10,8 @@ export interface FirebaseConfig {
 const PLACEHOLDER_KEYS = ['your_api_key_here', 'YOUR_API_KEY_HERE']
 
 export async function getFirebaseApp(): Promise<{ app: FirebaseApp; auth: Auth }> {
-  const res = await fetch('/api/firebase-config')
-  if (!res.ok) throw new Error(`Failed to load Firebase config (${res.status})`)
+  const res = await fetch('/api/client-auth-config')
+  if (!res.ok) throw new Error(`Failed to load client auth config (${res.status})`)
   const config = (await res.json()) as FirebaseConfig | null
   if (!config?.apiKey || PLACEHOLDER_KEYS.includes(config.apiKey)) {
     throw new Error(

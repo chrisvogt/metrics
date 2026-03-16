@@ -1,9 +1,11 @@
-import { logger } from 'firebase-functions'
-import { Timestamp } from 'firebase-admin/firestore'
 import pMap from 'p-map'
-import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
-import { listStoredMedia, storeRemoteMedia, toPublicMediaUrl } from '../services/media/media-service.js'
+import {
+  describeMediaStore,
+  listStoredMedia,
+  storeRemoteMedia,
+  toPublicMediaUrl,
+} from '../services/media/media-service.js'
 
 import getSpotifyAccessToken from '../api/spotify/get-access-token.js'
 import getSpotifyPlaylists from '../api/spotify/get-playlists.js'
@@ -11,8 +13,9 @@ import getSpotifyTopTracks from '../api/spotify/get-top-tracks.js'
 import getSpotifyUserProfile from '../api/spotify/get-user-profile.js'
 import { toProviderCollectionPath, toProviderMediaPrefix } from '../config/backend-paths.js'
 import { getSpotifyConfig } from '../config/backend-config.js'
-import { getMediaStore } from '../selectors/media-store.js'
+import { getLogger } from '../services/logger.js'
 import transformTrackToCollectionItem from '../transformers/track-to-collection-item.js'
+import { toStoredDateTime } from '../utils/time.js'
 
 const SPOTIFY_MOSAIC_BASE_URL = 'https://mosaic.scdn.co/300/'
 
@@ -54,11 +57,9 @@ const transformPlaylists = (playlists) => playlists.map(playlist => {
   }
 })
 
-const defaultDocumentStore = new FirestoreDocumentStore()
-
-const syncSpotifyTopTracks = async (documentStore: DocumentStore = defaultDocumentStore) => {
+const syncSpotifyTopTracks = async (documentStore: DocumentStore) => {
+  const logger = getLogger()
   const spotifyCollectionPath = toProviderCollectionPath('spotify')
-  const mediaStore = getMediaStore()
   const { clientId, clientSecret, redirectUri: redirectURI, refreshToken } = getSpotifyConfig()
 
   const { accessToken } = await getSpotifyAccessToken({
@@ -124,7 +125,7 @@ const syncSpotifyTopTracks = async (documentStore: DocumentStore = defaultDocume
       stopOnError: false,
     })
     logger.info('Spotify playlists image sync finished successfully.', {
-      mediaStore: mediaStore.describe(),
+      mediaStore: describeMediaStore(),
       totalUploadedCount: uploadResult.length,
       uploadedFiles: uploadResult.map(({ fileName }) => fileName),
     })
@@ -148,7 +149,7 @@ const syncSpotifyTopTracks = async (documentStore: DocumentStore = defaultDocume
       topTracks: topTracks.map(transformTrackToCollectionItem),
     },
     meta: {
-      synced: Timestamp.now(),
+      synced: toStoredDateTime(),
       totalUploadedMediaCount: uploadResult?.length ?? 0,
     },
     metrics: [
@@ -180,7 +181,7 @@ const syncSpotifyTopTracks = async (documentStore: DocumentStore = defaultDocume
     `${spotifyCollectionPath}/last-response_playlists`,
     {
       response: playlistsResponse,
-      fetchedAt: Timestamp.now(),
+      fetchedAt: toStoredDateTime(),
     }
   )
 
@@ -188,7 +189,7 @@ const syncSpotifyTopTracks = async (documentStore: DocumentStore = defaultDocume
     `${spotifyCollectionPath}/last-response_top-tracks`,
     {
       response: topTracks,
-      fetchedAt: Timestamp.now(),
+      fetchedAt: toStoredDateTime(),
     }
   )
 
@@ -196,7 +197,7 @@ const syncSpotifyTopTracks = async (documentStore: DocumentStore = defaultDocume
     `${spotifyCollectionPath}/last-response_user-profile`,
     {
       response: userProfile,
-      fetchedAt: Timestamp.now(),
+      fetchedAt: toStoredDateTime(),
     }
   )
 

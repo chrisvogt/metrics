@@ -7,9 +7,9 @@ import getInstagramWidgetContent from './get-instagram-widget-content.js'
 import getSpotifyWidgetContent from './get-spotify-widget-content.js'
 import getSteamWidgetContent from './get-steam-widget-content.js'
 
-type WidgetHandler = (userId: string, documentStore?: DocumentStore) => Promise<unknown>
+type InjectedWidgetHandler = (userId: string, documentStore: DocumentStore) => Promise<unknown>
 
-const widgetHandlerRegistry: Record<string, WidgetHandler> = {
+const widgetHandlerRegistry: Record<string, InjectedWidgetHandler> = {
   discogs: getDiscogsWidgetContent,
   github: getGitHubWidgetContent,
   goodreads: getGoodreadsWidgetContent,
@@ -24,12 +24,12 @@ export const validWidgetIds = Object.keys(widgetHandlerRegistry)
 export const getWidgetContent = async (
   widgetId: string,
   userId: string,
-  documentStore?: DocumentStore
+  documentStore: DocumentStore
 ): Promise<unknown> => {
   if (!validWidgetIds.includes(widgetId)) {
     throw new Error(`Unrecognized widget type: ${widgetId}`)
   }
 
   const getContent = widgetHandlerRegistry[widgetId]!
-  return documentStore ? getContent(userId, documentStore) : getContent(userId)
+  return getContent(userId, documentStore)
 }

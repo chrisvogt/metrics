@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { Timestamp } from 'firebase-admin/firestore'
 
 import syncInstagramData from './sync-instagram-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { configureLogger } from '../services/logger.js'
 
 vi.mock('../api/instagram/fetch-instagram-data.js', () => ({
   default: vi.fn(),
 }))
 
 vi.mock('../services/media/media-service.js', () => ({
+  describeMediaStore: vi.fn(() => ({ backend: 'disk', target: '/tmp/media' })),
   listStoredMedia: vi.fn(),
   storeRemoteMedia: vi.fn(async (item) => ({
     fileName: item.destinationPath || 'chrisvogt/instagram/test.jpg',
@@ -24,22 +25,20 @@ vi.mock('../transformers/to-ig-destination-path.js', () => ({
   default: vi.fn(() => 'chrisvogt/instagram/test.jpg'),
 }))
 
-vi.mock('firebase-functions', () => ({
-  logger: {
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
-}))
-
 import fetchInstagramData from '../api/instagram/fetch-instagram-data.js'
 import { listStoredMedia, storeRemoteMedia } from '../services/media/media-service.js'
 
 describe('syncInstagramData', () => {
   let documentStore: DocumentStore
+  const logger = {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    configureLogger(logger)
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
@@ -83,13 +82,13 @@ describe('syncInstagramData', () => {
 
     expect(result.result).toBe('SUCCESS')
     expect(result.data.media).toHaveLength(2)
-    expect(result.data.meta.synced).toBeInstanceOf(Timestamp)
+    expect(result.data.meta.synced).toEqual(expect.any(String))
 
     expect(documentStore.setDocument).toHaveBeenNthCalledWith(
       1,
       'users/chrisvogt/instagram/last-response',
       expect.objectContaining({
-        fetchedAt: expect.any(Timestamp),
+        fetchedAt: expect.any(String),
       })
     )
     expect(documentStore.setDocument).toHaveBeenNthCalledWith(
@@ -97,7 +96,7 @@ describe('syncInstagramData', () => {
       'users/chrisvogt/instagram/widget-content',
       expect.objectContaining({
         meta: {
-          synced: expect.any(Timestamp),
+          synced: expect.any(String),
         },
         profile: {
           biography: 'Test bio',

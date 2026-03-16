@@ -1,19 +1,22 @@
-import { logger } from 'firebase-functions'
-import { Timestamp } from 'firebase-admin/firestore'
 import convertToHttps from 'to-https'
 import got from 'got'
 import pMap from 'p-map'
-import { listStoredMedia, storeRemoteMedia, toPublicMediaUrl } from '../services/media/media-service.js'
+import {
+  describeMediaStore,
+  listStoredMedia,
+  storeRemoteMedia,
+  toPublicMediaUrl,
+} from '../services/media/media-service.js'
 
 import fetchUser from '../api/goodreads/fetch-user.js'
 import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.js'
 import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summary.js'
-import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import fetchBookFromGoogle from '../api/google-books/fetch-book.js'
 import { getGoogleBooksApiKey } from '../config/backend-config.js'
 import { toProviderCollectionPath } from '../config/backend-paths.js'
-import { getMediaStore } from '../selectors/media-store.js'
+import { getLogger } from '../services/logger.js'
+import { toStoredDateTime } from '../utils/time.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
@@ -60,7 +63,7 @@ const transformBookData = (book) => {
 }
 
 const processUpdatesWithMedia = async (updates = [], books = []) => {
-  const mediaStore = getMediaStore()
+  const logger = getLogger()
   if (!updates || updates.length === 0) {
     return updates
   }
@@ -302,7 +305,7 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
           stopOnError: false,
         })
         logger.info('Goodreads updates book media upload finished.', {
-          mediaStore: mediaStore.describe(),
+          mediaStore: describeMediaStore(),
           totalUploadedCount: mediaToDownload.length,
           uploadedFiles: mediaToDownload.map(({ destinationPath }) => destinationPath),
         })
@@ -448,9 +451,8 @@ const fetchAllGoodreadsPromises = async (): Promise<{
 /**
  * Sync Goodreads Data
  */
-const defaultDocumentStore = new FirestoreDocumentStore()
-
-const syncGoodreadsData = async (documentStore: DocumentStore = defaultDocumentStore) => {
+const syncGoodreadsData = async (documentStore: DocumentStore) => {
+  const logger = getLogger()
   const goodreadsCollectionPath = toProviderCollectionPath('goodreads')
   const {
     collections = {},
@@ -470,7 +472,7 @@ const syncGoodreadsData = async (documentStore: DocumentStore = defaultDocumentS
   const widgetContent: Record<string, unknown> = {
     collections,
     meta: {
-      synced: Timestamp.now(),
+      synced: toStoredDateTime(),
     },
     profile,
   }
@@ -490,7 +492,7 @@ const syncGoodreadsData = async (documentStore: DocumentStore = defaultDocumentS
     `${goodreadsCollectionPath}/last-response_user-show`,
     {
       response: res.user,
-      updated: Timestamp.now(),
+      updated: toStoredDateTime(),
     }
   )
 
@@ -498,7 +500,7 @@ const syncGoodreadsData = async (documentStore: DocumentStore = defaultDocumentS
     `${goodreadsCollectionPath}/last-response_book-reviews`,
     {
       response: res.reviews,
-      updated: Timestamp.now(),
+      updated: toStoredDateTime(),
     }
   )
 
@@ -509,7 +511,7 @@ const syncGoodreadsData = async (documentStore: DocumentStore = defaultDocumentS
     if (aiSummary) {
       await documentStore.setDocument(`${goodreadsCollectionPath}/last-response_ai-summary`, {
         summary: aiSummary,
-        generatedAt: Timestamp.now(),
+        generatedAt: toStoredDateTime(),
       })
     }
   }

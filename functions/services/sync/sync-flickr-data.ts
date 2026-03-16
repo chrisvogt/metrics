@@ -1,15 +1,15 @@
-import { Timestamp } from 'firebase-admin/firestore'
-import { logger } from 'firebase-functions'
-
 import type { DocumentStore } from '../../ports/document-store.js'
 import { getFlickrConfig } from '../../config/backend-config.js'
 import { toProviderCollectionPath } from '../../config/backend-paths.js'
+import { getLogger } from '../../services/logger.js'
+import { toStoredDateTime } from '../../utils/time.js'
 import fetchPhotos from '../../api/flickr/fetch-photos.js'
 
 export const toFlickrLastResponsePath = () => `${toProviderCollectionPath('flickr')}/last-response`
 export const toFlickrWidgetContentPath = () => `${toProviderCollectionPath('flickr')}/widget-content`
 
 const syncFlickrData = async (documentStore: DocumentStore) => {
+  const logger = getLogger()
   const { userId: flickrUsername } = getFlickrConfig()
 
   try {
@@ -17,7 +17,7 @@ const syncFlickrData = async (documentStore: DocumentStore) => {
 
     await documentStore.setDocument(toFlickrLastResponsePath(), {
       response: photosResponse,
-      fetchedAt: Timestamp.now(),
+      fetchedAt: toStoredDateTime(),
     })
 
     const photos = Array.isArray(photosResponse?.photos) ? photosResponse.photos : []
@@ -28,7 +28,7 @@ const syncFlickrData = async (documentStore: DocumentStore) => {
         photos,
       },
       meta: {
-        synced: Timestamp.now(),
+        synced: toStoredDateTime(),
       },
       metrics: [
         ...(photoCount > 0

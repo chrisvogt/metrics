@@ -1,7 +1,6 @@
-import { logger } from 'firebase-functions'
-import { Timestamp } from 'firebase-admin/firestore'
-import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { getLogger } from '../services/logger.js'
+import { toStoredDateTime } from '../utils/time.js'
 
 import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
 
@@ -17,12 +16,11 @@ interface CreateUserResult {
   error?: string
 }
 
-const defaultDocumentStore = new FirestoreDocumentStore()
-
 const createUser = async (
   userRecord: UserRecord,
-  documentStore: DocumentStore = defaultDocumentStore
+  documentStore: DocumentStore
 ): Promise<CreateUserResult> => {
+  const logger = getLogger()
   const { uid, email, displayName } = userRecord
 
   const userData = {
@@ -34,8 +32,8 @@ const createUser = async (
       active: true,
     },
     widgets: {},
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
+    createdAt: toStoredDateTime(),
+    updatedAt: toStoredDateTime(),
   }
 
   try {

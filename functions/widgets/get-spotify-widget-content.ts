@@ -1,13 +1,10 @@
-import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import { getDefaultWidgetUserId } from '../config/backend-paths.js'
 import { toDateOrDefault, toUserWidgetContentPath } from './widget-document-store.js'
 
-const defaultDocumentStore = new FirestoreDocumentStore()
-
 const getSpotifyWidgetContent = async (
   userId: string = getDefaultWidgetUserId(),
-  documentStore: DocumentStore = defaultDocumentStore
+  documentStore: DocumentStore
 ) => {
   const spotifyWidgetContentPath = toUserWidgetContentPath(userId, 'spotify')
   const data = await documentStore.getDocument<{
