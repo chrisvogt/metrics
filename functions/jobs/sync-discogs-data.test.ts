@@ -12,12 +12,12 @@ vi.mock('../api/discogs/fetch-releases-batch.js', () => ({
   default: vi.fn(async (releases) => releases),
 }))
 
-vi.mock('../api/cloud-storage/list-stored-media.js', () => ({
-  default: vi.fn(),
-}))
-
-vi.mock('../api/cloud-storage/fetch-and-upload-file.js', () => ({
-  default: vi.fn(async (item) => ({ fileName: item.destinationPath || 'chrisvogt/discogs/test.jpg' })),
+vi.mock('../services/media/media-service.js', () => ({
+  listStoredMedia: vi.fn(),
+  storeRemoteMedia: vi.fn(async (item) => ({
+    fileName: item.destinationPath || 'chrisvogt/discogs/test.jpg',
+  })),
+  toPublicMediaUrl: vi.fn((path) => `https://cdn.example.com/${path}`),
 }))
 
 vi.mock('../transformers/transform-discogs-release.js', () => ({
@@ -37,8 +37,7 @@ vi.mock('firebase-functions', () => ({
 }))
 
 import fetchDiscogsReleases from '../api/discogs/fetch-releases.js'
-import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
-import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
+import { listStoredMedia, storeRemoteMedia } from '../services/media/media-service.js'
 
 describe('syncDiscogsData', () => {
   let documentStore: DocumentStore
@@ -164,7 +163,7 @@ describe('syncDiscogsData', () => {
       ],
     })
     vi.mocked(listStoredMedia).mockResolvedValue([])
-    vi.mocked(fetchAndUploadFile).mockRejectedValueOnce(new Error('Upload failed'))
+    vi.mocked(storeRemoteMedia).mockRejectedValueOnce(new Error('Upload failed'))
 
     const result = await syncDiscogsData(documentStore)
 

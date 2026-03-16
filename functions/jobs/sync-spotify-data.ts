@@ -3,21 +3,16 @@ import { Timestamp } from 'firebase-admin/firestore'
 import pMap from 'p-map'
 import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { listStoredMedia, storeRemoteMedia, toPublicMediaUrl } from '../services/media/media-service.js'
 
-import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import getSpotifyAccessToken from '../api/spotify/get-access-token.js'
 import getSpotifyPlaylists from '../api/spotify/get-playlists.js'
 import getSpotifyTopTracks from '../api/spotify/get-top-tracks.js'
 import getSpotifyUserProfile from '../api/spotify/get-user-profile.js'
-import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import { toProviderCollectionPath, toProviderMediaPrefix } from '../config/backend-paths.js'
 import { getSpotifyConfig } from '../config/backend-config.js'
 import { getMediaStore } from '../selectors/media-store.js'
 import transformTrackToCollectionItem from '../transformers/track-to-collection-item.js'
-
-import {
-  IMAGE_CDN_BASE_URL
-} from '../config/constants.js'
 
 const SPOTIFY_MOSAIC_BASE_URL = 'https://mosaic.scdn.co/300/'
 
@@ -50,7 +45,9 @@ const getMediaToDownloadReducer = (storedMediaFileNames = []) => (acc, playlist)
 
 const transformPlaylists = (playlists) => playlists.map(playlist => {
   const id = getMediaURLFromPlaylist(playlist)?.replace(SPOTIFY_MOSAIC_BASE_URL, '')
-  const cdnImageURL = `${IMAGE_CDN_BASE_URL}${toProviderMediaPrefix('spotify', undefined, 'playlists/')}${id}.jpg`
+  const cdnImageURL = toPublicMediaUrl(
+    `${toProviderMediaPrefix('spotify', undefined, 'playlists/')}${id}.jpg`
+  )
   return {
     ...playlist,
     cdnImageURL
@@ -122,7 +119,7 @@ const syncSpotifyTopTracks = async (documentStore: DocumentStore = defaultDocume
 
   let uploadResult
   try {
-    uploadResult = await pMap(mediaToDownload, fetchAndUploadFile, {
+    uploadResult = await pMap(mediaToDownload, storeRemoteMedia, {
       concurrency: 10,
       stopOnError: false,
     })

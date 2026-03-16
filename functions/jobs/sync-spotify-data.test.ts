@@ -33,12 +33,10 @@ vi.mock('../api/spotify/get-user-profile.js', () => ({
   default: vi.fn(),
 }))
 
-vi.mock('../api/cloud-storage/list-stored-media.js', () => ({
-  default: vi.fn(),
-}))
-
-vi.mock('../api/cloud-storage/fetch-and-upload-file.js', () => ({
-  default: vi.fn(async (item) => ({ fileName: item.destinationPath })),
+vi.mock('../services/media/media-service.js', () => ({
+  listStoredMedia: vi.fn(),
+  storeRemoteMedia: vi.fn(async (item) => ({ fileName: item.destinationPath })),
+  toPublicMediaUrl: vi.fn((path) => `https://cdn.example.com/${path}`),
 }))
 
 vi.mock('../transformers/track-to-collection-item.js', () => ({
@@ -57,7 +55,7 @@ import getSpotifyAccessToken from '../api/spotify/get-access-token.js'
 import getSpotifyPlaylists from '../api/spotify/get-playlists.js'
 import getSpotifyTopTracks from '../api/spotify/get-top-tracks.js'
 import getSpotifyUserProfile from '../api/spotify/get-user-profile.js'
-import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
+import { listStoredMedia } from '../services/media/media-service.js'
 
 describe('syncSpotifyData', () => {
   let documentStore: DocumentStore

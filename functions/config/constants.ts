@@ -5,6 +5,7 @@ const {
   cloudStorageImagesBucket: CLOUD_STORAGE_IMAGES_BUCKET,
   imageCdnBaseUrl: IMAGE_CDN_BASE_URL,
   localMediaRoot: LOCAL_MEDIA_ROOT,
+  mediaPublicBaseUrl: MEDIA_PUBLIC_BASE_URL,
   mediaStoreBackend: MEDIA_STORE_BACKEND,
 } = getStorageConfig()
 
@@ -19,4 +20,5 @@ export {
   DATABASE_COLLECTION_USERS,
   DISCOGS_USERNAME,
   IMAGE_CDN_BASE_URL,
+  MEDIA_PUBLIC_BASE_URL,
 }

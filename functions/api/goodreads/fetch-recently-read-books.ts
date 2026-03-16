@@ -3,19 +3,14 @@ import convertToHttps from 'to-https'
 import got from 'got'
 import { logger } from 'firebase-functions'
 import pMap from 'p-map'
+import { listStoredMedia, storeRemoteMedia, toPublicMediaUrl } from '../../services/media/media-service.js'
 
-import fetchAndUploadFile from '../cloud-storage/fetch-and-upload-file.js'
 import fetchBookFromGoogle from '../google-books/fetch-book.js'
-import listStoredMedia from '../cloud-storage/list-stored-media.js'
 import { getMediaStore } from '../../selectors/media-store.js'
 import {
   getGoodreadsConfig,
   getGoogleBooksApiKey,
 } from '../../config/backend-config.js'
-
-import {
-  IMAGE_CDN_BASE_URL
-} from '../../config/constants.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
@@ -45,7 +40,7 @@ const transformBookData = (book) => {
   return {
     authors,
     categories,
-    cdnMediaURL: `${IMAGE_CDN_BASE_URL}${mediaDestinationPath}`,
+    cdnMediaURL: toPublicMediaUrl(mediaDestinationPath),
     mediaDestinationPath: mediaDestinationPath,
     description: goodreadsDescription || description,
     id,
@@ -265,7 +260,7 @@ export default async () => {
 
   let result
   try {
-    result = await pMap(mediaToDownload, fetchAndUploadFile, {
+    result = await pMap(mediaToDownload, storeRemoteMedia, {
       concurrency: 10,
       stopOnError: false,
     })

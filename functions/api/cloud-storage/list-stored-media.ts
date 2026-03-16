@@ -1,5 +1,3 @@
-import { getMediaStore } from '../../selectors/media-store.js'
-
-const listStoredMedia = async () => getMediaStore().listFiles()
+import { listStoredMedia } from '../../services/media/media-service.js'
 
 export default listStoredMedia

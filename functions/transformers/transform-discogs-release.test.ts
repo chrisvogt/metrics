@@ -1,9 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import transformDiscogsRelease from './transform-discogs-release.js'
 
-// Mock the constants
-vi.mock('../config/constants.js', () => ({
-  IMAGE_CDN_BASE_URL: 'https://cdn.example.com/'
+vi.mock('../services/media/media-service.js', () => ({
+  toPublicMediaUrl: vi.fn((path) => `https://cdn.example.com/${path}`),
 }))
 
 // Mock the destination path transformer

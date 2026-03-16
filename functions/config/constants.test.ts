@@ -6,6 +6,7 @@ import {
   DISCOGS_USERNAME,
   IMAGE_CDN_BASE_URL,
   LOCAL_MEDIA_ROOT,
+  MEDIA_PUBLIC_BASE_URL,
   MEDIA_STORE_BACKEND,
 } from './constants.js'
 
@@ -20,5 +21,8 @@ describe('constants', () => {
     expect(typeof LOCAL_MEDIA_ROOT === 'string' || LOCAL_MEDIA_ROOT === undefined).toBe(true)
     expect(typeof DISCOGS_USERNAME === 'string' || DISCOGS_USERNAME === undefined).toBe(true)
     expect(typeof IMAGE_CDN_BASE_URL === 'string' || IMAGE_CDN_BASE_URL === undefined).toBe(true)
+    expect(typeof MEDIA_PUBLIC_BASE_URL === 'string' || MEDIA_PUBLIC_BASE_URL === undefined).toBe(
+      true
+    )
   })
 })

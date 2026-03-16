@@ -49,12 +49,10 @@ vi.mock('got', () => ({
   default: vi.fn()
 }))
 
-vi.mock('../api/cloud-storage/list-stored-media.js', () => ({
-  default: vi.fn()
-}))
-
-vi.mock('../api/cloud-storage/fetch-and-upload-file.js', () => ({
-  default: vi.fn()
+vi.mock('../services/media/media-service.js', () => ({
+  listStoredMedia: vi.fn(),
+  storeRemoteMedia: vi.fn(),
+  toPublicMediaUrl: vi.fn((path) => `https://cdn.example.com/${path}`),
 }))
 
 vi.mock('firebase-functions', () => ({
@@ -90,8 +88,8 @@ describe('syncGoodreadsData', () => {
     })
 
     // Mock listStoredMedia to return empty array
-    const listStoredMedia = await import('../api/cloud-storage/list-stored-media.js')
-    listStoredMedia.default.mockResolvedValue([])
+    const mediaService = await import('../services/media/media-service.js')
+    mediaService.listStoredMedia.mockResolvedValue([])
   })
 
   it('should successfully sync Goodreads data and save to database', async () => {
@@ -304,8 +302,8 @@ describe('syncGoodreadsData', () => {
     beforeEach(async () => {
       mockFetchBookFromGoogle = (await import('../api/google-books/fetch-book.js')).default
       mockGot = (await import('got')).default
-      mockListStoredMedia = (await import('../api/cloud-storage/list-stored-media.js')).default
-      mockFetchAndUploadFile = (await import('../api/cloud-storage/fetch-and-upload-file.js')).default
+      mockListStoredMedia = (await import('../services/media/media-service.js')).listStoredMedia
+      mockFetchAndUploadFile = (await import('../services/media/media-service.js')).storeRemoteMedia
       mockPMap = (await import('p-map')).default
       mockLogger = (await import('firebase-functions')).logger
 
