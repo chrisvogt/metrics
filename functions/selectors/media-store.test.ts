@@ -47,4 +47,12 @@ describe('media-store selector', () => {
 
     expect(resolveLocalMediaRoot()).toBe('/tmp/custom-media')
   })
+
+  it('throws for unsupported backends instead of silently falling back to gcs', async () => {
+    process.env.MEDIA_STORE_BACKEND = 's3'
+
+    const { getMediaStore } = await import('./media-store.js')
+
+    expect(() => getMediaStore()).toThrow('Unsupported media store backend: s3')
+  })
 })

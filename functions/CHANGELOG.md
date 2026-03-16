@@ -24,6 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auth routes** – `POST /api/auth/session` and `POST /api/auth/logout` now use the rate limiter (20 and 30 requests per 15 minutes respectively) so every route that performs authorization is rate-limited (CodeQL compliance).
 
+## [0.22.12] - 2026-03-15
+
+### Changed
+
+- **Provider-neutral media service boundary** – Media-heavy sync flows now call a shared media service layer instead of importing GCP-named helper modules directly, keeping provider logic independent from the underlying blob storage implementation.
+- **Provider-neutral public media config** – Added `MEDIA_PUBLIC_BASE_URL` as the preferred environment setting for generated media URLs while preserving `IMAGE_CDN_BASE_URL` as a compatibility alias for existing deployments.
+- **Explicit backend selection** – Media store resolution now fails fast for unsupported backends instead of silently falling back to GCS, which makes future container- or S3-backed experiments safer.
+
+### Developer experience
+
+- **Disk-backed deployment docs** – Updated the env template and setup docs to document the disk-backed media path used for local or container-hosted deployments.
+- **Focused media boundary coverage** – Refreshed sync-job, transformer, config, and Goodreads media tests around the new media service seam to keep the refactor well-covered.
+
 ## [0.22.11] - 2026-03-15
 
 ### Changed

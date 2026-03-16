@@ -10,6 +10,7 @@ describe('backend config', () => {
     delete process.env.CLIENT_PROJECT_ID
     delete process.env.CLOUD_STORAGE_IMAGES_BUCKET
     delete process.env.MEDIA_STORE_BACKEND
+    delete process.env.MEDIA_PUBLIC_BASE_URL
     delete process.env.LOCAL_MEDIA_ROOT
     delete process.env.IMAGE_CDN_BASE_URL
     delete process.env.DISCOGS_API_KEY
@@ -135,13 +136,13 @@ describe('backend config', () => {
 
   it('returns normalized storage config with development defaults', async () => {
     process.env.NODE_ENV = 'development'
-    process.env.IMAGE_CDN_BASE_URL = '/api/media/'
 
     const { getStorageConfig } = await import('./backend-config.js')
     const storageConfig = getStorageConfig()
 
     expect(storageConfig.mediaStoreBackend).toBe('disk')
-    expect(storageConfig.imageCdnBaseUrl).toBe('/api/media/')
+    expect(storageConfig.imageCdnBaseUrl).toBeUndefined()
+    expect(storageConfig.mediaPublicBaseUrl).toBeUndefined()
     expect(storageConfig.localMediaRoot.endsWith('tmp/media')).toBe(true)
   })
 
@@ -165,8 +166,18 @@ describe('backend config', () => {
       cloudStorageImagesBucket: 'bucket-name',
       imageCdnBaseUrl: undefined,
       localMediaRoot: '/tmp/media-root',
+      mediaPublicBaseUrl: undefined,
       mediaStoreBackend: 'disk',
     })
+  })
+
+  it('prefers the provider-neutral public media env var when present', async () => {
+    process.env.MEDIA_PUBLIC_BASE_URL = '/api/media/'
+
+    const { getStorageConfig } = await import('./backend-config.js')
+
+    expect(getStorageConfig().mediaPublicBaseUrl).toBe('/api/media/')
+    expect(getStorageConfig().imageCdnBaseUrl).toBe('/api/media/')
   })
 
   it('returns normalized backend path config with env overrides', async () => {

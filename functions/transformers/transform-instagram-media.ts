@@ -1,4 +1,4 @@
-import { IMAGE_CDN_BASE_URL } from '../config/constants.js'
+import { toPublicMediaUrl } from '../services/media/media-service.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 
 const transformInstagramMedia = rawMedia => {
@@ -19,14 +19,14 @@ const transformInstagramMedia = rawMedia => {
 
   // Determine the media URL to use for the CDN (prefer thumbnailURL for videos)
   const preferredMediaURL = mediaType === 'VIDEO' ? thumbnailURL : mediaURL
-  const cdnMediaURL = `${IMAGE_CDN_BASE_URL}${toIGDestinationPath(preferredMediaURL, id)}`
+  const cdnMediaURL = toPublicMediaUrl(toIGDestinationPath(preferredMediaURL, id))
 
   // Recursively transform child media, if present
   const transformedChildren = children?.data?.map(child => {
     const childMediaURL = child.thumbnail_url || child.media_url // Prefer thumbnail_url for children if available
     return {
       ...child,
-      cdnMediaURL: `${IMAGE_CDN_BASE_URL}${toIGDestinationPath(childMediaURL, child.id)}`
+      cdnMediaURL: toPublicMediaUrl(toIGDestinationPath(childMediaURL, child.id))
     }
   })
 

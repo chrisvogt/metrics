@@ -15,9 +15,18 @@ export const isDiskMediaStoreSelected = () => resolveMediaStoreBackend() === 'di
 
 export const getMediaStore = (): MediaStore => {
   if (!defaultMediaStore) {
-    defaultMediaStore = isDiskMediaStoreSelected()
-      ? new LocalDiskMediaStore(resolveLocalMediaRoot())
-      : new GcsMediaStore()
+    const backend = resolveMediaStoreBackend()
+
+    switch (backend) {
+    case 'disk':
+      defaultMediaStore = new LocalDiskMediaStore(resolveLocalMediaRoot())
+      break
+    case 'gcs':
+      defaultMediaStore = new GcsMediaStore()
+      break
+    default:
+      throw new Error(`Unsupported media store backend: ${backend}`)
+    }
   }
 
   return defaultMediaStore

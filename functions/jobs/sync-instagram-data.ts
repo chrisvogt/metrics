@@ -3,10 +3,9 @@ import { logger } from 'firebase-functions'
 import pMap from 'p-map'
 import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { listStoredMedia, storeRemoteMedia } from '../services/media/media-service.js'
 
-import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import fetchInstagramData from '../api/instagram/fetch-instagram-data.js'
-import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import { getMediaStore } from '../selectors/media-store.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
@@ -141,7 +140,7 @@ const syncInstagramData = async (documentStore: DocumentStore = defaultDocumentS
     try {
       result = await pMap(
         mediaToDownload as MediaItem[],
-        fetchAndUploadFile,
+        storeRemoteMedia,
         {
           concurrency: 10,
           stopOnError: false,

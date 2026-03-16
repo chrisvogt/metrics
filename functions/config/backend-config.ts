@@ -30,12 +30,20 @@ export const getFirebaseClientConfig = () => ({
   projectId: process.env.CLIENT_PROJECT_ID,
 })
 
-export const getStorageConfig = () => ({
-  cloudStorageImagesBucket: process.env.CLOUD_STORAGE_IMAGES_BUCKET,
-  imageCdnBaseUrl: process.env.IMAGE_CDN_BASE_URL,
-  localMediaRoot: process.env.LOCAL_MEDIA_ROOT ?? path.resolve(process.cwd(), 'tmp/media'),
-  mediaStoreBackend: process.env.MEDIA_STORE_BACKEND ?? (isProductionEnvironment() ? 'gcs' : 'disk'),
-})
+export const getStorageConfig = () => {
+  const mediaStoreBackend =
+    process.env.MEDIA_STORE_BACKEND ?? (isProductionEnvironment() ? 'gcs' : 'disk')
+  const mediaPublicBaseUrl =
+    process.env.MEDIA_PUBLIC_BASE_URL ?? process.env.IMAGE_CDN_BASE_URL
+
+  return {
+    cloudStorageImagesBucket: process.env.CLOUD_STORAGE_IMAGES_BUCKET,
+    imageCdnBaseUrl: mediaPublicBaseUrl,
+    localMediaRoot: process.env.LOCAL_MEDIA_ROOT ?? path.resolve(process.cwd(), 'tmp/media'),
+    mediaPublicBaseUrl,
+    mediaStoreBackend,
+  }
+}
 
 export const getDiscogsConfig = () => ({
   apiKey: process.env.DISCOGS_API_KEY,

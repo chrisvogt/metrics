@@ -3,11 +3,10 @@ import { logger } from 'firebase-functions'
 import pMap from 'p-map'
 import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { listStoredMedia, storeRemoteMedia } from '../services/media/media-service.js'
 
-import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
 import fetchDiscogsReleases from '../api/discogs/fetch-releases.js'
 import fetchReleasesBatch from '../api/discogs/fetch-releases-batch.js'
-import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import { getMediaStore } from '../selectors/media-store.js'
 import toDiscogsDestinationPath from '../transformers/to-discogs-destination-path.js'
 import transformDiscogsRelease from '../transformers/transform-discogs-release.js'
@@ -159,7 +158,7 @@ const syncDiscogsData = async (documentStore: DocumentStore = defaultDocumentSto
 
     let result: { fileName?: string }[]
     try {
-      result = await pMap(mediaToDownloadTyped, fetchAndUploadFile, {
+      result = await pMap(mediaToDownloadTyped, storeRemoteMedia, {
         concurrency: 10,
         stopOnError: false,
       })

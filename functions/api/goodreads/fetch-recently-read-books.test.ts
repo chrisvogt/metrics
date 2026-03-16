@@ -18,27 +18,20 @@ vi.mock('firebase-functions', () => ({
   }
 }))
 
-vi.mock('../cloud-storage/fetch-and-upload-file.js', () => ({
-  default: vi.fn()
-}))
-
 vi.mock('../google-books/fetch-book.js', () => ({
   default: vi.fn()
 }))
 
-vi.mock('../cloud-storage/list-stored-media.js', () => ({
-  default: vi.fn()
+vi.mock('../../services/media/media-service.js', () => ({
+  listStoredMedia: vi.fn(),
+  storeRemoteMedia: vi.fn(),
+  toPublicMediaUrl: vi.fn((path) => `https://cdn.example.com/${path}`),
 }))
 
 vi.mock('../../selectors/media-store.js', () => ({
   getMediaStore: vi.fn(() => ({
     describe: () => ({ backend: 'disk', target: '/tmp/test-media' }),
   })),
-}))
-
-vi.mock('../../config/constants.js', () => ({
-  CLOUD_STORAGE_IMAGES_BUCKET: 'test-bucket',
-  IMAGE_CDN_BASE_URL: 'https://cdn.example.com/'
 }))
 
 vi.mock('p-map', () => ({
@@ -61,9 +54,9 @@ describe('fetchRecentlyReadBooks', () => {
     // Get mock functions
     mockParseString = (await import('xml2js')).parseString
     mockGot = (await import('got')).default
-    mockFetchAndUploadFile = (await import('../cloud-storage/fetch-and-upload-file.js')).default
+    mockFetchAndUploadFile = (await import('../../services/media/media-service.js')).storeRemoteMedia
     mockFetchBookFromGoogle = (await import('../google-books/fetch-book.js')).default
-    mockListStoredMedia = (await import('../cloud-storage/list-stored-media.js')).default
+    mockListStoredMedia = (await import('../../services/media/media-service.js')).listStoredMedia
     mockPMap = (await import('p-map')).default
     mockLogger = (await import('firebase-functions')).logger
 

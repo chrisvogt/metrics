@@ -3,6 +3,7 @@ import { Timestamp } from 'firebase-admin/firestore'
 import convertToHttps from 'to-https'
 import got from 'got'
 import pMap from 'p-map'
+import { listStoredMedia, storeRemoteMedia, toPublicMediaUrl } from '../services/media/media-service.js'
 
 import fetchUser from '../api/goodreads/fetch-user.js'
 import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.js'
@@ -10,12 +11,9 @@ import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summar
 import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import fetchBookFromGoogle from '../api/google-books/fetch-book.js'
-import fetchAndUploadFile from '../api/cloud-storage/fetch-and-upload-file.js'
-import listStoredMedia from '../api/cloud-storage/list-stored-media.js'
 import { getGoogleBooksApiKey } from '../config/backend-config.js'
 import { toProviderCollectionPath } from '../config/backend-paths.js'
 import { getMediaStore } from '../selectors/media-store.js'
-import { IMAGE_CDN_BASE_URL } from '../config/constants.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
@@ -45,7 +43,7 @@ const transformBookData = (book) => {
   return {
     authors,
     categories,
-    cdnMediaURL: `${IMAGE_CDN_BASE_URL}${mediaDestinationPath}`,
+    cdnMediaURL: toPublicMediaUrl(mediaDestinationPath),
     mediaDestinationPath: mediaDestinationPath,
     description: goodreadsDescription || description,
     id,
@@ -299,7 +297,7 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
 
     if (mediaToDownload.length > 0) {
       try {
-        await pMap(mediaToDownload, fetchAndUploadFile, {
+        await pMap(mediaToDownload, storeRemoteMedia, {
           concurrency: 10,
           stopOnError: false,
         })

@@ -20,10 +20,12 @@ Useful local settings:
 ```bash
 MEDIA_STORE_BACKEND=disk
 LOCAL_MEDIA_ROOT=/absolute/path/to/metrics-local-media
-IMAGE_CDN_BASE_URL=/api/media/
+MEDIA_PUBLIC_BASE_URL=/api/media/
 ```
 
 With that setup, uploaded media is written under `LOCAL_MEDIA_ROOT` and served by the Functions app at `/api/media/*`.
+
+`IMAGE_CDN_BASE_URL` still works as a backwards-compatible alias, but `MEDIA_PUBLIC_BASE_URL` is the provider-neutral setting to use going forward.
 
 ## Production
 

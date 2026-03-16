@@ -1,6 +1,6 @@
-import { getMediaStore } from '../../selectors/media-store.js'
+import { storeRemoteMedia } from '../../services/media/media-service.js'
 
 const fetchAndUploadFile = ({ destinationPath, mediaURL, id }) =>
-  getMediaStore().fetchAndStore({ destinationPath, mediaURL, id })
+  storeRemoteMedia({ destinationPath, mediaURL, id })
 
 export default fetchAndUploadFile

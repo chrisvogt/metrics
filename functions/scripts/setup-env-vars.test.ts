@@ -28,6 +28,7 @@ describe('setup-env-vars.js', () => {
         firestore_database_url: 'https://test.firebaseio.com',
         cloud_storage_images_bucket: 'test-bucket',
         image_cdn_base_url: 'https://cdn.test.com',
+        media_public_base_url: 'https://media.test.com',
         media_store_backend: 'disk',
         local_media_root: '/tmp/metrics-media'
       },

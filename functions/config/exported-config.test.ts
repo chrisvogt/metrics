@@ -15,6 +15,7 @@ describe('exported-config', () => {
       expect(CONFIG_PATH_TO_ENV['spotify.client_id']).toBe('SPOTIFY_CLIENT_ID')
       expect(CONFIG_PATH_TO_ENV['storage.media_store_backend']).toBe('MEDIA_STORE_BACKEND')
       expect(CONFIG_PATH_TO_ENV['storage.local_media_root']).toBe('LOCAL_MEDIA_ROOT')
+      expect(CONFIG_PATH_TO_ENV['storage.media_public_base_url']).toBe('MEDIA_PUBLIC_BASE_URL')
     })
   })
 

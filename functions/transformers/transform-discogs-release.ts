@@ -1,4 +1,4 @@
-import { IMAGE_CDN_BASE_URL } from '../config/constants.js'
+import { toPublicMediaUrl } from '../services/media/media-service.js'
 import toDiscogsDestinationPath from './to-discogs-destination-path.js'
 
 const transformDiscogsRelease = rawRelease => {
@@ -30,8 +30,10 @@ const transformDiscogsRelease = rawRelease => {
   } = basicInfo
 
   // Generate CDN URLs for both thumb and cover images
-  const cdnThumbUrl = thumb ? `${IMAGE_CDN_BASE_URL}${toDiscogsDestinationPath(thumb, id, 'thumb')}` : null
-  const cdnCoverUrl = coverImage ? `${IMAGE_CDN_BASE_URL}${toDiscogsDestinationPath(coverImage, id, 'cover')}` : null
+  const cdnThumbUrl = thumb ? toPublicMediaUrl(toDiscogsDestinationPath(thumb, id, 'thumb')) : null
+  const cdnCoverUrl = coverImage
+    ? toPublicMediaUrl(toDiscogsDestinationPath(coverImage, id, 'cover'))
+    : null
 
   // Include raw resource data if available (no transformations)
   const resourceData = resource || null
