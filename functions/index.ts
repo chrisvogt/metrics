@@ -12,6 +12,7 @@ import {
   bootstrapLocalRuntimeEnv,
   ensureRuntimeConfigApplied,
 } from './config/runtime-config.js'
+import { FirebaseAuthService } from './adapters/auth/firebase-auth-service.js'
 import { FirestoreDocumentStore } from './adapters/storage/firestore-document-store.js'
 import {
   firebaseRuntimeConfigSource,
@@ -46,11 +47,12 @@ initializeFirebaseAdminRuntime({
 })
 
 const documentStore = new FirestoreDocumentStore()
+const authService = new FirebaseAuthService(admin)
 const applyFirebaseRuntimeConfig = () =>
   ensureRuntimeConfigApplied(firebaseRuntimeConfigSource, logger.warn)
 
 export const expressApp = createExpressApp({
-  admin,
+  authService,
   documentStore,
   ensureRuntimeConfigApplied: applyFirebaseRuntimeConfig,
   getFirebaseClientConfig,

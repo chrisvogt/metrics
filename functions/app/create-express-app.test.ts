@@ -59,15 +59,13 @@ describe('createExpressApp media route', () => {
     warn: vi.fn(),
   }
 
-  const admin = {
-    auth: vi.fn(() => ({
-      createSessionCookie: vi.fn(),
-      deleteUser: vi.fn(),
-      getUser: vi.fn(),
-      revokeRefreshTokens: vi.fn(),
-      verifyIdToken: vi.fn(),
-      verifySessionCookie: vi.fn(),
-    })),
+  const authService = {
+    createSessionCookie: vi.fn(),
+    deleteUser: vi.fn(),
+    getUser: vi.fn(),
+    revokeRefreshTokens: vi.fn(),
+    verifyIdToken: vi.fn(),
+    verifySessionCookie: vi.fn(),
   }
 
   const documentStore = {
@@ -79,7 +77,7 @@ describe('createExpressApp media route', () => {
     const { createExpressApp } = await import('./create-express-app.js')
 
     return createExpressApp({
-      admin: admin as never,
+      authService,
       documentStore,
       ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
       getFirebaseClientConfig: vi.fn(() => ({})),
@@ -203,17 +201,13 @@ describe('createExpressApp auth and session branches', () => {
     warn: vi.fn(),
   }
 
-  const authMethods = {
+  const authService = {
     createSessionCookie: vi.fn(),
     deleteUser: vi.fn(),
     getUser: vi.fn(),
     revokeRefreshTokens: vi.fn(),
     verifyIdToken: vi.fn(),
     verifySessionCookie: vi.fn(),
-  }
-
-  const admin = {
-    auth: vi.fn(() => authMethods),
   }
 
   const documentStore = {
@@ -225,7 +219,7 @@ describe('createExpressApp auth and session branches', () => {
     const { createExpressApp } = await import('./create-express-app.js')
 
     return createExpressApp({
-      admin: admin as never,
+      authService,
       documentStore,
       ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
       getFirebaseClientConfig: vi.fn(() => ({})),
@@ -276,12 +270,12 @@ describe('createExpressApp auth and session branches', () => {
     process.env.NODE_ENV = 'production'
     const app = await buildApp()
 
-    authMethods.verifyIdToken.mockResolvedValue({
+    authService.verifyIdToken.mockResolvedValue({
       uid: 'prod-user',
       email: 'prod@chrisvogt.me',
-      email_verified: true,
+      emailVerified: true,
     })
-    authMethods.createSessionCookie.mockResolvedValue('prod-session-cookie')
+    authService.createSessionCookie.mockResolvedValue('prod-session-cookie')
 
     const { agent, csrfToken, cookies } = await getCsrfHeaders(app)
     const response = await agent
@@ -303,12 +297,12 @@ describe('createExpressApp auth and session branches', () => {
     process.env.NODE_ENV = 'production'
     const app = await buildApp()
 
-    authMethods.verifyIdToken.mockResolvedValue({
+    authService.verifyIdToken.mockResolvedValue({
       uid: 'prod-user',
       email: 'prod@chrisvogt.me',
-      email_verified: true,
+      emailVerified: true,
     })
-    authMethods.revokeRefreshTokens.mockResolvedValue(undefined)
+    authService.revokeRefreshTokens.mockResolvedValue(undefined)
 
     const { agent, csrfToken, cookies } = await getCsrfHeaders(app)
     const response = await agent
@@ -329,7 +323,7 @@ describe('createExpressApp auth and session branches', () => {
   it('falls back cleanly when session-cookie verification rejects with a plain object', async () => {
     const app = await buildApp()
 
-    authMethods.verifySessionCookie.mockRejectedValue({
+    authService.verifySessionCookie.mockRejectedValue({
       code: 'auth/invalid-session-cookie',
     })
 
@@ -344,7 +338,7 @@ describe('createExpressApp auth and session branches', () => {
   it('returns 401 when bearer token verification rejects with a plain object', async () => {
     const app = await buildApp()
 
-    authMethods.verifyIdToken.mockRejectedValue({
+    authService.verifyIdToken.mockRejectedValue({
       code: 'auth/argument-error',
     })
 
