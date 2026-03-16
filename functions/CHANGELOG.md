@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.13] - 2026-03-15
+
+### Changed
+
+- **Provider-neutral auth boundary** – Auth and session operations now flow through a dedicated `AuthService` port instead of calling Firebase Admin Auth directly from the Express app, keeping non-auth app logic isolated from the Firebase-specific implementation.
+- **Firebase auth adapter** – Added a Firebase-backed auth adapter that owns session-cookie verification, ID-token verification, session creation, user lookup, logout token revocation, and auth-user deletion behind a single provider-specific implementation.
+
+### Developer experience
+
+- **Focused auth-boundary coverage** – Added adapter-level tests for the Firebase auth mapping layer and updated app tests to mock the provider-neutral auth boundary directly, making the migration seam easier to evolve safely.
+
 ### Changed
 
 - **Source layout (config / widgets / utils / helpers)** – Source that lived under `lib/` has been moved into role-based directories so that `lib/` is build output only and can be fully gitignored:
