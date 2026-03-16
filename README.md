@@ -29,7 +29,7 @@ This repository contains a Firebase-backed service I use to fetch and sync data 
 ### Prerequisites
 
 - **Node.js** (version in [.nvmrc](./.nvmrc), e.g. 24)
-- **pnpm** (e.g. `corepack enable && corepack prepare pnpm@9.15.0 --activate`, or see [pnpm.io](https://pnpm.io/installation))
+- **pnpm** (e.g. `corepack enable && corepack prepare pnpm@10.32.1 --activate`, or see [pnpm.io](https://pnpm.io/installation))
 - **Firebase CLI** (`pnpm add -g firebase-tools` or `npm install -g firebase-tools`)
 - **Firebase project** and `firebase login`
 
