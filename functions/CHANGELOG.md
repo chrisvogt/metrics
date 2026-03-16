@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.14] - 2026-03-15
+
+### Developer experience
+
+- **Service-boundary integration coverage** – Added focused seam tests for default `FirestoreDocumentStore` wiring in the Flickr sync wrapper and Spotify widget reader, so the provider-neutral service boundaries are protected without depending on broad runtime-level tests.
+
 ## [0.22.13] - 2026-03-15
 
 ### Changed
