@@ -1,4 +1,6 @@
 import type { MediaDescriptor, MediaStore } from '../../ports/media-store.js'
+import { getStorageConfig } from '../../config/backend-config.js'
+import { getMediaStore } from '../../selectors/media-store.js'
 
 export interface MediaService {
   describe: () => { backend: string; target: string }
@@ -25,11 +27,12 @@ export const configureMediaService = (mediaService: MediaService) => {
 }
 
 const getConfiguredMediaService = (): MediaService => {
-  if (!configuredMediaService) {
-    throw new Error('Media service has not been configured')
+  if (configuredMediaService) {
+    return configuredMediaService
   }
 
-  return configuredMediaService
+  const { mediaPublicBaseUrl } = getStorageConfig()
+  return createMediaService(getMediaStore(), mediaPublicBaseUrl)
 }
 
 export const listStoredMedia = async (): Promise<string[]> =>

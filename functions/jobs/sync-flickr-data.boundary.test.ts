@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { serviceMock } = vi.hoisted(() => ({
-  serviceMock: vi.fn(),
-}))
-
-vi.mock('../services/sync/sync-flickr-data.js', () => ({
-  default: serviceMock,
+vi.mock('../api/flickr/fetch-photos.js', () => ({
+  default: vi.fn(),
 }))
 
 describe('syncFlickrData boundary wiring', () => {
@@ -13,16 +9,20 @@ describe('syncFlickrData boundary wiring', () => {
     vi.clearAllMocks()
   })
 
-  it('passes an injected DocumentStore through to the shared sync service', async () => {
-    serviceMock.mockResolvedValue({ result: 'SUCCESS' })
+  it('uses the injected DocumentStore when performing the sync', async () => {
     const injectedStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn(),
     }
+    const { default: fetchPhotos } = await import('../api/flickr/fetch-photos.js')
+    vi.mocked(fetchPhotos).mockResolvedValue({ total: 0, photos: [] })
 
     const { default: syncFlickrData } = await import('./sync-flickr-data.js')
 
-    await expect(syncFlickrData(injectedStore)).resolves.toEqual({ result: 'SUCCESS' })
-    expect(serviceMock).toHaveBeenCalledWith(injectedStore)
+    await expect(syncFlickrData(injectedStore)).resolves.toEqual({
+      result: 'SUCCESS',
+      widgetContent: expect.any(Object),
+    })
+    expect(injectedStore.setDocument).toHaveBeenCalled()
   })
 })
