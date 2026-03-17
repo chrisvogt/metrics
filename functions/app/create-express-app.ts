@@ -35,7 +35,7 @@ interface CreateExpressAppOptions {
   ensureRuntimeConfigApplied: () => Promise<void>
   getClientAuthConfig: () => Record<string, string | undefined>
   logger: LoggerLike
-  mediaStore: MediaStore
+  resolveMediaStore: () => MediaStore
 }
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
@@ -88,7 +88,7 @@ export function createExpressApp({
   ensureRuntimeConfigApplied,
   getClientAuthConfig,
   logger,
-  mediaStore,
+  resolveMediaStore,
 }: CreateExpressAppOptions): express.Express {
   const expressApp = express()
 
@@ -267,6 +267,7 @@ export function createExpressApp({
     cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 100),
     async (req, res) => {
+      const mediaStore = resolveMediaStore()
       if (!(mediaStore instanceof LocalDiskMediaStore)) {
         res.sendStatus(404)
         return

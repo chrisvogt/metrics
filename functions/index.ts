@@ -13,7 +13,7 @@ const {
   ensureRuntimeConfigApplied,
   getClientAuthConfig,
   logger,
-  mediaStore,
+  resolveMediaStore,
   runtimePlatform,
   runtimeSecrets,
 } = createBackendBootstrap()
@@ -24,7 +24,7 @@ export const expressApp = createExpressApp({
   ensureRuntimeConfigApplied,
   getClientAuthConfig,
   logger,
-  mediaStore,
+  resolveMediaStore,
 })
 
 export { getSessionAuthError }
