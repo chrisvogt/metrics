@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs'
 import path from 'path'
 
 import { describe, expect, it } from 'vitest'
@@ -22,20 +22,22 @@ const forbiddenImportPatterns = [
 describe('provider import boundary', () => {
   it('keeps Firebase and GCP SDK imports out of guarded service code', async () => {
     const collectFiles = (directoryPath: string): string[] =>
-      readdirSync(directoryPath).flatMap((entry) => {
-        const entryPath = path.join(directoryPath, entry)
-        const stats = statSync(entryPath)
+      (!existsSync(directoryPath)
+        ? []
+        : readdirSync(directoryPath).flatMap((entry) => {
+          const entryPath = path.join(directoryPath, entry)
+          const stats = statSync(entryPath)
 
-        if (stats.isDirectory()) {
-          return collectFiles(entryPath)
-        }
+          if (stats.isDirectory()) {
+            return collectFiles(entryPath)
+          }
 
-        if (entryPath.endsWith('.test.ts') || !entryPath.endsWith('.ts')) {
-          return []
-        }
+          if (entryPath.endsWith('.test.ts') || !entryPath.endsWith('.ts')) {
+            return []
+          }
 
-        return [entryPath]
-      })
+          return [entryPath]
+        }))
 
     const files = guardedDirectories.flatMap((directory) =>
       collectFiles(path.join(rootDir, directory))

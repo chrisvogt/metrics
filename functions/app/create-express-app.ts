@@ -467,13 +467,23 @@ export function createExpressApp({
     res.json(config)
   }
 
-  expressApp.get('/api/client-auth-config', cors(corsOptions), async (_req, res) => {
-    await sendClientAuthConfig(res)
-  })
+  expressApp.get(
+    '/api/client-auth-config',
+    cors(corsOptions),
+    createRateLimiter(15 * 60 * 1000, 20),
+    async (_req, res) => {
+      await sendClientAuthConfig(res)
+    }
+  )
 
-  expressApp.get('/api/firebase-config', cors(corsOptions), async (_req, res) => {
-    await sendClientAuthConfig(res)
-  })
+  expressApp.get(
+    '/api/firebase-config',
+    cors(corsOptions),
+    createRateLimiter(15 * 60 * 1000, 20),
+    async (_req, res) => {
+      await sendClientAuthConfig(res)
+    }
+  )
 
   expressApp.get('/api/csrf-token', cors(corsOptions), (req, res) => {
     const csrfToken = typeof req.csrfToken === 'function' ? req.csrfToken() : res.locals._csrf
