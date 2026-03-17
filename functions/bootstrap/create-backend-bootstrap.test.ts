@@ -22,18 +22,8 @@ const getMediaStoreMock = vi.hoisted(() =>
     listFiles: vi.fn(),
   }))
 )
-const createMediaServiceMock = vi.hoisted(() =>
-  vi.fn(() => ({
-    describe: vi.fn(() => ({ backend: 'gcs', target: 'bucket' })),
-    listStoredMedia: vi.fn(),
-    storeRemoteMedia: vi.fn(),
-    toPublicMediaUrl: vi.fn((mediaPath: string) => mediaPath),
-  }))
-)
-const configureMediaServiceMock = vi.hoisted(() => vi.fn())
 const configureClockMock = vi.hoisted(() => vi.fn())
 const configureLoggerMock = vi.hoisted(() => vi.fn())
-const getStorageConfigMock = vi.hoisted(() => vi.fn(() => ({ mediaPublicBaseUrl: 'https://cdn.test' })))
 const getClientAuthConfigMock = vi.hoisted(() =>
   vi.fn(() => ({ apiKey: 'public-key', authDomain: 'auth.test', projectId: 'project-id' }))
 )
@@ -72,7 +62,6 @@ vi.mock('../config/runtime-config.js', () => ({
 
 vi.mock('../config/backend-config.js', () => ({
   getClientAuthConfig: getClientAuthConfigMock,
-  getStorageConfig: getStorageConfigMock,
   isProductionEnvironment: isProductionEnvironmentMock,
 }))
 
@@ -99,11 +88,6 @@ vi.mock('../runtime/firebase-functions-runtime.js', () => ({
 vi.mock('../selectors/media-store.js', () => ({
   getMediaStore: getMediaStoreMock,
   resetMediaStoreForTests: resetMediaStoreForTestsMock,
-}))
-
-vi.mock('../services/media/media-service.js', () => ({
-  configureMediaService: configureMediaServiceMock,
-  createMediaService: createMediaServiceMock,
 }))
 
 vi.mock('../services/clock.js', () => ({
@@ -146,15 +130,9 @@ describe('createBackendBootstrap', () => {
     expect(process.env.MEDIA_STORE_BACKEND).toBe('gcs')
     expect(firestoreDocumentStoreCtorMock).toHaveBeenCalledTimes(1)
     expect(firebaseAuthServiceCtorMock).toHaveBeenCalledWith(adminModuleMock)
-    expect(getMediaStoreMock).toHaveBeenCalledTimes(1)
-    expect(getStorageConfigMock).toHaveBeenCalledTimes(1)
-    expect(createMediaServiceMock).toHaveBeenCalledWith(
-      getMediaStoreMock.mock.results[0]?.value,
-      'https://cdn.test'
-    )
     expect(configureClockMock).toHaveBeenCalledWith(bootstrap.clock)
     expect(configureLoggerMock).toHaveBeenCalledWith(firebaseLoggerMock)
-    expect(configureMediaServiceMock).toHaveBeenCalledWith(bootstrap.mediaService)
+    expect(bootstrap.resolveMediaStore).toBe(getMediaStoreMock)
     expect(bootstrap.getClientAuthConfig()).toEqual({
       apiKey: 'public-key',
       authDomain: 'auth.test',

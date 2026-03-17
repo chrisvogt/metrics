@@ -106,7 +106,7 @@ describe('createExpressApp route coverage', () => {
       ensureRuntimeConfigApplied,
       getClientAuthConfig,
       logger,
-      mediaStore: new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
     })
 
     const clientAuthHandler = findRouteHandler(app, 'get', '/api/client-auth-config')
@@ -145,7 +145,7 @@ describe('createExpressApp route coverage', () => {
       ensureRuntimeConfigApplied,
       getClientAuthConfig,
       logger,
-      mediaStore: new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
     })
     const syncRouteHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider')
     const response = createResponse()

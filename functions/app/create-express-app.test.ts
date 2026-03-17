@@ -74,7 +74,8 @@ describe('createExpressApp media route', () => {
       ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
       getClientAuthConfig: vi.fn(() => ({})),
       logger,
-      mediaStore: new LocalDiskMediaStore(path.join(os.tmpdir(), 'metrics-unused-media-root')),
+      resolveMediaStore: () =>
+        new LocalDiskMediaStore(path.join(os.tmpdir(), 'metrics-unused-media-root')),
     })
   }
 
@@ -94,11 +95,11 @@ describe('createExpressApp media route', () => {
       ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
       getClientAuthConfig: vi.fn(() => ({})),
       logger,
-      mediaStore: {
+      resolveMediaStore: () => ({
         describe: () => ({ backend: 'gcs', target: 'bucket' }),
         fetchAndStore: vi.fn(),
         listFiles: vi.fn(),
-      },
+      }),
     })
 
     await request(app)
@@ -122,11 +123,11 @@ describe('createExpressApp media route', () => {
       ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
       getClientAuthConfig: vi.fn(() => ({})),
       logger,
-      mediaStore: {
+      resolveMediaStore: () => ({
         describe: () => ({ backend: 'gcs', target: '/tmp/not-local' }),
         fetchAndStore: vi.fn(),
         listFiles: vi.fn(),
-      },
+      }),
     })
 
     await request(app)
@@ -148,7 +149,7 @@ describe('createExpressApp media route', () => {
       ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
       getClientAuthConfig: vi.fn(() => ({})),
       logger,
-      mediaStore,
+      resolveMediaStore: () => mediaStore,
     })
 
     await request(routeApp)
@@ -166,7 +167,7 @@ describe('createExpressApp media route', () => {
       ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
       getClientAuthConfig: vi.fn(() => ({})),
       logger,
-      mediaStore,
+      resolveMediaStore: () => mediaStore,
     })
 
     const existingPath = path.join(rootDir, 'cover.jpg')
@@ -191,7 +192,7 @@ describe('createExpressApp media route', () => {
       ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
       getClientAuthConfig: vi.fn(() => ({})),
       logger,
-      mediaStore,
+      resolveMediaStore: () => mediaStore,
     })
 
     fs.mkdirSync(path.join(rootDir, 'folder'))
@@ -211,7 +212,7 @@ describe('createExpressApp media route', () => {
       ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
       getClientAuthConfig: vi.fn(() => ({})),
       logger,
-      mediaStore,
+      resolveMediaStore: () => mediaStore,
     })
 
     fs.writeFileSync(path.join(rootDir, 'cover.jpg'), 'file-bytes')
@@ -270,7 +271,8 @@ describe('createExpressApp auth and session branches', () => {
       ensureRuntimeConfigApplied,
       getClientAuthConfig,
       logger,
-      mediaStore: new LocalDiskMediaStore(path.join(os.tmpdir(), 'metrics-unused-auth-media')),
+      resolveMediaStore: () =>
+        new LocalDiskMediaStore(path.join(os.tmpdir(), 'metrics-unused-auth-media')),
     })
   }
 

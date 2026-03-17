@@ -1,4 +1,5 @@
 import admin from 'firebase-admin'
+import { existsSync } from 'fs'
 import { logger as firebaseLogger } from 'firebase-functions'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -7,7 +8,6 @@ import { FirebaseAuthService } from '../adapters/auth/firebase-auth-service.js'
 import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import {
   getClientAuthConfig,
-  getStorageConfig,
   isProductionEnvironment,
 } from '../config/backend-config.js'
 import {
@@ -16,16 +16,10 @@ import {
 } from '../config/runtime-config.js'
 import type { Clock } from '../ports/clock.js'
 import type { DocumentStore } from '../ports/document-store.js'
-import type { MediaStore } from '../ports/media-store.js'
 import type { RuntimePlatform } from '../ports/runtime-platform.js'
 import { configureClock } from '../services/clock.js'
 import { configureLogger } from '../services/logger.js'
-import {
-  configureMediaService,
-  createMediaService,
-  type MediaService,
-} from '../services/media/media-service.js'
-import { getMediaStore, resetMediaStoreForTests } from '../selectors/media-store.js'
+import { resetMediaStoreForTests, getMediaStore } from '../selectors/media-store.js'
 import { getSelectedProviders } from './provider-selection.js'
 import {
   firebaseRuntimeConfigSource,
@@ -59,14 +53,24 @@ export interface BackendBootstrap {
   ensureRuntimeConfigApplied: () => Promise<void>
   getClientAuthConfig: () => Record<string, string | undefined>
   logger: typeof firebaseLogger
-  mediaService: MediaService
-  mediaStore: MediaStore
+  resolveMediaStore: typeof getMediaStore
   runtimePlatform: RuntimePlatform
   runtimeSecrets: unknown[]
 }
 
+const resolveLocalEnvPath = (): string => {
+  const candidates = [
+    path.resolve(process.cwd(), 'functions/.env'),
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(__dirname, '../.env'),
+    path.resolve(__dirname, '../../functions/.env'),
+  ]
+
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0]
+}
+
 export const createBackendBootstrap = (): BackendBootstrap => {
-  bootstrapLocalRuntimeEnv(path.resolve(__dirname, '../.env'))
+  bootstrapLocalRuntimeEnv(resolveLocalEnvPath())
 
   const selectedProviders = getSelectedProviders()
 
@@ -84,13 +88,10 @@ export const createBackendBootstrap = (): BackendBootstrap => {
   const logger = firebaseLogger
   const documentStore = new FirestoreDocumentStore()
   const authService = new FirebaseAuthService(admin)
-  const mediaStore = getMediaStore()
-  const mediaService = createMediaService(mediaStore, getStorageConfig().mediaPublicBaseUrl)
   const runtimeSecrets = getFirebaseRuntimeSecrets()
 
   configureClock(clock)
   configureLogger(logger)
-  configureMediaService(mediaService)
 
   return {
     authService,
@@ -100,8 +101,7 @@ export const createBackendBootstrap = (): BackendBootstrap => {
       ensureRuntimeConfigApplied(firebaseRuntimeConfigSource, logger.warn),
     getClientAuthConfig,
     logger,
-    mediaService,
-    mediaStore,
+    resolveMediaStore: getMediaStore,
     runtimePlatform: firebaseRuntimePlatform,
     runtimeSecrets,
   }
