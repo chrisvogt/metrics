@@ -254,14 +254,21 @@ describe('createExpressApp auth and session branches', () => {
     setDocument: vi.fn(),
   }
 
+  const ensureRuntimeConfigApplied = vi.fn().mockResolvedValue(undefined)
+  const getClientAuthConfig = vi.fn(() => ({
+    apiKey: 'public-key',
+    authDomain: 'metrics.firebaseapp.com',
+    projectId: 'metrics-project',
+  }))
+
   const buildApp = async () => {
     const { createExpressApp } = await import('./create-express-app.js')
 
     return createExpressApp({
       authService,
       documentStore,
-      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
-      getClientAuthConfig: vi.fn(() => ({})),
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
       logger,
       mediaStore: new LocalDiskMediaStore(path.join(os.tmpdir(), 'metrics-unused-auth-media')),
     })
@@ -298,6 +305,12 @@ describe('createExpressApp auth and session branches', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.NODE_ENV = 'test'
+    ensureRuntimeConfigApplied.mockResolvedValue(undefined)
+    getClientAuthConfig.mockReturnValue({
+      apiKey: 'public-key',
+      authDomain: 'metrics.firebaseapp.com',
+      projectId: 'metrics-project',
+    })
   })
 
   afterEach(() => {
@@ -417,5 +430,59 @@ describe('createExpressApp auth and session branches', () => {
       ok: false,
       error: 'CSRF token missing',
     })
+  })
+
+  it('returns the client auth config from the provider-neutral endpoint', async () => {
+    const app = await buildApp()
+
+    const response = await request(app)
+      .get('/api/client-auth-config')
+      .expect(200)
+
+    expect(response.body).toEqual({
+      apiKey: 'public-key',
+      authDomain: 'metrics.firebaseapp.com',
+      projectId: 'metrics-project',
+    })
+    expect(ensureRuntimeConfigApplied).toHaveBeenCalledTimes(1)
+    expect(getClientAuthConfig).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the firebase config endpoint as a compatibility alias', async () => {
+    const app = await buildApp()
+
+    const response = await request(app)
+      .get('/api/firebase-config')
+      .expect(200)
+
+    expect(response.body).toEqual({
+      apiKey: 'public-key',
+      authDomain: 'metrics.firebaseapp.com',
+      projectId: 'metrics-project',
+    })
+    expect(ensureRuntimeConfigApplied).toHaveBeenCalledTimes(1)
+    expect(getClientAuthConfig).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['discogs', '../jobs/sync-discogs-data.js'],
+    ['goodreads', '../jobs/sync-goodreads-data.js'],
+    ['instagram', '../jobs/sync-instagram-data.js'],
+    ['steam', '../jobs/sync-steam-data.js'],
+  ])('syncs %s data through the injected document store route wrapper', async (provider, modulePath) => {
+    const app = await buildApp()
+    const jobModule = await import(modulePath)
+
+    vi.mocked(jobModule.default).mockResolvedValueOnce({
+      result: 'SUCCESS',
+      provider,
+    })
+
+    const response = await request(app)
+      .get(`/api/widgets/sync/${provider}`)
+      .expect(200)
+
+    expect(response.body.result).toBe('SUCCESS')
+    expect(jobModule.default).toHaveBeenCalledWith(documentStore)
   })
 })
