@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { Timestamp } from 'firebase-admin/firestore'
 
 import syncSteamData from './sync-steam-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { configureLogger } from '../services/logger.js'
 
 vi.mock('../config/backend-config.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../config/backend-config.js')>()
@@ -31,14 +31,6 @@ vi.mock('../api/gemini/generate-steam-summary.js', () => ({
   default: vi.fn(),
 }))
 
-vi.mock('firebase-functions', () => ({
-  logger: {
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
-}))
-
 import getOwnedGames from '../api/steam/get-owned-games.js'
 import getPlayerSummary from '../api/steam/get-player-summary.js'
 import getRecentlyPlayedGames from '../api/steam/get-recently-played-games.js'
@@ -46,9 +38,15 @@ import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
 
 describe('syncSteamData', () => {
   let documentStore: DocumentStore
+  const logger = {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    configureLogger(logger)
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
@@ -77,21 +75,21 @@ describe('syncSteamData', () => {
       'users/chrisvogt/steam/last-response_owned-games',
       expect.objectContaining({
         response: expect.any(Object),
-        fetchedAt: expect.any(Timestamp),
+        fetchedAt: expect.any(String),
       })
     )
     expect(documentStore.setDocument).toHaveBeenCalledWith(
       'users/chrisvogt/steam/last-response_player-summary',
       expect.objectContaining({
         response: expect.any(Object),
-        fetchedAt: expect.any(Timestamp),
+        fetchedAt: expect.any(String),
       })
     )
     expect(documentStore.setDocument).toHaveBeenCalledWith(
       'users/chrisvogt/steam/last-response_recently-played-games',
       expect.objectContaining({
         response: expect.any(Array),
-        fetchedAt: expect.any(Timestamp),
+        fetchedAt: expect.any(String),
       })
     )
     expect(documentStore.setDocument).toHaveBeenCalledWith(
@@ -99,7 +97,7 @@ describe('syncSteamData', () => {
       expect.objectContaining({
         aiSummary: 'Great recent activity',
         meta: {
-          synced: expect.any(Timestamp),
+          synced: expect.any(String),
         },
       })
     )
@@ -107,7 +105,7 @@ describe('syncSteamData', () => {
       'users/chrisvogt/steam/last-response_ai-summary',
       expect.objectContaining({
         summary: 'Great recent activity',
-        generatedAt: expect.any(Timestamp),
+        generatedAt: expect.any(String),
       })
     )
     expect(result.data.aiSummary).toBe('Great recent activity')

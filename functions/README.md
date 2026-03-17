@@ -1,12 +1,13 @@
 # Metrics Functions (backend)
 
-Firebase Cloud Functions backend for the Metrics API: an Express app that serves widget and auth endpoints, plus scheduled jobs that sync data from external APIs (Spotify, Steam, Goodreads, Instagram, Discogs, Flickr) into Firestore.
+Provider-neutral backend for the Metrics API: an Express app that serves widget and auth endpoints, plus scheduled jobs that sync data from external APIs (Spotify, Steam, Goodreads, Instagram, Discogs, Flickr). Firebase remains the current runtime/auth/document reference provider.
 
 ## Directory layout
 
 - **`lib/`** – Shared helpers and config: widget content getters, constants, exported-config mapping, utilities.
 - **`api/`** – External API clients (Goodreads, Spotify, Steam, Discogs, Instagram, Flickr, Google Books, Gemini, Cloud Storage).
 - **`adapters/`** – Concrete implementations for backend seams such as document storage and media storage.
+- **`bootstrap/`** – Provider selection and backend composition wiring.
 - **`jobs/`** – Sync jobs (e.g. `sync-spotify-data`, `sync-goodreads-data`) and user lifecycle (create-user, delete-user).
 - **`ports/`** – Provider-neutral interfaces for backend seams.
 - **`transformers/`** – Data shaping for storage and widgets (e.g. Discogs releases, Instagram media).
@@ -15,7 +16,7 @@ Firebase Cloud Functions backend for the Metrics API: an Express app that serves
 - **`scripts/`** – Standalone scripts (e.g. env setup).
 - **`queries/`** – GraphQL query files (e.g. GitHub widget).
 
-Entry point is **`index.js`**: it defines the HTTP function, scheduled functions, and auth triggers.
+Entry point is **`index.js`**: it composes the backend through the bootstrap layer, then registers the HTTP function, scheduled functions, and auth triggers on the selected runtime platform.
 
 ## Setup, run, deploy
 

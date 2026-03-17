@@ -24,7 +24,7 @@ export const markRuntimeConfigApplied = (): void => {
   process.env[FUNCTIONS_CONFIG_APPLIED_ENV] = '1'
 }
 
-export const getFirebaseClientConfig = () => ({
+export const getClientAuthConfig = () => ({
   apiKey: process.env.CLIENT_API_KEY,
   authDomain: process.env.CLIENT_AUTH_DOMAIN,
   projectId: process.env.CLIENT_PROJECT_ID,

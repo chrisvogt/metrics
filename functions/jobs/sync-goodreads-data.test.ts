@@ -1,28 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { Timestamp } from 'firebase-admin/firestore'
 import syncGoodreadsData from './sync-goodreads-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { configureLogger } from '../services/logger.js'
 
 // Use fake timers for retry/delay tests
 vi.useFakeTimers()
-
-// Mock firebase-admin
-vi.mock('firebase-admin', () => ({
-  default: {
-    firestore: vi.fn(() => ({
-      collection: vi.fn(() => ({
-        doc: vi.fn(() => ({
-          set: vi.fn()
-        }))
-      }))
-    }))
-  },
-  firestore: {
-    Timestamp: {
-      now: vi.fn(() => new Timestamp(1640995200, 0))
-    }
-  }
-}))
 
 // Mock the API functions
 vi.mock('../api/goodreads/fetch-user.js', () => ({
@@ -50,17 +32,10 @@ vi.mock('got', () => ({
 }))
 
 vi.mock('../services/media/media-service.js', () => ({
+  describeMediaStore: vi.fn(() => ({ backend: 'disk', target: '/tmp/media' })),
   listStoredMedia: vi.fn(),
   storeRemoteMedia: vi.fn(),
   toPublicMediaUrl: vi.fn((path) => `https://cdn.example.com/${path}`),
-}))
-
-vi.mock('firebase-functions', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn()
-  }
 }))
 
 import fetchUser from '../api/goodreads/fetch-user.js'
@@ -69,9 +44,15 @@ import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summar
 
 describe('syncGoodreadsData', () => {
   let documentStore: DocumentStore
+  const logger = {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
 
   beforeEach(async () => {
     vi.clearAllMocks()
+    configureLogger(logger)
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
@@ -134,7 +115,7 @@ describe('syncGoodreadsData', () => {
       updates: mockUserData.updates
     })
     expect(result.data.profile).toEqual(mockUserData.profile)
-    expect(result.data.meta.synced).toBeInstanceOf(Timestamp)
+    expect(result.data.meta.synced).toEqual(expect.any(String))
     expect(result.data.aiSummary).toBe(mockAISummary)
 
     expect(documentStore.setDocument).toHaveBeenCalledTimes(4)
@@ -142,14 +123,14 @@ describe('syncGoodreadsData', () => {
       'users/chrisvogt/goodreads/last-response_user-show',
       expect.objectContaining({
         response: { user: 'data' },
-        updated: expect.any(Timestamp),
+        updated: expect.any(String),
       })
     )
     expect(documentStore.setDocument).toHaveBeenCalledWith(
       'users/chrisvogt/goodreads/last-response_book-reviews',
       expect.objectContaining({
         response: { reviews: 'data' },
-        updated: expect.any(Timestamp),
+        updated: expect.any(String),
       })
     )
     expect(documentStore.setDocument).toHaveBeenCalledWith(
@@ -162,7 +143,7 @@ describe('syncGoodreadsData', () => {
       'users/chrisvogt/goodreads/last-response_ai-summary',
       expect.objectContaining({
         summary: mockAISummary,
-        generatedAt: expect.any(Timestamp),
+        generatedAt: expect.any(String),
       })
     )
   })
@@ -286,7 +267,7 @@ describe('syncGoodreadsData', () => {
       'users/chrisvogt/goodreads/last-response_ai-summary',
       {
         summary: mockAISummary,
-        generatedAt: expect.any(Timestamp)
+        generatedAt: expect.any(String)
       }
     )
   })
@@ -305,7 +286,7 @@ describe('syncGoodreadsData', () => {
       mockListStoredMedia = (await import('../services/media/media-service.js')).listStoredMedia
       mockFetchAndUploadFile = (await import('../services/media/media-service.js')).storeRemoteMedia
       mockPMap = (await import('p-map')).default
-      mockLogger = (await import('firebase-functions')).logger
+      mockLogger = logger
 
       // Set up environment variables
       process.env.GOOGLE_BOOKS_API_KEY = 'test-google-books-api-key'

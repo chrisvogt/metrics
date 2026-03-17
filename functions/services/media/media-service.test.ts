@@ -10,6 +10,8 @@ describe('media-service', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
+    delete process.env.MEDIA_PUBLIC_BASE_URL
+    delete process.env.IMAGE_CDN_BASE_URL
   })
 
   it('delegates list and store operations to the selected media store', async () => {
@@ -39,9 +41,7 @@ describe('media-service', () => {
   })
 
   it('returns a public URL when MEDIA_PUBLIC_BASE_URL is configured', async () => {
-    vi.doMock('../../config/constants.js', () => ({
-      MEDIA_PUBLIC_BASE_URL: '/api/media/',
-    }))
+    process.env.MEDIA_PUBLIC_BASE_URL = '/api/media/'
 
     const { toPublicMediaUrl } = await import('./media-service.js')
 
@@ -49,10 +49,6 @@ describe('media-service', () => {
   })
 
   it('returns the original path when no public media base URL is configured', async () => {
-    vi.doMock('../../config/constants.js', () => ({
-      MEDIA_PUBLIC_BASE_URL: undefined,
-    }))
-
     const { toPublicMediaUrl } = await import('./media-service.js')
 
     expect(toPublicMediaUrl('nested/file.jpg')).toBe('nested/file.jpg')

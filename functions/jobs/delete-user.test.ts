@@ -1,22 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { logger } from 'firebase-functions'
 
 import deleteUser from './delete-user.js'
 import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
 import type { DocumentStore } from '../ports/document-store.js'
-
-vi.mock('firebase-functions', () => ({
-  logger: {
-    info: vi.fn(),
-    error: vi.fn(),
-  },
-}))
+import { configureLogger } from '../services/logger.js'
 
 describe('deleteUser', () => {
   let documentStore: DocumentStore
+  const logger = {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    configureLogger(logger)
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn(),

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { Timestamp } from 'firebase-admin/firestore'
 
 import syncSpotifyData from './sync-spotify-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { configureLogger } from '../services/logger.js'
 
 vi.mock('../config/backend-config.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../config/backend-config.js')>()
@@ -34,6 +34,7 @@ vi.mock('../api/spotify/get-user-profile.js', () => ({
 }))
 
 vi.mock('../services/media/media-service.js', () => ({
+  describeMediaStore: vi.fn(() => ({ backend: 'disk', target: '/tmp/media' })),
   listStoredMedia: vi.fn(),
   storeRemoteMedia: vi.fn(async (item) => ({ fileName: item.destinationPath })),
   toPublicMediaUrl: vi.fn((path) => `https://cdn.example.com/${path}`),
@@ -41,14 +42,6 @@ vi.mock('../services/media/media-service.js', () => ({
 
 vi.mock('../transformers/track-to-collection-item.js', () => ({
   default: vi.fn((track) => ({ id: track.id, displayName: track.name })),
-}))
-
-vi.mock('firebase-functions', () => ({
-  logger: {
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
 }))
 
 import getSpotifyAccessToken from '../api/spotify/get-access-token.js'
@@ -59,9 +52,15 @@ import { listStoredMedia } from '../services/media/media-service.js'
 
 describe('syncSpotifyData', () => {
   let documentStore: DocumentStore
+  const logger = {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    configureLogger(logger)
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
@@ -98,28 +97,28 @@ describe('syncSpotifyData', () => {
       'users/chrisvogt/spotify/last-response_playlists',
       expect.objectContaining({
         response: expect.any(Object),
-        fetchedAt: expect.any(Timestamp),
+        fetchedAt: expect.any(String),
       })
     )
     expect(documentStore.setDocument).toHaveBeenCalledWith(
       'users/chrisvogt/spotify/last-response_top-tracks',
       expect.objectContaining({
         response: [{ id: 'track1', name: 'Track 1' }],
-        fetchedAt: expect.any(Timestamp),
+        fetchedAt: expect.any(String),
       })
     )
     expect(documentStore.setDocument).toHaveBeenCalledWith(
       'users/chrisvogt/spotify/last-response_user-profile',
       expect.objectContaining({
         response: expect.any(Object),
-        fetchedAt: expect.any(Timestamp),
+        fetchedAt: expect.any(String),
       })
     )
     expect(documentStore.setDocument).toHaveBeenCalledWith(
       'users/chrisvogt/spotify/widget-content',
       expect.objectContaining({
         meta: {
-          synced: expect.any(Timestamp),
+          synced: expect.any(String),
           totalUploadedMediaCount: 1,
         },
       })

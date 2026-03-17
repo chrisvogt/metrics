@@ -1,7 +1,6 @@
-import { logger } from 'firebase-functions'
-import { Timestamp } from 'firebase-admin/firestore'
-import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import type { DocumentStore } from '../ports/document-store.js'
+import { getLogger } from '../services/logger.js'
+import { toStoredDateTime } from '../utils/time.js'
 
 import getOwnedGames from '../api/steam/get-owned-games.js'
 import getPlayerSummary from '../api/steam/get-player-summary.js'
@@ -52,9 +51,8 @@ const transformSteamGame = (game) => {
  *  - header.jpg
  *  - capsule_231x87.jpg
  */
-const defaultDocumentStore = new FirestoreDocumentStore()
-
-const syncSteamData = async (documentStore: DocumentStore = defaultDocumentStore) => {
+const syncSteamData = async (documentStore: DocumentStore) => {
+  const logger = getLogger()
   const { apiKey, userId } = getSteamConfig()
   const steamCollectionPath = toProviderCollectionPath('steam')
 
@@ -68,7 +66,7 @@ const syncSteamData = async (documentStore: DocumentStore = defaultDocumentStore
     `${steamCollectionPath}/last-response_owned-games`,
     {
       response: ownedGames,
-      fetchedAt: Timestamp.now(),
+      fetchedAt: toStoredDateTime(),
     }
   )
 
@@ -76,7 +74,7 @@ const syncSteamData = async (documentStore: DocumentStore = defaultDocumentStore
     `${steamCollectionPath}/last-response_player-summary`,
     {
       response: playerSummary,
-      fetchedAt: Timestamp.now(),
+      fetchedAt: toStoredDateTime(),
     }
   )
 
@@ -84,7 +82,7 @@ const syncSteamData = async (documentStore: DocumentStore = defaultDocumentStore
     `${steamCollectionPath}/last-response_recently-played-games`,
     {
       response: recentlyPlayedGames,
-      fetchedAt: Timestamp.now(),
+      fetchedAt: toStoredDateTime(),
     }
   )
 
@@ -106,7 +104,7 @@ const syncSteamData = async (documentStore: DocumentStore = defaultDocumentStore
       recentlyPlayedGames: (recentlyPlayedGames as unknown[]).map((game: unknown) => transformSteamGame(game)),
     },
     meta: {
-      synced: Timestamp.now(),
+      synced: toStoredDateTime(),
     },
     metrics: [
       ...(ownedGameCount
@@ -143,7 +141,7 @@ const syncSteamData = async (documentStore: DocumentStore = defaultDocumentStore
     if (aiSummary) {
       await documentStore.setDocument(`${steamCollectionPath}/last-response_ai-summary`, {
         summary: aiSummary,
-        generatedAt: Timestamp.now(),
+        generatedAt: toStoredDateTime(),
       })
     }
   }

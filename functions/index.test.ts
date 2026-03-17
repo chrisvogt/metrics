@@ -941,7 +941,14 @@ describe('index.js', () => {
 
         expect(response.body.ok).toBe(true)
         expect(response.body.payload.message).toBe('Account deleted')
-        expect(deleteUserJob).toHaveBeenCalledWith({ uid: 'test-uid' })
+        expect(deleteUserJob).toHaveBeenCalledWith(
+          { uid: 'test-uid' },
+          expect.objectContaining({
+            deleteDocument: expect.any(Function),
+            getDocument: expect.any(Function),
+            setDocument: expect.any(Function),
+          })
+        )
         expect(mockDeleteUser).toHaveBeenCalledWith('test-uid')
       })
 
@@ -1202,7 +1209,14 @@ describe('index.js', () => {
         data: { uid: 'u1', email: 'e@test.com', displayName: 'Test' },
       })
 
-      expect(createUserJob).toHaveBeenCalledWith({ uid: 'u1', email: 'e@test.com', displayName: 'Test' })
+      expect(createUserJob).toHaveBeenCalledWith(
+        { uid: 'u1', email: 'e@test.com', displayName: 'Test' },
+        expect.objectContaining({
+          deleteDocument: expect.any(Function),
+          getDocument: expect.any(Function),
+          setDocument: expect.any(Function),
+        })
+      )
       expect(logSpy).toHaveBeenCalledWith('User creation trigger failed', { uid: 'u1', error: 'DB error' })
       logSpy.mockRestore()
     })
@@ -1217,7 +1231,14 @@ describe('index.js', () => {
         data: { uid: 'uid-fail', email: 'fail@test.com', displayName: 'Fail' },
       })
 
-      expect(createUserJob).toHaveBeenCalledWith({ uid: 'uid-fail', email: 'fail@test.com', displayName: 'Fail' })
+      expect(createUserJob).toHaveBeenCalledWith(
+        { uid: 'uid-fail', email: 'fail@test.com', displayName: 'Fail' },
+        expect.objectContaining({
+          deleteDocument: expect.any(Function),
+          getDocument: expect.any(Function),
+          setDocument: expect.any(Function),
+        })
+      )
     })
 
     it('should run success branch when createUserJob returns SUCCESS', async () => {
@@ -1230,7 +1251,14 @@ describe('index.js', () => {
         data: { uid: 'uid-ok', email: 'ok@chrisvogt.me', displayName: 'Ok' },
       })
 
-      expect(createUserJob).toHaveBeenCalledWith({ uid: 'uid-ok', email: 'ok@chrisvogt.me', displayName: 'Ok' })
+      expect(createUserJob).toHaveBeenCalledWith(
+        { uid: 'uid-ok', email: 'ok@chrisvogt.me', displayName: 'Ok' },
+        expect.objectContaining({
+          deleteDocument: expect.any(Function),
+          getDocument: expect.any(Function),
+          setDocument: expect.any(Function),
+        })
+      )
     })
   })
 

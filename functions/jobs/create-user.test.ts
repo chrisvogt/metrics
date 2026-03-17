@@ -1,22 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { logger } from 'firebase-functions'
 
 import createUser from './create-user.js'
 import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
 import type { DocumentStore } from '../ports/document-store.js'
-
-vi.mock('firebase-functions', () => ({
-  logger: {
-    info: vi.fn(),
-    error: vi.fn(),
-  },
-}))
+import { configureLogger } from '../services/logger.js'
 
 describe('createUser', () => {
   let documentStore: DocumentStore
+  const logger = {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    configureLogger(logger)
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
@@ -46,8 +45,8 @@ describe('createUser', () => {
         active: true,
       },
       widgets: {},
-      createdAt: expect.any(Object),
-      updatedAt: expect.any(Object),
+      createdAt: expect.any(String),
+      updatedAt: expect.any(String),
     })
 
     expect(documentStore.setDocument).toHaveBeenCalledWith(
@@ -61,8 +60,8 @@ describe('createUser', () => {
           active: true,
         },
         widgets: {},
-        createdAt: expect.any(Object),
-        updatedAt: expect.any(Object),
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
       }
     )
 

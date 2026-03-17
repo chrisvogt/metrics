@@ -7,14 +7,6 @@ import path from 'path'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 
-const getMediaStoreMock = vi.hoisted(() => vi.fn())
-const isDiskMediaStoreSelectedMock = vi.hoisted(() => vi.fn(() => true))
-
-vi.mock('../selectors/media-store.js', () => ({
-  getMediaStore: getMediaStoreMock,
-  isDiskMediaStoreSelected: isDiskMediaStoreSelectedMock,
-}))
-
 vi.mock('express-rate-limit', () => ({
   rateLimit: vi.fn(() => (_req, _res, next) => next()),
 }))
@@ -80,14 +72,14 @@ describe('createExpressApp media route', () => {
       authService,
       documentStore,
       ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
-      getFirebaseClientConfig: vi.fn(() => ({})),
+      getClientAuthConfig: vi.fn(() => ({})),
       logger,
+      mediaStore: new LocalDiskMediaStore(path.join(os.tmpdir(), 'metrics-unused-media-root')),
     })
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    isDiskMediaStoreSelectedMock.mockReturnValue(true)
   })
 
   afterEach(() => {
@@ -95,8 +87,19 @@ describe('createExpressApp media route', () => {
   })
 
   it('returns 404 when disk media serving is disabled', async () => {
-    const app = await buildApp()
-    isDiskMediaStoreSelectedMock.mockReturnValue(false)
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
+      getClientAuthConfig: vi.fn(() => ({})),
+      logger,
+      mediaStore: {
+        describe: () => ({ backend: 'gcs', target: 'bucket' }),
+        fetchAndStore: vi.fn(),
+        listFiles: vi.fn(),
+      },
+    })
 
     await request(app)
       .get('/api/media/cover.jpg')
@@ -112,10 +115,18 @@ describe('createExpressApp media route', () => {
   })
 
   it('returns 404 when the selected media store is not local disk-backed', async () => {
-    const app = await buildApp()
-    getMediaStoreMock.mockReturnValue({
-      describe: () => ({ target: '/tmp/not-local' }),
-      resolveAbsolutePath: () => '/tmp/not-local/cover.jpg',
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
+      getClientAuthConfig: vi.fn(() => ({})),
+      logger,
+      mediaStore: {
+        describe: () => ({ backend: 'gcs', target: '/tmp/not-local' }),
+        fetchAndStore: vi.fn(),
+        listFiles: vi.fn(),
+      },
     })
 
     await request(app)
@@ -124,25 +135,39 @@ describe('createExpressApp media route', () => {
   })
 
   it('returns 404 when the resolved media path escapes the local media root', async () => {
-    const app = await buildApp()
     const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'metrics-media-root-'))
     const mediaStore = new LocalDiskMediaStore(rootDir)
 
     vi.spyOn(mediaStore, 'resolveAbsolutePath').mockReturnValue(
       path.join(rootDir, '..', 'outside.txt')
     )
-    getMediaStoreMock.mockReturnValue(mediaStore)
+    const { createExpressApp } = await import('./create-express-app.js')
+    const routeApp = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
+      getClientAuthConfig: vi.fn(() => ({})),
+      logger,
+      mediaStore,
+    })
 
-    await request(app)
+    await request(routeApp)
       .get('/api/media/cover.jpg')
       .expect(404)
   })
 
   it('serves files from the local media root and returns 404 when the file is missing', async () => {
-    const app = await buildApp()
     const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'metrics-media-files-'))
     const mediaStore = new LocalDiskMediaStore(rootDir)
-    getMediaStoreMock.mockReturnValue(mediaStore)
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
+      getClientAuthConfig: vi.fn(() => ({})),
+      logger,
+      mediaStore,
+    })
 
     const existingPath = path.join(rootDir, 'cover.jpg')
     fs.writeFileSync(existingPath, 'file-bytes')
@@ -157,10 +182,17 @@ describe('createExpressApp media route', () => {
   })
 
   it('returns 500 when sendFile fails with a non-ENOENT error', async () => {
-    const app = await buildApp()
     const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'metrics-media-dir-'))
     const mediaStore = new LocalDiskMediaStore(rootDir)
-    getMediaStoreMock.mockReturnValue(mediaStore)
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
+      getClientAuthConfig: vi.fn(() => ({})),
+      logger,
+      mediaStore,
+    })
 
     fs.mkdirSync(path.join(rootDir, 'folder'))
 
@@ -170,10 +202,17 @@ describe('createExpressApp media route', () => {
   })
 
   it('does not overwrite the response when sendFile fails after headers are already sent', async () => {
-    const app = await buildApp()
     const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'metrics-media-sent-'))
     const mediaStore = new LocalDiskMediaStore(rootDir)
-    getMediaStoreMock.mockReturnValue(mediaStore)
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
+      getClientAuthConfig: vi.fn(() => ({})),
+      logger,
+      mediaStore,
+    })
 
     fs.writeFileSync(path.join(rootDir, 'cover.jpg'), 'file-bytes')
 
@@ -215,15 +254,23 @@ describe('createExpressApp auth and session branches', () => {
     setDocument: vi.fn(),
   }
 
+  const ensureRuntimeConfigApplied = vi.fn().mockResolvedValue(undefined)
+  const getClientAuthConfig = vi.fn(() => ({
+    apiKey: 'public-key',
+    authDomain: 'metrics.firebaseapp.com',
+    projectId: 'metrics-project',
+  }))
+
   const buildApp = async () => {
     const { createExpressApp } = await import('./create-express-app.js')
 
     return createExpressApp({
       authService,
       documentStore,
-      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
-      getFirebaseClientConfig: vi.fn(() => ({})),
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
       logger,
+      mediaStore: new LocalDiskMediaStore(path.join(os.tmpdir(), 'metrics-unused-auth-media')),
     })
   }
 
@@ -258,7 +305,12 @@ describe('createExpressApp auth and session branches', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.NODE_ENV = 'test'
-    isDiskMediaStoreSelectedMock.mockReturnValue(true)
+    ensureRuntimeConfigApplied.mockResolvedValue(undefined)
+    getClientAuthConfig.mockReturnValue({
+      apiKey: 'public-key',
+      authDomain: 'metrics.firebaseapp.com',
+      projectId: 'metrics-project',
+    })
   })
 
   afterEach(() => {
@@ -378,5 +430,59 @@ describe('createExpressApp auth and session branches', () => {
       ok: false,
       error: 'CSRF token missing',
     })
+  })
+
+  it('returns the client auth config from the provider-neutral endpoint', async () => {
+    const app = await buildApp()
+
+    const response = await request(app)
+      .get('/api/client-auth-config')
+      .expect(200)
+
+    expect(response.body).toEqual({
+      apiKey: 'public-key',
+      authDomain: 'metrics.firebaseapp.com',
+      projectId: 'metrics-project',
+    })
+    expect(ensureRuntimeConfigApplied).toHaveBeenCalledTimes(1)
+    expect(getClientAuthConfig).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the firebase config endpoint as a compatibility alias', async () => {
+    const app = await buildApp()
+
+    const response = await request(app)
+      .get('/api/firebase-config')
+      .expect(200)
+
+    expect(response.body).toEqual({
+      apiKey: 'public-key',
+      authDomain: 'metrics.firebaseapp.com',
+      projectId: 'metrics-project',
+    })
+    expect(ensureRuntimeConfigApplied).toHaveBeenCalledTimes(1)
+    expect(getClientAuthConfig).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['discogs', '../jobs/sync-discogs-data.js'],
+    ['goodreads', '../jobs/sync-goodreads-data.js'],
+    ['instagram', '../jobs/sync-instagram-data.js'],
+    ['steam', '../jobs/sync-steam-data.js'],
+  ])('syncs %s data through the injected document store route wrapper', async (provider, modulePath) => {
+    const app = await buildApp()
+    const jobModule = await import(modulePath)
+
+    vi.mocked(jobModule.default).mockResolvedValueOnce({
+      result: 'SUCCESS',
+      provider,
+    })
+
+    const response = await request(app)
+      .get(`/api/widgets/sync/${provider}`)
+      .expect(200)
+
+    expect(response.body.result).toBe('SUCCESS')
+    expect(jobModule.default).toHaveBeenCalledWith(documentStore)
   })
 })

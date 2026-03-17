@@ -66,9 +66,9 @@ describe('getWidgetContent', () => {
     const mockContent = { collections: { releases: [] } }
     getDiscogsWidgetContent.mockResolvedValue(mockContent)
 
-    const result = await getWidgetContent('discogs', 'user123')
+    const result = await getWidgetContent('discogs', 'user123', documentStore)
 
-    expect(getDiscogsWidgetContent).toHaveBeenCalledWith('user123')
+    expect(getDiscogsWidgetContent).toHaveBeenCalledWith('user123', documentStore)
     expect(result).toEqual(mockContent)
   })
 
@@ -76,9 +76,9 @@ describe('getWidgetContent', () => {
     const mockContent = { repositories: [] }
     getGitHubWidgetContent.mockResolvedValue(mockContent)
 
-    const result = await getWidgetContent('github', 'user123')
+    const result = await getWidgetContent('github', 'user123', documentStore)
 
-    expect(getGitHubWidgetContent).toHaveBeenCalledWith('user123')
+    expect(getGitHubWidgetContent).toHaveBeenCalledWith('user123', documentStore)
     expect(result).toEqual(mockContent)
   })
 
@@ -86,9 +86,9 @@ describe('getWidgetContent', () => {
     const mockContent = { collections: { recentlyReadBooks: [] } }
     getGoodreadsWidgetContent.mockResolvedValue(mockContent)
 
-    const result = await getWidgetContent('goodreads', 'user123')
+    const result = await getWidgetContent('goodreads', 'user123', documentStore)
 
-    expect(getGoodreadsWidgetContent).toHaveBeenCalledWith('user123')
+    expect(getGoodreadsWidgetContent).toHaveBeenCalledWith('user123', documentStore)
     expect(result).toEqual(mockContent)
   })
 
@@ -96,9 +96,9 @@ describe('getWidgetContent', () => {
     const mockContent = { collections: { media: [] } }
     getInstagramWidgetContent.mockResolvedValue(mockContent)
 
-    const result = await getWidgetContent('instagram', 'user123')
+    const result = await getWidgetContent('instagram', 'user123', documentStore)
 
-    expect(getInstagramWidgetContent).toHaveBeenCalledWith('user123')
+    expect(getInstagramWidgetContent).toHaveBeenCalledWith('user123', documentStore)
     expect(result).toEqual(mockContent)
   })
 
@@ -106,9 +106,9 @@ describe('getWidgetContent', () => {
     const mockContent = { collections: { topTracks: [] } }
     getSpotifyWidgetContent.mockResolvedValue(mockContent)
 
-    const result = await getWidgetContent('spotify', 'user123')
+    const result = await getWidgetContent('spotify', 'user123', documentStore)
 
-    expect(getSpotifyWidgetContent).toHaveBeenCalledWith('user123')
+    expect(getSpotifyWidgetContent).toHaveBeenCalledWith('user123', documentStore)
     expect(result).toEqual(mockContent)
   })
 
@@ -116,9 +116,9 @@ describe('getWidgetContent', () => {
     const mockContent = { collections: { recentlyPlayedGames: [] } }
     getSteamWidgetContent.mockResolvedValue(mockContent)
 
-    const result = await getWidgetContent('steam', 'user123')
+    const result = await getWidgetContent('steam', 'user123', documentStore)
 
-    expect(getSteamWidgetContent).toHaveBeenCalledWith('user123')
+    expect(getSteamWidgetContent).toHaveBeenCalledWith('user123', documentStore)
     expect(result).toEqual(mockContent)
   })
 
@@ -183,7 +183,7 @@ describe('getWidgetContent', () => {
   })
 
   it('should throw error for unrecognized widget type', async () => {
-    await expect(getWidgetContent('invalid', 'user123')).rejects.toThrow(
+    await expect(getWidgetContent('invalid', 'user123', documentStore)).rejects.toThrow(
       'Unrecognized widget type: invalid'
     )
   })

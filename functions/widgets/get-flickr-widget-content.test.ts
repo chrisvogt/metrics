@@ -1,21 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import getFlickrWidgetContent from './get-flickr-widget-content.js'
-
-// Mock firebase-functions logger
-vi.mock('firebase-functions', () => ({
-  logger: {
-    error: vi.fn()
-  }
-}))
-
-import { logger } from 'firebase-functions'
 import type { DocumentStore } from '../ports/document-store.js'
+import { configureLogger } from '../services/logger.js'
 
 describe('getFlickrWidgetContent', () => {
   let documentStore: DocumentStore
+  const logger = {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    configureLogger(logger)
 
     documentStore = {
       getDocument: vi.fn(),
