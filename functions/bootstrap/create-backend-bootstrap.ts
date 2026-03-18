@@ -60,8 +60,12 @@ export interface BackendBootstrap {
 
 const resolveLocalEnvPath = (): string => {
   const candidates = [
+    path.resolve(process.cwd(), 'functions/.env.local'),
+    path.resolve(process.cwd(), '.env.local'),
     path.resolve(process.cwd(), 'functions/.env'),
     path.resolve(process.cwd(), '.env'),
+    path.resolve(__dirname, '../.env.local'),
+    path.resolve(__dirname, '../../functions/.env.local'),
     path.resolve(__dirname, '../.env'),
     path.resolve(__dirname, '../../functions/.env'),
   ]

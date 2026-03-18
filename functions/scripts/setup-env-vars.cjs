@@ -81,7 +81,7 @@ function setupEnvVars({ runtimeConfig, execSyncImpl = execSync, log = console.lo
   log('\nEnvironment variables setup complete!')
   log('\nNext steps:')
   log('1. Deploy your functions: firebase deploy --only functions')
-  log('2. For local development, create a .env file with the same variables')
+  log('2. For local development, create a .env.local file with the same variables')
   log('3. You can now safely delete .runtimeconfig.json if you want')
 }
 
