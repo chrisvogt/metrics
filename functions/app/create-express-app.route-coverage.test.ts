@@ -56,6 +56,23 @@ const findRouteHandler = (
   return layer.route.stack[layer.route.stack.length - 1].handle
 }
 
+const findProtectedRouteMiddleware = (
+  app: ReturnType<typeof import('express').default>,
+  method: 'get' | 'delete',
+  routePath: string
+) => {
+  const layer = app.router.stack.find(
+    (entry: { route?: { path?: string; methods?: Record<string, boolean>; stack?: Array<{ handle: Function }> } }) =>
+      entry.route?.path === routePath && entry.route?.methods?.[method]
+  )
+
+  if (!layer?.route?.stack || layer.route.stack.length < 2) {
+    throw new Error(`Protected route middleware not found: ${method.toUpperCase()} ${routePath}`)
+  }
+
+  return layer.route.stack[layer.route.stack.length - 2].handle
+}
+
 const createResponse = () => {
   const response = {
     json: vi.fn(),
@@ -132,6 +149,15 @@ describe('createExpressApp route coverage', () => {
     })
   })
 
+  it('reports session auth header errors for missing, blank, and valid bearer tokens', async () => {
+    const { getSessionAuthError } = await import('./create-express-app.js')
+
+    expect(getSessionAuthError(undefined)).toBe('No valid authorization token provided')
+    expect(getSessionAuthError('Basic token')).toBe('No valid authorization token provided')
+    expect(getSessionAuthError('Bearer   ')).toBe('No token')
+    expect(getSessionAuthError('Bearer valid-token')).toBeNull()
+  })
+
   it.each([
     ['discogs', '../jobs/sync-discogs-data.js'],
     ['goodreads', '../jobs/sync-goodreads-data.js'],
@@ -156,5 +182,71 @@ describe('createExpressApp route coverage', () => {
     expect(jobModule.default).toHaveBeenCalledWith(documentStore)
     expect(response.status).toHaveBeenCalledWith(200)
     expect(response.send).toHaveBeenCalledWith({ result: 'SUCCESS', provider })
+  })
+
+  it('returns 401 when session auth reaches the defensive no-token branch', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+    })
+
+    const sessionHandler = findRouteHandler(app, 'post', '/api/auth/session')
+    const response = createResponse()
+    const authorization = {
+      startsWith: vi.fn(() => true),
+      split: vi.fn(() => ['Bearer token', 'synthetic-token']),
+      slice: vi.fn(() => '   '),
+    }
+
+    await sessionHandler(
+      {
+        headers: { authorization },
+      },
+      response
+    )
+
+    expect(response.status).toHaveBeenCalledWith(401)
+    expect(response.json).toHaveBeenCalledWith({ ok: false, error: 'No token' })
+  })
+
+  it('returns 401 when the protected auth middleware receives a blank bearer token', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+    })
+
+    const authenticateUser = findProtectedRouteMiddleware(app, 'get', '/api/user/profile')
+    const response = createResponse()
+    const next = vi.fn()
+
+    await authenticateUser(
+      {
+        cookies: {},
+        headers: { authorization: 'Bearer   ' },
+      },
+      response,
+      next
+    )
+
+    expect(logger.warn).toHaveBeenCalledWith('No valid authorization header found', {
+      authHeaderStart: 'Bearer   ',
+      hasAuthHeader: true,
+    })
+    expect(response.status).toHaveBeenCalledWith(401)
+    expect(response.json).toHaveBeenCalledWith({
+      ok: false,
+      error: 'No valid authorization header found',
+    })
+    expect(next).not.toHaveBeenCalled()
   })
 })
