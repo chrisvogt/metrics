@@ -1,5 +1,7 @@
+import type { DocumentData } from '@google-cloud/firestore'
+
 export interface DocumentStore {
-  getDocument<T>(path: string): Promise<T | null>
-  setDocument(path: string, value: unknown): Promise<void>
+  getDocument<T extends DocumentData>(path: string): Promise<T | null>
+  setDocument(path: string, value: DocumentData): Promise<void>
   deleteDocument?(path: string): Promise<void>
 }

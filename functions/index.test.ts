@@ -66,7 +66,11 @@ vi.mock('firebase-functions/params', () => ({
 const existsSyncMock = vi.hoisted(() => vi.fn(() => true))
 vi.mock('fs', () => ({
   existsSync: existsSyncMock,
-  readFileSync: vi.fn(() => JSON.stringify({ mock: 'token' }))
+  readFileSync: vi.fn(() => JSON.stringify({
+    type: 'service_account',
+    project_id: 'test-project',
+    client_email: 'firebase-adminsdk@test-project.iam.gserviceaccount.com',
+  }))
 }))
 
 // Mock dotenv
@@ -1260,6 +1264,46 @@ describe('index.js', () => {
         })
       )
     })
+
+    it('should normalize null displayName before delegating to createUserJob', async () => {
+      vi.resetModules()
+      const { default: createUserJob } = await import('./jobs/create-user.js')
+      vi.mocked(createUserJob).mockResolvedValue({ result: 'SUCCESS' })
+      const { handleUserCreation } = await import('./index.js')
+
+      await handleUserCreation({
+        data: { uid: 'uid-null-name', email: 'null@chrisvogt.me', displayName: null },
+      })
+
+      expect(createUserJob).toHaveBeenCalledWith(
+        { uid: 'uid-null-name', email: 'null@chrisvogt.me', displayName: undefined },
+        expect.objectContaining({
+          deleteDocument: expect.any(Function),
+          getDocument: expect.any(Function),
+          setDocument: expect.any(Function),
+        })
+      )
+    })
+
+    it('should normalize an omitted displayName before delegating to createUserJob', async () => {
+      vi.resetModules()
+      const { default: createUserJob } = await import('./jobs/create-user.js')
+      vi.mocked(createUserJob).mockResolvedValue({ result: 'SUCCESS' })
+      const { handleUserCreation } = await import('./index.js')
+
+      await handleUserCreation({
+        data: { uid: 'uid-no-name', email: 'noname@chrisvogt.me' },
+      })
+
+      expect(createUserJob).toHaveBeenCalledWith(
+        { uid: 'uid-no-name', email: 'noname@chrisvogt.me', displayName: undefined },
+        expect.objectContaining({
+          deleteDocument: expect.any(Function),
+          getDocument: expect.any(Function),
+          setDocument: expect.any(Function),
+        })
+      )
+    })
   })
 
   describe('Firebase Admin Initialization', () => {
@@ -1317,4 +1361,52 @@ describe('index.js', () => {
       existsSyncMock.mockReturnValue(true)
     })
   })
-}) 
+
+  describe('HTTP wrapper registration', () => {
+    it('should apply runtime config before delegating the registered HTTP handler to expressApp', async () => {
+      vi.resetModules()
+
+      const expressAppSpy = vi.fn()
+      const ensureRuntimeConfigApplied = vi.fn().mockResolvedValue(undefined)
+      const registerHttpFunction = vi.fn((handler) => handler)
+      const registerScheduledFunction = vi.fn((handler) => handler)
+      const registerUserCreationTrigger = vi.fn((handler) => handler)
+
+      vi.doMock('./app/create-express-app.js', () => ({
+        createExpressApp: vi.fn(() => expressAppSpy),
+        getSessionAuthError: vi.fn(),
+      }))
+
+      vi.doMock('./bootstrap/create-backend-bootstrap.js', () => ({
+        createBackendBootstrap: vi.fn(() => ({
+          authService: {},
+          documentStore: {},
+          ensureRuntimeConfigApplied,
+          getClientAuthConfig: vi.fn(() => ({})),
+          logger: {
+            error: vi.fn(),
+            info: vi.fn(),
+            warn: vi.fn(),
+          },
+          resolveMediaStore: vi.fn(),
+          runtimePlatform: {
+            registerHttpFunction,
+            registerScheduledFunction,
+            registerUserCreationTrigger,
+          },
+          runtimeSecrets: [],
+        })),
+      }))
+
+      const { app } = await import('./index.js')
+      const req = { headers: {}, method: 'GET', url: '/health' }
+      const res = { end: vi.fn() }
+
+      await app(req, res)
+
+      expect(ensureRuntimeConfigApplied).toHaveBeenCalledTimes(1)
+      expect(expressAppSpy).toHaveBeenCalledWith(req, res)
+      expect(registerHttpFunction).toHaveBeenCalledTimes(1)
+    })
+  })
+})

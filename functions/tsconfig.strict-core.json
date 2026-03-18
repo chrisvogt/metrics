@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true
+  },
+  "include": [
+    "adapters/storage/firestore-document-store.ts",
+    "config/backend-config.ts",
+    "config/runtime-config.ts",
+    "ports/document-store.ts",
+    "ports/runtime-platform.ts",
+    "runtime/firebase-admin-runtime.ts",
+    "runtime/firebase-runtime-config.ts",
+    "selectors/config.ts",
+    "types/**/*.d.ts",
+    "utils/extract-json-from-gemini-response.ts"
+  ]
+}

@@ -2,15 +2,17 @@ import {
   beforeUserCreated,
   type AuthBlockingEvent,
 } from 'firebase-functions/v2/identity'
-import { onRequest, type Request } from 'firebase-functions/v2/https'
+import { onRequest } from 'firebase-functions/v2/https'
 import { onSchedule, type ScheduledEvent } from 'firebase-functions/v2/scheduler'
 
 export const FIREBASE_FUNCTIONS_REGION = 'us-central1'
 export const FIREBASE_SCHEDULE = 'every day 02:00'
 
+type FirebaseHttpHandler = Parameters<typeof onRequest>[0]
+
 export const registerFirebaseHttpFunction = (
-  handler: (req: Request, res: any) => void | Promise<void>,
-  secrets: unknown[]
+  handler: (req: unknown, res: unknown) => void | Promise<void>,
+  secrets: readonly unknown[]
 ) =>
   onRequest(
     {
@@ -18,12 +20,12 @@ export const registerFirebaseHttpFunction = (
       timeoutSeconds: 300,
       secrets: secrets as never,
     },
-    handler as never
+    handler as unknown as FirebaseHttpHandler
   )
 
 export const registerFirebaseScheduledFunction = (
   handler: (event: ScheduledEvent) => void | Promise<void>,
-  secrets: unknown[]
+  secrets: readonly unknown[]
 ) =>
   onSchedule(
     {
@@ -36,7 +38,7 @@ export const registerFirebaseScheduledFunction = (
 
 export const registerFirebaseUserCreationTrigger = (
   handler: (event: AuthBlockingEvent) => void | Promise<void>,
-  secrets: unknown[]
+  secrets: readonly unknown[]
 ) =>
   beforeUserCreated(
     {

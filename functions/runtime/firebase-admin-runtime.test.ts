@@ -92,4 +92,57 @@ describe('firebase-admin-runtime', () => {
       log
     )
   })
+
+  it('throws when token.json does not resemble a Firebase service account', async () => {
+    const { getFirebaseAdminCredential } = await import('./firebase-admin-runtime.js')
+    const applicationDefault = vi.fn(() => ({ credential: 'adc' }))
+    const cert = vi.fn()
+
+    existsSyncMock.mockReturnValue(true)
+    readFileSyncMock.mockReturnValueOnce(JSON.stringify({ unexpected: true }))
+
+    expect(() =>
+      getFirebaseAdminCredential(
+        {
+          auth: vi.fn(),
+          credential: {
+            applicationDefault,
+            cert,
+          },
+          firestore: vi.fn(),
+          initializeApp: vi.fn(),
+        },
+        false
+      )
+    ).toThrow('Invalid Firebase service account JSON at ./token.json')
+
+    expect(cert).not.toHaveBeenCalled()
+    expect(applicationDefault).not.toHaveBeenCalled()
+  })
+
+  it('falls back to ADC in non-production when token.json is missing', async () => {
+    const { getFirebaseAdminCredential } = await import('./firebase-admin-runtime.js')
+    const applicationDefault = vi.fn(() => ({ credential: 'adc' }))
+    const cert = vi.fn()
+
+    existsSyncMock.mockReturnValue(false)
+
+    expect(
+      getFirebaseAdminCredential(
+        {
+          auth: vi.fn(),
+          credential: {
+            applicationDefault,
+            cert,
+          },
+          firestore: vi.fn(),
+          initializeApp: vi.fn(),
+        },
+        false
+      )
+    ).toEqual({ credential: 'adc' })
+
+    expect(applicationDefault).toHaveBeenCalledTimes(1)
+    expect(cert).not.toHaveBeenCalled()
+  })
 })

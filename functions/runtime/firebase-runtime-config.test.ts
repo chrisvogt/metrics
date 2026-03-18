@@ -30,6 +30,16 @@ describe('firebase runtime config', () => {
     expect(defineStringMock).toHaveBeenCalledWith('STORAGE_FIRESTORE_DATABASE_URL')
   })
 
+  it('reads the Firebase Firestore database url from a StringParam when available', async () => {
+    const value = vi.fn(() => 'mock-param-value')
+    defineStringMock.mockReturnValueOnce({ value })
+
+    const { getFirebaseFirestoreDatabaseUrl } = await import('./firebase-runtime-config.js')
+
+    expect(getFirebaseFirestoreDatabaseUrl()).toBe('mock-param-value')
+    expect(value).toHaveBeenCalledTimes(1)
+  })
+
   it('exposes the Firebase runtime secret for trigger wiring', async () => {
     const secret = { value: vi.fn(() => ({})) }
     defineJsonSecretMock.mockReturnValueOnce(secret)
