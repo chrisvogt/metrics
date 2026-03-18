@@ -1,7 +1,24 @@
+interface MetricsConfig {
+  google?: {
+    books_api_key?: string
+  } | null
+  spotify?: {
+    client_id?: string
+    client_secret?: string
+    redirect_uri?: string
+    refresh_token?: string
+  } | null
+  steam?: {
+    api_key?: string
+    user_id?: string
+  } | null
+}
+
 /**
  * Select the Google Books API Key.
  */
-const selectGoogleBooksAPIKey = config => config?.google?.books_api_key
+const selectGoogleBooksAPIKey = (config: MetricsConfig | null | undefined): string | undefined =>
+  config?.google?.books_api_key
 
 /**
  * Select the Spotify Client ID.
@@ -9,7 +26,8 @@ const selectGoogleBooksAPIKey = config => config?.google?.books_api_key
  * @param {object} config The current app configuration.
  * @returns {string} The Spotify Client ID associated with your application.
  */
-const selectSpotifyClientId = config => config?.spotify?.client_id
+const selectSpotifyClientId = (config: MetricsConfig | null | undefined): string | undefined =>
+  config?.spotify?.client_id
 
 /**
  * Select the Spotify client secret.
@@ -17,7 +35,8 @@ const selectSpotifyClientId = config => config?.spotify?.client_id
  * @param {object} config The current app configuration.
  * @returns {string} The Spotify Client Secret associated with your application.
  */
-const selectSpotifyClientSecret = config => config?.spotify?.client_secret
+const selectSpotifyClientSecret = (config: MetricsConfig | null | undefined): string | undefined =>
+  config?.spotify?.client_secret
 
 /**
  * Select the Spotify redirect URI.
@@ -25,7 +44,8 @@ const selectSpotifyClientSecret = config => config?.spotify?.client_secret
  * @param {object} config The current app configuration.
  * @returns {string} Must match value set in your Spotify developer dashboard.
  */
-const selectSpotifyRedirectURI = config => config?.spotify?.redirect_uri
+const selectSpotifyRedirectURI = (config: MetricsConfig | null | undefined): string | undefined =>
+  config?.spotify?.redirect_uri
 
 /**
  * Select the Spotify refresh token.
@@ -33,7 +53,8 @@ const selectSpotifyRedirectURI = config => config?.spotify?.redirect_uri
  * @param {object} config The current app configuration.
  * @returns {string} The latest Spotify Refresh Token. Used in place of an auth code.
  */
-const selectSpotifyRefreshToken = config => config?.spotify?.refresh_token
+const selectSpotifyRefreshToken = (config: MetricsConfig | null | undefined): string | undefined =>
+  config?.spotify?.refresh_token
 
 /**
  * Select the Steam API key.
@@ -42,7 +63,8 @@ const selectSpotifyRefreshToken = config => config?.spotify?.refresh_token
  * @param {object} config The current app configuration.
  * @returns {string} The Steam API key.
  */
-const selectSteamAPIKey = config => config?.steam?.api_key
+const selectSteamAPIKey = (config: MetricsConfig | null | undefined): string | undefined =>
+  config?.steam?.api_key
 
 /**
  * Select the Steam user identifier.
@@ -50,7 +72,8 @@ const selectSteamAPIKey = config => config?.steam?.api_key
  * @param {object} config The current app configuration.
  * @returns {string} The Steam user id. This numeric value is not the custom username.
  */
-const selectSteamUserId = config => config?.steam?.user_id
+const selectSteamUserId = (config: MetricsConfig | null | undefined): string | undefined =>
+  config?.steam?.user_id
 
 export {
   selectGoogleBooksAPIKey,

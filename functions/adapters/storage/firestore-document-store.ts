@@ -1,4 +1,5 @@
 import admin from 'firebase-admin'
+import type { DocumentData } from '@google-cloud/firestore'
 
 import type { DocumentStore } from '../../ports/document-store.js'
 
@@ -16,7 +17,7 @@ function toCollectionAndDocument(path: string): { collectionPath: string; docume
 }
 
 export class FirestoreDocumentStore implements DocumentStore {
-  async getDocument<T>(path: string): Promise<T | null> {
+  async getDocument<T extends DocumentData>(path: string): Promise<T | null> {
     const { collectionPath, documentId } = toCollectionAndDocument(path)
     const snapshot = await admin.firestore().collection(collectionPath).doc(documentId).get()
 
@@ -27,7 +28,7 @@ export class FirestoreDocumentStore implements DocumentStore {
     return snapshot.data() as T
   }
 
-  async setDocument(path: string, value: unknown): Promise<void> {
+  async setDocument(path: string, value: DocumentData): Promise<void> {
     const { collectionPath, documentId } = toCollectionAndDocument(path)
 
     await admin.firestore().collection(collectionPath).doc(documentId).set(value)

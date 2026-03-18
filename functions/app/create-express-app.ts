@@ -67,6 +67,15 @@ const buildFailureResponse = (err: unknown = {}): { ok: false; error: string } =
 const ALLOWED_EMAIL_DOMAINS = ['@chrisvogt.me', '@chronogrove.com']
 const CSRF_SECRET_COOKIE = '_csrfSecret'
 
+function extractBearerToken(authHeader: string | undefined): string | null {
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null
+  }
+
+  const token = authHeader.slice('Bearer '.length).trim()
+  return token.length > 0 ? token : null
+}
+
 function isAllowedEmail(email: string | undefined | null): boolean {
   if (!email) return false
   if (!isProductionEnvironment()) return true
@@ -77,7 +86,7 @@ export function getSessionAuthError(authHeader: string | undefined): string | nu
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return 'No valid authorization token provided'
   }
-  const token = authHeader.split('Bearer ')[1]?.trim() || ''
+  const token = extractBearerToken(authHeader) ?? ''
   if (!token) return 'No token'
   return null
 }
@@ -149,7 +158,8 @@ export function createExpressApp({
       }
 
       const authHeader = req.headers.authorization
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      const token = extractBearerToken(authHeader)
+      if (!token) {
         logger.warn('No valid authorization header found', {
           hasAuthHeader: !!req.headers.authorization,
           authHeaderStart: req.headers.authorization?.substring(0, 20),
@@ -162,10 +172,9 @@ export function createExpressApp({
       }
 
       logger.info('JWT token found, attempting verification')
-      const token = authHeader.split('Bearer ')[1]
 
       try {
-        const decodedToken = await authService.verifyIdToken(token!)
+        const decodedToken = await authService.verifyIdToken(token)
 
         logger.info('JWT token verified successfully', {
           uid: decodedToken.uid,
@@ -418,7 +427,12 @@ export function createExpressApp({
           return
         }
 
-        const token = (req.headers.authorization as string).split('Bearer ')[1]!.trim()
+        const token = extractBearerToken(req.headers.authorization)
+        if (!token) {
+          res.status(401).json({ ok: false, error: 'No token' })
+          return
+        }
+
         const decodedToken = await authService.verifyIdToken(token)
 
         if (!isAllowedEmail(decodedToken.email)) {
