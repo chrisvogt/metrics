@@ -7,6 +7,7 @@
   },
   "include": [
     "adapters/storage/firestore-document-store.ts",
+    "bootstrap/create-backend-bootstrap.ts",
     "config/backend-config.ts",
     "config/runtime-config.ts",
     "ports/document-store.ts",
@@ -14,7 +15,18 @@
     "runtime/firebase-admin-runtime.ts",
     "runtime/firebase-runtime-config.ts",
     "selectors/config.ts",
+    "types/sync-job.ts",
     "types/**/*.d.ts",
+    "types/widget-content.ts",
     "utils/extract-json-from-gemini-response.ts"
+    ,
+    "widgets/get-discogs-widget-content.ts",
+    "widgets/get-flickr-widget-content.ts",
+    "widgets/get-github-widget-content.ts",
+    "widgets/get-goodreads-widget-content.ts",
+    "widgets/get-instagram-widget-content.ts",
+    "widgets/get-spotify-widget-content.ts",
+    "widgets/get-steam-widget-content.ts",
+    "widgets/get-widget-content.ts"
   ]
 }

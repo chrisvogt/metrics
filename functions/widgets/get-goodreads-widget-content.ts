@@ -1,15 +1,18 @@
 import type { DocumentStore } from '../ports/document-store.js'
 import { getDefaultWidgetUserId } from '../config/backend-paths.js'
+import type {
+  GoodreadsWidgetContent,
+  GoodreadsWidgetDocument,
+} from '../types/widget-content.js'
 import { toDateOrDefault, toUserWidgetContentPath } from './widget-document-store.js'
 
 const getGoodreadsWidgetContent = async (
   userId: string = getDefaultWidgetUserId(),
   documentStore: DocumentStore
-) => {
+): Promise<GoodreadsWidgetContent> => {
   const goodreadsWidgetContentPath = toUserWidgetContentPath(userId, 'goodreads')
-  const data = await documentStore.getDocument<{
-    meta?: { synced?: unknown }
-  } & Record<string, unknown>>(goodreadsWidgetContentPath)
+  const data =
+    await documentStore.getDocument<GoodreadsWidgetDocument>(goodreadsWidgetContentPath)
 
   if (!data) {
     return {

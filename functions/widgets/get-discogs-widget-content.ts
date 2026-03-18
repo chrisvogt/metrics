@@ -1,15 +1,18 @@
 import type { DocumentStore } from '../ports/document-store.js'
 import { getDefaultWidgetUserId } from '../config/backend-paths.js'
+import type {
+  DiscogsWidgetContent,
+  DiscogsWidgetDocument,
+} from '../types/widget-content.js'
 import { toDateOrDefault, toUserWidgetContentPath } from './widget-document-store.js'
 
 const getDiscogsWidgetContent = async (
   userId: string = getDefaultWidgetUserId(),
   documentStore: DocumentStore
-) => {
+): Promise<DiscogsWidgetContent> => {
   const discogsWidgetContentPath = toUserWidgetContentPath(userId, 'discogs')
-  const data = await documentStore.getDocument<{
-    meta?: { synced?: unknown }
-  } & Record<string, unknown>>(discogsWidgetContentPath)
+  const data =
+    await documentStore.getDocument<DiscogsWidgetDocument>(discogsWidgetContentPath)
 
   if (!data) {
     return {
@@ -19,14 +22,9 @@ const getDiscogsWidgetContent = async (
 
   const { meta = {}, ...responseData } = data
 
-  const transformedMeta = {
-    ...meta,
-    ...(meta.synced ? { synced: toDateOrDefault(meta.synced) } : {}),
-  }
-
   return {
     ...responseData,
-    meta: transformedMeta,
+    meta: meta.synced ? { synced: toDateOrDefault(meta.synced) } : {},
   }
 }
 

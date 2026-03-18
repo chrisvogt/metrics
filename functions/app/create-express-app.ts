@@ -13,6 +13,8 @@ import { getWidgetUserIdForHostname } from '../config/backend-paths.js'
 import { isProductionEnvironment } from '../config/backend-config.js'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
+import type { WidgetContentUnion, WidgetId } from '../types/widget-content.js'
+import { isWidgetId } from '../types/widget-content.js'
 import deleteUserJob from '../jobs/delete-user.js'
 import syncDiscogsDataJob from '../jobs/sync-discogs-data.js'
 import syncFlickrDataJob from '../jobs/sync-flickr-data.js'
@@ -20,7 +22,7 @@ import syncGoodreadsDataJob from '../jobs/sync-goodreads-data.js'
 import syncInstagramDataJob from '../jobs/sync-instagram-data.js'
 import syncSpotifyDataJob from '../jobs/sync-spotify-data.js'
 import syncSteamDataJob from '../jobs/sync-steam-data.js'
-import { getWidgetContent, validWidgetIds } from '../widgets/get-widget-content.js'
+import { getWidgetContent } from '../widgets/get-widget-content.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 
 interface LoggerLike {
@@ -51,10 +53,12 @@ function createRateLimiter(windowMs: number, max: number) {
   })
 }
 
-const buildSuccessResponse = (payload: unknown): { ok: true; payload: unknown } => ({
-  ok: true,
-  payload,
-})
+const buildSuccessResponse = <TPayload>(
+  payload: TPayload
+): { ok: true; payload: TPayload } => ({
+    ok: true,
+    payload,
+  })
 
 const buildFailureResponse = (err: unknown = {}): { ok: false; error: string } => ({
   ok: false,
@@ -66,6 +70,8 @@ const buildFailureResponse = (err: unknown = {}): { ok: false; error: string } =
 
 const ALLOWED_EMAIL_DOMAINS = ['@chrisvogt.me', '@chronogrove.com']
 const CSRF_SECRET_COOKIE = '_csrfSecret'
+type ProviderSyncId = Exclude<WidgetId, 'github'>
+type ProviderSyncResult = { result: string } & Record<string, unknown>
 
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader?.startsWith('Bearer ')) {
@@ -262,7 +268,7 @@ export function createExpressApp({
     credentials: true,
   }
 
-  const syncHandlersByProvider: Record<string, () => Promise<unknown>> = {
+  const syncHandlersByProvider: Record<ProviderSyncId, () => Promise<ProviderSyncResult>> = {
     discogs: () => syncDiscogsDataJob(documentStore),
     goodreads: () => syncGoodreadsDataJob(documentStore),
     instagram: () => syncInstagramDataJob(documentStore),
@@ -319,8 +325,12 @@ export function createExpressApp({
     cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 10),
     async (req, res) => {
-      const provider = req.params.provider as string
-      const handler = provider ? syncHandlersByProvider[provider] : undefined
+      const providerParam = req.params.provider
+      const provider = typeof providerParam === 'string' ? providerParam : undefined
+      const handler =
+        provider && provider in syncHandlersByProvider
+          ? syncHandlersByProvider[provider as ProviderSyncId]
+          : undefined
 
       if (!handler) {
         logger.info(`Attempted to sync an unrecognized provider: ${provider}`)
@@ -341,7 +351,7 @@ export function createExpressApp({
   expressApp.get('/api/widgets/:provider', cors(corsOptions), async (req, res) => {
     const provider = req.params.provider
 
-    if (!provider || !validWidgetIds.includes(provider)) {
+    if (!provider || !isWidgetId(provider)) {
       const response = buildFailureResponse({
         message: 'A valid provider type is required.',
       })
@@ -354,7 +364,8 @@ export function createExpressApp({
     const userId = getWidgetUserIdForHostname(originalHostname)
 
     try {
-      const widgetContent = await getWidgetContent(provider, userId, documentStore)
+      const widgetContent: WidgetContentUnion =
+        await getWidgetContent(provider, userId, documentStore)
       const response = buildSuccessResponse(widgetContent)
       res.set('Cache-Control', 'public, max-age=3600, s-maxage=7200')
       res.status(200).send(response)

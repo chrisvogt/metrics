@@ -487,4 +487,32 @@ describe('createExpressApp auth and session branches', () => {
     expect(response.body.result).toBe('SUCCESS')
     expect(jobModule.default).toHaveBeenCalledWith(documentStore)
   })
+
+  it('treats array sync provider params as unsupported', async () => {
+    const app = await buildApp()
+    const syncRouteLayer = app.router.stack.find(
+      (layer) => layer.route?.path === '/api/widgets/sync/:provider'
+    )
+    const syncHandler = syncRouteLayer?.route?.stack.at(-1)?.handle
+
+    expect(syncHandler).toBeTypeOf('function')
+
+    const req = {
+      params: {
+        provider: ['discogs'],
+      },
+    }
+    const res = {
+      send: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+    }
+
+    await syncHandler?.(req, res)
+
+    expect(logger.info).toHaveBeenCalledWith(
+      'Attempted to sync an unrecognized provider: undefined'
+    )
+    expect(res.status).toHaveBeenCalledWith(400)
+    expect(res.send).toHaveBeenCalledWith('Unrecognized or unsupported provider.')
+  })
 })

@@ -1,22 +1,18 @@
 import type { DocumentStore } from '../ports/document-store.js'
 import { getDefaultWidgetUserId } from '../config/backend-paths.js'
+import type {
+  InstagramWidgetContent,
+  InstagramWidgetDocument,
+} from '../types/widget-content.js'
 import { toDateOrDefault, toUserWidgetContentPath } from './widget-document-store.js'
 
 const getInstagramWidgetContent = async (
   userId: string = getDefaultWidgetUserId(),
   documentStore: DocumentStore
-) => {
+): Promise<InstagramWidgetContent> => {
   const instagramWidgetContentPath = toUserWidgetContentPath(userId, 'instagram')
-  const data = await documentStore.getDocument<{
-    media?: unknown[]
-    meta?: { synced?: unknown }
-    profile?: {
-      biography?: string
-      followersCount?: number
-      mediaCount?: number
-      username?: string
-    }
-  }>(instagramWidgetContentPath)
+  const data =
+    await documentStore.getDocument<InstagramWidgetDocument>(instagramWidgetContentPath)
 
   if (!data) {
     throw new Error('Failed to get a response.')
