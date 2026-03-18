@@ -60,9 +60,9 @@ export const handleUserCreation = runtimePlatform.registerUserCreationTrigger(as
   const rawUser: RuntimeUserCreationData | undefined = event.data
   const user = rawUser
     ? {
-        ...rawUser,
-        displayName: rawUser.displayName ?? undefined,
-      }
+      ...rawUser,
+      displayName: rawUser.displayName ?? undefined,
+    }
     : undefined
   if (!user) {
     logger.error('handleUserCreation: event.data missing')
