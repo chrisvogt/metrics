@@ -66,7 +66,11 @@ vi.mock('firebase-functions/params', () => ({
 const existsSyncMock = vi.hoisted(() => vi.fn(() => true))
 vi.mock('fs', () => ({
   existsSync: existsSyncMock,
-  readFileSync: vi.fn(() => JSON.stringify({ mock: 'token' }))
+  readFileSync: vi.fn(() => JSON.stringify({
+    type: 'service_account',
+    project_id: 'test-project',
+    client_email: 'firebase-adminsdk@test-project.iam.gserviceaccount.com',
+  }))
 }))
 
 // Mock dotenv

@@ -21,7 +21,13 @@ interface FirebaseAdminRuntimeOptions {
 const isServiceAccount = (value: unknown): value is admin.ServiceAccount =>
   typeof value === 'object' &&
   value !== null &&
-  ('projectId' in value || 'project_id' in value)
+  !Array.isArray(value) &&
+  (
+    typeof (value as { projectId?: unknown }).projectId === 'string' ||
+    typeof (value as { project_id?: unknown }).project_id === 'string' ||
+    typeof (value as { clientEmail?: unknown }).clientEmail === 'string' ||
+    typeof (value as { client_email?: unknown }).client_email === 'string'
+  )
 
 export function getFirebaseAdminCredential(
   adminModule: FirebaseAdminModule,

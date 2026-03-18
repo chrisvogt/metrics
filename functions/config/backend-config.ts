@@ -84,10 +84,10 @@ export const getSteamConfig = () => ({
   userId: process.env.STEAM_USER_ID,
 })
 
-const isStringRecord = (value: unknown): value is Record<string, string> =>
+const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' &&
   value !== null &&
-  Object.values(value).every((entry) => typeof entry === 'string')
+  !Array.isArray(value)
 
 const parseWidgetUserMap = (
   rawValue: string | undefined
@@ -98,7 +98,7 @@ const parseWidgetUserMap = (
 
   try {
     const parsed = JSON.parse(rawValue) as unknown
-    const widgetUserMap = isStringRecord(parsed) ? parsed : {}
+    const widgetUserMap = isRecord(parsed) ? parsed : {}
 
     return Object.entries(widgetUserMap).reduce<Record<string, string>>((acc, [hostname, userId]) => {
       if (hostname.length > 0 && typeof userId === 'string' && userId.length > 0) {
