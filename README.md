@@ -86,6 +86,8 @@ Set `CLIENT_API_KEY`, `CLIENT_AUTH_DOMAIN`, and `CLIENT_PROJECT_ID` in your `fun
 #### Option 2: Production (Secret Manager)
 Production config lives in **Google Cloud Secret Manager** as the secret **`FUNCTIONS_CONFIG_EXPORT`** (one JSON object with all keys). To create or update it: run `firebase functions:config:export`, or in [Secret Manager](https://console.cloud.google.com/security/secret-manager) add a new version of that secret with JSON matching the shape in `functions/config/exported-config.ts` (see `CONFIG_PATH_TO_ENV`; e.g. `auth.client_api_key`, `github.access_token`, `spotify.client_id`, etc.).
 
+For production deploys, leave disk-only storage settings such as `LOCAL_MEDIA_ROOT` and `MEDIA_STORE_BACKEND=disk` unset. The backend defaults production media storage to GCS, while the secret-backed storage values provide the Firestore database URL, bucket, and public media base URL.
+
 ## Monorepo
 
 This repo is a **pnpm workspace** with two packages: `hosting` (React app) and `functions` (Firebase Cloud Functions). **[Turborepo](https://turbo.build/repo)** runs tasks across the workspace: it only runs a script in packages that define it, caches outputs, and avoids redundant work.
