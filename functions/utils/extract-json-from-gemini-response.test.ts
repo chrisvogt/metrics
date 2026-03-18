@@ -22,6 +22,10 @@ describe('extractJsonFromGeminiResponse', () => {
     expect(result).toEqual({ response: '<p>Raw</p>', debug: { key: 'value' } })
   })
 
+  it('returns null when raw JSON parses to a non-object value', () => {
+    expect(extractJsonFromGeminiResponse('123')).toBeNull()
+  })
+
   it('returns null for plain text', () => {
     expect(extractJsonFromGeminiResponse('Just plain text')).toBeNull()
   })
