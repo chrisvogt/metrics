@@ -55,7 +55,7 @@ export interface BackendBootstrap {
   logger: typeof firebaseLogger
   resolveMediaStore: typeof getMediaStore
   runtimePlatform: RuntimePlatform
-  runtimeSecrets: unknown[]
+  runtimeSecrets: ReturnType<typeof getFirebaseRuntimeSecrets>
 }
 
 const resolveLocalEnvPath = (): string => {

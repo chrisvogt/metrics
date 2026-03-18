@@ -4,6 +4,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 import { getGitHubConfig } from '../config/backend-config.js'
+import type { GitHubWidgetContent } from '../types/widget-content.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -13,7 +14,7 @@ const query = fs.readFileSync(
   'utf8'
 )
 
-const getGitHubWidgetContent = async () => {
+const getGitHubWidgetContent = async (): Promise<GitHubWidgetContent> => {
   const { accessToken, username } = getGitHubConfig()
 
   if (!accessToken || !username) {
@@ -30,7 +31,7 @@ const getGitHubWidgetContent = async () => {
     },
   })
 
-  return body
+  return body as GitHubWidgetContent
 }
 
 export default getGitHubWidgetContent

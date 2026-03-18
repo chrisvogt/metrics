@@ -1,4 +1,10 @@
 import type { DocumentStore } from '../ports/document-store.js'
+import type {
+  WidgetContentById,
+  WidgetContentUnion,
+  WidgetId,
+} from '../types/widget-content.js'
+import { isWidgetId, widgetIds } from '../types/widget-content.js'
 import getDiscogsWidgetContent from './get-discogs-widget-content.js'
 import getFlickrWidgetContent from './get-flickr-widget-content.js'
 import getGitHubWidgetContent from './get-github-widget-content.js'
@@ -7,26 +13,31 @@ import getInstagramWidgetContent from './get-instagram-widget-content.js'
 import getSpotifyWidgetContent from './get-spotify-widget-content.js'
 import getSteamWidgetContent from './get-steam-widget-content.js'
 
-type InjectedWidgetHandler = (userId: string, documentStore: DocumentStore) => Promise<unknown>
+type InjectedWidgetHandler<TWidgetId extends WidgetId> = (
+  userId: string,
+  documentStore: DocumentStore
+) => Promise<WidgetContentById[TWidgetId]>
 
-const widgetHandlerRegistry: Record<string, InjectedWidgetHandler> = {
+const widgetHandlerRegistry: {
+  [TWidgetId in WidgetId]: InjectedWidgetHandler<TWidgetId>
+} = {
   discogs: getDiscogsWidgetContent,
+  flickr: getFlickrWidgetContent,
   github: getGitHubWidgetContent,
   goodreads: getGoodreadsWidgetContent,
   instagram: getInstagramWidgetContent,
   spotify: getSpotifyWidgetContent,
   steam: getSteamWidgetContent,
-  flickr: getFlickrWidgetContent,
 }
 
-export const validWidgetIds = Object.keys(widgetHandlerRegistry)
+export const validWidgetIds = widgetIds
 
 export const getWidgetContent = async (
-  widgetId: string,
+  widgetId: WidgetId,
   userId: string,
   documentStore: DocumentStore
-): Promise<unknown> => {
-  if (!validWidgetIds.includes(widgetId)) {
+): Promise<WidgetContentUnion> => {
+  if (!isWidgetId(widgetId)) {
     throw new Error(`Unrecognized widget type: ${widgetId}`)
   }
 
