@@ -325,7 +325,8 @@ export function createExpressApp({
     cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 10),
     async (req, res) => {
-      const provider = req.params.provider
+      const providerParam = req.params.provider
+      const provider = typeof providerParam === 'string' ? providerParam : undefined
       const handler =
         provider && provider in syncHandlersByProvider
           ? syncHandlersByProvider[provider as ProviderSyncId]
