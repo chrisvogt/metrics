@@ -198,6 +198,17 @@ describe('backend config', () => {
     })
   })
 
+  it('returns the default hostname mapping when no overrides are provided', async () => {
+    const { getBackendPathConfig } = await import('./backend-config.js')
+
+    expect(getBackendPathConfig()).toEqual({
+      defaultWidgetUserId: 'chrisvogt',
+      widgetUserIdByHostname: {
+        'api.chronogrove.com': 'chronogrove',
+      },
+    })
+  })
+
   it('parses hostname mapping config from comma-separated env values', async () => {
     process.env.WIDGET_USER_ID_BY_HOSTNAME =
       'api.custom.example=custom-user, api.secondary.example=secondary-user'
@@ -223,6 +234,14 @@ describe('backend config', () => {
     expect(getBackendPathConfig().widgetUserIdByHostname).toEqual({
       'api.custom.example': 'custom-user',
     })
+  })
+
+  it('ignores JSON hostname mapping values that are not objects', async () => {
+    process.env.WIDGET_USER_ID_BY_HOSTNAME = JSON.stringify(['api.custom.example=custom-user'])
+
+    const { getBackendPathConfig } = await import('./backend-config.js')
+
+    expect(getBackendPathConfig().widgetUserIdByHostname).toEqual({})
   })
 
   it('ignores malformed entries in comma-separated hostname mapping config', async () => {
