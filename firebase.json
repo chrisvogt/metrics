@@ -5,7 +5,10 @@
   },
   "functions": {
     "port": 5020,
-    "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"],
+    "predeploy": [
+      "node \"$RESOURCE_DIR/../scripts/guard-functions-env.cjs\"",
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ],
     "runtime": "nodejs24",
     "source": "functions",
     "codebase": "default"

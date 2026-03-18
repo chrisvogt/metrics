@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.15] - 2026-03-17
+
+### Fixed
+
+- **Functions deploy config isolation** – Local development now prefers `functions/.env.local`, deploys fail fast when `functions/.env` is present, and direct Firebase CLI deploys run the same guard during predeploy so local disk-backed settings do not leak into production runtime config.
+- **Node 24 runtime startup** – Moved `dotenv` into runtime dependencies so newly deployed Cloud Functions revisions can import the shared config bootstrap successfully during startup.
+
+### Developer experience
+
+- **Firebase param handoff** – Documented the split between local-only env files, Firebase deploy-time parameter files, and the `FUNCTIONS_CONFIG_EXPORT` Secret Manager payload so local disk storage remains available without interfering with production Firestore/GCS deploys.
+
 ## [0.22.14] - 2026-03-15
 
 ### Developer experience

@@ -2,14 +2,14 @@
 
 ## Local Development
 
-1. Copy `.env.template` to `.env`:
+1. Copy `.env.template` to `.env.local`:
    ```bash
-   cp .env.template .env
+   cp .env.template .env.local
    ```
-2. Fill in your actual values in the `.env` file.
-3. The `.env` file is in `.gitignore` and is not committed.
+2. Fill in your actual values in the `.env.local` file.
+3. The `.env.local` file is in `.gitignore` and is not committed.
 
-When `NODE_ENV !== 'production'`, the app loads all config from `.env` (via dotenv). No other config files are used locally.
+When `NODE_ENV !== 'production'`, the app should load local config from `.env.local` (via dotenv). Avoid `functions/.env` for day-to-day development because Firebase deploys that file's values into Cloud Functions.
 
 ### Local media storage
 
@@ -59,7 +59,7 @@ Edit **FUNCTIONS_CONFIG_EXPORT** in Secret Manager and add a new version with th
 
 ## Environment variables reference
 
-See `.env.template` for the full list of variable names. The same names are used in `.env` (local) and as the target of the mapping from the secret’s JSON paths in `config/exported-config.ts` (production).
+See `.env.template` for the full list of variable names. The same names are used in `.env.local` (local) and as the target of the mapping from the secret’s JSON paths in `config/exported-config.ts` (production).
 
 ## After setup
 

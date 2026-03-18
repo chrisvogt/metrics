@@ -1,6 +1,6 @@
 {
   "name": "metrics-functions",
-  "version": "0.22.14",
+  "version": "0.22.15",
   "description": "Personal metrics API. A hobby project tracking my online metrics.",
   "type": "module",
   "main": "lib/index.js",
@@ -26,6 +26,7 @@
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.0",
     "firebase": "^12.10.0",
@@ -49,7 +50,6 @@
     "@typescript-eslint/eslint-plugin": "^8.56.1",
     "@typescript-eslint/parser": "^8.56.1",
     "@vitest/coverage-v8": "^4.0.18",
-    "dotenv": "^17.3.1",
     "eslint": "^10.0.3",
     "firebase-functions-test": "^3.4.1",
     "globals": "^17.4.0",

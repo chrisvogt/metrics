@@ -46,8 +46,8 @@ This repository contains a portable metrics service I use to fetch and sync data
 2. **Configure environment (local development)**  
    In `functions/`, copy the env template and set values (see [Environment variables](#environment-variables) below):
    ```bash
-   cp functions/.env.template functions/.env
-   # Edit functions/.env (CLIENT_API_KEY, CLIENT_AUTH_DOMAIN, CLIENT_PROJECT_ID, etc.)
+   cp functions/.env.template functions/.env.local
+   # Edit functions/.env.local (CLIENT_API_KEY, CLIENT_AUTH_DOMAIN, CLIENT_PROJECT_ID, etc.)
    ```
 
 ### Environment variables
@@ -56,11 +56,12 @@ For local development, copy the template and set your values:
 
 ```bash
 # In the /functions directory
-cp .env.template .env
-# Edit .env with your actual values
+cp .env.template .env.local
+# Edit .env.local with your actual values
 ```
 
-**Important:** Never commit `functions/.env` to version control. It contains sensitive information like API keys.
+**Important:** Never commit `functions/.env.local` to version control. It contains sensitive information like API keys.
+Also avoid using `functions/.env` for normal development, because Firebase deploys that file's values into Cloud Functions.
 
 #### Required Environment Variables
 
@@ -80,7 +81,7 @@ The following variables are required for the authentication system to work:
 The current client auth config payload (still Firebase-shaped while auth migration is deferred) is served from the backend so it isn’t hardcoded in the client.
 
 #### Local (development)
-Set `CLIENT_API_KEY`, `CLIENT_AUTH_DOMAIN`, and `CLIENT_PROJECT_ID` in your `functions/.env` file.
+Set `CLIENT_API_KEY`, `CLIENT_AUTH_DOMAIN`, and `CLIENT_PROJECT_ID` in your `functions/.env.local` file.
 
 #### Option 2: Production (Secret Manager)
 Production config lives in **Google Cloud Secret Manager** as the secret **`FUNCTIONS_CONFIG_EXPORT`** (one JSON object with all keys). To create or update it: run `firebase functions:config:export`, or in [Secret Manager](https://console.cloud.google.com/security/secret-manager) add a new version of that secret with JSON matching the shape in `functions/config/exported-config.ts` (see `CONFIG_PATH_TO_ENV`; e.g. `auth.client_api_key`, `github.access_token`, `spotify.client_id`, etc.).

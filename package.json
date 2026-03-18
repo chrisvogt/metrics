@@ -11,9 +11,9 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
-    "deploy:all": "pnpm run build && firebase deploy",
+    "deploy:all": "node scripts/guard-functions-env.cjs && pnpm run build && firebase deploy",
     "deploy:hosting": "pnpm run build && firebase deploy --only hosting",
-    "deploy:functions": "firebase deploy --only functions"
+    "deploy:functions": "node scripts/guard-functions-env.cjs && firebase deploy --only functions"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
