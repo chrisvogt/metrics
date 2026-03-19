@@ -37,7 +37,9 @@ const parser = new xml2js.Parser({
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value != null && typeof value === 'object'
 
-const getMaybeString = (value: unknown): string | undefined => {
+// xml2js text nodes can appear as either a plain string or an object containing
+// the charkey (default `_`) under the `_` property.
+const getXmlTextOrUndefined = (value: unknown): string | undefined => {
   if (typeof value === 'string') return value
   if (!isRecord(value)) return undefined
   const inner = value._
@@ -67,20 +69,20 @@ const getProfileFromResponse = (result: unknown): GoodreadsProfile => {
     shelf => isRecord(shelf) && shelf.name === 'read',
   ) as Record<string, unknown> | undefined
 
-  const bookCountStr = getMaybeString(readShelf?.book_count) ?? ''
+  const bookCountStr = getXmlTextOrUndefined(readShelf?.book_count) ?? ''
   const readCount = Number(bookCountStr) || 0
 
   return {
-    name: getMaybeString(user.name),
-    username: getMaybeString(user.user_name),
-    link: getMaybeString(user.link),
-    imageURL: getMaybeString(user.image_url),
-    smallImageURL: getMaybeString(user.small_image_url),
-    website: getMaybeString(user.website),
-    joined: getMaybeString(user.joined),
-    interests: getMaybeString(user.interests),
-    favoriteBooks: getMaybeString(user.favorite_books),
-    friendsCount: getMaybeString(user.friends_count),
+    name: getXmlTextOrUndefined(user.name),
+    username: getXmlTextOrUndefined(user.user_name),
+    link: getXmlTextOrUndefined(user.link),
+    imageURL: getXmlTextOrUndefined(user.image_url),
+    smallImageURL: getXmlTextOrUndefined(user.small_image_url),
+    website: getXmlTextOrUndefined(user.website),
+    joined: getXmlTextOrUndefined(user.joined),
+    interests: getXmlTextOrUndefined(user.interests),
+    favoriteBooks: getXmlTextOrUndefined(user.favorite_books),
+    friendsCount: getXmlTextOrUndefined(user.friends_count),
     readCount,
   }
 }

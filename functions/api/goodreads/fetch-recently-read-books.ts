@@ -98,18 +98,25 @@ export default async () => {
 
       const transformedReviews = reviewsResponse.reduce<GoodreadsReviewListBookSource[]>(
         (books, book) => {
-          const getFirstString = (value: unknown): string | undefined => {
+          const getXmlTextOrUndefined = (value: unknown): string | undefined => {
             if (typeof value === 'string') return value
-            if (Array.isArray(value) && typeof value[0] === 'string') return value[0]
+            if (Array.isArray(value)) {
+              const first = value[0]
+              return typeof first === 'string' ? first : undefined
+            }
+            if (value && typeof value === 'object') {
+              const maybeInner = (value as { _: unknown })._
+              return typeof maybeInner === 'string' ? maybeInner : undefined
+            }
             return undefined
           }
 
-          const dateCandidate = Array.isArray(book?.read_at) ? book.read_at[0] : book?.read_at
-          if (typeof dateCandidate !== 'string' || dateCandidate.length <= 3) {
+          const readDate = getXmlTextOrUndefined(book?.read_at)
+          if (!readDate || readDate.length <= 3) {
             return books
           }
 
-          const rating = getFirstString(book?.rating)
+          const rating = getXmlTextOrUndefined(book?.rating)
           if (!rating) {
             return books
           }
@@ -122,15 +129,15 @@ export default async () => {
 
           const firstBook = firstBookUnknown as Record<string, unknown>
 
-          const goodreadsDescription = getFirstString(firstBook.description)
-          const isbn13 = getFirstString(firstBook.isbn13)
-          const isbn10 = getFirstString(firstBook.isbn)
+          const goodreadsDescription = getXmlTextOrUndefined(firstBook.description)
+          const isbn13 = getXmlTextOrUndefined(firstBook.isbn13)
+          const isbn10 = getXmlTextOrUndefined(firstBook.isbn)
           const isbn = isbn13 || isbn10
           if (!isbn) {
             return books
           }
 
-          const title = getFirstString(firstBook.title)
+          const title = getXmlTextOrUndefined(firstBook.title)
 
           let authorName: string | undefined
           const authorsValue = firstBook.authors
@@ -139,7 +146,7 @@ export default async () => {
             const authorValue = author0.author
             const authorFirst = Array.isArray(authorValue) ? authorValue[0] : undefined
             if (authorFirst && typeof authorFirst === 'object') {
-              authorName = getFirstString((authorFirst as Record<string, unknown>).name)
+              authorName = getXmlTextOrUndefined((authorFirst as Record<string, unknown>).name)
             }
           }
 
