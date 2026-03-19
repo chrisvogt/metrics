@@ -2,7 +2,7 @@ import type {
   GoogleBooksVolumeSubset,
 } from './google-books.js'
 
-export type GoodreadsNilObject = { nil?: string } | { _: unknown } | Record<string, unknown>
+export type GoodreadsNilObject = { nil?: string; _: string | undefined }
 
 export type GoodreadsPossiblyNilString = string | GoodreadsNilObject | null | undefined
 

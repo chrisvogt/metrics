@@ -66,7 +66,7 @@ export interface GoodreadsWidgetDocument {
   aiSummary?: string
   collections?: GoodreadsWidgetCollections
   meta?: WidgetMeta
-  profile?: GoodreadsProfile | unknown
+  profile?: GoodreadsProfile
   recentBooks?: GoodreadsRecentlyReadBook[]
   summary?: string | null
 }

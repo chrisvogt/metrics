@@ -45,6 +45,7 @@ export const isGoogleBooksVolumesResponseSubset = (
   value: unknown,
 ): value is GoogleBooksVolumesResponseSubset => {
   if (!value || typeof value !== 'object') return false
-  return 'items' in value
+  const maybeItems = (value as { items?: unknown }).items
+  return Array.isArray(maybeItems)
 }
 
