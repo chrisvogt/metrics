@@ -1831,7 +1831,17 @@ describe('syncGoodreadsData', () => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
-          results.push(result)
+          // Clone update identities so final matching falls back to link matching.
+          // NOTE: `processUpdatesWithMedia` uses the `updates` array later to create
+          // `fetchedBooksWithMetadata[].update`, so we must clone `result.updates` (not only `result.update`).
+          const clonedUpdates = Array.isArray(result?.updates)
+            ? result.updates.map((u: unknown) => (typeof u === 'object' && u ? { ...(u as object) } : u))
+            : result?.updates
+          results.push({
+            ...result,
+            ...(result?.update ? { update: clonedUpdates?.[0] ?? result.update } : {}),
+            ...(result?.updates ? { updates: clonedUpdates } : {}),
+          })
         }
         return results
       })
@@ -1893,7 +1903,15 @@ describe('syncGoodreadsData', () => {
         const results = []
         for (let i = 0; i < items.length; i++) {
           const result = await mapper(items[i], i)
-          results.push(result)
+          // Clone update identities so final matching falls back to ISBN matching.
+          const clonedUpdates = Array.isArray(result?.updates)
+            ? result.updates.map((u: unknown) => (typeof u === 'object' && u ? { ...(u as object) } : u))
+            : result?.updates
+          results.push({
+            ...result,
+            ...(result?.update ? { update: clonedUpdates?.[0] ?? result.update } : {}),
+            ...(result?.updates ? { updates: clonedUpdates } : {}),
+          })
         }
         return results
       })

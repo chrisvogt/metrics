@@ -291,6 +291,52 @@ describe('fetchUser', () => {
     expect(result.updates?.[1]).toEqual({ type: 'review', transformed: true })
   })
 
+  it('should log and ignore errors transforming updates', async () => {
+    const mockXmlResponse = '<xml>test data</xml>'
+    const mockJsonResult = {
+      GoodreadsResponse: {
+        user: {
+          name: 'Test User',
+          user_shelves: {
+            user_shelf: [
+              { name: 'read', book_count: { _: '50' } },
+            ],
+          },
+          updates: {
+            update: [
+              { type: 'userstatus', book: { goodreadsID: '123' } },
+              { type: 'review', book: { goodreadsID: '456' } },
+            ],
+          },
+        },
+      },
+    }
+
+    mockGot.mockResolvedValue({ body: mockXmlResponse })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, mockJsonResult)
+    })
+
+    mockGetUserStatus.mockImplementation(() => {
+      throw new Error('userstatus boom')
+    })
+    mockGetReview.mockImplementation(() => {
+      throw new Error('review boom')
+    })
+
+    const result = await fetchUser()
+
+    expect(result.updates ?? []).toHaveLength(0)
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Failed to transform Goodreads userstatus update.',
+      expect.any(Error),
+    )
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Failed to transform Goodreads review update.',
+      expect.any(Error),
+    )
+  })
+
   it('should handle single update (not array)', async () => {
     const mockXmlResponse = '<xml>test data</xml>'
     const mockJsonResult = {
