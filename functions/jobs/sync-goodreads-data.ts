@@ -116,7 +116,7 @@ const processUpdatesWithMedia = async (
 
   // Find updates that need book data fetched
   const updatesNeedingBooks: Array<{ update: GoodreadsUpdate; isbn: string | null }> = []
-  const updatesWithMedia = updates.map((update) => {
+  const updatesWithMedia: GoodreadsUpdateWithMedia[] = updates.map((update): GoodreadsUpdateWithMedia => {
     // Get ISBN from the update's book
     let isbn: string | null = null
     if (update.type === 'userstatus' && update.book) {
@@ -135,7 +135,7 @@ const processUpdatesWithMedia = async (
       const matchingBook = booksByISBN.get(isbn) || booksByISBN.get(isbn.replace(/-/g, ''))
       if (matchingBook && matchingBook.cdnMediaURL) {
         // Book already exists, use its CDN URL
-        const updateWithMedia = { ...update }
+        const updateWithMedia: GoodreadsUpdateWithMedia = { ...update }
         updateWithMedia.cdnMediaURL = matchingBook.cdnMediaURL
         updateWithMedia.mediaDestinationPath = matchingBook.mediaDestinationPath
         return updateWithMedia
@@ -300,14 +300,20 @@ const processUpdatesWithMedia = async (
     )
     
     // Extract ISBN from Google Books response if available, otherwise use the update's ISBN
-    const fetchedBooksWithMetadata = fetchedBookResults
-      .filter(({ googleBookResult }) => 
-        Boolean(googleBookResult) && Boolean(googleBookResult.book)
+    type FetchedBookWithMetadata = GoodreadsRecentlyReadBook & { update: GoodreadsUpdate }
+
+    const fetchedBooksWithMetadata: FetchedBookWithMetadata[] = fetchedBookResults
+      .filter(
+        (
+          entry,
+        ): entry is typeof entry & {
+          googleBookResult: GoogleBooksFetchByIsbnResult & { book: GoogleBooksVolumeSubset }
+        } => Boolean(entry.googleBookResult && entry.googleBookResult.book),
       )
       .flatMap(({ googleBookResult, updates, isbn: updateISBN }) => {
         // Try to get ISBN from Google Books response first
         let isbn = updateISBN
-        const volumeInfo = googleBookResult.book?.volumeInfo
+        const volumeInfo = googleBookResult.book.volumeInfo
         if (volumeInfo?.industryIdentifiers) {
           const isbn13 = volumeInfo.industryIdentifiers.find(id => id.type === 'ISBN_13')
           const isbn10 = volumeInfo.industryIdentifiers.find(id => id.type === 'ISBN_10')
@@ -315,7 +321,8 @@ const processUpdatesWithMedia = async (
         }
         
         const transformedBook = transformBookData({
-          ...googleBookResult,
+          book: googleBookResult.book,
+          rating: googleBookResult.rating,
           isbn,
         })
         
@@ -359,10 +366,10 @@ const processUpdatesWithMedia = async (
     }
 
     // Create a map of fetched books by update reference, link, ISBN, and title for matching
-    const fetchedBooksByUpdate = new Map()
-    const fetchedBooksByLink = new Map()
-    const fetchedBooksByISBN = new Map()
-    const fetchedBooksByTitle = new Map()
+    const fetchedBooksByUpdate = new Map<GoodreadsUpdate, FetchedBookWithMetadata>()
+    const fetchedBooksByLink = new Map<string, FetchedBookWithMetadata>()
+    const fetchedBooksByISBN = new Map<string, FetchedBookWithMetadata>()
+    const fetchedBooksByTitle = new Map<string, FetchedBookWithMetadata>()
     
     fetchedBooksWithMetadata.forEach(book => {
       // Map by update object reference (most reliable for exact matches)
@@ -404,14 +411,14 @@ const processUpdatesWithMedia = async (
     })
 
     // Update updates with fetched book data
-    return updatesWithMedia.map((update) => {
+    return updatesWithMedia.map((update): GoodreadsUpdateWithMedia => {
       if (update.cdnMediaURL) {
         // Already has media from existing books
         return update
       }
 
       // Try to match by update object reference first (most reliable)
-      let fetchedBook = fetchedBooksByUpdate.get(update)
+      let fetchedBook: FetchedBookWithMetadata | undefined = fetchedBooksByUpdate.get(update)
       
       // Fallback to link matching
       if (!fetchedBook && update.link) {
@@ -444,7 +451,7 @@ const processUpdatesWithMedia = async (
       }
 
       if (fetchedBook && fetchedBook.cdnMediaURL) {
-        const updateWithMedia = { ...update }
+        const updateWithMedia: GoodreadsUpdateWithMedia = { ...update }
         updateWithMedia.cdnMediaURL = fetchedBook.cdnMediaURL
         updateWithMedia.mediaDestinationPath = fetchedBook.mediaDestinationPath
         return updateWithMedia
