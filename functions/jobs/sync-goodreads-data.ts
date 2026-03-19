@@ -21,8 +21,8 @@ import { toStoredDateTime } from '../utils/time.js'
 import type {
   GoogleBooksFetchByIsbnResult,
   GoogleBooksVolumeSubset,
-  GoogleBooksVolumesResponseSubset,
 } from '../types/google-books.js'
+import { isGoogleBooksVolumesResponseSubset } from '../types/google-books.js'
 import type {
   GoodreadsProfile,
   GoodreadsRecentlyReadBook,
@@ -34,13 +34,6 @@ import type {
   GoodreadsReviewBook,
 } from '../types/goodreads.js'
 import type { GoodreadsWidgetDocument } from '../types/widget-content.js'
-
-const isGoogleBooksVolumesResponseSubset = (
-  value: unknown,
-): value is GoogleBooksVolumesResponseSubset => {
-  if (!value || typeof value !== 'object') return false
-  return 'items' in value
-}
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 

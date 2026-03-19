@@ -6,16 +6,12 @@ import { getGoogleBooksApiKey } from '../../config/backend-config.js'
 import type {
   GoogleBooksFetchByIsbnInput,
   GoogleBooksFetchByIsbnResult,
-  GoogleBooksVolumesResponseSubset,
   GoogleBooksVolumeSubset,
 } from '../../types/google-books.js'
 
-const isVolumesResponseSubset = (
-  value: unknown,
-): value is GoogleBooksVolumesResponseSubset => {
-  if (!value || typeof value !== 'object') return false
-  return 'items' in value
-}
+import {
+  isGoogleBooksVolumesResponseSubset as isVolumesResponseSubset,
+} from '../../types/google-books.js'
 
 const fetchBook = async (
   book: GoogleBooksFetchByIsbnInput,

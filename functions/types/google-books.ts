@@ -41,3 +41,10 @@ export interface GoogleBooksFetchByIsbnResult {
   rating?: string | null
 }
 
+export const isGoogleBooksVolumesResponseSubset = (
+  value: unknown,
+): value is GoogleBooksVolumesResponseSubset => {
+  if (!value || typeof value !== 'object') return false
+  return 'items' in value
+}
+

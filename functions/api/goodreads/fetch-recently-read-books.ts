@@ -13,9 +13,11 @@ import {
 } from '../../config/backend-config.js'
 
 import type {
-  GoogleBooksVolumesResponseSubset,
   GoogleBooksVolumeSubset,
   GoogleBooksFetchByIsbnResult,
+} from '../../types/google-books.js'
+import {
+  isGoogleBooksVolumesResponseSubset,
 } from '../../types/google-books.js'
 import type {
   GoodreadsRecentlyReadBook,
@@ -79,13 +81,6 @@ export default async () => {
   )
 
   let rawReviewsResponse: GoodreadsReviewListRawReview[] = []
-
-  const isGoogleBooksVolumesResponseSubset = (
-    value: unknown,
-  ): value is GoogleBooksVolumesResponseSubset => {
-    if (!value || typeof value !== 'object') return false
-    return 'items' in value
-  }
 
   // Transforms Goodreads Book Reviews response from XML into JSON
   const bookReviews = await new Promise<GoodreadsReviewListBookSource[]>((resolve, reject) => {
