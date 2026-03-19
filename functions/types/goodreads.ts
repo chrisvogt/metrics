@@ -6,10 +6,6 @@ export type GoodreadsNilObject = { nil?: string } | { _: unknown } | Record<stri
 
 export type GoodreadsPossiblyNilString = string | GoodreadsNilObject | null | undefined
 
-export function toGoodreadsString(value: GoodreadsPossiblyNilString): string | null {
-  return typeof value === 'string' ? value : null
-}
-
 export interface GoodreadsActor {
   imageURL?: string
   link?: string
@@ -138,23 +134,8 @@ export interface GoodreadsReviewListBookSource {
   authorName?: string
 }
 
-export function isGoodreadsReviewListBookSource(
-  value: unknown
-): value is GoodreadsReviewListBookSource {
-  if (!value || typeof value !== 'object') return false
-  const v = value as { isbn?: unknown; rating?: unknown }
-  return typeof v.isbn === 'string' && typeof v.rating === 'string'
-}
-
 export interface GoodreadsWidgetCollections {
   recentlyReadBooks?: GoodreadsRecentlyReadBook[]
   updates?: GoodreadsUpdate[] | null
-}
-
-export interface GoodreadsWidgetDocumentShape {
-  collections?: GoodreadsWidgetCollections
-  meta?: { synced?: Date | unknown }
-  profile?: GoodreadsProfile | unknown
-  aiSummary?: unknown
 }
 
