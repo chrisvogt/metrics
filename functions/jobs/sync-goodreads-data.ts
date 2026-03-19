@@ -17,6 +17,7 @@ import { getGoogleBooksApiKey } from '../config/backend-config.js'
 import { toProviderCollectionPath } from '../config/backend-paths.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
+import { getXmlTextOrNull } from '../utils/goodreads-xml.js'
 
 import type {
   GoogleBooksFetchByIsbnResult,
@@ -113,14 +114,14 @@ const processUpdatesWithMedia = async (
     // Get ISBN from the update's book
     let isbn: string | null = null
     if (update.type === 'userstatus' && update.book) {
-      const isbn13 = update.book.isbn13
-      const isbn10 = update.book.isbn
-      isbn = typeof isbn13 === 'string' ? isbn13 : (typeof isbn10 === 'string' ? isbn10 : null)
+      const isbn13 = getXmlTextOrNull(update.book.isbn13)
+      const isbn10 = getXmlTextOrNull(update.book.isbn)
+      isbn = isbn13 ?? isbn10
     } else if (update.type === 'review' && update.book) {
       // Review updates might not have ISBN, but check anyway
-      const isbn13 = update.book.isbn13
-      const isbn10 = update.book.isbn
-      isbn = typeof isbn13 === 'string' ? isbn13 : (typeof isbn10 === 'string' ? isbn10 : null)
+      const isbn13 = getXmlTextOrNull(update.book.isbn13)
+      const isbn10 = getXmlTextOrNull(update.book.isbn)
+      isbn = isbn13 ?? isbn10
     }
 
     // If we have ISBN, try to match with existing books
@@ -385,11 +386,11 @@ const processUpdatesWithMedia = async (
         if (book.update.type === 'userstatus' && book.update.book) {
           const isbn13 = book.update.book.isbn13
           const isbn10 = book.update.book.isbn
-          updateISBN = (isbn13 && typeof isbn13 === 'string') ? isbn13 : ((isbn10 && typeof isbn10 === 'string') ? isbn10 : null)
+          updateISBN = getXmlTextOrNull(isbn13) ?? getXmlTextOrNull(isbn10)
         } else if (book.update.type === 'review' && book.update.book) {
           const isbn13 = book.update.book.isbn13
           const isbn10 = book.update.book.isbn
-          updateISBN = (isbn13 && typeof isbn13 === 'string') ? isbn13 : ((isbn10 && typeof isbn10 === 'string') ? isbn10 : null)
+          updateISBN = getXmlTextOrNull(isbn13) ?? getXmlTextOrNull(isbn10)
         }
         if (updateISBN && String(updateISBN) !== String(book.isbn)) {
           fetchedBooksByISBN.set(String(updateISBN), book)
@@ -422,13 +423,13 @@ const processUpdatesWithMedia = async (
       if (!fetchedBook) {
         let isbn: string | null = null
         if (update.type === 'userstatus' && update.book) {
-          const isbn13 = update.book.isbn13
-          const isbn10 = update.book.isbn
-          isbn = typeof isbn13 === 'string' ? isbn13 : (typeof isbn10 === 'string' ? isbn10 : null)
+          const isbn13 = getXmlTextOrNull(update.book.isbn13)
+          const isbn10 = getXmlTextOrNull(update.book.isbn)
+          isbn = isbn13 ?? isbn10
         } else if (update.type === 'review' && update.book) {
-          const isbn13 = update.book.isbn13
-          const isbn10 = update.book.isbn
-          isbn = typeof isbn13 === 'string' ? isbn13 : (typeof isbn10 === 'string' ? isbn10 : null)
+          const isbn13 = getXmlTextOrNull(update.book.isbn13)
+          const isbn10 = getXmlTextOrNull(update.book.isbn)
+          isbn = isbn13 ?? isbn10
         }
 
         if (isbn) {

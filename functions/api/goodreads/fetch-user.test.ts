@@ -291,6 +291,156 @@ describe('fetchUser', () => {
     expect(result.updates?.[1]).toEqual({ type: 'review', transformed: true })
   })
 
+  it('should ignore null/undefined updates in update array', async () => {
+    const mockXmlResponse = '<xml>test data</xml>'
+    const mockJsonResult = {
+      GoodreadsResponse: {
+        user: {
+          name: 'Test User',
+          user_shelves: {
+            user_shelf: [
+              { name: 'read', book_count: { _: '50' } }
+            ]
+          },
+          updates: {
+            update: [
+              null,
+              'oops-not-an-object',
+              { type: 'userstatus', book: { goodreadsID: '123' } },
+              undefined,
+              { type: 'review', book: { goodreadsID: '456' } },
+            ]
+          }
+        }
+      }
+    }
+
+    mockGot.mockResolvedValue({ body: mockXmlResponse })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, mockJsonResult)
+    })
+
+    mockGetUserStatus.mockReturnValue({ type: 'userstatus', transformed: true })
+    mockGetReview.mockReturnValue({ type: 'review', transformed: true })
+
+    const result = await fetchUser()
+
+    expect(result.updates ?? []).toHaveLength(2)
+    expect(result.updates?.[0]).toEqual({ type: 'userstatus', transformed: true })
+    expect(result.updates?.[1]).toEqual({ type: 'review', transformed: true })
+    expect(mockGetUserStatus).toHaveBeenCalledTimes(1)
+    expect(mockGetReview).toHaveBeenCalledTimes(1)
+  })
+
+  it('should handle malformed XML parse result (non-record)', async () => {
+    const mockXmlResponse = '<xml>test data</xml>'
+
+    mockGot.mockResolvedValue({ body: mockXmlResponse })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, null)
+    })
+
+    const result = await fetchUser()
+
+    expect(result.profile?.readCount ?? 0).toBe(0)
+    expect(result.updates ?? []).toEqual([])
+    expect(mockGetUserStatus).not.toHaveBeenCalled()
+    expect(mockGetReview).not.toHaveBeenCalled()
+  })
+
+  it('should handle malformed XML parse result (missing user)', async () => {
+    const mockXmlResponse = '<xml>test data</xml>'
+    const mockJsonResult = {
+      GoodreadsResponse: {
+        user: null,
+      },
+    }
+
+    mockGot.mockResolvedValue({ body: mockXmlResponse })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, mockJsonResult)
+    })
+
+    const result = await fetchUser()
+
+    expect(result.profile?.readCount ?? 0).toBe(0)
+    expect(result.updates ?? []).toEqual([])
+    expect(mockGetUserStatus).not.toHaveBeenCalled()
+    expect(mockGetReview).not.toHaveBeenCalled()
+  })
+
+  it('should handle malformed XML parse result (non-record user_shelves)', async () => {
+    const mockXmlResponse = '<xml>test data</xml>'
+    const mockJsonResult = {
+      GoodreadsResponse: {
+        user: {
+          user_shelves: 'not-an-object',
+          updates: {
+            update: [],
+          },
+        },
+      },
+    }
+
+    mockGot.mockResolvedValue({ body: mockXmlResponse })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, mockJsonResult)
+    })
+
+    const result = await fetchUser()
+
+    expect(result.profile?.readCount ?? 0).toBe(0)
+    expect(result.updates ?? []).toEqual([])
+    expect(mockGetUserStatus).not.toHaveBeenCalled()
+    expect(mockGetReview).not.toHaveBeenCalled()
+  })
+
+  it('should log and ignore errors transforming updates', async () => {
+    const mockXmlResponse = '<xml>test data</xml>'
+    const mockJsonResult = {
+      GoodreadsResponse: {
+        user: {
+          name: 'Test User',
+          user_shelves: {
+            user_shelf: [
+              { name: 'read', book_count: { _: '50' } },
+            ],
+          },
+          updates: {
+            update: [
+              { type: 'userstatus', book: { goodreadsID: '123' } },
+              { type: 'review', book: { goodreadsID: '456' } },
+            ],
+          },
+        },
+      },
+    }
+
+    mockGot.mockResolvedValue({ body: mockXmlResponse })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, mockJsonResult)
+    })
+
+    mockGetUserStatus.mockImplementation(() => {
+      throw new Error('userstatus boom')
+    })
+    mockGetReview.mockImplementation(() => {
+      throw new Error('review boom')
+    })
+
+    const result = await fetchUser()
+
+    expect(result.updates ?? []).toHaveLength(0)
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Failed to transform Goodreads userstatus update.',
+      expect.any(Error),
+    )
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'Failed to transform Goodreads review update.',
+      expect.any(Error),
+    )
+  })
+
   it('should handle single update (not array)', async () => {
     const mockXmlResponse = '<xml>test data</xml>'
     const mockJsonResult = {

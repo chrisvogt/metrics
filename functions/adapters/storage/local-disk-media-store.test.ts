@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'fs'
 import { tmpdir } from 'os'
 import path from 'path'
 import { Readable } from 'stream'
@@ -75,5 +75,92 @@ describe('LocalDiskMediaStore', () => {
     expect(adapter.resolveAbsolutePath('../nested/test.txt')).toBe(
       path.join(rootDirectory, 'nested/test.txt')
     )
+  })
+
+  it('returns an empty list when the root directory does not exist (ENOENT)', async () => {
+    const nonExistentRoot = path.join(tmpdir(), `metrics-media-does-not-exist-${Date.now()}`)
+    const missingAdapter = new LocalDiskMediaStore(nonExistentRoot)
+
+    await expect(missingAdapter.listFiles()).resolves.toEqual([])
+  })
+
+  it('rethrows errors when the root directory exists but is not a directory', async () => {
+    const filePath = path.join(rootDirectory, 'not-a-directory')
+    writeFileSync(filePath, 'nope')
+
+    const fileAsRootAdapter = new LocalDiskMediaStore(filePath)
+    await expect(fileAsRootAdapter.listFiles()).rejects.toBeInstanceOf(Error)
+  })
+
+  it('rejects when mediaURL is missing', async () => {
+    await expect(
+      adapter.fetchAndStore({
+        destinationPath: 'nested/test.txt',
+        id: 'media123',
+        mediaURL: undefined,
+      }),
+    ).rejects.toThrow('Missing media to download for media123.')
+  })
+
+  it('rejects when the download fails (https.get error)', async () => {
+    mockHttpsGet.mockImplementation((_url, _callback) => {
+      return {
+        on: (_event: string, cb: (err: Error) => void) => {
+          cb(new Error('download boom'))
+          return this
+        },
+      }
+    })
+
+    await expect(
+      adapter.fetchAndStore({
+        destinationPath: 'nested/test.txt',
+        id: 'media123',
+        mediaURL: 'https://example.com/test.txt',
+      }),
+    ).rejects.toThrow('Failed to download media for media123: download boom')
+  })
+
+  it('rejects when the destination path is a directory (write stream error)', async () => {
+    // Create a directory where the file is supposed to go to force a writeStream error (EISDIR).
+    const absoluteDestinationPath = path.join(rootDirectory, 'nested/test.txt')
+    mkdirSync(path.dirname(absoluteDestinationPath), { recursive: true })
+    mkdirSync(absoluteDestinationPath)
+
+    mockHttpsGet.mockImplementation((_url, callback) => {
+      const response = new Readable({
+        read() {
+          this.push('hello world')
+          this.push(null)
+        },
+      })
+      callback(response)
+      return { on: vi.fn().mockReturnThis() }
+    })
+
+    await expect(
+      adapter.fetchAndStore({
+        destinationPath: 'nested/test.txt',
+        id: 'media123',
+        mediaURL: 'https://example.com/test.txt',
+      }),
+    ).rejects.toThrow(/Failed to upload nested\/test\.txt: /)
+  })
+
+  it('rejects when mkdir fails because rootDirectory is not a directory', async () => {
+    const filePath = path.join(rootDirectory, 'root-is-file')
+    writeFileSync(filePath, 'not a dir')
+    const fileRootAdapter = new LocalDiskMediaStore(filePath)
+
+    await expect(
+      fileRootAdapter.fetchAndStore({
+        destinationPath: 'nested/test.txt',
+        id: 'media123',
+        mediaURL: 'https://example.com/test.txt',
+      }),
+    ).rejects.toBeInstanceOf(Error)
+
+    // Should fail before it even tries to download.
+    expect(mockHttpsGet).not.toHaveBeenCalled()
   })
 })

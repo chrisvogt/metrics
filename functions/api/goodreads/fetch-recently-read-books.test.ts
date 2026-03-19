@@ -551,6 +551,97 @@ describe('fetchRecentlyReadBooks', () => {
     })
   })
 
+  it('should filter out books with missing rating', async () => {
+    const mockGoodreadsResponse = `
+      <GoodreadsResponse>
+        <reviews>
+          <review>
+            <read_at>2023-01-01</read_at>
+            <book>
+              <isbn>1234567890</isbn>
+            </book>
+            <!-- No rating node -->
+          </review>
+        </reviews>
+      </GoodreadsResponse>
+    `
+
+    mockGot.mockResolvedValue({ body: mockGoodreadsResponse })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{
+            review: [{
+              read_at: ['2023-01-01'],
+              book: [{
+                isbn: ['1234567890'],
+              }],
+              // rating intentionally omitted
+            }],
+          }],
+        },
+      })
+    })
+
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        return [] // no transformed reviews should reach book fetching
+      }
+      return []
+    })
+
+    mockListStoredMedia.mockResolvedValue([])
+
+    const result = await fetchRecentlyReadBooks()
+
+    expect(mockFetchBookFromGoogle).not.toHaveBeenCalled()
+    expect(result.books).toEqual([])
+  })
+
+  it('should filter out books when book node is not an object', async () => {
+    const mockGoodreadsResponse = `
+      <GoodreadsResponse>
+        <reviews>
+          <review>
+            <read_at>2023-01-01</read_at>
+            <book>not-an-object</book>
+            <rating>4</rating>
+          </review>
+        </reviews>
+      </GoodreadsResponse>
+    `
+
+    mockGot.mockResolvedValue({ body: mockGoodreadsResponse })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, {
+        GoodreadsResponse: {
+          reviews: [{
+            review: [{
+              read_at: ['2023-01-01'],
+              // Force a non-object shape for `book`
+              book: 'not-an-object',
+              rating: ['4'],
+            }],
+          }],
+        },
+      })
+    })
+
+    mockPMap.mockImplementation(async (items, mapper, options) => {
+      if (options?.concurrency === 3) {
+        return []
+      }
+      return []
+    })
+
+    mockListStoredMedia.mockResolvedValue([])
+
+    const result = await fetchRecentlyReadBooks()
+
+    expect(mockFetchBookFromGoogle).not.toHaveBeenCalled()
+    expect(result.books).toEqual([])
+  })
+
   it('should handle books without ISBN', async () => {
     const mockGoodreadsResponse = `
       <GoodreadsResponse>

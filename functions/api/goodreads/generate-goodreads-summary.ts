@@ -4,9 +4,11 @@ import { logger } from 'firebase-functions'
 import { getGeminiApiKey } from '../../config/backend-config.js'
 import extractJsonFromGeminiResponse from '../../utils/extract-json-from-gemini-response.js'
 
+import type { GoodreadsWidgetDocument } from '../../types/widget-content.js'
+
 type GeminiGoodreadsSummaryJson = {
   response?: string
-  debug?: unknown
+  debug?: Record<string, unknown>
 }
 
 /**
@@ -14,7 +16,7 @@ type GeminiGoodreadsSummaryJson = {
  * @param {Object} goodreadsData - The Goodreads data object containing collections and profile info
  * @returns {Promise<string>} - The AI-generated summary
  */
-const generateGoodreadsSummary = async (goodreadsData): Promise<string> => {
+const generateGoodreadsSummary = async (goodreadsData: GoodreadsWidgetDocument): Promise<string> => {
   const apiKey = getGeminiApiKey()
 
   if (!apiKey) {
@@ -53,7 +55,7 @@ Instructions:
 - Focus on recent reading activity and overall patterns
 - Return only **valid JSON** — no markdown or extra text
 
-Goodreads Profile: ${profile?.displayName || 'Chris Vogt'}
+Goodreads Profile: ${profile?.name || profile?.username || 'Chris Vogt'}
 
 "recentlyReadBooks": ${JSON.stringify(collections?.recentlyReadBooks?.map(book => ({
     title: book.title,

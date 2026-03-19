@@ -26,6 +26,8 @@ import type {
   GoodreadsReviewListRawReview,
 } from '../../types/goodreads.js'
 
+import { getXmlTextOrUndefined } from '../../utils/goodreads-xml.js'
+
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
 type TransformBookDataInput = GoodreadsRecentlyReadBookFromGoogle
@@ -98,52 +100,48 @@ export default async () => {
 
       const transformedReviews = reviewsResponse.reduce<GoodreadsReviewListBookSource[]>(
         (books, book) => {
-          const readAt = book?.read_at
-          const dateCandidate = Array.isArray(readAt) ? readAt[0] : readAt
-          const dateLength = typeof dateCandidate === 'string'
-            ? dateCandidate.length
-            : (dateCandidate as { length?: number } | undefined)?.length
+          const readDate = getXmlTextOrUndefined(book?.read_at)
+          if (!readDate || readDate.length <= 3) {
+            return books
+          }
 
-          if (typeof dateCandidate !== 'string' && typeof dateLength === 'number' && dateLength > 3) {
+          const rating = getXmlTextOrUndefined(book?.rating)
+          if (!rating) {
             return books
           }
 
           const bookDataUnknown = book?.book
-          const ratingUnknown = Array.isArray(book?.rating) ? book.rating[0] : book?.rating
-          if (typeof ratingUnknown !== 'string') {
+          const firstBookUnknown = Array.isArray(bookDataUnknown) ? bookDataUnknown[0] : bookDataUnknown
+          if (!firstBookUnknown || typeof firstBookUnknown !== 'object') {
             return books
           }
 
-          const [firstBook = {}] = Array.isArray(bookDataUnknown)
-            ? bookDataUnknown
-            : [bookDataUnknown]
+          const firstBook = firstBookUnknown as Record<string, unknown>
 
-          const descriptionUnknown = (firstBook as any)?.description
-          const [goodreadsDescription] = Array.isArray(descriptionUnknown) ? descriptionUnknown : []
-
-          const isbn10Unknown = (firstBook as any)?.isbn
-          const [isbn10] = Array.isArray(isbn10Unknown) ? isbn10Unknown : []
-
-          const isbn13Unknown = (firstBook as any)?.isbn13
-          const [isbn13] = Array.isArray(isbn13Unknown) ? isbn13Unknown : []
-
+          const goodreadsDescription = getXmlTextOrUndefined(firstBook.description)
+          const isbn13 = getXmlTextOrUndefined(firstBook.isbn13)
+          const isbn10 = getXmlTextOrUndefined(firstBook.isbn)
           const isbn = isbn13 || isbn10
-          if (typeof isbn !== 'string') {
+          if (!isbn) {
             return books
           }
 
-          const titleUnknown = (firstBook as any)?.title
-          const title = Array.isArray(titleUnknown) ? titleUnknown[0] : undefined
+          const title = getXmlTextOrUndefined(firstBook.title)
 
-          const authorsUnknown = (firstBook as any)?.authors
-          const authorNameUnknown = Array.isArray(authorsUnknown)
-            ? authorsUnknown?.[0]?.author?.[0]?.name?.[0]
-            : undefined
-          const authorName = typeof authorNameUnknown === 'string' ? authorNameUnknown : undefined
+          let authorName: string | undefined
+          const authorsValue = firstBook.authors
+          if (Array.isArray(authorsValue) && authorsValue[0] && typeof authorsValue[0] === 'object') {
+            const author0 = authorsValue[0] as Record<string, unknown>
+            const authorValue = author0.author
+            const authorFirst = Array.isArray(authorValue) ? authorValue[0] : undefined
+            if (authorFirst && typeof authorFirst === 'object') {
+              authorName = getXmlTextOrUndefined((authorFirst as Record<string, unknown>).name)
+            }
+          }
 
           books.push({
             isbn,
-            rating: ratingUnknown,
+            rating,
             goodreadsDescription,
             ...(typeof title === 'string' && { title }),
             ...(typeof authorName === 'string' && { authorName }),

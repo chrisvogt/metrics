@@ -36,6 +36,9 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+      - name: Typecheck (strict core)
+        run: pnpm run typecheck
+
       - name: Test (with coverage)
         id: tests
         continue-on-error: true
