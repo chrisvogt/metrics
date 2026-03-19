@@ -17,6 +17,7 @@ import { getGoogleBooksApiKey } from '../config/backend-config.js'
 import { toProviderCollectionPath } from '../config/backend-paths.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
+import { getXmlTextOrNull } from '../utils/goodreads-xml.js'
 
 import type {
   GoogleBooksFetchByIsbnResult,
@@ -30,24 +31,12 @@ import type {
   GoodreadsReviewListRawReview,
   GoodreadsUpdate,
   GoodreadsWidgetCollections,
-  GoodreadsPossiblyNilString,
   GoodreadsUserStatusBook,
   GoodreadsReviewBook,
 } from '../types/goodreads.js'
 import type { GoodreadsWidgetDocument } from '../types/widget-content.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
-
-const extractGoodreadsPossiblyNilString = (
-  value: GoodreadsPossiblyNilString,
-): string | null => {
-  if (typeof value === 'string') return value
-  if (value && typeof value === 'object') {
-    const maybe = value as { _: string | undefined }
-    if (typeof maybe._ === 'string') return maybe._
-  }
-  return null
-}
 
 const transformBookData = (
   book: GoodreadsRecentlyReadBookFromGoogle,
@@ -125,13 +114,13 @@ const processUpdatesWithMedia = async (
     // Get ISBN from the update's book
     let isbn: string | null = null
     if (update.type === 'userstatus' && update.book) {
-      const isbn13 = extractGoodreadsPossiblyNilString(update.book.isbn13)
-      const isbn10 = extractGoodreadsPossiblyNilString(update.book.isbn)
+      const isbn13 = getXmlTextOrNull(update.book.isbn13)
+      const isbn10 = getXmlTextOrNull(update.book.isbn)
       isbn = isbn13 ?? isbn10
     } else if (update.type === 'review' && update.book) {
       // Review updates might not have ISBN, but check anyway
-      const isbn13 = extractGoodreadsPossiblyNilString(update.book.isbn13)
-      const isbn10 = extractGoodreadsPossiblyNilString(update.book.isbn)
+      const isbn13 = getXmlTextOrNull(update.book.isbn13)
+      const isbn10 = getXmlTextOrNull(update.book.isbn)
       isbn = isbn13 ?? isbn10
     }
 
@@ -397,11 +386,11 @@ const processUpdatesWithMedia = async (
         if (book.update.type === 'userstatus' && book.update.book) {
           const isbn13 = book.update.book.isbn13
           const isbn10 = book.update.book.isbn
-          updateISBN = extractGoodreadsPossiblyNilString(isbn13) ?? extractGoodreadsPossiblyNilString(isbn10)
+          updateISBN = getXmlTextOrNull(isbn13) ?? getXmlTextOrNull(isbn10)
         } else if (book.update.type === 'review' && book.update.book) {
           const isbn13 = book.update.book.isbn13
           const isbn10 = book.update.book.isbn
-          updateISBN = extractGoodreadsPossiblyNilString(isbn13) ?? extractGoodreadsPossiblyNilString(isbn10)
+          updateISBN = getXmlTextOrNull(isbn13) ?? getXmlTextOrNull(isbn10)
         }
         if (updateISBN && String(updateISBN) !== String(book.isbn)) {
           fetchedBooksByISBN.set(String(updateISBN), book)
@@ -434,12 +423,12 @@ const processUpdatesWithMedia = async (
       if (!fetchedBook) {
         let isbn: string | null = null
         if (update.type === 'userstatus' && update.book) {
-          const isbn13 = extractGoodreadsPossiblyNilString(update.book.isbn13)
-          const isbn10 = extractGoodreadsPossiblyNilString(update.book.isbn)
+          const isbn13 = getXmlTextOrNull(update.book.isbn13)
+          const isbn10 = getXmlTextOrNull(update.book.isbn)
           isbn = isbn13 ?? isbn10
         } else if (update.type === 'review' && update.book) {
-          const isbn13 = extractGoodreadsPossiblyNilString(update.book.isbn13)
-          const isbn10 = extractGoodreadsPossiblyNilString(update.book.isbn)
+          const isbn13 = getXmlTextOrNull(update.book.isbn13)
+          const isbn10 = getXmlTextOrNull(update.book.isbn)
           isbn = isbn13 ?? isbn10
         }
 

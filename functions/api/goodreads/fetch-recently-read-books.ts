@@ -26,6 +26,8 @@ import type {
   GoodreadsReviewListRawReview,
 } from '../../types/goodreads.js'
 
+import { getXmlTextOrUndefined } from '../../utils/goodreads-xml.js'
+
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
 type TransformBookDataInput = GoodreadsRecentlyReadBookFromGoogle
@@ -98,19 +100,6 @@ export default async () => {
 
       const transformedReviews = reviewsResponse.reduce<GoodreadsReviewListBookSource[]>(
         (books, book) => {
-          const getXmlTextOrUndefined = (value: unknown): string | undefined => {
-            if (typeof value === 'string') return value
-            if (Array.isArray(value)) {
-              const first = value[0]
-              return typeof first === 'string' ? first : undefined
-            }
-            if (value && typeof value === 'object') {
-              const maybeInner = (value as { _: unknown })._
-              return typeof maybeInner === 'string' ? maybeInner : undefined
-            }
-            return undefined
-          }
-
           const readDate = getXmlTextOrUndefined(book?.read_at)
           if (!readDate || readDate.length <= 3) {
             return books

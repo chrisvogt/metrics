@@ -8,6 +8,8 @@ import { getGoodreadsConfig } from '../../config/backend-config.js'
 
 import type { GoodreadsProfile, GoodreadsUpdate } from '../../types/goodreads.js'
 
+import { getXmlTextOrUndefined } from '../../utils/goodreads-xml.js'
+
 type FetchUserResult = {
   jsonResponse?: unknown
   profile?: GoodreadsProfile
@@ -15,14 +17,28 @@ type FetchUserResult = {
 }
 
 const transformUpdate = (update: unknown): GoodreadsUpdate | null => {
-  const u = update as { type?: string }
+  // xml2js can produce arrays with null/undefined entries when optional nodes are missing.
+  // Guarding here prevents TypeErrors, and keeps the caller logic simple.
+  if (!update || typeof update !== 'object' || Array.isArray(update)) return null
+
+  const u = update as { type?: unknown }
 
   if (u.type === 'userstatus') {
-    return getUserStatus(u)
+    try {
+      return getUserStatus(u as any)
+    } catch (err) {
+      logger.error('Failed to transform Goodreads userstatus update.', err)
+      return null
+    }
   }
 
   if (u.type === 'review') {
-    return getReview(u)
+    try {
+      return getReview(u as any)
+    } catch (err) {
+      logger.error('Failed to transform Goodreads review update.', err)
+      return null
+    }
   }
 
   return null
@@ -36,15 +52,6 @@ const parser = new xml2js.Parser({
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value != null && typeof value === 'object'
-
-// xml2js text nodes can appear as either a plain string or an object containing
-// the charkey (default `_`) under the `_` property.
-const getXmlTextOrUndefined = (value: unknown): string | undefined => {
-  if (typeof value === 'string') return value
-  if (!isRecord(value)) return undefined
-  const inner = value._
-  return typeof inner === 'string' ? inner : undefined
-}
 
 const asArray = (value: unknown): unknown[] => {
   if (Array.isArray(value)) return value
