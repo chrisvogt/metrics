@@ -4,12 +4,17 @@ import { logger } from 'firebase-functions'
 import { getGeminiApiKey } from '../../config/backend-config.js'
 import extractJsonFromGeminiResponse from '../../utils/extract-json-from-gemini-response.js'
 
+type GeminiGoodreadsSummaryJson = {
+  response?: string
+  debug?: unknown
+}
+
 /**
  * Generate AI summary of Goodreads reading data using Gemini
  * @param {Object} goodreadsData - The Goodreads data object containing collections and profile info
  * @returns {Promise<string>} - The AI-generated summary
  */
-const generateGoodreadsSummary = async (goodreadsData) => {
+const generateGoodreadsSummary = async (goodreadsData): Promise<string> => {
   const apiKey = getGeminiApiKey()
 
   if (!apiKey) {
@@ -69,7 +74,7 @@ Goodreads Profile: ${profile?.displayName || 'Chris Vogt'}
   try {
     const result = await model.generateContent(prompt)
     const response = await result.response
-    const parsed = extractJsonFromGeminiResponse(response.text())
+    const parsed = extractJsonFromGeminiResponse<GeminiGoodreadsSummaryJson>(response.text())
     if (!parsed) {
       throw new Error('Gemini response was not valid JSON (no markdown block or raw JSON)')
     }

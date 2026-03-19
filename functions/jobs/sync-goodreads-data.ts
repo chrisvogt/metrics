@@ -18,9 +18,28 @@ import { toProviderCollectionPath } from '../config/backend-paths.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
 
+import type {
+  GoogleBooksFetchByIsbnResult,
+  GoogleBooksVolumeSubset,
+} from '../types/google-books.js'
+import { isGoogleBooksVolumesResponseSubset } from '../types/google-books.js'
+import type {
+  GoodreadsProfile,
+  GoodreadsRecentlyReadBook,
+  GoodreadsRecentlyReadBookFromGoogle,
+  GoodreadsReviewListRawReview,
+  GoodreadsUpdate,
+  GoodreadsWidgetCollections,
+  GoodreadsUserStatusBook,
+  GoodreadsReviewBook,
+} from '../types/goodreads.js'
+import type { GoodreadsWidgetDocument } from '../types/widget-content.js'
+
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
-const transformBookData = (book) => {
+const transformBookData = (
+  book: GoodreadsRecentlyReadBookFromGoogle,
+): GoodreadsRecentlyReadBook => {
   const {
     book: {
       id,
@@ -62,14 +81,22 @@ const transformBookData = (book) => {
   }
 }
 
-const processUpdatesWithMedia = async (updates = [], books = []) => {
+type GoodreadsUpdateWithMedia = GoodreadsUpdate & {
+  cdnMediaURL?: string
+  mediaDestinationPath?: string
+}
+
+const processUpdatesWithMedia = async (
+  updates: GoodreadsUpdate[] | null | undefined = [],
+  books: GoodreadsRecentlyReadBook[] = [],
+): Promise<GoodreadsUpdateWithMedia[] | null | undefined> => {
   const logger = getLogger()
   if (!updates || updates.length === 0) {
     return updates
   }
 
   // Create a map of books by ISBN for quick lookup
-  const booksByISBN = new Map()
+  const booksByISBN = new Map<string, GoodreadsRecentlyReadBook>()
   books.forEach(book => {
     // Get ISBN from book data (we store it in transformBookData)
     const isbn = book.isbn
@@ -81,20 +108,19 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
   })
 
   // Find updates that need book data fetched
-  const updatesNeedingBooks = []
-  const updatesWithMedia = updates.map((update) => {
+  const updatesNeedingBooks: Array<{ update: GoodreadsUpdate; isbn: string | null }> = []
+  const updatesWithMedia: GoodreadsUpdateWithMedia[] = updates.map((update): GoodreadsUpdateWithMedia => {
     // Get ISBN from the update's book
-    let isbn = null
+    let isbn: string | null = null
     if (update.type === 'userstatus' && update.book) {
       const isbn13 = update.book.isbn13
       const isbn10 = update.book.isbn
-      // Handle case where isbn might be { nil: "true" } object
-      isbn = (isbn13 && typeof isbn13 === 'string') ? isbn13 : ((isbn10 && typeof isbn10 === 'string') ? isbn10 : null)
+      isbn = typeof isbn13 === 'string' ? isbn13 : (typeof isbn10 === 'string' ? isbn10 : null)
     } else if (update.type === 'review' && update.book) {
       // Review updates might not have ISBN, but check anyway
       const isbn13 = update.book.isbn13
       const isbn10 = update.book.isbn
-      isbn = (isbn13 && typeof isbn13 === 'string') ? isbn13 : ((isbn10 && typeof isbn10 === 'string') ? isbn10 : null)
+      isbn = typeof isbn13 === 'string' ? isbn13 : (typeof isbn10 === 'string' ? isbn10 : null)
     }
 
     // If we have ISBN, try to match with existing books
@@ -102,7 +128,7 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
       const matchingBook = booksByISBN.get(isbn) || booksByISBN.get(isbn.replace(/-/g, ''))
       if (matchingBook && matchingBook.cdnMediaURL) {
         // Book already exists, use its CDN URL
-        const updateWithMedia = { ...update }
+        const updateWithMedia: GoodreadsUpdateWithMedia = { ...update }
         updateWithMedia.cdnMediaURL = matchingBook.cdnMediaURL
         updateWithMedia.mediaDestinationPath = matchingBook.mediaDestinationPath
         return updateWithMedia
@@ -119,7 +145,15 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
   // Deduplicate by ISBN or title to avoid fetching the same book multiple times
   if (updatesNeedingBooks.length > 0) {
     // Create a map of unique books to fetch (keyed by ISBN or title)
-    const uniqueBooksToFetch = new Map()
+    const uniqueBooksToFetch = new Map<
+      string,
+      {
+        update: GoodreadsUpdate
+        isbn: string | null
+        book: GoodreadsReviewBook | GoodreadsUserStatusBook
+        updates: GoodreadsUpdate[]
+      }
+    >()
     updatesNeedingBooks.forEach(({ update, isbn }) => {
       const book = update.book
       if (!book || !book.title) return
@@ -149,7 +183,7 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
           await new Promise(resolve => setTimeout(resolve, 200)) // 200ms delay between requests
         }
         
-        let result = null
+        let result: GoogleBooksFetchByIsbnResult | null = null
         
         // Helper function to fetch with retry and exponential backoff
         const fetchWithRetry = async (fetchFn, maxRetries = 3) => {
@@ -221,7 +255,10 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
                     country: 'US'
                   }
                 })
-                const { items: [foundBook] = [] } = JSON.parse(body)
+                const parsed: unknown = JSON.parse(body)
+                const foundBook: GoogleBooksVolumeSubset | undefined = isGoogleBooksVolumesResponseSubset(parsed)
+                  ? parsed.items?.[0]
+                  : undefined
                 
                 if (foundBook) {
                   return {
@@ -256,14 +293,20 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
     )
     
     // Extract ISBN from Google Books response if available, otherwise use the update's ISBN
-    const fetchedBooksWithMetadata = fetchedBookResults
-      .filter(({ googleBookResult }) => 
-        Boolean(googleBookResult) && Boolean(googleBookResult.book)
+    type FetchedBookWithMetadata = GoodreadsRecentlyReadBook & { update: GoodreadsUpdate }
+
+    const fetchedBooksWithMetadata: FetchedBookWithMetadata[] = fetchedBookResults
+      .filter(
+        (
+          entry,
+        ): entry is typeof entry & {
+          googleBookResult: GoogleBooksFetchByIsbnResult & { book: GoogleBooksVolumeSubset }
+        } => Boolean(entry.googleBookResult && entry.googleBookResult.book),
       )
       .flatMap(({ googleBookResult, updates, isbn: updateISBN }) => {
         // Try to get ISBN from Google Books response first
         let isbn = updateISBN
-        const volumeInfo = googleBookResult.book?.volumeInfo
+        const volumeInfo = googleBookResult.book.volumeInfo
         if (volumeInfo?.industryIdentifiers) {
           const isbn13 = volumeInfo.industryIdentifiers.find(id => id.type === 'ISBN_13')
           const isbn10 = volumeInfo.industryIdentifiers.find(id => id.type === 'ISBN_10')
@@ -271,7 +314,8 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
         }
         
         const transformedBook = transformBookData({
-          ...googleBookResult,
+          book: googleBookResult.book,
+          rating: googleBookResult.rating,
           isbn,
         })
         
@@ -315,10 +359,10 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
     }
 
     // Create a map of fetched books by update reference, link, ISBN, and title for matching
-    const fetchedBooksByUpdate = new Map()
-    const fetchedBooksByLink = new Map()
-    const fetchedBooksByISBN = new Map()
-    const fetchedBooksByTitle = new Map()
+    const fetchedBooksByUpdate = new Map<GoodreadsUpdate, FetchedBookWithMetadata>()
+    const fetchedBooksByLink = new Map<string, FetchedBookWithMetadata>()
+    const fetchedBooksByISBN = new Map<string, FetchedBookWithMetadata>()
+    const fetchedBooksByTitle = new Map<string, FetchedBookWithMetadata>()
     
     fetchedBooksWithMetadata.forEach(book => {
       // Map by update object reference (most reliable for exact matches)
@@ -360,14 +404,14 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
     })
 
     // Update updates with fetched book data
-    return updatesWithMedia.map((update) => {
+    return updatesWithMedia.map((update): GoodreadsUpdateWithMedia => {
       if (update.cdnMediaURL) {
         // Already has media from existing books
         return update
       }
 
       // Try to match by update object reference first (most reliable)
-      let fetchedBook = fetchedBooksByUpdate.get(update)
+      let fetchedBook: FetchedBookWithMetadata | undefined = fetchedBooksByUpdate.get(update)
       
       // Fallback to link matching
       if (!fetchedBook && update.link) {
@@ -376,15 +420,15 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
       
       // Fallback to ISBN matching
       if (!fetchedBook) {
-        let isbn = null
+        let isbn: string | null = null
         if (update.type === 'userstatus' && update.book) {
           const isbn13 = update.book.isbn13
           const isbn10 = update.book.isbn
-          isbn = (isbn13 && typeof isbn13 === 'string') ? isbn13 : ((isbn10 && typeof isbn10 === 'string') ? isbn10 : null)
+          isbn = typeof isbn13 === 'string' ? isbn13 : (typeof isbn10 === 'string' ? isbn10 : null)
         } else if (update.type === 'review' && update.book) {
           const isbn13 = update.book.isbn13
           const isbn10 = update.book.isbn
-          isbn = (isbn13 && typeof isbn13 === 'string') ? isbn13 : ((isbn10 && typeof isbn10 === 'string') ? isbn10 : null)
+          isbn = typeof isbn13 === 'string' ? isbn13 : (typeof isbn10 === 'string' ? isbn10 : null)
         }
 
         if (isbn) {
@@ -400,7 +444,7 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
       }
 
       if (fetchedBook && fetchedBook.cdnMediaURL) {
-        const updateWithMedia = { ...update }
+        const updateWithMedia: GoodreadsUpdateWithMedia = { ...update }
         updateWithMedia.cdnMediaURL = fetchedBook.cdnMediaURL
         updateWithMedia.mediaDestinationPath = fetchedBook.mediaDestinationPath
         return updateWithMedia
@@ -413,37 +457,40 @@ const processUpdatesWithMedia = async (updates = [], books = []) => {
   return updatesWithMedia
 }
 
-const fetchAllGoodreadsPromises = async (): Promise<{
-  collections?: { recentlyReadBooks?: unknown[]; updates?: unknown[] }
-  profile?: unknown
-  responses?: { user?: unknown; reviews?: unknown }
-  error?: unknown
-}> => {
+type FetchAllGoodreadsPromisesSuccess = {
+  collections: GoodreadsWidgetCollections
+  profile?: GoodreadsProfile
+  responses: { user?: unknown; reviews?: GoodreadsReviewListRawReview[] }
+}
+
+type FetchAllGoodreadsPromisesResult = FetchAllGoodreadsPromisesSuccess | { error: string }
+
+const fetchAllGoodreadsPromises = async (): Promise<FetchAllGoodreadsPromisesResult> => {
   try {
     const [user, recentlyRead] = await Promise.all([
       fetchUser(),
       fetchRecentlyReadBooks(),
     ])
-    const u = (user ?? {}) as { updates?: unknown[] | null; profile?: unknown; jsonResponse?: unknown }
-    const r = (recentlyRead ?? {}) as { books?: unknown[]; rawReviewsResponse?: unknown }
 
     const processedUpdates =
-      u.updates == null ? null : await processUpdatesWithMedia(u.updates, r.books ?? [])
+      user.updates == null
+        ? null
+        : await processUpdatesWithMedia(user.updates, recentlyRead.books ?? [])
 
     return {
       collections: {
-        recentlyReadBooks: (r.books ?? []).slice(0, 18),
+        recentlyReadBooks: (recentlyRead.books ?? []).slice(0, 18),
         updates: processedUpdates,
       },
-      profile: u.profile,
+      profile: user.profile,
       responses: {
-        user: u.jsonResponse,
-        reviews: r.rawReviewsResponse,
+        user: user.jsonResponse,
+        reviews: recentlyRead.rawReviewsResponse,
       },
     }
-  } catch (error) {
+  } catch (error: unknown) {
     return {
-      error: error instanceof Error ? error.message : error,
+      error: error instanceof Error ? error.message : String(error),
     }
   }
 }
@@ -454,31 +501,26 @@ const fetchAllGoodreadsPromises = async (): Promise<{
 const syncGoodreadsData = async (documentStore: DocumentStore) => {
   const logger = getLogger()
   const goodreadsCollectionPath = toProviderCollectionPath('goodreads')
-  const {
-    collections = {},
-    error,
-    profile = {},
-    responses = {}
-  } = await fetchAllGoodreadsPromises()
+  const result = await fetchAllGoodreadsPromises()
 
-  if (error) {
-    logger.error('Failed to fetch Goodreads data.', error)
+  if ('error' in result) {
+    logger.error('Failed to fetch Goodreads data.', result.error)
     return {
       result: 'FAILURE',
-      error: error instanceof Error ? error.message : String(error),
+      error: result.error,
     }
   }
 
-  const widgetContent: Record<string, unknown> = {
-    collections,
+  const widgetContent: GoodreadsWidgetDocument = {
+    collections: result.collections,
     meta: {
       synced: toStoredDateTime(),
     },
-    profile,
+    profile: result.profile,
   }
 
   // Generate AI summary using Gemini
-  let aiSummary: unknown = null
+  let aiSummary: string | undefined
   try {
     aiSummary = await generateGoodreadsSummary(widgetContent)
     widgetContent.aiSummary = aiSummary
@@ -487,11 +529,10 @@ const syncGoodreadsData = async (documentStore: DocumentStore) => {
     // Continue with sync even if AI summary fails
   }
 
-  const res = responses as { user?: unknown; reviews?: unknown }
   const saveUserResponse = async () => await documentStore.setDocument(
     `${goodreadsCollectionPath}/last-response_user-show`,
     {
-      response: res.user,
+      response: result.responses.user,
       updated: toStoredDateTime(),
     }
   )
@@ -499,7 +540,7 @@ const syncGoodreadsData = async (documentStore: DocumentStore) => {
   const saveBookReviews = async () => await documentStore.setDocument(
     `${goodreadsCollectionPath}/last-response_book-reviews`,
     {
-      response: res.reviews,
+      response: result.responses.reviews,
       updated: toStoredDateTime(),
     }
   )

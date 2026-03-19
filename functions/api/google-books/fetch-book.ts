@@ -3,7 +3,20 @@ import got from 'got'
 
 import { getGoogleBooksApiKey } from '../../config/backend-config.js'
 
-const fetchBook = async (book, maxRetries = 3) => {
+import type {
+  GoogleBooksFetchByIsbnInput,
+  GoogleBooksFetchByIsbnResult,
+  GoogleBooksVolumeSubset,
+} from '../../types/google-books.js'
+
+import {
+  isGoogleBooksVolumesResponseSubset as isVolumesResponseSubset,
+} from '../../types/google-books.js'
+
+const fetchBook = async (
+  book: GoogleBooksFetchByIsbnInput,
+  maxRetries = 3,
+): Promise<GoogleBooksFetchByIsbnResult | null> => {
   const { isbn, rating } = book
   const googleBooksAPIKey = getGoogleBooksApiKey()
 
@@ -17,7 +30,11 @@ const fetchBook = async (book, maxRetries = 3) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const { body } = await got(googleBooksVolumeURL)
-      const { items: [book] = [] } = JSON.parse(body)
+      const parsed: unknown = JSON.parse(body)
+      const items = isVolumesResponseSubset(parsed)
+        ? parsed.items
+        : undefined
+      const book: GoogleBooksVolumeSubset | undefined = items?.[0]
 
       if (!book) {
         logger.info(`No result from Google Books for ISBN: ${isbn}; title/author fallback may be used.`)
