@@ -108,6 +108,8 @@ const getUpdatesFromResponse = (result: unknown): GoodreadsUpdate[] => {
 
   const rawUpdates = updates.update
   return asArray(rawUpdates)
+    // xml2js can emit null/undefined entries inside arrays for missing optional nodes.
+    .filter((update): update is unknown => Boolean(update))
     .map(update => transformUpdate(update))
     .filter((update): update is GoodreadsUpdate => Boolean(update))
 }

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.16] - 2026-03-18
+
+### Changed
+- **Shared Goodreads XML parsing utility** – Extracted common xml2js text-node extraction into `utils/goodreads-xml.ts` and reused it across Goodreads recently-read and sync flows to reduce duplicated parsing logic.
+- **CI strict typecheck** – CI now runs `pnpm run typecheck` (strict core) so Goodreads shape/type issues are caught earlier.
+
 ## [0.22.15] - 2026-03-17
 
 ### Fixed
