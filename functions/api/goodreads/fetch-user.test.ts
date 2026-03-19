@@ -291,6 +291,46 @@ describe('fetchUser', () => {
     expect(result.updates?.[1]).toEqual({ type: 'review', transformed: true })
   })
 
+  it('should ignore null/undefined updates in update array', async () => {
+    const mockXmlResponse = '<xml>test data</xml>'
+    const mockJsonResult = {
+      GoodreadsResponse: {
+        user: {
+          name: 'Test User',
+          user_shelves: {
+            user_shelf: [
+              { name: 'read', book_count: { _: '50' } }
+            ]
+          },
+          updates: {
+            update: [
+              null,
+              { type: 'userstatus', book: { goodreadsID: '123' } },
+              undefined,
+              { type: 'review', book: { goodreadsID: '456' } },
+            ]
+          }
+        }
+      }
+    }
+
+    mockGot.mockResolvedValue({ body: mockXmlResponse })
+    mockParseString.mockImplementation((xml, callback) => {
+      callback(null, mockJsonResult)
+    })
+
+    mockGetUserStatus.mockReturnValue({ type: 'userstatus', transformed: true })
+    mockGetReview.mockReturnValue({ type: 'review', transformed: true })
+
+    const result = await fetchUser()
+
+    expect(result.updates ?? []).toHaveLength(2)
+    expect(result.updates?.[0]).toEqual({ type: 'userstatus', transformed: true })
+    expect(result.updates?.[1]).toEqual({ type: 'review', transformed: true })
+    expect(mockGetUserStatus).toHaveBeenCalledTimes(1)
+    expect(mockGetReview).toHaveBeenCalledTimes(1)
+  })
+
   it('should log and ignore errors transforming updates', async () => {
     const mockXmlResponse = '<xml>test data</xml>'
     const mockJsonResult = {
