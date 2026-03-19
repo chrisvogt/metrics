@@ -12,9 +12,23 @@ import {
   getGoogleBooksApiKey,
 } from '../../config/backend-config.js'
 
+import type {
+  GoogleBooksVolumesResponseSubset,
+  GoogleBooksVolumeSubset,
+  GoogleBooksFetchByIsbnResult,
+} from '../../types/google-books.js'
+import type {
+  GoodreadsRecentlyReadBook,
+  GoodreadsRecentlyReadBookFromGoogle,
+  GoodreadsReviewListBookSource,
+  GoodreadsReviewListRawReview,
+} from '../../types/goodreads.js'
+
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
-const transformBookData = (book) => {
+type TransformBookDataInput = GoodreadsRecentlyReadBookFromGoogle
+
+const transformBookData = (book: TransformBookDataInput): GoodreadsRecentlyReadBook => {
   const {
     book: {
       id,
@@ -64,54 +78,90 @@ export default async () => {
     `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read&per_page=100`
   )
 
-  let rawReviewsResponse
+  let rawReviewsResponse: GoodreadsReviewListRawReview[] = []
+
+  const isGoogleBooksVolumesResponseSubset = (
+    value: unknown,
+  ): value is GoogleBooksVolumesResponseSubset => {
+    if (!value || typeof value !== 'object') return false
+    return 'items' in value
+  }
 
   // Transforms Goodreads Book Reviews response from XML into JSON
-  const bookReviews = await new Promise((resolve, reject) => {
+  const bookReviews = await new Promise<GoodreadsReviewListBookSource[]>((resolve, reject) => {
     parseString(body, (error, response) => {
       if (error) {
         reject(error)
       }
 
-      const reviewsResponse = response?.GoodreadsResponse?.reviews?.[0]?.review ?? []
-      const transformedReviews = reviewsResponse.reduce((books, book) => {
-        const {
-          read_at: [date],
-        } = book
-      
-        if (typeof date !== 'string' && date.length > 3) {
-          return books
-        }
-      
-        const {
-          book: bookData,
-          rating: [rating],
-        } = book
+      const reviewsResponseUnknown =
+        response?.GoodreadsResponse?.reviews?.[0]?.review ?? []
 
-        const [firstBook = {}] = Array.isArray(bookData) ? bookData : [bookData]
-        const [goodreadsDescription] = firstBook?.description ?? []
-        const [isbn10] = firstBook?.isbn ?? []
-        const [isbn13] = firstBook?.isbn13 ?? []
-        const isbn = isbn13 || isbn10
-        const title = firstBook?.title?.[0]
-        const authorName = firstBook?.authors?.[0]?.author?.[0]?.name?.[0]
-      
-        if (Array.isArray(books) && typeof isbn === 'string') {
+      const reviewsResponse: GoodreadsReviewListRawReview[] = Array.isArray(reviewsResponseUnknown)
+        ? (reviewsResponseUnknown as GoodreadsReviewListRawReview[])
+        : []
+
+      const transformedReviews = reviewsResponse.reduce<GoodreadsReviewListBookSource[]>(
+        (books, book) => {
+          const readAt = book?.read_at
+          const dateCandidate = Array.isArray(readAt) ? readAt[0] : readAt
+          const dateLength = typeof dateCandidate === 'string'
+            ? dateCandidate.length
+            : (dateCandidate as { length?: number } | undefined)?.length
+
+          if (typeof dateCandidate !== 'string' && typeof dateLength === 'number' && dateLength > 3) {
+            return books
+          }
+
+          const bookDataUnknown = book?.book
+          const ratingUnknown = Array.isArray(book?.rating) ? book.rating[0] : book?.rating
+          if (typeof ratingUnknown !== 'string') {
+            return books
+          }
+
+          const [firstBook = {}] = Array.isArray(bookDataUnknown)
+            ? bookDataUnknown
+            : [bookDataUnknown]
+
+          const descriptionUnknown = (firstBook as any)?.description
+          const [goodreadsDescription] = Array.isArray(descriptionUnknown) ? descriptionUnknown : []
+
+          const isbn10Unknown = (firstBook as any)?.isbn
+          const [isbn10] = Array.isArray(isbn10Unknown) ? isbn10Unknown : []
+
+          const isbn13Unknown = (firstBook as any)?.isbn13
+          const [isbn13] = Array.isArray(isbn13Unknown) ? isbn13Unknown : []
+
+          const isbn = isbn13 || isbn10
+          if (typeof isbn !== 'string') {
+            return books
+          }
+
+          const titleUnknown = (firstBook as any)?.title
+          const title = Array.isArray(titleUnknown) ? titleUnknown[0] : undefined
+
+          const authorsUnknown = (firstBook as any)?.authors
+          const authorNameUnknown = Array.isArray(authorsUnknown)
+            ? authorsUnknown?.[0]?.author?.[0]?.name?.[0]
+            : undefined
+          const authorName = typeof authorNameUnknown === 'string' ? authorNameUnknown : undefined
+
           books.push({
             isbn,
-            rating,
+            rating: ratingUnknown,
             goodreadsDescription,
             ...(typeof title === 'string' && { title }),
             ...(typeof authorName === 'string' && { authorName }),
           })
-        }
-      
-        return books
-      }, [])
+
+          return books
+        },
+        [],
+      )
 
       rawReviewsResponse = reviewsResponse
 
-      resolve(Array.isArray(transformedReviews) ? transformedReviews : [])
+      resolve(transformedReviews)
     })
   })
 
@@ -122,21 +172,20 @@ export default async () => {
   // Google Books.
   // Use pMap with concurrency control to avoid rate limiting
   const bookResults = await pMap(
-    bookReviews as unknown[],
-    async (book: unknown, index: number) => {
+    bookReviews,
+    async (book: GoodreadsReviewListBookSource, index: number) => {
       // Add a small delay between requests to avoid rate limiting (except for first request)
       if (index > 0) {
         await new Promise(resolve => setTimeout(resolve, 200)) // 200ms delay between requests
       }
       
-      const bookObj = book as Record<string, unknown>
-      let result = await fetchBookFromGoogle(bookObj)
+      let result: GoogleBooksFetchByIsbnResult | null = await fetchBookFromGoogle(book)
 
       // If ISBN lookup failed, try searching by title and/or author
-      if ((!result || !result.book) && bookObj.title) {
-        const searchQuery = bookObj.authorName
-          ? `intitle:${bookObj.title} inauthor:${bookObj.authorName}`
-          : `intitle:${bookObj.title}`
+      if ((!result || !result.book) && book.title) {
+        const searchQuery = book.authorName
+          ? `intitle:${book.title} inauthor:${book.authorName}`
+          : `intitle:${book.title}`
         const maxRetries = 3
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
@@ -148,14 +197,17 @@ export default async () => {
                 country: 'US'
               }
             })
-            const { items: [foundBook] = [] } = JSON.parse(body)
+            const parsed: unknown = JSON.parse(body)
+            const foundBook: GoogleBooksVolumeSubset | undefined =
+              isGoogleBooksVolumesResponseSubset(parsed) ? parsed.items?.[0] : undefined
+
             if (foundBook) {
               result = {
                 book: foundBook,
-                rating: bookObj.rating,
+                rating: book.rating,
               }
               logger.info(
-                `Found book by ${bookObj.authorName ? 'title/author' : 'title'} for recently read: ${bookObj.title}`
+                `Found book by ${book.authorName ? 'title/author' : 'title'} for recently read: ${book.title}`
               )
               break
             }
@@ -177,13 +229,13 @@ export default async () => {
             if ((statusCode === 429 || statusCode === 503) && attempt < maxRetries) {
               const waitTime = Math.pow(2, attempt) * 1000
               logger.warn(
-                `Rate limited (${statusCode}) for title search "${bookObj.title}", waiting ${waitTime}ms before retry ${attempt}/${maxRetries}`
+                `Rate limited (${statusCode}) for title search "${book.title}", waiting ${waitTime}ms before retry ${attempt}/${maxRetries}`
               )
               await new Promise(resolve => setTimeout(resolve, waitTime))
               continue
             }
             logger.error(
-              `Error fetching book by ${bookObj.authorName ? 'title/author' : 'title'} for recently read "${bookObj.title}" after retries:`,
+              `Error fetching book by ${book.authorName ? 'title/author' : 'title'} for recently read "${book.title}" after retries:`,
               error
             )
             break
@@ -193,13 +245,13 @@ export default async () => {
 
       if (!result || !result.book) {
         logger.warn(
-          `Book not found by ISBN or title/author fallback: ${bookObj.title ? `"${bookObj.title}"` : `ISBN ${bookObj.isbn}`}`
+          `Book not found by ISBN or title/author fallback: ${book.title ? `"${book.title}"` : `ISBN ${book.isbn}`}`
         )
       }
 
       return {
         googleBookResult: result,
-        goodreadsData: bookObj,
+        goodreadsData: book,
         originalIndex: index
       }
     },
@@ -208,33 +260,34 @@ export default async () => {
       stopOnError: false,
     }
   )
-  const books = bookResults
+
+  const books: GoodreadsRecentlyReadBook[] = bookResults
     .filter(
-      (bookResult: unknown) => {
-        const r = bookResult as { googleBookResult?: { book?: unknown } }
-        return Boolean(r?.googleBookResult?.book)
-      }
+      (bookResult): bookResult is {
+        googleBookResult: GoogleBooksFetchByIsbnResult & { book: GoogleBooksVolumeSubset }
+        goodreadsData: GoodreadsReviewListBookSource
+        originalIndex: number
+      } => Boolean(bookResult.googleBookResult?.book),
     )
-    .map((bookResult: unknown) => {
-      const { googleBookResult, goodreadsData } = bookResult as { googleBookResult: unknown; goodreadsData: Record<string, unknown> }
-      return {
-        ...(googleBookResult as object),
-        goodreadsDescription: goodreadsData?.goodreadsDescription,
-        isbn: goodreadsData?.isbn,
-      }
+    .map((bookResult) => {
+      const { googleBookResult, goodreadsData } = bookResult
+
+      return transformBookData({
+        book: googleBookResult.book,
+        rating: googleBookResult.rating ?? null,
+        goodreadsDescription: goodreadsData.goodreadsDescription,
+        isbn: goodreadsData.isbn,
+      })
     })
-    .map((b: unknown) => transformBookData(b as Record<string, unknown>))
 
   const storedMediaFileNames = await listStoredMedia()
 
   // TODO: update the filters to use the same source of truth as data being saved
   // to the db.
   const mediaToDownload = books
-    .filter(({ mediaDestinationPath, thumbnail }: { mediaDestinationPath?: string; thumbnail?: string }) => {
-      if (!thumbnail) {
-        return false // I've found at least 1 book that doesn't contain a thumbnail
-      }
-      const isAlreadyDownloaded = storedMediaFileNames.includes(mediaDestinationPath!)
+    .filter(({ mediaDestinationPath, thumbnail }) => {
+      if (!thumbnail) return false // I've found at least 1 book that doesn't contain a thumbnail
+      const isAlreadyDownloaded = storedMediaFileNames.includes(mediaDestinationPath)
       return !isAlreadyDownloaded
     })
     .map(({ id, mediaDestinationPath, thumbnail }) => ({

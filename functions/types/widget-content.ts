@@ -1,3 +1,9 @@
+import type {
+  GoodreadsProfile,
+  GoodreadsRecentlyReadBook,
+  GoodreadsWidgetCollections,
+} from './goodreads.js'
+
 export const widgetIds = [
   'discogs',
   'github',
@@ -57,14 +63,11 @@ export interface GitHubWidgetContent {
 }
 
 export interface GoodreadsWidgetDocument {
-  aiSummary?: unknown
-  collections?: {
-    recentlyReadBooks?: unknown[]
-    updates?: unknown[] | null
-  }
+  aiSummary?: string
+  collections?: GoodreadsWidgetCollections
   meta?: WidgetMeta
-  profile?: unknown
-  recentBooks?: unknown[]
+  profile?: GoodreadsProfile | unknown
+  recentBooks?: GoodreadsRecentlyReadBook[]
   summary?: string | null
 }
 
