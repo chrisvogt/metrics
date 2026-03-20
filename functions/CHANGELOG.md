@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.17] - 2026-03-19
+
+### Fixed
+
+- **Widget GET CDN caching** – Global `lusca` CSRF was calling `setToken` on every request, so `GET /api/widgets/:provider` responses included `Set-Cookie` (`_csrfSecret`, `XSRF-TOKEN`). Shared caches then refused to store them (`x-cache: MISS`) despite `Cache-Control: public, s-maxage`. Public widget reads are now on the CSRF `blocklist` (exact `/api/widgets/<id>` for each `widgetId`); `/api/widgets/sync/*` is unchanged. Tests assert no `set-cookie` on successful widget reads.
+
 ## [0.22.16] - 2026-03-18
 
 ### Changed

@@ -14,7 +14,7 @@ import { isProductionEnvironment } from '../config/backend-config.js'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
 import type { WidgetContentUnion, WidgetId } from '../types/widget-content.js'
-import { isWidgetId } from '../types/widget-content.js'
+import { isWidgetId, widgetIds } from '../types/widget-content.js'
 import deleteUserJob from '../jobs/delete-user.js'
 import syncDiscogsDataJob from '../jobs/sync-discogs-data.js'
 import syncFlickrDataJob from '../jobs/sync-flickr-data.js'
@@ -70,6 +70,12 @@ const buildFailureResponse = (err: unknown = {}): { ok: false; error: string } =
 
 const ALLOWED_EMAIL_DOMAINS = ['@chrisvogt.me', '@chronogrove.com']
 const CSRF_SECRET_COOKIE = '_csrfSecret'
+
+/** Paths where lusca must not run: it sets Set-Cookie on every GET, which prevents CDN caching. */
+const CSRF_BLOCKLIST_WIDGET_READS = widgetIds.map((id) => ({
+  path: `/api/widgets/${id}`,
+  type: 'exact' as const,
+}))
 type ProviderSyncId = Exclude<WidgetId, 'github'>
 type ProviderSyncResult = { result: string } & Record<string, unknown>
 
@@ -236,6 +242,7 @@ export function createExpressApp({
     lusca.csrf({
       angular: true,
       secret: CSRF_SECRET_COOKIE,
+      blocklist: CSRF_BLOCKLIST_WIDGET_READS,
       impl: createCookieBackedCsrfImpl({
         httpOnly: true,
         sameSite: isProductionEnvironment() ? 'strict' : 'lax',

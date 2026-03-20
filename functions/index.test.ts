@@ -163,6 +163,7 @@ describe('index.js', () => {
           payload: { mock: 'widget-content' }
         })
         expect(response.headers['cache-control']).toBe('public, max-age=3600, s-maxage=7200')
+        expect(response.headers['set-cookie']).toBeUndefined()
       })
 
       it('should return 404 for invalid provider', async () => {

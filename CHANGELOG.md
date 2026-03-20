@@ -20,6 +20,7 @@ Package-specific changes:
 
 ### Fixed
 
+- **Widget API (functions)** – Public `GET /api/widgets/:provider` responses no longer emit CSRF cookies, so Firebase Hosting / CDN can cache them per `Cache-Control` again. See [functions/CHANGELOG.md](functions/CHANGELOG.md) **0.22.17**.
 - **Auth routes (functions)** – `POST /api/auth/session` and `POST /api/auth/logout` are now rate-limited so all authorization routes satisfy CodeQL; session allows 20 req/15 min, logout 30 req/15 min.
 
 ## [Hosting 0.3.0] - 2026-03-06
