@@ -11,6 +11,7 @@ import {
   getGoodreadsConfig,
   getGoogleBooksApiKey,
 } from '../../config/backend-config.js'
+import { GOODREADS_BOOKS_TO_FETCH } from '../../config/goodreads-config.js'
 
 import type {
   GoogleBooksVolumeSubset,
@@ -79,7 +80,7 @@ export default async () => {
   const { apiKey: key, userId: userID } = getGoodreadsConfig()
 
   const { body } = await got(
-    `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read&per_page=100`
+    `https://www.goodreads.com/review/list/${userID}.xml?key=${key}&v=2&shelf=read&sort=date_read&per_page=${GOODREADS_BOOKS_TO_FETCH}`
   )
 
   let rawReviewsResponse: GoodreadsReviewListRawReview[] = []
@@ -158,6 +159,10 @@ export default async () => {
     })
   })
 
+  // Early slice: only fetch Google Books data and download thumbnails for books we'll use.
+  // Avoids unnecessary API calls and rate limiting.
+  const bookReviewsToProcess = bookReviews.slice(0, GOODREADS_BOOKS_TO_FETCH)
+
   // NOTE(chrisvogt): I'd like to eventually phase this out, or replace Goodreads
   // altogether. The Goodreads data is not very good, and is often lacking detailed
   // information. The Google Books data is really clean and useful. So, I'm currently
@@ -165,7 +170,7 @@ export default async () => {
   // Google Books.
   // Use pMap with concurrency control to avoid rate limiting
   const bookResults = await pMap(
-    bookReviews,
+    bookReviewsToProcess,
     async (book: GoodreadsReviewListBookSource, index: number) => {
       // Add a small delay between requests to avoid rate limiting (except for first request)
       if (index > 0) {
