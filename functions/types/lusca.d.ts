@@ -1,14 +1,13 @@
 declare module 'lusca' {
-  type CsrfPathBlockRule = { path: string; type: 'startsWith' | 'exact' }
+  /** Path rule for lusca’s `blocklist` option (third-party name). */
+  type CsrfPathExclusionRule = { path: string; type: 'startsWith' | 'exact' }
 
   interface CsrfOptions {
     angular?: boolean
     secret?: string
     impl?: unknown
-    /** Paths that skip CSRF entirely (no token cookie). Alias: `blacklist`. */
-    blocklist?: string | Array<string | CsrfPathBlockRule>
-    /** @deprecated Use `blocklist` */
-    blacklist?: string | Array<string | CsrfPathBlockRule>
+    /** Request paths that skip CSRF (no token cookies). Option name is defined by lusca. */
+    blocklist?: string | Array<string | CsrfPathExclusionRule>
     cookie?: {
       name?: string
       options?: {

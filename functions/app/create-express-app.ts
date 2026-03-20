@@ -71,8 +71,8 @@ const buildFailureResponse = (err: unknown = {}): { ok: false; error: string } =
 const ALLOWED_EMAIL_DOMAINS = ['@chrisvogt.me', '@chronogrove.com']
 const CSRF_SECRET_COOKIE = '_csrfSecret'
 
-/** Paths where lusca must not run: it sets Set-Cookie on every GET, which prevents CDN caching. */
-const CSRF_BLOCKLIST_WIDGET_READS = widgetIds.map((id) => ({
+/** Public widget reads: skip CSRF so lusca does not set cookies (would prevent CDN caching). */
+const CSRF_EXCLUDED_PATHS_WIDGET_READS = widgetIds.map((id) => ({
   path: `/api/widgets/${id}`,
   type: 'exact' as const,
 }))
@@ -242,7 +242,7 @@ export function createExpressApp({
     lusca.csrf({
       angular: true,
       secret: CSRF_SECRET_COOKIE,
-      blocklist: CSRF_BLOCKLIST_WIDGET_READS,
+      blocklist: CSRF_EXCLUDED_PATHS_WIDGET_READS,
       impl: createCookieBackedCsrfImpl({
         httpOnly: true,
         sameSite: isProductionEnvironment() ? 'strict' : 'lax',
