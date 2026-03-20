@@ -15,6 +15,7 @@ import type { DocumentStore } from '../ports/document-store.js'
 import fetchBookFromGoogle from '../api/google-books/fetch-book.js'
 import { getGoogleBooksApiKey } from '../config/backend-config.js'
 import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { GOODREADS_BOOKS_TO_DISPLAY } from '../config/goodreads-config.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
 import { getXmlTextOrNull } from '../utils/goodreads-xml.js'
@@ -480,7 +481,7 @@ const fetchAllGoodreadsPromises = async (): Promise<FetchAllGoodreadsPromisesRes
 
     return {
       collections: {
-        recentlyReadBooks: (recentlyRead.books ?? []).slice(0, 18),
+        recentlyReadBooks: (recentlyRead.books ?? []).slice(0, GOODREADS_BOOKS_TO_DISPLAY),
         updates: processedUpdates,
       },
       profile: user.profile,

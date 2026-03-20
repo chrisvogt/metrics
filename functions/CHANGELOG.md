@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Goodreads sync optimization** – Previously fetched 100 books from Goodreads, then called Google Books API and downloaded thumbnails for all of them, but only stored 18. Now fetches 30 books (per_page), processes only those 30 (early slice before pMap), and stores 24 for display. Reduces Google Books API usage and rate limiting. See [#175](https://github.com/chrisvogt/metrics/issues/175).
+
 ## [0.22.17] - 2026-03-19
 
 ### Fixed
