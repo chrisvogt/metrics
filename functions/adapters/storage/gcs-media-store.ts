@@ -1,12 +1,22 @@
 import admin from 'firebase-admin'
 import https from 'https'
 
-import { CLOUD_STORAGE_IMAGES_BUCKET } from '../../config/constants.js'
+import { getStorageConfig } from '../../config/backend-config.js'
 import type { MediaDescriptor, MediaStore, StoredMedia } from '../../ports/media-store.js'
+
+function getBucketName(): string {
+  const bucket = getStorageConfig().cloudStorageImagesBucket
+  if (!bucket) {
+    throw new Error(
+      'Bucket name not specified or invalid. Set storage.cloud_storage_images_bucket in FUNCTIONS_CONFIG_EXPORT secret.'
+    )
+  }
+  return bucket
+}
 
 export class GcsMediaStore implements MediaStore {
   async listFiles(): Promise<string[]> {
-    const bucket = admin.storage().bucket(CLOUD_STORAGE_IMAGES_BUCKET)
+    const bucket = admin.storage().bucket(getBucketName())
     const [files] = await bucket.getFiles()
 
     return files.map(({ name }) => name)
@@ -19,7 +29,7 @@ export class GcsMediaStore implements MediaStore {
         return
       }
 
-      const bucket = admin.storage().bucket(CLOUD_STORAGE_IMAGES_BUCKET)
+      const bucket = admin.storage().bucket(getBucketName())
       const file = bucket.file(destinationPath)
 
       https.get(mediaURL, (res) => {
@@ -51,7 +61,7 @@ export class GcsMediaStore implements MediaStore {
   describe() {
     return {
       backend: 'gcs',
-      target: CLOUD_STORAGE_IMAGES_BUCKET ?? 'unknown-bucket',
+      target: getStorageConfig().cloudStorageImagesBucket ?? 'unknown-bucket',
     }
   }
 }

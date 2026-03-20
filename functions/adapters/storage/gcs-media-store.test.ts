@@ -10,8 +10,8 @@ vi.mock('https', () => ({
   get: vi.fn(),
 }))
 
-vi.mock('../../config/constants.js', () => ({
-  CLOUD_STORAGE_IMAGES_BUCKET: 'test-bucket',
+vi.mock('../../config/backend-config.js', () => ({
+  getStorageConfig: vi.fn(() => ({ cloudStorageImagesBucket: 'test-bucket' })),
 }))
 
 import { GcsMediaStore } from './gcs-media-store.js'
@@ -97,5 +97,21 @@ describe('GcsMediaStore', () => {
       backend: 'gcs',
       target: 'test-bucket',
     })
+  })
+
+  it('throws when bucket is not configured', async () => {
+    const { getStorageConfig } = await import('../../config/backend-config.js')
+    vi.mocked(getStorageConfig).mockReturnValueOnce({
+      cloudStorageImagesBucket: undefined,
+      imageCdnBaseUrl: undefined,
+      localMediaRoot: '/tmp',
+      mediaPublicBaseUrl: undefined,
+      mediaStoreBackend: 'gcs',
+    } as ReturnType<typeof getStorageConfig>)
+
+    const adapterWithNoBucket = new GcsMediaStore()
+    await expect(adapterWithNoBucket.listFiles()).rejects.toThrow(
+      'Bucket name not specified or invalid. Set storage.cloud_storage_images_bucket in FUNCTIONS_CONFIG_EXPORT secret.'
+    )
   })
 })

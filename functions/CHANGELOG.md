@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Goodreads sync optimization** – Previously fetched 100 books from Goodreads, then called Google Books API and downloaded thumbnails for all of them, but only stored 18. Now fetches 30 books (per_page), processes only those 30 (early slice before pMap), and stores 24 for display. Reduces Google Books API usage and rate limiting. See [#175](https://github.com/chrisvogt/metrics/issues/175).
 
+## [0.22.18] - 2026-03-19
+
+### Fixed
+
+- **GCS bucket config timing** – `GcsMediaStore` previously read `CLOUD_STORAGE_IMAGES_BUCKET` from constants at module load time, before `FUNCTIONS_CONFIG_EXPORT` was applied. In production, the bucket was always undefined, causing "Bucket name not specified or invalid" on sync jobs. Now reads from `getStorageConfig()` at runtime (after the secret is loaded). If the bucket is still missing, throws a clearer error pointing to the secret. See [#177](https://github.com/chrisvogt/metrics/issues/177).
+
 ## [0.22.17] - 2026-03-19
 
 ### Fixed
