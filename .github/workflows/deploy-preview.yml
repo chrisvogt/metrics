@@ -9,11 +9,10 @@ on:
 permissions:
   contents: read
   checks: write  # required by Firebase action to create/update PR check runs
+  pull-requests: write  # required to post preview URL comment on PR
 
 jobs:
   build_and_preview:
-    # Disabled while the Firebase account/project is unavailable for preview deployments.
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -39,5 +38,5 @@ jobs:
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PERSONAL_STATS_CHRISVOGT }}"
-          expires: 30d
+          expires: 72h
           projectId: personal-stats-chrisvogt
