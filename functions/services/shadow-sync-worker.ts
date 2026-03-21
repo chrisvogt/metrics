@@ -34,16 +34,16 @@ const runShadowSyncJob = async (
   documentStore: DocumentStore
 ): Promise<SyncJobResult<unknown>> => {
   switch (job.provider) {
-    case 'steam':
-      return syncSteamData(documentStore, {
-        source: job.source,
-        userId: job.userId,
-      })
-    default:
-      return {
-        error: `Shadow sync is not implemented for provider: ${job.provider}`,
-        result: 'FAILURE',
-      }
+  case 'steam':
+    return syncSteamData(documentStore, {
+      source: job.source,
+      userId: job.userId,
+    })
+  default:
+    return {
+      error: `Shadow sync is not implemented for provider: ${job.provider}`,
+      result: 'FAILURE',
+    }
   }
 }
 
