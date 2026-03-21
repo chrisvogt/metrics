@@ -7,6 +7,8 @@ describe('getSteamWidgetContent', () => {
   let documentStore: DocumentStore
 
   beforeEach(() => {
+    vi.resetModules()
+    delete process.env.WIDGET_DATA_SOURCE_BY_PROVIDER
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn(),
@@ -69,5 +71,24 @@ describe('getSteamWidgetContent', () => {
         synced: new Date(0),
       },
     })
+  })
+
+  it('should read from shadow widget content paths when Steam is switched over', async () => {
+    process.env.WIDGET_DATA_SOURCE_BY_PROVIDER = 'steam=shadow'
+    vi.mocked(documentStore.getDocument).mockResolvedValue({
+      meta: {
+        synced: {
+          _seconds: 1640995200,
+          _nanoseconds: 0,
+        },
+      },
+    })
+
+    const { default: getSteamWidgetContentWithShadow } = await import('./get-steam-widget-content.js')
+    await getSteamWidgetContentWithShadow('chrisvogt', documentStore)
+
+    expect(documentStore.getDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/steam_tmp/widget-content'
+    )
   })
 })

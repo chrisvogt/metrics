@@ -1,4 +1,6 @@
 import type { DocumentStore } from '../ports/document-store.js'
+import type { SyncJobResult } from '../types/sync-job.js'
+import type { WidgetDataSource } from '../types/widget-content.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
 
@@ -7,8 +9,13 @@ import getPlayerSummary from '../api/steam/get-player-summary.js'
 import getRecentlyPlayedGames from '../api/steam/get-recently-played-games.js'
 import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
 
-import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
 import { getSteamConfig } from '../config/backend-config.js'
+
+interface SyncSteamDataOptions {
+  source?: WidgetDataSource
+  userId?: string
+}
 
 const transformSteamGame = (game) => {
   const {
@@ -51,10 +58,13 @@ const transformSteamGame = (game) => {
  *  - header.jpg
  *  - capsule_231x87.jpg
  */
-const syncSteamData = async (documentStore: DocumentStore) => {
+const syncSteamData = async (
+  documentStore: DocumentStore,
+  { source = 'live', userId: targetUserId = getDefaultWidgetUserId() }: SyncSteamDataOptions = {}
+): Promise<SyncJobResult<Record<string, unknown>>> => {
   const logger = getLogger()
   const { apiKey, userId } = getSteamConfig()
-  const steamCollectionPath = toProviderCollectionPath('steam')
+  const steamCollectionPath = toProviderCollectionPath('steam', targetUserId, source)
 
   const [recentlyPlayedGames, ownedGames, playerSummary] = await Promise.all([
     getRecentlyPlayedGames(apiKey, userId),

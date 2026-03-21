@@ -20,6 +20,29 @@ export function isWidgetId(value: string): value is WidgetId {
   return (widgetIds as readonly string[]).includes(value)
 }
 
+export const syncableWidgetIds = [
+  'discogs',
+  'goodreads',
+  'instagram',
+  'spotify',
+  'steam',
+  'flickr',
+] as const
+
+export type SyncProviderId = (typeof syncableWidgetIds)[number]
+
+export function isSyncProviderId(value: string): value is SyncProviderId {
+  return (syncableWidgetIds as readonly string[]).includes(value)
+}
+
+export const widgetDataSources = ['live', 'shadow'] as const
+
+export type WidgetDataSource = (typeof widgetDataSources)[number]
+
+export function isWidgetDataSource(value: string): value is WidgetDataSource {
+  return (widgetDataSources as readonly string[]).includes(value)
+}
+
 export interface WidgetMeta<TSynced = unknown> {
   synced?: TSynced
 }

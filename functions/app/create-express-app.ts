@@ -9,12 +9,14 @@ import { rateLimit } from 'express-rate-limit'
 import type { AuthService } from '../ports/auth-service.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { MediaStore } from '../ports/media-store.js'
+import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { getWidgetUserIdForHostname } from '../config/backend-paths.js'
 import { isProductionEnvironment } from '../config/backend-config.js'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
-import type { WidgetContentUnion, WidgetId } from '../types/widget-content.js'
-import { isWidgetId, widgetIds } from '../types/widget-content.js'
+import type { SyncJobResult } from '../types/sync-job.js'
+import type { SyncProviderId, WidgetContentUnion, WidgetId } from '../types/widget-content.js'
+import { isSyncProviderId, isWidgetId, widgetIds } from '../types/widget-content.js'
 import deleteUserJob from '../jobs/delete-user.js'
 import syncDiscogsDataJob from '../jobs/sync-discogs-data.js'
 import syncFlickrDataJob from '../jobs/sync-flickr-data.js'
@@ -22,6 +24,8 @@ import syncGoodreadsDataJob from '../jobs/sync-goodreads-data.js'
 import syncInstagramDataJob from '../jobs/sync-instagram-data.js'
 import syncSpotifyDataJob from '../jobs/sync-spotify-data.js'
 import syncSteamDataJob from '../jobs/sync-steam-data.js'
+import { runShadowSyncForProvider } from '../services/shadow-sync-manual.js'
+import type { ManualShadowSyncResult } from '../services/shadow-sync-manual.js'
 import { getWidgetContent } from '../widgets/get-widget-content.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 
@@ -38,6 +42,7 @@ interface CreateExpressAppOptions {
   getClientAuthConfig: () => Record<string, string | undefined>
   logger: LoggerLike
   resolveMediaStore: () => MediaStore
+  syncJobQueue: SyncJobQueue
 }
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
@@ -77,7 +82,7 @@ const CSRF_EXCLUDED_PATHS_WIDGET_READS = widgetIds.map((id) => ({
   type: 'exact' as const,
 }))
 type ProviderSyncId = Exclude<WidgetId, 'github'>
-type ProviderSyncResult = { result: string } & Record<string, unknown>
+type ProviderSyncResult = Record<string, unknown> | SyncJobResult<Record<string, unknown>>
 
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader?.startsWith('Bearer ')) {
@@ -110,6 +115,7 @@ export function createExpressApp({
   getClientAuthConfig,
   logger,
   resolveMediaStore,
+  syncJobQueue,
 }: CreateExpressAppOptions): express.Express {
   const expressApp = express()
 
@@ -284,6 +290,14 @@ export function createExpressApp({
     flickr: () => syncFlickrDataJob(documentStore),
   }
 
+  const runShadowSyncHandler = async (
+    provider: SyncProviderId
+  ): Promise<ManualShadowSyncResult> => runShadowSyncForProvider({
+    documentStore,
+    provider,
+    syncJobQueue,
+  })
+
   expressApp.get(
     '/api/media/{*mediaPath}',
     cors(corsOptions),
@@ -350,6 +364,30 @@ export function createExpressApp({
         res.status(200).send(result)
       } catch (err) {
         logger.error(`Error syncing ${provider} data.`, err)
+        res.status(500).send({ error: err })
+      }
+    }
+  )
+
+  expressApp.get(
+    '/api/widgets/sync-shadow/:provider',
+    cors(corsOptions),
+    createRateLimiter(15 * 60 * 1000, 10),
+    async (req, res) => {
+      const providerParam = req.params.provider
+      const provider = typeof providerParam === 'string' ? providerParam : undefined
+
+      if (!provider || !isSyncProviderId(provider)) {
+        logger.info(`Attempted to shadow sync an unrecognized provider: ${provider}`)
+        res.status(400).send('Unrecognized or unsupported shadow sync provider.')
+        return
+      }
+
+      try {
+        const result = await runShadowSyncHandler(provider)
+        res.status(200).send(result)
+      } catch (err) {
+        logger.error(`Error shadow syncing ${provider} data.`, err)
         res.status(500).send({ error: err })
       }
     }

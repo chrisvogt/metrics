@@ -99,6 +99,14 @@ vi.mock('./jobs/sync-flickr-data.js', () => ({
   default: vi.fn(() => Promise.resolve({ success: true }))
 }))
 
+vi.mock('./services/shadow-sync-planner.js', () => ({
+  planShadowSyncJobs: vi.fn(() => Promise.resolve({ result: 'NOOP' })),
+}))
+
+vi.mock('./services/shadow-sync-worker.js', () => ({
+  runNextShadowSyncJob: vi.fn(() => Promise.resolve({ result: 'NOOP' })),
+}))
+
 vi.mock('./jobs/create-user.js', () => ({
   default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' }))
 }))
@@ -1095,6 +1103,16 @@ describe('index.js', () => {
       expect(typeof syncFlickrData).toBe('function')
     })
 
+    it('should export runShadowSyncPlanner function', async () => {
+      const { runShadowSyncPlanner } = await import('./index.js')
+      expect(typeof runShadowSyncPlanner).toBe('function')
+    })
+
+    it('should export runShadowSyncWorker function', async () => {
+      const { runShadowSyncWorker } = await import('./index.js')
+      expect(typeof runShadowSyncWorker).toBe('function')
+    })
+
     it('should run syncGoodreadsData handler', async () => {
       const { syncGoodreadsData } = await import('./index.js')
       const { default: syncGoodreadsDataJob } = await import('./jobs/sync-goodreads-data.js')
@@ -1133,6 +1151,20 @@ describe('index.js', () => {
       vi.mocked(syncFlickrDataJob).mockResolvedValueOnce(undefined)
       await syncFlickrData()
       expect(syncFlickrDataJob).toHaveBeenCalled()
+    })
+
+    it('should run shadow sync planner handler', async () => {
+      const { runShadowSyncPlanner } = await import('./index.js')
+      const { planShadowSyncJobs } = await import('./services/shadow-sync-planner.js')
+      await runShadowSyncPlanner()
+      expect(planShadowSyncJobs).toHaveBeenCalled()
+    })
+
+    it('should run shadow sync worker handler', async () => {
+      const { runShadowSyncWorker } = await import('./index.js')
+      const { runNextShadowSyncJob } = await import('./services/shadow-sync-worker.js')
+      await runShadowSyncWorker()
+      expect(runNextShadowSyncJob).toHaveBeenCalled()
     })
   })
 
@@ -1396,6 +1428,14 @@ describe('index.js', () => {
             registerUserCreationTrigger,
           },
           runtimeSecrets: [],
+          syncJobQueue: {
+            claimJob: vi.fn(),
+            claimNextJob: vi.fn(),
+            completeJob: vi.fn(),
+            enqueue: vi.fn(),
+            failJob: vi.fn(),
+            getJob: vi.fn(),
+          },
         })),
       }))
 

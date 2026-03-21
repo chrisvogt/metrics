@@ -1,6 +1,13 @@
 import * as dotenv from 'dotenv'
 import path from 'path'
 
+import {
+  isSyncProviderId,
+  isWidgetDataSource,
+  type SyncProviderId,
+  type WidgetDataSource,
+} from '../types/widget-content.js'
+
 const FUNCTIONS_CONFIG_APPLIED_ENV = '__FUNCTIONS_CONFIG_APPLIED__'
 const DEFAULT_WIDGET_USER_ID = 'chrisvogt'
 const DEFAULT_WIDGET_HOSTNAME_USER_MAP = {
@@ -89,20 +96,21 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null &&
   !Array.isArray(value)
 
-const parseWidgetUserMap = (
-  rawValue: string | undefined
+const parseStringMap = (
+  rawValue: string | undefined,
+  defaults: Record<string, string> = {}
 ): Record<string, string> => {
   if (!rawValue) {
-    return { ...DEFAULT_WIDGET_HOSTNAME_USER_MAP }
+    return { ...defaults }
   }
 
   try {
     const parsed = JSON.parse(rawValue) as unknown
-    const widgetUserMap = isRecord(parsed) ? parsed : {}
+    const stringMap = isRecord(parsed) ? parsed : {}
 
-    return Object.entries(widgetUserMap).reduce<Record<string, string>>((acc, [hostname, userId]) => {
-      if (hostname.length > 0 && typeof userId === 'string' && userId.length > 0) {
-        acc[hostname] = userId
+    return Object.entries(stringMap).reduce<Record<string, string>>((acc, [key, value]) => {
+      if (key.length > 0 && typeof value === 'string' && value.length > 0) {
+        acc[key] = value
       }
       return acc
     }, {})
@@ -112,16 +120,57 @@ const parseWidgetUserMap = (
       .map((entry) => entry.trim())
       .filter(Boolean)
       .reduce<Record<string, string>>((acc, entry) => {
-        const [hostname, userId] = entry.split('=').map((part) => part?.trim())
-        if (hostname && userId) {
-          acc[hostname] = userId
+        const [key, value] = entry.split('=').map((part) => part?.trim())
+        if (key && value) {
+          acc[key] = value
         }
         return acc
       }, {})
   }
 }
 
+const parseWidgetUserMap = (
+  rawValue: string | undefined
+): Record<string, string> => {
+  return parseStringMap(rawValue, DEFAULT_WIDGET_HOSTNAME_USER_MAP)
+}
+
+const parseWidgetDataSourceMap = (
+  rawValue: string | undefined
+): Partial<Record<SyncProviderId, WidgetDataSource>> =>
+  Object.entries(parseStringMap(rawValue)).reduce<Partial<Record<SyncProviderId, WidgetDataSource>>>(
+    (acc, [provider, source]) => {
+      if (isSyncProviderId(provider) && isWidgetDataSource(source)) {
+        acc[provider] = source
+      }
+      return acc
+    },
+    {}
+  )
+
+const parseSyncProviderList = (rawValue: string | undefined): SyncProviderId[] => {
+  if (!rawValue) {
+    return []
+  }
+
+  const candidates = rawValue
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+
+  return candidates.filter(isSyncProviderId)
+}
+
+const parseBooleanEnv = (rawValue: string | undefined): boolean =>
+  rawValue === '1' || rawValue === 'true'
+
 export const getBackendPathConfig = () => ({
   defaultWidgetUserId: process.env.DEFAULT_WIDGET_USER_ID ?? DEFAULT_WIDGET_USER_ID,
   widgetUserIdByHostname: parseWidgetUserMap(process.env.WIDGET_USER_ID_BY_HOSTNAME),
+  widgetDataSourceByProvider: parseWidgetDataSourceMap(process.env.WIDGET_DATA_SOURCE_BY_PROVIDER),
+})
+
+export const getShadowSyncConfig = () => ({
+  enabled: parseBooleanEnv(process.env.SHADOW_SYNC_ENABLED),
+  providers: parseSyncProviderList(process.env.SHADOW_SYNC_PROVIDERS),
 })

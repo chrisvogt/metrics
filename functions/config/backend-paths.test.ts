@@ -8,6 +8,7 @@ describe('backend paths', () => {
     process.env = { ...originalEnv }
     delete process.env.DEFAULT_WIDGET_USER_ID
     delete process.env.WIDGET_USER_ID_BY_HOSTNAME
+    delete process.env.WIDGET_DATA_SOURCE_BY_PROVIDER
   })
 
   afterEach(() => {
@@ -27,14 +28,19 @@ describe('backend paths', () => {
   it('builds user collection paths explicitly', async () => {
     const { toUserCollectionPath, toProviderCollectionPath } = await importBackendPaths()
     expect(toUserCollectionPath('chrisvogt', 'spotify')).toBe('users/chrisvogt/spotify')
+    expect(toUserCollectionPath('chrisvogt', 'spotify', 'shadow')).toBe('users/chrisvogt/spotify_tmp')
     expect(toUserCollectionPath('chronogrove', 'instagram')).toBe('users/chronogrove/instagram')
     expect(toProviderCollectionPath('spotify')).toBe('users/chrisvogt/spotify')
+    expect(toProviderCollectionPath('spotify', 'chrisvogt', 'shadow')).toBe('users/chrisvogt/spotify_tmp')
   })
 
   it('builds user-scoped media prefixes explicitly', async () => {
     const { toMediaPrefix, toProviderMediaPrefix } = await importBackendPaths()
     expect(toMediaPrefix('chrisvogt', 'discogs')).toBe('chrisvogt/discogs/')
     expect(toMediaPrefix('chrisvogt', 'spotify', 'playlists/')).toBe('chrisvogt/spotify/playlists/')
+    expect(toMediaPrefix('chrisvogt', 'spotify', 'playlists/', 'shadow')).toBe(
+      'chrisvogt/spotify_tmp/playlists/'
+    )
     expect(toProviderMediaPrefix('instagram')).toBe('chrisvogt/instagram/')
   })
 
@@ -49,9 +55,11 @@ describe('backend paths', () => {
     process.env.DEFAULT_WIDGET_USER_ID = 'custom-user'
     process.env.WIDGET_USER_ID_BY_HOSTNAME =
       'api.custom.example=custom-user,api.secondary.example=secondary-user'
+    process.env.WIDGET_DATA_SOURCE_BY_PROVIDER = 'steam=shadow'
 
     const {
       getDefaultWidgetUserId,
+      getWidgetDataSourceForProvider,
       getWidgetUserIdForHostname,
       toProviderCollectionPath,
       toProviderMediaPrefix,
@@ -60,6 +68,7 @@ describe('backend paths', () => {
     expect(getDefaultWidgetUserId()).toBe('custom-user')
     expect(getWidgetUserIdForHostname('api.custom.example')).toBe('custom-user')
     expect(getWidgetUserIdForHostname('api.secondary.example')).toBe('secondary-user')
+    expect(getWidgetDataSourceForProvider('steam')).toBe('shadow')
     expect(toProviderCollectionPath('goodreads')).toBe('users/custom-user/goodreads')
     expect(toProviderMediaPrefix('discogs')).toBe('custom-user/discogs/')
   })

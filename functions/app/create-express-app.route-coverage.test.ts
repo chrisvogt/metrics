@@ -39,6 +39,15 @@ vi.mock('../widgets/get-widget-content.js', () => ({
   validWidgetIds: ['spotify'],
 }))
 
+vi.mock('../services/shadow-sync-manual.js', () => ({
+  runShadowSyncForProvider: vi.fn(() => Promise.resolve({
+    afterJob: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'completed' },
+    beforeJob: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'queued' },
+    enqueue: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'enqueued' },
+    worker: { jobId: 'shadow-chrisvogt-steam-shadow', result: 'SUCCESS' },
+  })),
+}))
+
 const findRouteHandler = (
   app: ReturnType<typeof import('express').default>,
   method: 'get' | 'delete' | 'post',
@@ -103,6 +112,14 @@ describe('createExpressApp route coverage', () => {
     getDocument: vi.fn(),
     setDocument: vi.fn(),
   }
+  const syncJobQueue = {
+    claimJob: vi.fn(),
+    claimNextJob: vi.fn(),
+    completeJob: vi.fn(),
+    enqueue: vi.fn(),
+    failJob: vi.fn(),
+    getJob: vi.fn(),
+  }
   const ensureRuntimeConfigApplied = vi.fn().mockResolvedValue(undefined)
   const getClientAuthConfig = vi.fn(() => ({
     apiKey: 'public-key',
@@ -124,6 +141,7 @@ describe('createExpressApp route coverage', () => {
       getClientAuthConfig,
       logger,
       resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
     })
 
     const clientAuthHandler = findRouteHandler(app, 'get', '/api/client-auth-config')
@@ -172,6 +190,7 @@ describe('createExpressApp route coverage', () => {
       getClientAuthConfig,
       logger,
       resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
     })
     const syncRouteHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider')
     const response = createResponse()
@@ -184,6 +203,31 @@ describe('createExpressApp route coverage', () => {
     expect(response.send).toHaveBeenCalledWith({ result: 'SUCCESS', provider })
   })
 
+  it('dispatches the manual shadow sync route through the injected queue and worker services', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+    const shadowSyncHandler = findRouteHandler(app, 'get', '/api/widgets/sync-shadow/:provider')
+    const response = createResponse()
+    const { runShadowSyncForProvider } = await import('../services/shadow-sync-manual.js')
+
+    await shadowSyncHandler({ params: { provider: 'steam' } }, response)
+
+    expect(runShadowSyncForProvider).toHaveBeenCalledWith({
+      documentStore,
+      provider: 'steam',
+      syncJobQueue,
+    })
+    expect(response.status).toHaveBeenCalledWith(200)
+  })
+
   it('returns 401 when session auth reaches the defensive no-token branch', async () => {
     const { createExpressApp } = await import('./create-express-app.js')
     const app = createExpressApp({
@@ -193,6 +237,7 @@ describe('createExpressApp route coverage', () => {
       getClientAuthConfig,
       logger,
       resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
     })
 
     const sessionHandler = findRouteHandler(app, 'post', '/api/auth/session')
@@ -223,6 +268,7 @@ describe('createExpressApp route coverage', () => {
       getClientAuthConfig,
       logger,
       resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
     })
 
     const authenticateUser = findProtectedRouteMiddleware(app, 'get', '/api/user/profile')

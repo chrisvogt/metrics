@@ -44,6 +44,15 @@ vi.mock('../widgets/get-widget-content.js', () => ({
   validWidgetIds: ['spotify'],
 }))
 
+vi.mock('../services/shadow-sync-manual.js', () => ({
+  runShadowSyncForProvider: vi.fn(() => Promise.resolve({
+    afterJob: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'completed' },
+    beforeJob: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'queued' },
+    enqueue: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'enqueued' },
+    worker: { jobId: 'shadow-chrisvogt-steam-shadow', result: 'SUCCESS' },
+  })),
+}))
+
 describe('createExpressApp media route', () => {
   const logger = {
     error: vi.fn(),
@@ -65,6 +74,15 @@ describe('createExpressApp media route', () => {
     setDocument: vi.fn(),
   }
 
+  const syncJobQueue = {
+    claimJob: vi.fn(),
+    claimNextJob: vi.fn(),
+    completeJob: vi.fn(),
+    enqueue: vi.fn(),
+    failJob: vi.fn(),
+    getJob: vi.fn(),
+  }
+
   const buildApp = async () => {
     const { createExpressApp } = await import('./create-express-app.js')
 
@@ -76,6 +94,7 @@ describe('createExpressApp media route', () => {
       logger,
       resolveMediaStore: () =>
         new LocalDiskMediaStore(path.join(os.tmpdir(), 'metrics-unused-media-root')),
+      syncJobQueue,
     })
   }
 
@@ -100,6 +119,7 @@ describe('createExpressApp media route', () => {
         fetchAndStore: vi.fn(),
         listFiles: vi.fn(),
       }),
+      syncJobQueue,
     })
 
     await request(app)
@@ -128,6 +148,7 @@ describe('createExpressApp media route', () => {
         fetchAndStore: vi.fn(),
         listFiles: vi.fn(),
       }),
+      syncJobQueue,
     })
 
     await request(app)
@@ -150,6 +171,7 @@ describe('createExpressApp media route', () => {
       getClientAuthConfig: vi.fn(() => ({})),
       logger,
       resolveMediaStore: () => mediaStore,
+      syncJobQueue,
     })
 
     await request(routeApp)
@@ -168,6 +190,7 @@ describe('createExpressApp media route', () => {
       getClientAuthConfig: vi.fn(() => ({})),
       logger,
       resolveMediaStore: () => mediaStore,
+      syncJobQueue,
     })
 
     const existingPath = path.join(rootDir, 'cover.jpg')
@@ -193,6 +216,7 @@ describe('createExpressApp media route', () => {
       getClientAuthConfig: vi.fn(() => ({})),
       logger,
       resolveMediaStore: () => mediaStore,
+      syncJobQueue,
     })
 
     fs.mkdirSync(path.join(rootDir, 'folder'))
@@ -255,6 +279,15 @@ describe('createExpressApp auth and session branches', () => {
     setDocument: vi.fn(),
   }
 
+  const syncJobQueue = {
+    claimJob: vi.fn(),
+    claimNextJob: vi.fn(),
+    completeJob: vi.fn(),
+    enqueue: vi.fn(),
+    failJob: vi.fn(),
+    getJob: vi.fn(),
+  }
+
   const ensureRuntimeConfigApplied = vi.fn().mockResolvedValue(undefined)
   const getClientAuthConfig = vi.fn(() => ({
     apiKey: 'public-key',
@@ -273,6 +306,7 @@ describe('createExpressApp auth and session branches', () => {
       logger,
       resolveMediaStore: () =>
         new LocalDiskMediaStore(path.join(os.tmpdir(), 'metrics-unused-auth-media')),
+      syncJobQueue,
     })
   }
 
@@ -486,6 +520,33 @@ describe('createExpressApp auth and session branches', () => {
 
     expect(response.body.result).toBe('SUCCESS')
     expect(jobModule.default).toHaveBeenCalledWith(documentStore)
+  })
+
+  it('runs the manual shadow sync route through the injected queue and worker services', async () => {
+    const app = await buildApp()
+    const { runShadowSyncForProvider } = await import('../services/shadow-sync-manual.js')
+
+    const response = await request(app)
+      .get('/api/widgets/sync-shadow/steam')
+      .expect(200)
+
+    expect(runShadowSyncForProvider).toHaveBeenCalledWith({
+      documentStore,
+      provider: 'steam',
+      syncJobQueue,
+    })
+    expect(response.body.enqueue.status).toBe('enqueued')
+    expect(response.body.worker.result).toBe('SUCCESS')
+  })
+
+  it('returns 400 for unsupported manual shadow sync providers', async () => {
+    const app = await buildApp()
+
+    const response = await request(app)
+      .get('/api/widgets/sync-shadow/github')
+      .expect(400)
+
+    expect(response.text).toBe('Unrecognized or unsupported shadow sync provider.')
   })
 
   it('treats array sync provider params as unsupported', async () => {

@@ -2,11 +2,15 @@ import { createExpressApp, getSessionAuthError } from './app/create-express-app.
 import { createBackendBootstrap } from './bootstrap/create-backend-bootstrap.js'
 import createUserJob from './jobs/create-user.js'
 import type { RuntimeUserCreationData } from './ports/runtime-platform.js'
+import { planShadowSyncJobs } from './services/shadow-sync-planner.js'
+import { runNextShadowSyncJob } from './services/shadow-sync-worker.js'
 import syncGoodreadsDataJob from './jobs/sync-goodreads-data.js'
 import syncInstagramDataJob from './jobs/sync-instagram-data.js'
 import syncSpotifyDataJob from './jobs/sync-spotify-data.js'
 import syncSteamDataJob from './jobs/sync-steam-data.js'
 import syncFlickrDataJob from './jobs/sync-flickr-data.js'
+
+const SHADOW_SYNC_WORKER_SCHEDULE = 'every 15 minutes'
 
 const {
   authService,
@@ -17,6 +21,7 @@ const {
   resolveMediaStore,
   runtimePlatform,
   runtimeSecrets,
+  syncJobQueue,
 } = createBackendBootstrap()
 
 export const expressApp = createExpressApp({
@@ -26,6 +31,7 @@ export const expressApp = createExpressApp({
   getClientAuthConfig,
   logger,
   resolveMediaStore,
+  syncJobQueue,
 })
 
 export { getSessionAuthError }
@@ -54,6 +60,21 @@ export const syncFlickrData = runtimePlatform.registerScheduledFunction(async ()
   await ensureRuntimeConfigApplied()
   await syncFlickrDataJob(documentStore)
 }, runtimeSecrets)
+
+export const runShadowSyncPlanner = runtimePlatform.registerScheduledFunction(async () => {
+  await ensureRuntimeConfigApplied()
+  await planShadowSyncJobs(syncJobQueue)
+}, runtimeSecrets)
+
+export const runShadowSyncWorker = runtimePlatform.registerScheduledFunction(async () => {
+  await ensureRuntimeConfigApplied()
+  await runNextShadowSyncJob({
+    documentStore,
+    syncJobQueue,
+  })
+}, runtimeSecrets, {
+  schedule: SHADOW_SYNC_WORKER_SCHEDULE,
+})
 
 export const handleUserCreation = runtimePlatform.registerUserCreationTrigger(async (event) => {
   await ensureRuntimeConfigApplied()

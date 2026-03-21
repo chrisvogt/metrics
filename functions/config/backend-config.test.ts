@@ -32,6 +32,9 @@ describe('backend config', () => {
     delete process.env.STEAM_USER_ID
     delete process.env.DEFAULT_WIDGET_USER_ID
     delete process.env.WIDGET_USER_ID_BY_HOSTNAME
+    delete process.env.WIDGET_DATA_SOURCE_BY_PROVIDER
+    delete process.env.SHADOW_SYNC_ENABLED
+    delete process.env.SHADOW_SYNC_PROVIDERS
   })
 
   it('detects production mode from NODE_ENV', async () => {
@@ -186,11 +189,19 @@ describe('backend config', () => {
       'api.custom.example': 'custom-user',
       'api.secondary.example': 'secondary-user',
     })
+    process.env.WIDGET_DATA_SOURCE_BY_PROVIDER = JSON.stringify({
+      steam: 'shadow',
+      spotify: 'live',
+    })
 
     const { getBackendPathConfig } = await import('./backend-config.js')
 
     expect(getBackendPathConfig()).toEqual({
       defaultWidgetUserId: 'custom-user',
+      widgetDataSourceByProvider: {
+        spotify: 'live',
+        steam: 'shadow',
+      },
       widgetUserIdByHostname: {
         'api.custom.example': 'custom-user',
         'api.secondary.example': 'secondary-user',
@@ -203,6 +214,7 @@ describe('backend config', () => {
 
     expect(getBackendPathConfig()).toEqual({
       defaultWidgetUserId: 'chrisvogt',
+      widgetDataSourceByProvider: {},
       widgetUserIdByHostname: {
         'api.chronogrove.com': 'chronogrove',
       },
@@ -252,6 +264,39 @@ describe('backend config', () => {
 
     expect(getBackendPathConfig().widgetUserIdByHostname).toEqual({
       'api.custom.example': 'custom-user',
+    })
+  })
+
+  it('parses provider source mapping config and ignores invalid entries', async () => {
+    process.env.WIDGET_DATA_SOURCE_BY_PROVIDER =
+      'steam=shadow, spotify=live, github=shadow, invalid-entry, flickr=unknown'
+
+    const { getBackendPathConfig } = await import('./backend-config.js')
+
+    expect(getBackendPathConfig().widgetDataSourceByProvider).toEqual({
+      spotify: 'live',
+      steam: 'shadow',
+    })
+  })
+
+  it('returns normalized shadow sync config from env', async () => {
+    process.env.SHADOW_SYNC_ENABLED = 'true'
+    process.env.SHADOW_SYNC_PROVIDERS = 'steam,spotify,github,unknown'
+
+    const { getShadowSyncConfig } = await import('./backend-config.js')
+
+    expect(getShadowSyncConfig()).toEqual({
+      enabled: true,
+      providers: ['steam', 'spotify'],
+    })
+  })
+
+  it('defaults shadow sync config to disabled with no providers', async () => {
+    const { getShadowSyncConfig } = await import('./backend-config.js')
+
+    expect(getShadowSyncConfig()).toEqual({
+      enabled: false,
+      providers: [],
     })
   })
 })
