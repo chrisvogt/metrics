@@ -24,6 +24,16 @@ This repository contains a portable metrics service I use to fetch and sync data
 - **Real-time Data**: Live data fetching and caching for widget content
 - **Local Development**: Full Firebase emulator support for development
 
+## Documentation
+
+Design notes and architecture references live under [`docs/`](docs/). The table below links each file to its topic.
+
+| Document | What it covers |
+|----------|----------------|
+| [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md) | Firestore `sync_jobs` queue: scheduled planner and worker, manual `GET /api/widgets/sync/:provider`, job states, and related source files. |
+| [docs/SESSION_COOKIES.md](docs/SESSION_COOKIES.md) | Firebase session cookies (HTTP-only), `/api/auth/session`, JWT fallback, and security properties. |
+| [docs/MULTI_TENANT_ARCHITECTURE_PLAN.md](docs/MULTI_TENANT_ARCHITECTURE_PLAN.md) | Plan for evolving from single-tenant env-based config toward user-scoped storage and sync. |
+
 ## How to install
 
 ### Prerequisites
