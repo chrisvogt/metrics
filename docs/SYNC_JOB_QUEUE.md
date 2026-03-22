@@ -78,7 +78,17 @@ stateDiagram-v2
 
 ## Worker execution
 
-`processSyncJob` (`functions/services/sync-worker.js`) dispatches on `job.provider` to the corresponding `sync-*-data` job module, writes widget data through `DocumentStore`, then calls `completeJob` or `failJob` with a `SyncJobSummary` (`durationMs`, `result`, optional `metrics`).
+`processSyncJob` (`functions/services/sync-worker.js`) dispatches on `job.provider` to the corresponding `sync-*-data` job module. Provider jobs write widget payloads through `DocumentStore` as before. When a job finishes, the worker builds a **`SyncJobSummary`** and calls `completeJob` (success) or `failJob` (returned failure or thrown error).
+
+### Completion summary and optional `metrics`
+
+The Firestore document field **`summary`** (written on complete/fail) always includes at least **`durationMs`** and **`result`**. **`summary.metrics`** is optional numeric telemetry for operators and dashboards.
+
+1. **Provider-owned counters** – On **`result: 'SUCCESS'`**, a sync job may attach **`metrics?: Record<string, number>`** on its return value. That field is part of the shared success type in `functions/types/sync-job.ts` (`SyncJobSuccess`).
+2. **Worker behavior** – The worker copies `metrics` from the job result into `SyncJobSummary` only when the run succeeded **and** `metrics` is present **and** non-empty. It does **not** inspect `data` or branch on provider for metrics; any provider can opt in by returning `metrics`.
+3. **Steam today** – `sync-steam-data.ts` sets `ownedGamesCount` and `recentlyPlayedGamesCount` from the lengths of the **`collections.ownedGames`** and **`collections.recentlyPlayedGames`** arrays in the widget payload that was just persisted (same shape as `data` on success). Other providers currently omit `metrics`.
+
+Failures and thrown errors get a summary with **`durationMs`** and **`result: 'FAILURE'`** only (no `metrics`).
 
 ## Operational notes
 
@@ -91,6 +101,7 @@ stateDiagram-v2
 | Area | Location |
 |------|----------|
 | Queue port | `functions/ports/sync-job-queue.ts` |
+| Sync job result shape (optional `metrics` on success) | `functions/types/sync-job.ts` |
 | Types | `functions/types/sync-pipeline.ts` |
 | Firestore adapter | `functions/adapters/sync/firestore-sync-job-queue.ts` |
 | Planner / manual / worker | `functions/services/sync-planner.ts`, `sync-manual.ts`, `sync-worker.ts` |

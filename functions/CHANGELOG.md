@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Sync queue metrics** – Optional **`metrics`** on successful `SyncJobResult` (`types/sync-job.ts`) are merged into the Firestore job **`summary`** by `processSyncJob` (`services/sync-worker.ts`). Provider jobs own the numbers (e.g. Steam’s `ownedGamesCount` / `recentlyPlayedGamesCount` from `sync-steam-data.ts`); the worker does not parse provider-specific `data` for metrics.
 - **Instagram Graph fetch** – Uses `prefixUrl` and `searchParams` for `got` instead of embedding the access token in a URL string literal. Caps top-level media at 24 items via a dedicated `{userId}/media` request.
 - **Build output** – `functions/lib/` is gitignored; compile with `pnpm run build` before deploy (aligned with the existing TypeScript layout).
 

@@ -87,6 +87,10 @@ describe('runNextSyncJob', () => {
           recentlyPlayedGames: [{ id: 3 }],
         },
       },
+      metrics: {
+        ownedGamesCount: 2,
+        recentlyPlayedGamesCount: 1,
+      },
       result: 'SUCCESS',
     })
 
@@ -109,7 +113,7 @@ describe('runNextSyncJob', () => {
     )
   })
 
-  it('completes Steam jobs with zero metrics when success payload omits data', async () => {
+  it('completes Steam jobs without queue metrics when sync omits metrics', async () => {
     vi.mocked(syncJobQueue.claimNextJob).mockResolvedValue({
       runCount: 1,
       enqueuedAt: '2026-03-21T02:00:00.000Z',
@@ -129,24 +133,22 @@ describe('runNextSyncJob', () => {
       result: 'SUCCESS',
     })
 
-    expect(syncJobQueue.completeJob).toHaveBeenCalledWith(
-      'sync-chrisvogt-steam',
-      expect.objectContaining({
-        metrics: {
-          ownedGamesCount: 0,
-          recentlyPlayedGamesCount: 0,
-        },
-        result: 'SUCCESS',
-      })
-    )
+    expect(syncJobQueue.completeJob).toHaveBeenCalledTimes(1)
+    const completedSummary = vi.mocked(syncJobQueue.completeJob).mock.calls[0][1]
+    expect(completedSummary).not.toHaveProperty('metrics')
+    expect(completedSummary.result).toBe('SUCCESS')
   })
 
-  it('derives Steam metrics when only one game list is present on success data', async () => {
+  it('forwards queue metrics from the Steam sync result', async () => {
     vi.mocked(syncSteamData).mockResolvedValue({
       data: {
         collections: {
           ownedGames: [{ id: 1 }],
         },
+      },
+      metrics: {
+        ownedGamesCount: 1,
+        recentlyPlayedGamesCount: 0,
       },
       result: 'SUCCESS',
     })
@@ -177,12 +179,16 @@ describe('runNextSyncJob', () => {
     )
   })
 
-  it('derives Steam metrics when only recently played games are present', async () => {
+  it('forwards queue metrics when only recently played games are counted', async () => {
     vi.mocked(syncSteamData).mockResolvedValue({
       data: {
         collections: {
           recentlyPlayedGames: [{ id: 9 }],
         },
+      },
+      metrics: {
+        ownedGamesCount: 0,
+        recentlyPlayedGamesCount: 1,
       },
       result: 'SUCCESS',
     })
@@ -249,6 +255,10 @@ describe('runNextSyncJob', () => {
           ownedGames: [],
           recentlyPlayedGames: [],
         },
+      },
+      metrics: {
+        ownedGamesCount: 0,
+        recentlyPlayedGamesCount: 0,
       },
       result: 'SUCCESS',
     })

@@ -16,32 +16,25 @@ import type { QueuedSyncJob, SyncJobSummary } from '../types/sync-pipeline.js'
 interface SyncExecutionResult {
   data?: unknown
   error?: unknown
+  metrics?: Record<string, number>
   result: 'FAILURE' | 'SUCCESS'
 }
 
-const toSteamSyncMetrics = (data: unknown): Record<string, number> => {
-  const widgetContent = data as {
-    collections?: {
-      ownedGames?: unknown[]
-      recentlyPlayedGames?: unknown[]
-    }
+const queueMetricsFromResult = (result: SyncExecutionResult): Record<string, number> => {
+  if (result.result !== 'SUCCESS' || result.metrics === undefined) {
+    return {}
   }
-
-  return {
-    ownedGamesCount: widgetContent?.collections?.ownedGames?.length ?? 0,
-    recentlyPlayedGamesCount: widgetContent?.collections?.recentlyPlayedGames?.length ?? 0,
-  }
+  return result.metrics
 }
 
-const buildSummary = (
-  result: SyncExecutionResult,
-  durationMs: number,
-  metrics: Record<string, number> = {}
-): SyncJobSummary => ({
-  durationMs,
-  metrics,
-  result: result.result,
-})
+const buildSummary = (result: SyncExecutionResult, durationMs: number): SyncJobSummary => {
+  const metrics = queueMetricsFromResult(result)
+  return {
+    durationMs,
+    ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
+    result: result.result,
+  }
+}
 
 const runSyncJob = async (
   job: QueuedSyncJob,
@@ -99,10 +92,7 @@ export const processSyncJob = async ({
   try {
     const result = await runSyncJob(job, documentStore)
     const durationMs = Date.now() - startedAt
-    const metrics = job.provider === 'steam' && result.result === 'SUCCESS'
-      ? toSteamSyncMetrics(('data' in result ? result.data : undefined))
-      : {}
-    const summary = buildSummary(result, durationMs, metrics)
+    const summary = buildSummary(result, durationMs)
 
     if (result.result === 'SUCCESS') {
       await syncJobQueue.completeJob(job.jobId, summary)

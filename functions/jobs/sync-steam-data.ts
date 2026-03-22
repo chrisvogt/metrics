@@ -159,9 +159,17 @@ const syncSteamData = async (
       saveWidgetContent(),
       saveAISummary(),
     ])
+    const { ownedGames, recentlyPlayedGames } = widgetContent.collections as {
+      ownedGames: unknown[]
+      recentlyPlayedGames: unknown[]
+    }
     return {
+      data: widgetContent,
+      metrics: {
+        ownedGamesCount: ownedGames.length,
+        recentlyPlayedGamesCount: recentlyPlayedGames.length,
+      },
       result: 'SUCCESS',
-      data: widgetContent
     }
   } catch (err) {
     logger.error('Failed to save Steam data to database.', err)

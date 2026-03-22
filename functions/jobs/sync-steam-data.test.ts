@@ -71,6 +71,10 @@ describe('syncSteamData', () => {
     const result = await syncSteamData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
+    expect(result.metrics).toEqual({
+      ownedGamesCount: 1,
+      recentlyPlayedGamesCount: 1,
+    })
     expect(documentStore.setDocument).toHaveBeenCalledWith(
       'users/chrisvogt/steam/last-response_owned-games',
       expect.objectContaining({
@@ -120,6 +124,10 @@ describe('syncSteamData', () => {
     const result = await syncSteamData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
+    expect(result.metrics).toEqual({
+      ownedGamesCount: 0,
+      recentlyPlayedGamesCount: 0,
+    })
     expect(documentStore.setDocument).toHaveBeenCalledTimes(4)
   })
 
@@ -151,8 +159,12 @@ describe('syncSteamData', () => {
     vi.mocked(getPlayerSummary).mockResolvedValue({})
     vi.mocked(generateSteamSummary).mockResolvedValue(null)
 
-    await syncSteamData(documentStore)
+    const result = await syncSteamData(documentStore)
 
+    expect(result.metrics).toEqual({
+      ownedGamesCount: 2,
+      recentlyPlayedGamesCount: 0,
+    })
     expect(documentStore.setDocument).toHaveBeenCalledWith(
       'users/chrisvogt/steam/widget-content',
       expect.objectContaining({
