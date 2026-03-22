@@ -46,32 +46,26 @@ const runSyncJob = async (
   switch (job.provider) {
   case 'discogs':
     return syncDiscogsData(documentStore, {
-      source: job.source,
       userId: job.userId,
     }) as Promise<ShadowSyncExecutionResult>
   case 'flickr':
     return syncFlickrData(documentStore, {
-      source: job.source,
       userId: job.userId,
     }) as Promise<ShadowSyncExecutionResult>
   case 'goodreads':
     return syncGoodreadsData(documentStore, {
-      source: job.source,
       userId: job.userId,
     }) as Promise<ShadowSyncExecutionResult>
   case 'instagram':
     return syncInstagramData(documentStore, {
-      source: job.source,
       userId: job.userId,
     }) as Promise<ShadowSyncExecutionResult>
   case 'spotify':
     return syncSpotifyData(documentStore, {
-      source: job.source,
       userId: job.userId,
     }) as Promise<ShadowSyncExecutionResult>
   case 'steam':
     return syncSteamData(documentStore, {
-      source: job.source,
       userId: job.userId,
     }) as Promise<ShadowSyncExecutionResult>
   default:
@@ -112,7 +106,6 @@ export const processSyncJob = async ({
         durationMs,
         jobId: job.jobId,
         provider: job.provider,
-        source: job.source,
         userId: job.userId,
       })
       return {
@@ -127,7 +120,6 @@ export const processSyncJob = async ({
       error: result.error,
       jobId: job.jobId,
       provider: job.provider,
-      source: job.source,
       userId: job.userId,
     })
     return {
@@ -146,7 +138,6 @@ export const processSyncJob = async ({
       error,
       jobId: job.jobId,
       provider: job.provider,
-      source: job.source,
       userId: job.userId,
     })
     return {

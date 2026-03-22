@@ -35,14 +35,6 @@ export function isSyncProviderId(value: string): value is SyncProviderId {
   return (syncableWidgetIds as readonly string[]).includes(value)
 }
 
-export const widgetDataSources = ['live', 'shadow'] as const
-
-export type WidgetDataSource = (typeof widgetDataSources)[number]
-
-export function isWidgetDataSource(value: string): value is WidgetDataSource {
-  return (widgetDataSources as readonly string[]).includes(value)
-}
-
 export interface WidgetMeta<TSynced = unknown> {
   synced?: TSynced
 }

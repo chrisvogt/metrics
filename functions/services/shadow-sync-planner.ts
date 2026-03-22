@@ -17,7 +17,6 @@ export const planSyncJobs = async (
       syncJobQueue.enqueue({
         mode: 'sync',
         provider,
-        source: 'live',
         userId,
       })
     )

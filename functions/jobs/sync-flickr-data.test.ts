@@ -259,7 +259,6 @@ describe('syncFlickrData', () => {
     })
 
     await syncFlickrData(documentStore, {
-      source: 'shadow',
       userId: 'chrisvogt',
     })
 

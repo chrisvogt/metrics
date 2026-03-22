@@ -64,17 +64,16 @@ describe('fetchInstagramMedia', () => {
             before: 'before_cursor',
             after: 'after_cursor'
           },
-          next: 'https://graph.instagram.com/v12.0/me/media?access_token=...'
+          next: 'https://graph.instagram.com/v25.0/123456789/media?access_token=...'
         }
       }
     }
 
     mockGot.mockResolvedValue({ body: mockInstagramData })
 
-    const result = await fetchInstagramMedia()
+    const result = await fetchInstagramMedia('123456789')
 
-    // Verify got was called with correct parameters
-    expect(mockGot).toHaveBeenCalledWith('me', {
+    expect(mockGot).toHaveBeenCalledWith('v25.0/123456789', {
       responseType: 'json',
       prefixUrl: 'https://graph.instagram.com',
       searchParams: {
@@ -85,13 +84,11 @@ describe('fetchInstagramMedia', () => {
           'followers_count',
           'id',
           'media_count',
-          'media{caption,children{id,media_url,thumbnail_url},id,ig_id,media_type,media_url,permalink,thumbnail_url,timestamp,username}',
+          'media{alt_text,caption,children{alt_text,id,media_url,thumbnail_url},comments_count,id,ig_id,like_count,media_type,media_url,permalink,thumbnail_url,timestamp,username}',
           'username'
         ].join(',')
       }
     })
-
-    // Verify result
     expect(result).toEqual(mockInstagramData)
   })
 
@@ -117,7 +114,7 @@ describe('fetchInstagramMedia', () => {
 
     mockGot.mockResolvedValue({ body: mockEmptyData })
 
-    const result = await fetchInstagramMedia()
+    const result = await fetchInstagramMedia('123456789')
 
     expect(result).toEqual(mockEmptyData)
     expect(result.media.data).toEqual([])
@@ -141,9 +138,9 @@ describe('fetchInstagramMedia', () => {
       }
     }
 
-    mockGot.mockResolvedValue({ body: mockMalformedData })
+    mockGot.mockResolvedValueOnce({ body: mockMalformedData })
 
-    const result = await fetchInstagramMedia()
+    const result = await fetchInstagramMedia('123456789')
 
     // Should return the malformed response as-is
     expect(result).toEqual(mockMalformedData)
@@ -157,12 +154,11 @@ describe('fetchInstagramMedia', () => {
       biography: 'Test bio',
       followers_count: 100,
       media_count: 10
-      // Missing media field
     }
 
     mockGot.mockResolvedValue({ body: mockBasicData })
 
-    const result = await fetchInstagramMedia()
+    const result = await fetchInstagramMedia('123456789')
 
     expect(result).toEqual(mockBasicData)
     expect(result.media).toBeUndefined()
@@ -216,7 +212,7 @@ describe('fetchInstagramMedia', () => {
 
     mockGot.mockResolvedValue({ body: mockCarouselData })
 
-    const result = await fetchInstagramMedia()
+    const result = await fetchInstagramMedia('123456789')
 
     expect(result).toEqual(mockCarouselData)
     expect(result.media.data[0].children.data).toHaveLength(2)
@@ -239,10 +235,9 @@ describe('fetchInstagramMedia', () => {
 
     mockGot.mockResolvedValue({ body: mockInstagramData })
 
-    const result = await fetchInstagramMedia()
+    const result = await fetchInstagramMedia('123456789')
 
-    // Should still work but with undefined access token
-    expect(mockGot).toHaveBeenCalledWith('me', {
+    expect(mockGot).toHaveBeenCalledWith('v25.0/123456789', {
       responseType: 'json',
       prefixUrl: 'https://graph.instagram.com',
       searchParams: {
@@ -253,7 +248,7 @@ describe('fetchInstagramMedia', () => {
           'followers_count',
           'id',
           'media_count',
-          'media{caption,children{id,media_url,thumbnail_url},id,ig_id,media_type,media_url,permalink,thumbnail_url,timestamp,username}',
+          'media{alt_text,caption,children{alt_text,id,media_url,thumbnail_url},comments_count,id,ig_id,like_count,media_type,media_url,permalink,thumbnail_url,timestamp,username}',
           'username'
         ].join(',')
       }

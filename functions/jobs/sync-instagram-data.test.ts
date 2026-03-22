@@ -40,7 +40,11 @@ describe('syncInstagramData', () => {
     vi.clearAllMocks()
     configureLogger(logger)
     documentStore = {
-      getDocument: vi.fn(),
+      getDocument: vi.fn().mockResolvedValue({
+        instagram: {
+          userId: '17841401593834162',
+        },
+      }),
       setDocument: vi.fn().mockResolvedValue(undefined),
     }
   })
@@ -191,7 +195,6 @@ describe('syncInstagramData', () => {
     vi.mocked(listStoredMedia).mockResolvedValue([])
 
     await syncInstagramData(documentStore, {
-      source: 'shadow',
       userId: 'chrisvogt',
     })
 
@@ -205,5 +208,16 @@ describe('syncInstagramData', () => {
       'users/chrisvogt/instagram/widget-content',
       expect.any(Object)
     )
+  })
+
+  it('should fail clearly when the Instagram user id is missing from the user document', async () => {
+    vi.mocked(documentStore.getDocument).mockResolvedValue({})
+
+    const result = await syncInstagramData(documentStore)
+
+    expect(result).toEqual({
+      result: 'FAILURE',
+      error: 'Missing Instagram user id for chrisvogt. Save it to users/chrisvogt under instagram.userId.',
+    })
   })
 })

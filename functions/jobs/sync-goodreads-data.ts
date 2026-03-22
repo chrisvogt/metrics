@@ -503,7 +503,7 @@ const fetchAllGoodreadsPromises = async (): Promise<FetchAllGoodreadsPromisesRes
  */
 const syncGoodreadsData = async (
   documentStore: DocumentStore,
-  { source: _source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
   const goodreadsCollectionPath = toProviderCollectionPath('goodreads', userId)

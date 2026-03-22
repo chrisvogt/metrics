@@ -30,7 +30,7 @@ const getMediaURLFromPlaylist = playlist => playlist.images?.find(playlist => pl
 // Reducer to handle media filtering and transformation
 const getMediaToDownloadReducer = (
   storedMediaFileNames = [],
-  { source: _source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
 ) => (acc, playlist) => {
   const mediaURL = getMediaURLFromPlaylist(playlist)
   if (!mediaURL) {
@@ -56,7 +56,7 @@ const getMediaToDownloadReducer = (
 
 const transformPlaylists = (
   playlists,
-  { source: _source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
 ) => playlists.map(playlist => {
   const id = getMediaURLFromPlaylist(playlist)?.replace(SPOTIFY_MOSAIC_BASE_URL, '')
   const cdnImageURL = toPublicMediaUrl(

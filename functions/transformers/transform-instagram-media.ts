@@ -3,6 +3,7 @@ import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 
 const transformInstagramMedia = rawMedia => {
   const {
+    alt_text: altText,
     caption,
     comments_count: commentsCounts,
     children,
@@ -31,6 +32,7 @@ const transformInstagramMedia = rawMedia => {
   })
 
   return {
+    altText,
     caption,
     cdnMediaURL,
     children: transformedChildren, // Include transformed children

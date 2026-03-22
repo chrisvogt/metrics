@@ -1,6 +1,5 @@
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobResult } from '../types/sync-job.js'
-import type { WidgetDataSource } from '../types/widget-content.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
 
@@ -13,7 +12,6 @@ import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/back
 import { getSteamConfig } from '../config/backend-config.js'
 
 interface SyncSteamDataOptions {
-  source?: WidgetDataSource
   userId?: string
 }
 
@@ -60,7 +58,7 @@ const transformSteamGame = (game) => {
  */
 const syncSteamData = async (
   documentStore: DocumentStore,
-  { source: _source = 'live', userId: targetUserId = getDefaultWidgetUserId() }: SyncSteamDataOptions = {}
+  { userId: targetUserId = getDefaultWidgetUserId() }: SyncSteamDataOptions = {}
 ): Promise<SyncJobResult<Record<string, unknown>>> => {
   const logger = getLogger()
   const { apiKey, userId } = getSteamConfig()

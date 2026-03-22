@@ -1,14 +1,12 @@
-import type { SyncProviderId, WidgetDataSource } from './widget-content.js'
+import type { SyncProviderId } from './widget-content.js'
 
 export interface QueuedSyncJobDescriptor {
   mode: 'sync'
   provider: SyncProviderId
-  source: WidgetDataSource
   userId: string
 }
 
 export interface SyncJobExecutionOptions {
-  source?: WidgetDataSource
   userId?: string
 }
 

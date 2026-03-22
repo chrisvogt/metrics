@@ -178,7 +178,6 @@ describe('syncDiscogsData', () => {
     vi.mocked(listStoredMedia).mockResolvedValue([])
 
     await syncDiscogsData(documentStore, {
-      source: 'shadow',
       userId: 'chrisvogt',
     })
 

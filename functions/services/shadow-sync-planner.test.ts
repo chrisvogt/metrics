@@ -18,7 +18,7 @@ describe('planSyncJobs', () => {
       claimNextJob: vi.fn(),
       completeJob: vi.fn(),
       enqueue: vi.fn(async ({ provider }) => ({
-        jobId: `sync-chrisvogt-${provider}-live`,
+        jobId: `sync-chrisvogt-${provider}`,
         status: 'enqueued',
       })),
       failJob: vi.fn(),
@@ -26,15 +26,15 @@ describe('planSyncJobs', () => {
     }
   })
 
-  it('enqueues all syncable providers in live mode', async () => {
+  it('enqueues all syncable providers', async () => {
     await expect(planSyncJobs(syncJobQueue)).resolves.toEqual({
       enqueuedJobIds: [
-        'sync-chrisvogt-discogs-live',
-        'sync-chrisvogt-goodreads-live',
-        'sync-chrisvogt-instagram-live',
-        'sync-chrisvogt-spotify-live',
-        'sync-chrisvogt-steam-live',
-        'sync-chrisvogt-flickr-live',
+        'sync-chrisvogt-discogs',
+        'sync-chrisvogt-goodreads',
+        'sync-chrisvogt-instagram',
+        'sync-chrisvogt-spotify',
+        'sync-chrisvogt-steam',
+        'sync-chrisvogt-flickr',
       ],
       providerCount: 6,
       result: 'SUCCESS',
@@ -42,13 +42,11 @@ describe('planSyncJobs', () => {
     expect(syncJobQueue.enqueue).toHaveBeenCalledWith({
       mode: 'sync',
       provider: 'steam',
-      source: 'live',
       userId: 'chrisvogt',
     })
     expect(syncJobQueue.enqueue).toHaveBeenCalledWith({
       mode: 'sync',
       provider: 'spotify',
-      source: 'live',
       userId: 'chrisvogt',
     })
   })

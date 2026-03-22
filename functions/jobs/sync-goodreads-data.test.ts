@@ -1191,7 +1191,6 @@ describe('syncGoodreadsData', () => {
       generateGoodreadsSummary.mockResolvedValue('<p>Summary</p>')
 
       await syncGoodreadsData(documentStore, {
-        source: 'shadow',
         userId: 'chrisvogt',
       })
 

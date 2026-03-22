@@ -22,10 +22,10 @@ vi.mock('../widgets/get-widget-content.js', () => ({
 
 vi.mock('../services/shadow-sync-manual.js', () => ({
   runSyncForProvider: vi.fn(() => Promise.resolve({
-    afterJob: { jobId: 'sync-chrisvogt-steam-live', status: 'completed' },
-    beforeJob: { jobId: 'sync-chrisvogt-steam-live', status: 'queued' },
-    enqueue: { jobId: 'sync-chrisvogt-steam-live', status: 'enqueued' },
-    worker: { jobId: 'sync-chrisvogt-steam-live', result: 'SUCCESS' },
+    afterJob: { jobId: 'sync-chrisvogt-steam', status: 'completed' },
+    beforeJob: { jobId: 'sync-chrisvogt-steam', status: 'queued' },
+    enqueue: { jobId: 'sync-chrisvogt-steam', status: 'enqueued' },
+    worker: { jobId: 'sync-chrisvogt-steam', result: 'SUCCESS' },
   })),
 }))
 

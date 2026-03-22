@@ -12,8 +12,8 @@ import { toStoredDateTime } from '../../utils/time.js'
 
 const SYNC_JOBS_COLLECTION = 'sync_jobs'
 
-const toSyncJobId = ({ mode, provider, source, userId }: QueuedSyncJobDescriptor) =>
-  `${mode}-${userId}-${provider}-${source}`
+const toSyncJobId = ({ mode, provider, userId }: QueuedSyncJobDescriptor) =>
+  `${mode}-${userId}-${provider}`
 
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error

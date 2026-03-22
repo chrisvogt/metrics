@@ -25,7 +25,6 @@ export const runSyncForProvider = async ({
   const enqueue = await syncJobQueue.enqueue({
     mode: 'sync',
     provider,
-    source: 'live',
     userId,
   })
 

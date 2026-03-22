@@ -212,7 +212,6 @@ describe('syncSpotifyData', () => {
     vi.mocked(listStoredMedia).mockResolvedValue([])
 
     await syncSpotifyData(documentStore, {
-      source: 'shadow',
       userId: 'chrisvogt',
     })
 

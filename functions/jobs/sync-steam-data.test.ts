@@ -174,7 +174,6 @@ describe('syncSteamData', () => {
     vi.mocked(generateSteamSummary).mockResolvedValue(null)
 
     await syncSteamData(documentStore, {
-      source: 'shadow',
       userId: 'chrisvogt',
     })
 

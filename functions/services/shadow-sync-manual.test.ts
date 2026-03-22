@@ -6,7 +6,7 @@ import { runSyncForProvider } from './shadow-sync-manual.js'
 
 vi.mock('./shadow-sync-worker.js', () => ({
   processSyncJob: vi.fn(() => Promise.resolve({
-    jobId: 'sync-chrisvogt-steam-live',
+    jobId: 'sync-chrisvogt-steam',
     result: 'SUCCESS',
   })),
 }))
@@ -27,10 +27,9 @@ describe('runSyncForProvider', () => {
       claimJob: vi.fn(async () => ({
         runCount: 1,
         enqueuedAt: '2026-03-21T02:00:00.000Z',
-        jobId: 'sync-chrisvogt-steam-live',
+        jobId: 'sync-chrisvogt-steam',
         mode: 'sync',
         provider: 'steam',
-        source: 'live',
         status: 'processing',
         updatedAt: '2026-03-21T02:00:00.000Z',
         userId: 'chrisvogt',
@@ -38,18 +37,18 @@ describe('runSyncForProvider', () => {
       claimNextJob: vi.fn(),
       completeJob: vi.fn(),
       enqueue: vi.fn(async () => ({
-        jobId: 'sync-chrisvogt-steam-live',
+        jobId: 'sync-chrisvogt-steam',
         status: 'enqueued' as const,
       })),
       failJob: vi.fn(),
       getJob: vi
         .fn()
         .mockResolvedValueOnce({
-          jobId: 'sync-chrisvogt-steam-live',
+          jobId: 'sync-chrisvogt-steam',
           status: 'queued',
         })
         .mockResolvedValueOnce({
-          jobId: 'sync-chrisvogt-steam-live',
+          jobId: 'sync-chrisvogt-steam',
           status: 'completed',
         }),
     }
@@ -63,26 +62,25 @@ describe('runSyncForProvider', () => {
       userId: 'chrisvogt',
     })).resolves.toEqual({
       afterJob: {
-        jobId: 'sync-chrisvogt-steam-live',
+        jobId: 'sync-chrisvogt-steam',
         status: 'completed',
       },
       beforeJob: {
-        jobId: 'sync-chrisvogt-steam-live',
+        jobId: 'sync-chrisvogt-steam',
         status: 'queued',
       },
       enqueue: {
-        jobId: 'sync-chrisvogt-steam-live',
+        jobId: 'sync-chrisvogt-steam',
         status: 'enqueued',
       },
       worker: {
-        jobId: 'sync-chrisvogt-steam-live',
+        jobId: 'sync-chrisvogt-steam',
         result: 'SUCCESS',
       },
     })
     expect(syncJobQueue.enqueue).toHaveBeenCalledWith({
       mode: 'sync',
       provider: 'steam',
-      source: 'live',
       userId: 'chrisvogt',
     })
     expect(processSyncJob).toHaveBeenCalled()
@@ -98,19 +96,19 @@ describe('runSyncForProvider', () => {
       userId: 'chrisvogt',
     })).resolves.toEqual({
       afterJob: {
-        jobId: 'sync-chrisvogt-steam-live',
+        jobId: 'sync-chrisvogt-steam',
         status: 'completed',
       },
       beforeJob: {
-        jobId: 'sync-chrisvogt-steam-live',
+        jobId: 'sync-chrisvogt-steam',
         status: 'queued',
       },
       enqueue: {
-        jobId: 'sync-chrisvogt-steam-live',
+        jobId: 'sync-chrisvogt-steam',
         status: 'enqueued',
       },
       worker: {
-        jobId: 'sync-chrisvogt-steam-live',
+        jobId: 'sync-chrisvogt-steam',
         result: 'NOOP',
       },
     })

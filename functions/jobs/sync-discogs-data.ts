@@ -79,7 +79,7 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, release) => {
 
 const syncDiscogsData = async (
   documentStore: DocumentStore,
-  { source: _source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
   try {

@@ -109,10 +109,10 @@ vi.mock('./services/shadow-sync-worker.js', () => ({
 
 vi.mock('./services/shadow-sync-manual.js', () => ({
   runSyncForProvider: vi.fn(() => Promise.resolve({
-    afterJob: { jobId: 'sync-chrisvogt-spotify-live', status: 'completed' },
-    beforeJob: { jobId: 'sync-chrisvogt-spotify-live', status: 'queued' },
-    enqueue: { jobId: 'sync-chrisvogt-spotify-live', status: 'enqueued' },
-    worker: { jobId: 'sync-chrisvogt-spotify-live', result: 'SUCCESS' },
+    afterJob: { jobId: 'sync-chrisvogt-spotify', status: 'completed' },
+    beforeJob: { jobId: 'sync-chrisvogt-spotify', status: 'queued' },
+    enqueue: { jobId: 'sync-chrisvogt-spotify', status: 'enqueued' },
+    worker: { jobId: 'sync-chrisvogt-spotify', result: 'SUCCESS' },
   })),
 }))
 
