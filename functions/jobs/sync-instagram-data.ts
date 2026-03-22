@@ -81,7 +81,7 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
 
 const syncInstagramData = async (
   documentStore: DocumentStore,
-  { source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  { source: _source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
   try {

@@ -60,7 +60,7 @@ const transformSteamGame = (game) => {
  */
 const syncSteamData = async (
   documentStore: DocumentStore,
-  { source = 'live', userId: targetUserId = getDefaultWidgetUserId() }: SyncSteamDataOptions = {}
+  { source: _source = 'live', userId: targetUserId = getDefaultWidgetUserId() }: SyncSteamDataOptions = {}
 ): Promise<SyncJobResult<Record<string, unknown>>> => {
   const logger = getLogger()
   const { apiKey, userId } = getSteamConfig()

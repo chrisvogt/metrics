@@ -7,11 +7,11 @@ import fetchPhotos from '../api/flickr/fetch-photos.js'
 import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
 export const toFlickrLastResponsePath = ({
-  source = 'live',
+  source: _source = 'live',
   userId = getDefaultWidgetUserId(),
 }: SyncJobExecutionOptions = {}) => `${toProviderCollectionPath('flickr', userId)}/last-response`
 export const toFlickrWidgetContentPath = ({
-  source = 'live',
+  source: _source = 'live',
   userId = getDefaultWidgetUserId(),
 }: SyncJobExecutionOptions = {}) => `${toProviderCollectionPath('flickr', userId)}/widget-content`
 

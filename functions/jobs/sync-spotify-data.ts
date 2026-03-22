@@ -30,7 +30,7 @@ const getMediaURLFromPlaylist = playlist => playlist.images?.find(playlist => pl
 // Reducer to handle media filtering and transformation
 const getMediaToDownloadReducer = (
   storedMediaFileNames = [],
-  { source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  { source: _source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
 ) => (acc, playlist) => {
   const mediaURL = getMediaURLFromPlaylist(playlist)
   if (!mediaURL) {
@@ -56,7 +56,7 @@ const getMediaToDownloadReducer = (
 
 const transformPlaylists = (
   playlists,
-  { source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  { source: _source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
 ) => playlists.map(playlist => {
   const id = getMediaURLFromPlaylist(playlist)?.replace(SPOTIFY_MOSAIC_BASE_URL, '')
   const cdnImageURL = toPublicMediaUrl(
@@ -73,7 +73,7 @@ const syncSpotifyTopTracks = async (
   options: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
-  const { source = 'live', userId = getDefaultWidgetUserId() } = options
+  const { userId = getDefaultWidgetUserId() } = options
   const spotifyCollectionPath = toProviderCollectionPath('spotify', userId)
   const { clientId, clientSecret, redirectUri: redirectURI, refreshToken } = getSpotifyConfig()
 
