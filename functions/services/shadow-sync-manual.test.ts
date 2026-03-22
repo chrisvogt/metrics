@@ -52,6 +52,7 @@ describe('runShadowSyncForProvider', () => {
           jobId: 'shadow-chrisvogt-steam-shadow',
           status: 'completed',
         }),
+      listRecentJobs: vi.fn(),
     }
   })
 

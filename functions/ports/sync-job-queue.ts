@@ -12,4 +12,5 @@ export interface SyncJobQueue {
   enqueue(job: QueuedSyncJobDescriptor): Promise<EnqueueSyncJobResult>
   failJob(jobId: string, error: unknown, summary: SyncJobSummary): Promise<void>
   getJob(jobId: string): Promise<QueuedSyncJob | null>
+  listRecentJobs(limit?: number): Promise<QueuedSyncJob[]>
 }

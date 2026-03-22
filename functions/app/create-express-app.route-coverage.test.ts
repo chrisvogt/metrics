@@ -119,6 +119,7 @@ describe('createExpressApp route coverage', () => {
     enqueue: vi.fn(),
     failJob: vi.fn(),
     getJob: vi.fn(),
+    listRecentJobs: vi.fn(),
   }
   const ensureRuntimeConfigApplied = vi.fn().mockResolvedValue(undefined)
   const getClientAuthConfig = vi.fn(() => ({
@@ -226,6 +227,47 @@ describe('createExpressApp route coverage', () => {
       syncJobQueue,
     })
     expect(response.status).toHaveBeenCalledWith(200)
+  })
+
+  it('dispatches the queue status route through the injected queue service', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+    const queueStatusHandler = findRouteHandler(app, 'get', '/api/widgets/sync-shadow/status')
+    const response = createResponse()
+    syncJobQueue.listRecentJobs.mockResolvedValueOnce([
+      {
+        jobId: 'shadow-chrisvogt-steam-shadow',
+        provider: 'steam',
+        mode: 'shadow',
+        source: 'shadow',
+        userId: 'chrisvogt',
+        runCount: 1,
+        enqueuedAt: '2026-03-21T02:00:00.000Z',
+        status: 'completed',
+        updatedAt: '2026-03-21T02:05:00.000Z',
+      },
+    ])
+
+    await queueStatusHandler({}, response)
+
+    expect(syncJobQueue.listRecentJobs).toHaveBeenCalledWith()
+    expect(response.status).toHaveBeenCalledWith(200)
+    expect(response.send).toHaveBeenCalledWith({
+      jobs: [
+        expect.objectContaining({
+          jobId: 'shadow-chrisvogt-steam-shadow',
+          provider: 'steam',
+        }),
+      ],
+    })
   })
 
   it('returns 401 when session auth reaches the defensive no-token branch', async () => {

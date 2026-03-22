@@ -21,6 +21,17 @@ const toErrorMessage = (error: unknown): string =>
     : (error as { message?: string })?.message ?? String(error)
 
 export class FirestoreSyncJobQueue implements SyncJobQueue {
+  async listRecentJobs(limit = 20): Promise<QueuedSyncJob[]> {
+    const snapshot = await admin
+      .firestore()
+      .collection(SYNC_JOBS_COLLECTION)
+      .orderBy('updatedAt', 'desc')
+      .limit(limit)
+      .get()
+
+    return snapshot.docs.map((doc) => doc.data() as QueuedSyncJob)
+  }
+
   async getJob(jobId: string): Promise<QueuedSyncJob | null> {
     const snapshot = await admin.firestore().collection(SYNC_JOBS_COLLECTION).doc(jobId).get()
     if (!snapshot.exists) {

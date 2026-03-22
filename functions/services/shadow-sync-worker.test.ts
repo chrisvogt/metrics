@@ -58,6 +58,7 @@ describe('runNextShadowSyncJob', () => {
       enqueue: vi.fn(),
       failJob: vi.fn(),
       getJob: vi.fn(),
+      listRecentJobs: vi.fn(),
     }
   })
 
