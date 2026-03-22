@@ -24,6 +24,63 @@ This repository contains a portable metrics service I use to fetch and sync data
 - **Real-time Data**: Live data fetching and caching for widget content
 - **Local Development**: Full Firebase emulator support for development
 
+## How It Works
+
+This service backs the widgets on [www.chrisvogt.me](https://www.chrisvogt.me). The diagrams are intentionally small—each shows one slice. For queue semantics, schedules, and job fields, see [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md).
+
+### 1. Public widget reads
+
+The site calls the metrics API; responses are cached at the edge. No auth required.
+
+```mermaid
+flowchart LR
+  site[www.chrisvogt.me] --> fn[Cloud Functions<br/>GET /api/widgets/:provider]
+  fn --> fs[(Firestore<br/>users/.../widget-content)]
+```
+
+### 2. Scheduled sync (queue + worker)
+
+The **planner** seeds one job per provider per day; the **worker** drains the queue on a short interval. Each run fetches from the right platform API and writes widget documents.
+
+```mermaid
+flowchart TB
+  subgraph sched[Cloud Scheduler]
+    p[runSyncPlanner · daily 02:00]
+    w[runSyncWorker · every 15 min]
+  end
+  p --> plan[planSyncJobs]
+  plan --> q[(Firestore · sync_jobs)]
+  w --> next[runNextSyncJob]
+  next --> q
+  next --> job[processSyncJob + provider sync]
+  job --> apis[Platform APIs]
+  job --> docs[(Firestore · widget documents)]
+```
+
+### 3. Admin dashboard
+
+[metrics.chrisvogt.me](https://metrics.chrisvogt.me) uses Firebase Auth and session cookies. Manual sync hits the same backend and runs the job **inline** (enqueue → claim → sync) instead of waiting for the worker tick.
+
+```mermaid
+flowchart TB
+  admin[metrics.chrisvogt.me] --> auth[Firebase Auth]
+  admin --> sess[POST /api/auth/session]
+  admin --> sync[GET /api/widgets/sync/:provider]
+  sync --> fn[runSyncForProvider]
+  fn --> q[(sync_jobs)]
+  fn --> job[processSyncJob]
+  job --> out[Platform APIs + widget writes]
+```
+
+**Key flows:**
+
+| Path | Description |
+|------|-------------|
+| **Widget reads** | The website calls `GET /api/widgets/:provider` (public, cached). The handler reads the provider's `widget-content` document from Firestore and returns it. |
+| **Scheduled sync** | Cloud Scheduler fires `runSyncPlanner` daily at 02:00, which enqueues one job per provider into the `sync_jobs` Firestore collection. `runSyncWorker` runs every 15 minutes, claims the next queued job, calls the provider's external API, writes fresh data to Firestore, and marks the job completed or failed. |
+| **Manual sync** | An authenticated admin triggers `GET /api/widgets/sync/:provider`. The handler enqueues a job, claims it inline, runs the provider sync immediately, and returns before/after queue snapshots. |
+| **Auth** | The admin dashboard authenticates via Firebase Auth (Google, email, or phone) and creates an HTTP-only session cookie through `POST /api/auth/session`. Sync endpoints require a valid session or JWT. |
+
 ## Documentation
 
 Design notes and architecture references live under [`docs/`](docs/). The table below links each file to its topic.
