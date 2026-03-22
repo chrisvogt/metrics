@@ -38,6 +38,7 @@ describe('planSyncJobs', () => {
       ],
       providerCount: 6,
       result: 'SUCCESS',
+      skippedJobIds: [],
     })
     expect(syncJobQueue.enqueue).toHaveBeenCalledWith({
       mode: 'sync',
@@ -48,6 +49,31 @@ describe('planSyncJobs', () => {
       mode: 'sync',
       provider: 'spotify',
       userId: 'chrisvogt',
+    })
+  })
+
+  it('separates enqueued and skipped job ids', async () => {
+    let call = 0
+    vi.mocked(syncJobQueue.enqueue).mockImplementation(async ({ provider }) => {
+      call += 1
+      const jobId = `sync-chrisvogt-${provider}`
+      return {
+        jobId,
+        status: call === 1 ? 'skipped' : 'enqueued',
+      }
+    })
+
+    await expect(planSyncJobs(syncJobQueue)).resolves.toEqual({
+      enqueuedJobIds: [
+        'sync-chrisvogt-goodreads',
+        'sync-chrisvogt-instagram',
+        'sync-chrisvogt-spotify',
+        'sync-chrisvogt-steam',
+        'sync-chrisvogt-flickr',
+      ],
+      providerCount: 6,
+      result: 'SUCCESS',
+      skippedJobIds: ['sync-chrisvogt-discogs'],
     })
   })
 })
