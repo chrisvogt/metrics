@@ -200,4 +200,64 @@ describe('runNextSyncJob', () => {
       userId: 'chrisvogt',
     })
   })
+
+  it('fails with a helpful error when the provider is not implemented', async () => {
+    await expect(processSyncJob({
+      documentStore,
+      job: {
+        runCount: 1,
+        enqueuedAt: '2026-03-21T02:00:00.000Z',
+        jobId: 'sync-chrisvogt-letterboxd',
+        mode: 'sync',
+        provider: 'letterboxd' as never,
+        status: 'processing',
+        updatedAt: '2026-03-21T02:00:00.000Z',
+        userId: 'chrisvogt',
+      },
+      syncJobQueue,
+    })).resolves.toEqual({
+      jobId: 'sync-chrisvogt-letterboxd',
+      result: 'FAILURE',
+    })
+
+    expect(syncJobQueue.failJob).toHaveBeenCalledWith(
+      'sync-chrisvogt-letterboxd',
+      'Sync is not implemented for provider: letterboxd',
+      expect.objectContaining({
+        result: 'FAILURE',
+      })
+    )
+  })
+
+  it('fails the job when the sync handler throws unexpectedly', async () => {
+    vi.mocked(syncSteamData).mockRejectedValueOnce(new Error('Steam exploded'))
+
+    await expect(processSyncJob({
+      documentStore,
+      job: {
+        runCount: 1,
+        enqueuedAt: '2026-03-21T02:00:00.000Z',
+        jobId: 'sync-chrisvogt-steam',
+        mode: 'sync',
+        provider: 'steam',
+        status: 'processing',
+        updatedAt: '2026-03-21T02:00:00.000Z',
+        userId: 'chrisvogt',
+      },
+      syncJobQueue,
+    })).resolves.toEqual({
+      jobId: 'sync-chrisvogt-steam',
+      result: 'FAILURE',
+    })
+
+    expect(syncJobQueue.failJob).toHaveBeenCalledWith(
+      'sync-chrisvogt-steam',
+      expect.objectContaining({
+        message: 'Steam exploded',
+      }),
+      expect.objectContaining({
+        result: 'FAILURE',
+      })
+    )
+  })
 })

@@ -30,7 +30,7 @@ const fetchInstagramMedia = async () => {
     got(
       `${INSTAGRAM_BASE_URL}/${INSTAGRAM_API_VERSION}/${instagramUserId}/media?access_token=${accessToken}&limit=${MAX_TOP_LEVEL_MEDIA_ITEMS}&fields=${mediaFields}`,
       {
-      responseType: 'json',
+        responseType: 'json',
       }
     ),
   ])

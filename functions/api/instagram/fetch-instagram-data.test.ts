@@ -246,4 +246,12 @@ describe('fetchInstagramMedia', () => {
       'Missing INSTAGRAM_ACCESS_TOKEN environment variable.'
     )
   })
+
+  it('should handle missing user id environment variable', async () => {
+    delete process.env.INSTAGRAM_USER_ID
+
+    await expect(fetchInstagramMedia()).rejects.toThrow(
+      'Missing INSTAGRAM_USER_ID environment variable.'
+    )
+  })
 }) 
