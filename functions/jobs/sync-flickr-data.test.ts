@@ -251,4 +251,27 @@ describe('syncFlickrData', () => {
     expect(result.widgetContent.collections.photos).toEqual(mockPhotosResponse.photos)
     expect(result.widgetContent.collections.photos[1].title).toBeUndefined()
   })
+
+  it('should support writing Flickr shadow data to tmp collections', async () => {
+    vi.mocked(fetchPhotos).mockResolvedValue({
+      total: 0,
+      photos: [],
+    })
+
+    await syncFlickrData(documentStore, {
+      source: 'shadow',
+      userId: 'chrisvogt',
+    })
+
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
+      1,
+      'users/chrisvogt/flickr_tmp/last-response',
+      expect.any(Object)
+    )
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
+      2,
+      'users/chrisvogt/flickr_tmp/widget-content',
+      expect.any(Object)
+    )
+  })
 })

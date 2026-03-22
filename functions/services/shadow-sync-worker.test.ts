@@ -5,10 +5,35 @@ import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { configureLogger } from './logger.js'
 import { processShadowSyncJob, runNextShadowSyncJob } from './shadow-sync-worker.js'
 
+vi.mock('../jobs/sync-discogs-data.js', () => ({
+  default: vi.fn(),
+}))
+
+vi.mock('../jobs/sync-flickr-data.js', () => ({
+  default: vi.fn(),
+}))
+
+vi.mock('../jobs/sync-goodreads-data.js', () => ({
+  default: vi.fn(),
+}))
+
+vi.mock('../jobs/sync-instagram-data.js', () => ({
+  default: vi.fn(),
+}))
+
+vi.mock('../jobs/sync-spotify-data.js', () => ({
+  default: vi.fn(),
+}))
+
 vi.mock('../jobs/sync-steam-data.js', () => ({
   default: vi.fn(),
 }))
 
+import syncDiscogsData from '../jobs/sync-discogs-data.js'
+import syncFlickrData from '../jobs/sync-flickr-data.js'
+import syncGoodreadsData from '../jobs/sync-goodreads-data.js'
+import syncInstagramData from '../jobs/sync-instagram-data.js'
+import syncSpotifyData from '../jobs/sync-spotify-data.js'
 import syncSteamData from '../jobs/sync-steam-data.js'
 
 describe('runNextShadowSyncJob', () => {
@@ -144,6 +169,41 @@ describe('runNextShadowSyncJob', () => {
     })).resolves.toEqual({
       jobId: 'shadow-chrisvogt-steam-shadow',
       result: 'SUCCESS',
+    })
+  })
+
+  it.each([
+    ['discogs', syncDiscogsData],
+    ['flickr', syncFlickrData],
+    ['goodreads', syncGoodreadsData],
+    ['instagram', syncInstagramData],
+    ['spotify', syncSpotifyData],
+  ] as const)('dispatches %s shadow jobs through the matching sync job', async (provider, jobModule) => {
+    vi.mocked(jobModule).mockResolvedValueOnce({
+      result: 'SUCCESS',
+    })
+
+    await expect(processShadowSyncJob({
+      documentStore,
+      job: {
+        runCount: 1,
+        enqueuedAt: '2026-03-21T02:00:00.000Z',
+        jobId: `shadow-chrisvogt-${provider}-shadow`,
+        mode: 'shadow',
+        provider,
+        source: 'shadow',
+        status: 'processing',
+        updatedAt: '2026-03-21T02:00:00.000Z',
+        userId: 'chrisvogt',
+      },
+      syncJobQueue,
+    })).resolves.toEqual({
+      jobId: `shadow-chrisvogt-${provider}-shadow`,
+      result: 'SUCCESS',
+    })
+    expect(jobModule).toHaveBeenCalledWith(documentStore, {
+      source: 'shadow',
+      userId: 'chrisvogt',
     })
   })
 })

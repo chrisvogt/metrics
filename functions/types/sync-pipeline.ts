@@ -7,6 +7,11 @@ export interface QueuedSyncJobDescriptor {
   userId: string
 }
 
+export interface SyncJobExecutionOptions {
+  source?: WidgetDataSource
+  userId?: string
+}
+
 export type QueuedSyncJobStatus = 'queued' | 'processing' | 'completed' | 'failed'
 
 export interface SyncJobSummary {

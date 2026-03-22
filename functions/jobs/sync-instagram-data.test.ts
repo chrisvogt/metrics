@@ -179,4 +179,31 @@ describe('syncInstagramData', () => {
     expect(result.result).toBe('SUCCESS')
     expect(result.totalUploadedCount).toBe(0)
   })
+
+  it('should support writing Instagram shadow data to tmp collections', async () => {
+    vi.mocked(fetchInstagramData).mockResolvedValue({
+      media: { data: [] },
+      biography: 'Test bio',
+      followers_count: 1000,
+      media_count: 50,
+      username: 'testuser',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncInstagramData(documentStore, {
+      source: 'shadow',
+      userId: 'chrisvogt',
+    })
+
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
+      1,
+      'users/chrisvogt/instagram_tmp/last-response',
+      expect.any(Object)
+    )
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
+      2,
+      'users/chrisvogt/instagram_tmp/widget-content',
+      expect.any(Object)
+    )
+  })
 })

@@ -1,9 +1,19 @@
+import syncDiscogsData from '../jobs/sync-discogs-data.js'
+import syncFlickrData from '../jobs/sync-flickr-data.js'
+import syncGoodreadsData from '../jobs/sync-goodreads-data.js'
+import syncInstagramData from '../jobs/sync-instagram-data.js'
+import syncSpotifyData from '../jobs/sync-spotify-data.js'
 import syncSteamData from '../jobs/sync-steam-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { getLogger } from './logger.js'
 import type { QueuedSyncJob, SyncJobSummary } from '../types/sync-pipeline.js'
-import type { SyncJobResult } from '../types/sync-job.js'
+
+interface ShadowSyncExecutionResult {
+  data?: unknown
+  error?: unknown
+  result: 'FAILURE' | 'SUCCESS'
+}
 
 const toSteamSyncMetrics = (data: unknown): Record<string, number> => {
   const widgetContent = data as {
@@ -20,7 +30,7 @@ const toSteamSyncMetrics = (data: unknown): Record<string, number> => {
 }
 
 const buildSummary = (
-  result: SyncJobResult<unknown>,
+  result: ShadowSyncExecutionResult,
   durationMs: number,
   metrics: Record<string, number> = {}
 ): SyncJobSummary => ({
@@ -32,13 +42,38 @@ const buildSummary = (
 const runShadowSyncJob = async (
   job: QueuedSyncJob,
   documentStore: DocumentStore
-): Promise<SyncJobResult<unknown>> => {
+): Promise<ShadowSyncExecutionResult> => {
   switch (job.provider) {
+    case 'discogs':
+      return syncDiscogsData(documentStore, {
+        source: job.source,
+        userId: job.userId,
+      }) as Promise<ShadowSyncExecutionResult>
+    case 'flickr':
+      return syncFlickrData(documentStore, {
+        source: job.source,
+        userId: job.userId,
+      }) as Promise<ShadowSyncExecutionResult>
+    case 'goodreads':
+      return syncGoodreadsData(documentStore, {
+        source: job.source,
+        userId: job.userId,
+      }) as Promise<ShadowSyncExecutionResult>
+    case 'instagram':
+      return syncInstagramData(documentStore, {
+        source: job.source,
+        userId: job.userId,
+      }) as Promise<ShadowSyncExecutionResult>
+    case 'spotify':
+      return syncSpotifyData(documentStore, {
+        source: job.source,
+        userId: job.userId,
+      }) as Promise<ShadowSyncExecutionResult>
   case 'steam':
     return syncSteamData(documentStore, {
       source: job.source,
       userId: job.userId,
-    })
+      }) as Promise<ShadowSyncExecutionResult>
   default:
     return {
       error: `Shadow sync is not implemented for provider: ${job.provider}`,
@@ -67,7 +102,7 @@ export const processShadowSyncJob = async ({
     const result = await runShadowSyncJob(job, documentStore)
     const durationMs = Date.now() - startedAt
     const metrics = job.provider === 'steam' && result.result === 'SUCCESS'
-      ? toSteamSyncMetrics(result.data)
+      ? toSteamSyncMetrics(('data' in result ? result.data : undefined))
       : {}
     const summary = buildSummary(result, durationMs, metrics)
 

@@ -12,7 +12,8 @@ import { getLogger } from '../services/logger.js'
 import toDiscogsDestinationPath from '../transformers/to-discogs-destination-path.js'
 import transformDiscogsRelease from '../transformers/transform-discogs-release.js'
 import { toStoredDateTime } from '../utils/time.js'
-import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
+import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
 import { 
   DISCOGS_USERNAME
@@ -76,10 +77,13 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, release) => {
   return acc
 }
 
-const syncDiscogsData = async (documentStore: DocumentStore) => {
+const syncDiscogsData = async (
+  documentStore: DocumentStore,
+  { source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+) => {
   const logger = getLogger()
   try {
-    const discogsCollectionPath = toProviderCollectionPath('discogs')
+    const discogsCollectionPath = toProviderCollectionPath('discogs', userId, source)
     const discogsResponse = await fetchDiscogsReleases()
 
     const { releases, pagination } = discogsResponse

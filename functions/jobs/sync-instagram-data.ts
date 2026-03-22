@@ -11,7 +11,8 @@ import { getLogger } from '../services/logger.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
 import { toStoredDateTime } from '../utils/time.js'
-import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
+import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
 /*
 
@@ -78,10 +79,13 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
   return acc
 }
 
-const syncInstagramData = async (documentStore: DocumentStore) => {
+const syncInstagramData = async (
+  documentStore: DocumentStore,
+  { source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+) => {
   const logger = getLogger()
   try {
-    const instagramCollectionPath = toProviderCollectionPath('instagram')
+    const instagramCollectionPath = toProviderCollectionPath('instagram', userId, source)
     const instagramResponse = (await fetchInstagramData()) as {
       media?: { data?: unknown[] }
       biography?: string

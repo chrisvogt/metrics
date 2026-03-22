@@ -197,4 +197,28 @@ describe('syncSpotifyData', () => {
       error: new Error('Playlists failed'),
     })
   })
+
+  it('should support writing Spotify shadow data to tmp collections', async () => {
+    vi.mocked(getSpotifyAccessToken).mockResolvedValue({ accessToken: 'spotify-token' })
+    vi.mocked(getSpotifyUserProfile).mockResolvedValue({
+      display_name: 'Test User',
+      external_urls: { spotify: 'https://open.spotify.com/user/test' },
+      followers: { total: 100 },
+      id: 'user123',
+      images: [{ url: 'https://example.com/avatar.jpg' }],
+    })
+    vi.mocked(getSpotifyTopTracks).mockResolvedValue([])
+    vi.mocked(getSpotifyPlaylists).mockResolvedValue({ total: 0, items: [] })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncSpotifyData(documentStore, {
+      source: 'shadow',
+      userId: 'chrisvogt',
+    })
+
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/spotify_tmp/widget-content',
+      expect.any(Object)
+    )
+  })
 })
