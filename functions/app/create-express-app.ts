@@ -298,10 +298,6 @@ export function createExpressApp({
     syncJobQueue,
   })
 
-  const loadShadowSyncStatus = async () => ({
-    jobs: await syncJobQueue.listRecentJobs(),
-  })
-
   expressApp.get(
     '/api/media/{*mediaPath}',
     cors(corsOptions),
@@ -368,21 +364,6 @@ export function createExpressApp({
         res.status(200).send(result)
       } catch (err) {
         logger.error(`Error syncing ${provider} data.`, err)
-        res.status(500).send({ error: err })
-      }
-    }
-  )
-
-  expressApp.get(
-    '/api/widgets/sync-shadow/status',
-    cors(corsOptions),
-    createRateLimiter(15 * 60 * 1000, 30),
-    async (_req, res) => {
-      try {
-        const result = await loadShadowSyncStatus()
-        res.status(200).send(result)
-      } catch (err) {
-        logger.error('Error loading shadow sync queue status.', err)
         res.status(500).send({ error: err })
       }
     }

@@ -1435,7 +1435,6 @@ describe('index.js', () => {
             enqueue: vi.fn(),
             failJob: vi.fn(),
             getJob: vi.fn(),
-            listRecentJobs: vi.fn(),
           },
         })),
       }))

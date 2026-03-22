@@ -28,7 +28,6 @@ describe('planShadowSyncJobs', () => {
       })),
       failJob: vi.fn(),
       getJob: vi.fn(),
-      listRecentJobs: vi.fn(),
     }
   })
 

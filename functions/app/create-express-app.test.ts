@@ -81,7 +81,6 @@ describe('createExpressApp media route', () => {
     enqueue: vi.fn(),
     failJob: vi.fn(),
     getJob: vi.fn(),
-    listRecentJobs: vi.fn(),
   }
 
   const buildApp = async () => {
@@ -287,7 +286,6 @@ describe('createExpressApp auth and session branches', () => {
     enqueue: vi.fn(),
     failJob: vi.fn(),
     getJob: vi.fn(),
-    listRecentJobs: vi.fn(),
   }
 
   const ensureRuntimeConfigApplied = vi.fn().mockResolvedValue(undefined)
@@ -551,30 +549,6 @@ describe('createExpressApp auth and session branches', () => {
     expect(response.text).toBe('Unrecognized or unsupported shadow sync provider.')
   })
 
-  it('returns recent shadow sync queue status', async () => {
-    const app = await buildApp()
-    syncJobQueue.listRecentJobs.mockResolvedValueOnce([
-      {
-        jobId: 'shadow-chrisvogt-steam-shadow',
-        provider: 'steam',
-        mode: 'shadow',
-        source: 'shadow',
-        userId: 'chrisvogt',
-        runCount: 1,
-        enqueuedAt: '2026-03-21T02:00:00.000Z',
-        status: 'completed',
-        updatedAt: '2026-03-21T02:05:00.000Z',
-      },
-    ])
-
-    const response = await request(app)
-      .get('/api/widgets/sync-shadow/status')
-      .expect(200)
-
-    expect(syncJobQueue.listRecentJobs).toHaveBeenCalledWith()
-    expect(response.body.jobs).toHaveLength(1)
-    expect(response.body.jobs[0].jobId).toBe('shadow-chrisvogt-steam-shadow')
-  })
 
   it('treats array sync provider params as unsupported', async () => {
     const app = await buildApp()
