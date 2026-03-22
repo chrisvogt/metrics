@@ -322,6 +322,29 @@ describe('FirestoreSyncJobQueue', () => {
     })
   })
 
+  it('treats missing run count as zero when claiming', async () => {
+    const queue = new FirestoreSyncJobQueue()
+    const queuedJob = {
+      ...baseJob,
+      enqueuedAt: '2026-03-21T12:00:00.000Z',
+      jobId: 'sync-chrisvogt-steam',
+      status: 'queued' as const,
+      updatedAt: '2026-03-21T12:00:00.000Z',
+    }
+    mockTransactionGet.mockResolvedValue({
+      data: () => ({ ...queuedJob, runCount: undefined }),
+      exists: true,
+    })
+
+    await expect(queue.claimJob('sync-chrisvogt-steam')).resolves.toEqual({
+      ...queuedJob,
+      lastStartedAt: '2026-03-21T12:34:56.000Z',
+      runCount: 1,
+      status: 'processing',
+      updatedAt: '2026-03-21T12:34:56.000Z',
+    })
+  })
+
   it('completes a job with the supplied summary', async () => {
     const queue = new FirestoreSyncJobQueue()
     const summary = {

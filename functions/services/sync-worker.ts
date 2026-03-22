@@ -28,8 +28,8 @@ const toSteamSyncMetrics = (data: unknown): Record<string, number> => {
   }
 
   return {
-    ownedGamesCount: widgetContent.collections?.ownedGames?.length ?? 0,
-    recentlyPlayedGamesCount: widgetContent.collections?.recentlyPlayedGames?.length ?? 0,
+    ownedGamesCount: widgetContent?.collections?.ownedGames?.length ?? 0,
+    recentlyPlayedGamesCount: widgetContent?.collections?.recentlyPlayedGames?.length ?? 0,
   }
 }
 
