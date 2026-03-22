@@ -77,20 +77,25 @@ describe('fetchInstagramMedia', () => {
 
     const result = await fetchInstagramMedia()
 
-    expect(mockGot).toHaveBeenNthCalledWith(
-      1,
-      'https://graph.instagram.com/v25.0/me?access_token=test-instagram-access-token&fields=id,user_id,username,account_type,profile_picture_url,followers_count,follows_count,media_count',
-      {
-        responseType: 'json',
-      }
-    )
-    expect(mockGot).toHaveBeenNthCalledWith(
-      2,
-      'https://graph.instagram.com/v25.0/123456789/media?access_token=test-instagram-access-token&limit=24&fields=alt_text,caption,children{alt_text,id,media_url,thumbnail_url},comments_count,id,ig_id,like_count,media_type,media_url,permalink,thumbnail_url,timestamp,username',
-      {
-        responseType: 'json',
-      }
-    )
+    expect(mockGot).toHaveBeenNthCalledWith(1, 'me', {
+      prefixUrl: 'https://graph.instagram.com/v25.0/',
+      responseType: 'json',
+      searchParams: {
+        access_token: 'test-instagram-access-token',
+        fields:
+          'id,user_id,username,account_type,profile_picture_url,followers_count,follows_count,media_count',
+      },
+    })
+    expect(mockGot).toHaveBeenNthCalledWith(2, '123456789/media', {
+      prefixUrl: 'https://graph.instagram.com/v25.0/',
+      responseType: 'json',
+      searchParams: {
+        access_token: 'test-instagram-access-token',
+        fields:
+          'alt_text,caption,children{alt_text,id,media_url,thumbnail_url},comments_count,id,ig_id,like_count,media_type,media_url,permalink,thumbnail_url,timestamp,username',
+        limit: 24,
+      },
+    })
     expect(result).toEqual({
       ...mockProfileData,
       media: mockMediaData,

@@ -4,6 +4,7 @@
  * completion, and failure transitions.
  */
 import admin from 'firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 import type { QueryDocumentSnapshot } from '@google-cloud/firestore'
 
 import type { SyncJobQueue } from '../../ports/sync-job-queue.js'
@@ -58,12 +59,14 @@ export class FirestoreSyncJobQueue implements SyncJobQueue {
           ...job,
           runCount: existing?.runCount ?? 0,
           enqueuedAt: now,
-          error: undefined,
+          error: FieldValue.delete(),
           jobId,
           status: 'queued',
-          summary: existing?.summary,
+          ...(existing?.summary !== undefined
+            ? { summary: existing.summary }
+            : { summary: FieldValue.delete() }),
           updatedAt: now,
-        } satisfies QueuedSyncJob,
+        },
         { merge: true }
       )
 
@@ -124,7 +127,7 @@ export class FirestoreSyncJobQueue implements SyncJobQueue {
     await admin.firestore().collection(SYNC_JOBS_COLLECTION).doc(jobId).set(
       {
         completedAt: now,
-        error: undefined,
+        error: FieldValue.delete(),
         status: 'completed',
         summary,
         updatedAt: now,

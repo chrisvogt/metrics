@@ -4,6 +4,7 @@ import { getInstagramAccessToken, getInstagramUserId } from '../../config/backen
 
 const INSTAGRAM_API_VERSION = 'v25.0'
 const INSTAGRAM_BASE_URL = 'https://graph.instagram.com'
+const INSTAGRAM_GRAPH_PREFIX_URL = `${INSTAGRAM_BASE_URL}/${INSTAGRAM_API_VERSION}/`
 const MAX_TOP_LEVEL_MEDIA_ITEMS = 24
 
 const profileFields =
@@ -24,15 +25,23 @@ const fetchInstagramMedia = async () => {
   }
 
   const [{ body: profileBody }, { body: mediaBody }] = await Promise.all([
-    got(`${INSTAGRAM_BASE_URL}/${INSTAGRAM_API_VERSION}/me?access_token=${accessToken}&fields=${profileFields}`, {
+    got('me', {
+      prefixUrl: INSTAGRAM_GRAPH_PREFIX_URL,
       responseType: 'json',
+      searchParams: {
+        access_token: accessToken,
+        fields: profileFields,
+      },
     }),
-    got(
-      `${INSTAGRAM_BASE_URL}/${INSTAGRAM_API_VERSION}/${instagramUserId}/media?access_token=${accessToken}&limit=${MAX_TOP_LEVEL_MEDIA_ITEMS}&fields=${mediaFields}`,
-      {
-        responseType: 'json',
-      }
-    ),
+    got(`${instagramUserId}/media`, {
+      prefixUrl: INSTAGRAM_GRAPH_PREFIX_URL,
+      responseType: 'json',
+      searchParams: {
+        access_token: accessToken,
+        fields: mediaFields,
+        limit: MAX_TOP_LEVEL_MEDIA_ITEMS,
+      },
+    }),
   ])
 
   return {

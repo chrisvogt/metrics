@@ -9,7 +9,6 @@ import type { RuntimeScheduleOptions } from '../ports/runtime-platform.js'
 
 export const FIREBASE_FUNCTIONS_REGION = 'us-central1'
 export const FIREBASE_SCHEDULE = 'every day 02:00'
-export const FIREBASE_SHADOW_SYNC_WORKER_SCHEDULE = 'every 15 minutes'
 
 type FirebaseHttpHandler = Parameters<typeof onRequest>[0]
 

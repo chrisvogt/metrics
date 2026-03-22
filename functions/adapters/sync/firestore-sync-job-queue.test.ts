@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockToStoredDateTime = vi.hoisted(() => vi.fn(() => '2026-03-21T12:34:56.000Z'))
 
+const fieldValueDeleteSentinel = vi.hoisted(() => ({}))
+
 const {
   mockCollection,
   mockDoc,
@@ -64,6 +66,12 @@ const {
 vi.mock('firebase-admin', () => ({
   default: {
     firestore: mockFirestore,
+  },
+}))
+
+vi.mock('firebase-admin/firestore', () => ({
+  FieldValue: {
+    delete: () => fieldValueDeleteSentinel,
   },
 }))
 
@@ -189,7 +197,7 @@ describe('FirestoreSyncJobQueue', () => {
       {
         ...baseJob,
         enqueuedAt: '2026-03-21T12:34:56.000Z',
-        error: undefined,
+        error: fieldValueDeleteSentinel,
         jobId: 'sync-chrisvogt-steam',
         runCount: 7,
         status: 'queued',
@@ -215,11 +223,11 @@ describe('FirestoreSyncJobQueue', () => {
       {
         ...baseJob,
         enqueuedAt: '2026-03-21T12:34:56.000Z',
-        error: undefined,
+        error: fieldValueDeleteSentinel,
         jobId: 'sync-chrisvogt-steam',
         runCount: 0,
         status: 'queued',
-        summary: undefined,
+        summary: fieldValueDeleteSentinel,
         updatedAt: '2026-03-21T12:34:56.000Z',
       },
       { merge: true }
@@ -329,7 +337,7 @@ describe('FirestoreSyncJobQueue', () => {
     expect(mockDocSet).toHaveBeenCalledWith(
       {
         completedAt: '2026-03-21T12:34:56.000Z',
-        error: undefined,
+        error: fieldValueDeleteSentinel,
         status: 'completed',
         summary,
         updatedAt: '2026-03-21T12:34:56.000Z',
