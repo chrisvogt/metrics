@@ -6,7 +6,7 @@ vi.mock('../config/backend-paths.js', () => ({
   getDefaultWidgetUserId: vi.fn(() => 'chrisvogt'),
 }))
 
-import { planSyncJobs } from './shadow-sync-planner.js'
+import { planSyncJobs } from './sync-planner.js'
 
 describe('planSyncJobs', () => {
   let syncJobQueue: SyncJobQueue

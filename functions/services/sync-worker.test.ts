@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { configureLogger } from './logger.js'
-import { processSyncJob, runNextSyncJob } from './shadow-sync-worker.js'
+import { processSyncJob, runNextSyncJob } from './sync-worker.js'
 
 vi.mock('../jobs/sync-discogs-data.js', () => ({
   default: vi.fn(),

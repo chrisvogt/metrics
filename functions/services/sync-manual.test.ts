@@ -2,16 +2,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
-import { runSyncForProvider } from './shadow-sync-manual.js'
+import { runSyncForProvider } from './sync-manual.js'
 
-vi.mock('./shadow-sync-worker.js', () => ({
+vi.mock('./sync-worker.js', () => ({
   processSyncJob: vi.fn(() => Promise.resolve({
     jobId: 'sync-chrisvogt-steam',
     result: 'SUCCESS',
   })),
 }))
 
-import { processSyncJob } from './shadow-sync-worker.js'
+import { processSyncJob } from './sync-worker.js'
 
 describe('runSyncForProvider', () => {
   let documentStore: DocumentStore

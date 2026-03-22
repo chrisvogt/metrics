@@ -99,15 +99,15 @@ vi.mock('./jobs/sync-flickr-data.js', () => ({
   default: vi.fn(() => Promise.resolve({ success: true }))
 }))
 
-vi.mock('./services/shadow-sync-planner.js', () => ({
+vi.mock('./services/sync-planner.js', () => ({
   planSyncJobs: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
 }))
 
-vi.mock('./services/shadow-sync-worker.js', () => ({
+vi.mock('./services/sync-worker.js', () => ({
   runNextSyncJob: vi.fn(() => Promise.resolve({ result: 'NOOP' })),
 }))
 
-vi.mock('./services/shadow-sync-manual.js', () => ({
+vi.mock('./services/sync-manual.js', () => ({
   runSyncForProvider: vi.fn(() => Promise.resolve({
     afterJob: { jobId: 'sync-chrisvogt-spotify', status: 'completed' },
     beforeJob: { jobId: 'sync-chrisvogt-spotify', status: 'queued' },
@@ -270,7 +270,7 @@ describe('index.js', () => {
 
     describe('GET /api/widgets/sync/:provider', () => {
       it('should sync data for valid provider', async () => {
-        const { runSyncForProvider } = await import('./services/shadow-sync-manual.js')
+        const { runSyncForProvider } = await import('./services/sync-manual.js')
 
         const response = await request(app)
           .get('/api/widgets/sync/spotify')
@@ -284,7 +284,7 @@ describe('index.js', () => {
       })
 
       it('should sync Flickr data through the queue-backed handler', async () => {
-        const { runSyncForProvider } = await import('./services/shadow-sync-manual.js')
+        const { runSyncForProvider } = await import('./services/sync-manual.js')
 
         const response = await request(app)
           .get('/api/widgets/sync/flickr')
@@ -305,7 +305,7 @@ describe('index.js', () => {
       })
 
       it('should handle sync errors gracefully', async () => {
-        const { runSyncForProvider } = await import('./services/shadow-sync-manual.js')
+        const { runSyncForProvider } = await import('./services/sync-manual.js')
         vi.mocked(runSyncForProvider).mockRejectedValueOnce(new Error('Sync failed'))
 
         const response = await request(app)
@@ -1093,14 +1093,14 @@ describe('index.js', () => {
 
     it('should run sync planner handler', async () => {
       const { runSyncPlanner } = await import('./index.js')
-      const { planSyncJobs } = await import('./services/shadow-sync-planner.js')
+      const { planSyncJobs } = await import('./services/sync-planner.js')
       await runSyncPlanner()
       expect(planSyncJobs).toHaveBeenCalled()
     })
 
     it('should run sync worker handler', async () => {
       const { runSyncWorker } = await import('./index.js')
-      const { runNextSyncJob } = await import('./services/shadow-sync-worker.js')
+      const { runNextSyncJob } = await import('./services/sync-worker.js')
       await runSyncWorker()
       expect(runNextSyncJob).toHaveBeenCalled()
     })

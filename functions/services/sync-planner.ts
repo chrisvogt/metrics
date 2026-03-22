@@ -1,3 +1,7 @@
+/**
+ * Schedules provider sync work by enqueuing one sync job per supported provider
+ * for the default widget user.
+ */
 import { getDefaultWidgetUserId } from '../config/backend-paths.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { syncableWidgetIds } from '../types/widget-content.js'

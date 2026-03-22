@@ -20,7 +20,7 @@ vi.mock('../widgets/get-widget-content.js', () => ({
   validWidgetIds: ['spotify'],
 }))
 
-vi.mock('../services/shadow-sync-manual.js', () => ({
+vi.mock('../services/sync-manual.js', () => ({
   runSyncForProvider: vi.fn(() => Promise.resolve({
     afterJob: { jobId: 'sync-chrisvogt-steam', status: 'completed' },
     beforeJob: { jobId: 'sync-chrisvogt-steam', status: 'queued' },
@@ -483,7 +483,7 @@ describe('createExpressApp auth and session branches', () => {
     'steam',
   ])('runs %s through the queue-backed sync route wrapper', async (provider) => {
     const app = await buildApp()
-    const { runSyncForProvider } = await import('../services/shadow-sync-manual.js')
+    const { runSyncForProvider } = await import('../services/sync-manual.js')
 
     const response = await request(app)
       .get(`/api/widgets/sync/${provider}`)

@@ -1,3 +1,7 @@
+/**
+ * Shared types for the sync job pipeline, including queue descriptors, runtime
+ * execution options, and job status/summary payloads.
+ */
 import type { SyncProviderId } from './widget-content.js'
 
 export interface QueuedSyncJobDescriptor {

@@ -15,7 +15,7 @@ vi.mock('../widgets/get-widget-content.js', () => ({
   validWidgetIds: ['spotify'],
 }))
 
-vi.mock('../services/shadow-sync-manual.js', () => ({
+vi.mock('../services/sync-manual.js', () => ({
   runSyncForProvider: vi.fn(() => Promise.resolve({
     afterJob: { jobId: 'sync-chrisvogt-steam', status: 'completed' },
     beforeJob: { jobId: 'sync-chrisvogt-steam', status: 'queued' },
@@ -170,7 +170,7 @@ describe('createExpressApp route coverage', () => {
     })
     const syncRouteHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider')
     const response = createResponse()
-    const { runSyncForProvider } = await import('../services/shadow-sync-manual.js')
+    const { runSyncForProvider } = await import('../services/sync-manual.js')
 
     await syncRouteHandler({ params: { provider } }, response)
 

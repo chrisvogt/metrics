@@ -2,8 +2,8 @@ import { createExpressApp, getSessionAuthError } from './app/create-express-app.
 import { createBackendBootstrap } from './bootstrap/create-backend-bootstrap.js'
 import createUserJob from './jobs/create-user.js'
 import type { RuntimeUserCreationData } from './ports/runtime-platform.js'
-import { planSyncJobs } from './services/shadow-sync-planner.js'
-import { runNextSyncJob } from './services/shadow-sync-worker.js'
+import { planSyncJobs } from './services/sync-planner.js'
+import { runNextSyncJob } from './services/sync-worker.js'
 
 const SYNC_WORKER_SCHEDULE = 'every 15 minutes'
 

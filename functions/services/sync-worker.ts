@@ -1,3 +1,7 @@
+/**
+ * Runs queued sync jobs by dispatching to the provider-specific sync modules and
+ * recording completion or failure back to the sync job queue.
+ */
 import syncDiscogsData from '../jobs/sync-discogs-data.js'
 import syncFlickrData from '../jobs/sync-flickr-data.js'
 import syncGoodreadsData from '../jobs/sync-goodreads-data.js'
@@ -9,7 +13,7 @@ import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { getLogger } from './logger.js'
 import type { QueuedSyncJob, SyncJobSummary } from '../types/sync-pipeline.js'
 
-interface ShadowSyncExecutionResult {
+interface SyncExecutionResult {
   data?: unknown
   error?: unknown
   result: 'FAILURE' | 'SUCCESS'
@@ -30,7 +34,7 @@ const toSteamSyncMetrics = (data: unknown): Record<string, number> => {
 }
 
 const buildSummary = (
-  result: ShadowSyncExecutionResult,
+  result: SyncExecutionResult,
   durationMs: number,
   metrics: Record<string, number> = {}
 ): SyncJobSummary => ({
@@ -42,32 +46,32 @@ const buildSummary = (
 const runSyncJob = async (
   job: QueuedSyncJob,
   documentStore: DocumentStore
-): Promise<ShadowSyncExecutionResult> => {
+): Promise<SyncExecutionResult> => {
   switch (job.provider) {
   case 'discogs':
     return syncDiscogsData(documentStore, {
       userId: job.userId,
-    }) as Promise<ShadowSyncExecutionResult>
+    }) as Promise<SyncExecutionResult>
   case 'flickr':
     return syncFlickrData(documentStore, {
       userId: job.userId,
-    }) as Promise<ShadowSyncExecutionResult>
+    }) as Promise<SyncExecutionResult>
   case 'goodreads':
     return syncGoodreadsData(documentStore, {
       userId: job.userId,
-    }) as Promise<ShadowSyncExecutionResult>
+    }) as Promise<SyncExecutionResult>
   case 'instagram':
     return syncInstagramData(documentStore, {
       userId: job.userId,
-    }) as Promise<ShadowSyncExecutionResult>
+    }) as Promise<SyncExecutionResult>
   case 'spotify':
     return syncSpotifyData(documentStore, {
       userId: job.userId,
-    }) as Promise<ShadowSyncExecutionResult>
+    }) as Promise<SyncExecutionResult>
   case 'steam':
     return syncSteamData(documentStore, {
       userId: job.userId,
-    }) as Promise<ShadowSyncExecutionResult>
+    }) as Promise<SyncExecutionResult>
   default:
     return {
       error: `Sync is not implemented for provider: ${job.provider}`,

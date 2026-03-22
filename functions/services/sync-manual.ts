@@ -1,8 +1,13 @@
+/**
+ * Provides the manual "sync this provider now" flow used by the HTTP endpoint.
+ * It enqueues a job, claims it immediately, runs it inline, and returns queue
+ * state before and after execution for debugging and UI feedback.
+ */
 import { getDefaultWidgetUserId } from '../config/backend-paths.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import type { SyncProviderId } from '../types/widget-content.js'
-import { processSyncJob, type SyncWorkerResult } from './shadow-sync-worker.js'
+import { processSyncJob, type SyncWorkerResult } from './sync-worker.js'
 
 export interface ManualSyncResult {
   afterJob: Awaited<ReturnType<SyncJobQueue['getJob']>>

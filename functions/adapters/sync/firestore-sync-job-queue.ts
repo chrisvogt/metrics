@@ -1,3 +1,8 @@
+/**
+ * Firestore-backed implementation of the sync job queue. It stores queue state
+ * in the `sync_jobs` collection and is responsible for enqueue, claim,
+ * completion, and failure transitions.
+ */
 import admin from 'firebase-admin'
 import type { QueryDocumentSnapshot } from '@google-cloud/firestore'
 
