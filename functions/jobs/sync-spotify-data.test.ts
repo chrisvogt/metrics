@@ -198,7 +198,7 @@ describe('syncSpotifyData', () => {
     })
   })
 
-  it('should support writing Spotify shadow data to tmp collections', async () => {
+  it('should continue writing Spotify data to canonical collections', async () => {
     vi.mocked(getSpotifyAccessToken).mockResolvedValue({ accessToken: 'spotify-token' })
     vi.mocked(getSpotifyUserProfile).mockResolvedValue({
       display_name: 'Test User',
@@ -217,7 +217,7 @@ describe('syncSpotifyData', () => {
     })
 
     expect(documentStore.setDocument).toHaveBeenCalledWith(
-      'users/chrisvogt/spotify_tmp/widget-content',
+      'users/chrisvogt/spotify/widget-content',
       expect.any(Object)
     )
   })

@@ -27,7 +27,6 @@ interface FetchResult {
 }
 
 interface LoadingState {
-  shadowSync: boolean
   widgets: boolean
   session: boolean
   sync: boolean
@@ -42,9 +41,7 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
   const [widgetResult, setWidgetResult] = useState<FetchResult | null>(null)
   const [sessionResult, setSessionResult] = useState<FetchResult | null>(null)
   const [syncResult, setSyncResult] = useState<FetchResult | null>(null)
-  const [shadowSyncResult, setShadowSyncResult] = useState<FetchResult | null>(null)
   const [loading, setLoading] = useState<LoadingState>({
-    shadowSync: false,
     widgets: false,
     session: false,
     sync: false,
@@ -142,35 +139,6 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
     }
   }
 
-  const testShadowSync = async () => {
-    if (!idToken) return
-    setLoading((l) => ({ ...l, shadowSync: true }))
-    setShadowSyncResult(null)
-    const start = Date.now()
-    try {
-      const res = await fetch(`${baseUrl}/api/widgets/sync-shadow/${syncProvider}`, {
-        headers: { Authorization: `Bearer ${idToken}` },
-        credentials: 'include',
-        cache: 'no-store',
-      })
-      const data = await res.json().catch(() => ({}))
-      setShadowSyncResult({
-        ok: res.ok,
-        status: res.status,
-        time: Date.now() - start,
-        data,
-      })
-    } catch (err) {
-      setShadowSyncResult({
-        ok: false,
-        error: err instanceof Error ? err.message : String(err),
-        time: Date.now() - start,
-      })
-    } finally {
-      setLoading((l) => ({ ...l, shadowSync: false }))
-    }
-  }
-
   return (
     <>
       {showApi && (
@@ -262,6 +230,9 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
           </div>
           <div className={styles.block}>
             <h3 className={styles.blockTitle}>Sync provider</h3>
+            <p className={styles.blockText}>
+              Runs the queue-backed sync flow for a provider and returns the enqueue plus worker state.
+            </p>
             <div className={styles.endpoint}>
               <span className={styles.methodGet}>GET</span>
               <code className={styles.path}>/api/widgets/sync/&#123;provider&#125;</code>
@@ -287,39 +258,6 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
                 </button>
               </div>
               {syncResult && <ResultBox result={syncResult} />}
-            </div>
-          </div>
-          <div className={styles.block}>
-            <h3 className={styles.blockTitle}>Shadow sync provider</h3>
-            <p className={styles.blockText}>
-              Enqueue and process the new shadow sync pipeline for a provider. This should write to
-              `_tmp_` collections and report queue plus worker state.
-            </p>
-            <div className={styles.endpoint}>
-              <span className={styles.methodGet}>GET</span>
-              <code className={styles.path}>/api/widgets/sync-shadow/&#123;provider&#125;</code>
-              <div className={styles.controls}>
-                <select
-                  value={syncProvider}
-                  onChange={(e) => setSyncProvider(e.target.value)}
-                  className={styles.select}
-                >
-                  {SYNC_PROVIDERS.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className={styles.btnSecondary}
-                  onClick={testShadowSync}
-                  disabled={!idToken || loading.shadowSync}
-                >
-                  {loading.shadowSync ? 'Testing…' : 'Test'}
-                </button>
-              </div>
-              {shadowSyncResult && <ResultBox result={shadowSyncResult} />}
             </div>
           </div>
         </>

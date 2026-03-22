@@ -64,7 +64,7 @@ const syncSteamData = async (
 ): Promise<SyncJobResult<Record<string, unknown>>> => {
   const logger = getLogger()
   const { apiKey, userId } = getSteamConfig()
-  const steamCollectionPath = toProviderCollectionPath('steam', targetUserId, source)
+  const steamCollectionPath = toProviderCollectionPath('steam', targetUserId)
 
   const [recentlyPlayedGames, ownedGames, playerSummary] = await Promise.all([
     getRecentlyPlayedGames(apiKey, userId),

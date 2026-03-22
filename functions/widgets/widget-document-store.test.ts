@@ -15,12 +15,6 @@ describe('widget-document-store helpers', () => {
     )
   })
 
-  it('builds shadow widget-content paths when requested explicitly', () => {
-    expect(toUserWidgetContentPath('chronogrove', 'steam', 'shadow')).toBe(
-      'users/chronogrove/steam_tmp/widget-content'
-    )
-  })
-
   it('returns date values as-is', () => {
     const value = new Date('2026-03-14T00:00:00.000Z')
 

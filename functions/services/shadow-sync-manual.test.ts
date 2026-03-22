@@ -2,18 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
-import { runShadowSyncForProvider } from './shadow-sync-manual.js'
+import { runSyncForProvider } from './shadow-sync-manual.js'
 
 vi.mock('./shadow-sync-worker.js', () => ({
-  processShadowSyncJob: vi.fn(() => Promise.resolve({
-    jobId: 'shadow-chrisvogt-steam-shadow',
+  processSyncJob: vi.fn(() => Promise.resolve({
+    jobId: 'sync-chrisvogt-steam-live',
     result: 'SUCCESS',
   })),
 }))
 
-import { processShadowSyncJob } from './shadow-sync-worker.js'
+import { processSyncJob } from './shadow-sync-worker.js'
 
-describe('runShadowSyncForProvider', () => {
+describe('runSyncForProvider', () => {
   let documentStore: DocumentStore
   let syncJobQueue: SyncJobQueue
 
@@ -27,10 +27,10 @@ describe('runShadowSyncForProvider', () => {
       claimJob: vi.fn(async () => ({
         runCount: 1,
         enqueuedAt: '2026-03-21T02:00:00.000Z',
-        jobId: 'shadow-chrisvogt-steam-shadow',
-        mode: 'shadow',
+        jobId: 'sync-chrisvogt-steam-live',
+        mode: 'sync',
         provider: 'steam',
-        source: 'shadow',
+        source: 'live',
         status: 'processing',
         updatedAt: '2026-03-21T02:00:00.000Z',
         userId: 'chrisvogt',
@@ -38,79 +38,79 @@ describe('runShadowSyncForProvider', () => {
       claimNextJob: vi.fn(),
       completeJob: vi.fn(),
       enqueue: vi.fn(async () => ({
-        jobId: 'shadow-chrisvogt-steam-shadow',
+        jobId: 'sync-chrisvogt-steam-live',
         status: 'enqueued' as const,
       })),
       failJob: vi.fn(),
       getJob: vi
         .fn()
         .mockResolvedValueOnce({
-          jobId: 'shadow-chrisvogt-steam-shadow',
+          jobId: 'sync-chrisvogt-steam-live',
           status: 'queued',
         })
         .mockResolvedValueOnce({
-          jobId: 'shadow-chrisvogt-steam-shadow',
+          jobId: 'sync-chrisvogt-steam-live',
           status: 'completed',
         }),
     }
   })
 
-  it('enqueues, claims, processes, and reloads a shadow sync job', async () => {
-    await expect(runShadowSyncForProvider({
+  it('enqueues, claims, processes, and reloads a sync job', async () => {
+    await expect(runSyncForProvider({
       documentStore,
       provider: 'steam',
       syncJobQueue,
       userId: 'chrisvogt',
     })).resolves.toEqual({
       afterJob: {
-        jobId: 'shadow-chrisvogt-steam-shadow',
+        jobId: 'sync-chrisvogt-steam-live',
         status: 'completed',
       },
       beforeJob: {
-        jobId: 'shadow-chrisvogt-steam-shadow',
+        jobId: 'sync-chrisvogt-steam-live',
         status: 'queued',
       },
       enqueue: {
-        jobId: 'shadow-chrisvogt-steam-shadow',
+        jobId: 'sync-chrisvogt-steam-live',
         status: 'enqueued',
       },
       worker: {
-        jobId: 'shadow-chrisvogt-steam-shadow',
+        jobId: 'sync-chrisvogt-steam-live',
         result: 'SUCCESS',
       },
     })
     expect(syncJobQueue.enqueue).toHaveBeenCalledWith({
-      mode: 'shadow',
+      mode: 'sync',
       provider: 'steam',
-      source: 'shadow',
+      source: 'live',
       userId: 'chrisvogt',
     })
-    expect(processShadowSyncJob).toHaveBeenCalled()
+    expect(processSyncJob).toHaveBeenCalled()
   })
 
   it('returns NOOP worker status when the job cannot be claimed', async () => {
     vi.mocked(syncJobQueue.claimJob).mockResolvedValueOnce(null)
 
-    await expect(runShadowSyncForProvider({
+    await expect(runSyncForProvider({
       documentStore,
       provider: 'steam',
       syncJobQueue,
       userId: 'chrisvogt',
     })).resolves.toEqual({
       afterJob: {
-        jobId: 'shadow-chrisvogt-steam-shadow',
+        jobId: 'sync-chrisvogt-steam-live',
         status: 'completed',
       },
       beforeJob: {
-        jobId: 'shadow-chrisvogt-steam-shadow',
+        jobId: 'sync-chrisvogt-steam-live',
         status: 'queued',
       },
       enqueue: {
-        jobId: 'shadow-chrisvogt-steam-shadow',
+        jobId: 'sync-chrisvogt-steam-live',
         status: 'enqueued',
       },
       worker: {
-        jobId: 'shadow-chrisvogt-steam-shadow',
+        jobId: 'sync-chrisvogt-steam-live',
         result: 'NOOP',
       },
     })

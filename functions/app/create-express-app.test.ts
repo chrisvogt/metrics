@@ -15,41 +15,17 @@ vi.mock('../jobs/delete-user.js', () => ({
   default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
 }))
 
-vi.mock('../jobs/sync-discogs-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
-}))
-
-vi.mock('../jobs/sync-flickr-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
-}))
-
-vi.mock('../jobs/sync-goodreads-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
-}))
-
-vi.mock('../jobs/sync-instagram-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
-}))
-
-vi.mock('../jobs/sync-spotify-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
-}))
-
-vi.mock('../jobs/sync-steam-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
-}))
-
 vi.mock('../widgets/get-widget-content.js', () => ({
   getWidgetContent: vi.fn(() => Promise.resolve({ mock: 'widget-content' })),
   validWidgetIds: ['spotify'],
 }))
 
 vi.mock('../services/shadow-sync-manual.js', () => ({
-  runShadowSyncForProvider: vi.fn(() => Promise.resolve({
-    afterJob: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'completed' },
-    beforeJob: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'queued' },
-    enqueue: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'enqueued' },
-    worker: { jobId: 'shadow-chrisvogt-steam-shadow', result: 'SUCCESS' },
+  runSyncForProvider: vi.fn(() => Promise.resolve({
+    afterJob: { jobId: 'sync-chrisvogt-steam-live', status: 'completed' },
+    beforeJob: { jobId: 'sync-chrisvogt-steam-live', status: 'queued' },
+    enqueue: { jobId: 'sync-chrisvogt-steam-live', status: 'enqueued' },
+    worker: { jobId: 'sync-chrisvogt-steam-live', result: 'SUCCESS' },
   })),
 }))
 
@@ -501,52 +477,35 @@ describe('createExpressApp auth and session branches', () => {
   })
 
   it.each([
-    ['discogs', '../jobs/sync-discogs-data.js'],
-    ['goodreads', '../jobs/sync-goodreads-data.js'],
-    ['instagram', '../jobs/sync-instagram-data.js'],
-    ['steam', '../jobs/sync-steam-data.js'],
-  ])('syncs %s data through the injected document store route wrapper', async (provider, modulePath) => {
+    'discogs',
+    'goodreads',
+    'instagram',
+    'steam',
+  ])('runs %s through the queue-backed sync route wrapper', async (provider) => {
     const app = await buildApp()
-    const jobModule = await import(modulePath)
-
-    vi.mocked(jobModule.default).mockResolvedValueOnce({
-      result: 'SUCCESS',
-      provider,
-    })
+    const { runSyncForProvider } = await import('../services/shadow-sync-manual.js')
 
     const response = await request(app)
       .get(`/api/widgets/sync/${provider}`)
       .expect(200)
 
-    expect(response.body.result).toBe('SUCCESS')
-    expect(jobModule.default).toHaveBeenCalledWith(documentStore)
-  })
-
-  it('runs the manual shadow sync route through the injected queue and worker services', async () => {
-    const app = await buildApp()
-    const { runShadowSyncForProvider } = await import('../services/shadow-sync-manual.js')
-
-    const response = await request(app)
-      .get('/api/widgets/sync-shadow/steam')
-      .expect(200)
-
-    expect(runShadowSyncForProvider).toHaveBeenCalledWith({
+    expect(runSyncForProvider).toHaveBeenCalledWith({
       documentStore,
-      provider: 'steam',
+      provider,
       syncJobQueue,
     })
     expect(response.body.enqueue.status).toBe('enqueued')
     expect(response.body.worker.result).toBe('SUCCESS')
   })
 
-  it('returns 400 for unsupported manual shadow sync providers', async () => {
+  it('returns 400 for unsupported sync providers', async () => {
     const app = await buildApp()
 
     const response = await request(app)
-      .get('/api/widgets/sync-shadow/github')
+      .get('/api/widgets/sync/github')
       .expect(400)
 
-    expect(response.text).toBe('Unrecognized or unsupported shadow sync provider.')
+    expect(response.text).toBe('Unrecognized or unsupported provider.')
   })
 
 

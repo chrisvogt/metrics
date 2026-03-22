@@ -6,30 +6,6 @@ vi.mock('express-rate-limit', () => ({
   rateLimit: vi.fn(() => (_req, _res, next) => next?.()),
 }))
 
-vi.mock('../jobs/sync-discogs-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'discogs' })),
-}))
-
-vi.mock('../jobs/sync-flickr-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'flickr' })),
-}))
-
-vi.mock('../jobs/sync-goodreads-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'goodreads' })),
-}))
-
-vi.mock('../jobs/sync-instagram-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'instagram' })),
-}))
-
-vi.mock('../jobs/sync-spotify-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'spotify' })),
-}))
-
-vi.mock('../jobs/sync-steam-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'steam' })),
-}))
-
 vi.mock('../jobs/delete-user.js', () => ({
   default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
 }))
@@ -40,11 +16,11 @@ vi.mock('../widgets/get-widget-content.js', () => ({
 }))
 
 vi.mock('../services/shadow-sync-manual.js', () => ({
-  runShadowSyncForProvider: vi.fn(() => Promise.resolve({
-    afterJob: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'completed' },
-    beforeJob: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'queued' },
-    enqueue: { jobId: 'shadow-chrisvogt-steam-shadow', status: 'enqueued' },
-    worker: { jobId: 'shadow-chrisvogt-steam-shadow', result: 'SUCCESS' },
+  runSyncForProvider: vi.fn(() => Promise.resolve({
+    afterJob: { jobId: 'sync-chrisvogt-steam-live', status: 'completed' },
+    beforeJob: { jobId: 'sync-chrisvogt-steam-live', status: 'queued' },
+    enqueue: { jobId: 'sync-chrisvogt-steam-live', status: 'enqueued' },
+    worker: { jobId: 'sync-chrisvogt-steam-live', result: 'SUCCESS' },
   })),
 }))
 
@@ -177,11 +153,11 @@ describe('createExpressApp route coverage', () => {
   })
 
   it.each([
-    ['discogs', '../jobs/sync-discogs-data.js'],
-    ['goodreads', '../jobs/sync-goodreads-data.js'],
-    ['instagram', '../jobs/sync-instagram-data.js'],
-    ['steam', '../jobs/sync-steam-data.js'],
-  ])('dispatches the %s sync route through the injected document store', async (provider, modulePath) => {
+    'discogs',
+    'goodreads',
+    'instagram',
+    'steam',
+  ])('dispatches the %s sync route through the queue-backed runner', async (provider) => {
     const { createExpressApp } = await import('./create-express-app.js')
     const app = createExpressApp({
       authService,
@@ -194,38 +170,19 @@ describe('createExpressApp route coverage', () => {
     })
     const syncRouteHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider')
     const response = createResponse()
-    const jobModule = await import(modulePath)
+    const { runSyncForProvider } = await import('../services/shadow-sync-manual.js')
 
     await syncRouteHandler({ params: { provider } }, response)
 
-    expect(jobModule.default).toHaveBeenCalledWith(documentStore)
-    expect(response.status).toHaveBeenCalledWith(200)
-    expect(response.send).toHaveBeenCalledWith({ result: 'SUCCESS', provider })
-  })
-
-  it('dispatches the manual shadow sync route through the injected queue and worker services', async () => {
-    const { createExpressApp } = await import('./create-express-app.js')
-    const app = createExpressApp({
-      authService,
+    expect(runSyncForProvider).toHaveBeenCalledWith({
       documentStore,
-      ensureRuntimeConfigApplied,
-      getClientAuthConfig,
-      logger,
-      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
-      syncJobQueue,
-    })
-    const shadowSyncHandler = findRouteHandler(app, 'get', '/api/widgets/sync-shadow/:provider')
-    const response = createResponse()
-    const { runShadowSyncForProvider } = await import('../services/shadow-sync-manual.js')
-
-    await shadowSyncHandler({ params: { provider: 'steam' } }, response)
-
-    expect(runShadowSyncForProvider).toHaveBeenCalledWith({
-      documentStore,
-      provider: 'steam',
+      provider,
       syncJobQueue,
     })
     expect(response.status).toHaveBeenCalledWith(200)
+    expect(response.send).toHaveBeenCalledWith(expect.objectContaining({
+      enqueue: { jobId: 'sync-chrisvogt-steam-live', status: 'enqueued' },
+    }))
   })
 
 

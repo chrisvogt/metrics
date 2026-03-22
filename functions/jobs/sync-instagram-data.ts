@@ -85,7 +85,7 @@ const syncInstagramData = async (
 ) => {
   const logger = getLogger()
   try {
-    const instagramCollectionPath = toProviderCollectionPath('instagram', userId, source)
+    const instagramCollectionPath = toProviderCollectionPath('instagram', userId)
     const instagramResponse = (await fetchInstagramData()) as {
       media?: { data?: unknown[] }
       biography?: string

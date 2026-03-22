@@ -40,7 +40,7 @@ const getMediaToDownloadReducer = (
   // I'm using the media filename — a hash — to identify the media file in GCP Storage because I assume the
   // images on mosaic.scdn.co rotate and change over time based on the playlist.
   const id = mediaURL.replace(SPOTIFY_MOSAIC_BASE_URL, '')
-  const destinationPath = `${toProviderMediaPrefix('spotify', userId, 'playlists/', source)}${id}.jpg`
+  const destinationPath = `${toProviderMediaPrefix('spotify', userId, 'playlists/')}${id}.jpg`
   const isAlreadyDownloaded = storedMediaFileNames.includes(destinationPath)
 
   if (!isAlreadyDownloaded) {
@@ -60,7 +60,7 @@ const transformPlaylists = (
 ) => playlists.map(playlist => {
   const id = getMediaURLFromPlaylist(playlist)?.replace(SPOTIFY_MOSAIC_BASE_URL, '')
   const cdnImageURL = toPublicMediaUrl(
-    `${toProviderMediaPrefix('spotify', userId, 'playlists/', source)}${id}.jpg`
+    `${toProviderMediaPrefix('spotify', userId, 'playlists/')}${id}.jpg`
   )
   return {
     ...playlist,
@@ -74,7 +74,7 @@ const syncSpotifyTopTracks = async (
 ) => {
   const logger = getLogger()
   const { source = 'live', userId = getDefaultWidgetUserId() } = options
-  const spotifyCollectionPath = toProviderCollectionPath('spotify', userId, source)
+  const spotifyCollectionPath = toProviderCollectionPath('spotify', userId)
   const { clientId, clientSecret, redirectUri: redirectURI, refreshToken } = getSpotifyConfig()
 
   const { accessToken } = await getSpotifyAccessToken({

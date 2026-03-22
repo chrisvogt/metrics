@@ -1,7 +1,7 @@
 import type { SyncProviderId, WidgetDataSource } from './widget-content.js'
 
 export interface QueuedSyncJobDescriptor {
-  mode: 'shadow'
+  mode: 'sync'
   provider: SyncProviderId
   source: WidgetDataSource
   userId: string

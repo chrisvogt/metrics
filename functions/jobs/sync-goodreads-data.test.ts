@@ -1178,7 +1178,7 @@ describe('syncGoodreadsData', () => {
       expect(result.result).toBe('SUCCESS')
     })
 
-  it('should support writing Goodreads shadow data to tmp collections', async () => {
+  it('should continue writing Goodreads data to canonical collections', async () => {
     fetchUser.mockResolvedValue({
       profile: { displayName: 'Test User' },
       updates: [],
@@ -1196,7 +1196,7 @@ describe('syncGoodreadsData', () => {
     })
 
     expect(documentStore.setDocument).toHaveBeenCalledWith(
-      'users/chrisvogt/goodreads_tmp/widget-content',
+      'users/chrisvogt/goodreads/widget-content',
       expect.any(Object)
     )
   })

@@ -2,16 +2,16 @@ import { getDefaultWidgetUserId } from '../config/backend-paths.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import type { SyncProviderId } from '../types/widget-content.js'
-import { processShadowSyncJob, type ShadowSyncWorkerResult } from './shadow-sync-worker.js'
+import { processSyncJob, type SyncWorkerResult } from './shadow-sync-worker.js'
 
-export interface ManualShadowSyncResult {
+export interface ManualSyncResult {
   afterJob: Awaited<ReturnType<SyncJobQueue['getJob']>>
   beforeJob: Awaited<ReturnType<SyncJobQueue['getJob']>>
   enqueue: Awaited<ReturnType<SyncJobQueue['enqueue']>>
-  worker: ShadowSyncWorkerResult
+  worker: SyncWorkerResult
 }
 
-export const runShadowSyncForProvider = async ({
+export const runSyncForProvider = async ({
   documentStore,
   provider,
   syncJobQueue,
@@ -21,11 +21,11 @@ export const runShadowSyncForProvider = async ({
   provider: SyncProviderId
   syncJobQueue: SyncJobQueue
   userId?: string
-}): Promise<ManualShadowSyncResult> => {
+}): Promise<ManualSyncResult> => {
   const enqueue = await syncJobQueue.enqueue({
-    mode: 'shadow',
+    mode: 'sync',
     provider,
-    source: 'shadow',
+    source: 'live',
     userId,
   })
 
@@ -33,7 +33,7 @@ export const runShadowSyncForProvider = async ({
   const claimedJob = await syncJobQueue.claimJob(enqueue.jobId)
 
   const worker = claimedJob
-    ? await processShadowSyncJob({
+    ? await processSyncJob({
       documentStore,
       job: claimedJob,
       syncJobQueue,

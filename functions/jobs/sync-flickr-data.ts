@@ -9,11 +9,11 @@ import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 export const toFlickrLastResponsePath = ({
   source = 'live',
   userId = getDefaultWidgetUserId(),
-}: SyncJobExecutionOptions = {}) => `${toProviderCollectionPath('flickr', userId, source)}/last-response`
+}: SyncJobExecutionOptions = {}) => `${toProviderCollectionPath('flickr', userId)}/last-response`
 export const toFlickrWidgetContentPath = ({
   source = 'live',
   userId = getDefaultWidgetUserId(),
-}: SyncJobExecutionOptions = {}) => `${toProviderCollectionPath('flickr', userId, source)}/widget-content`
+}: SyncJobExecutionOptions = {}) => `${toProviderCollectionPath('flickr', userId)}/widget-content`
 
 const syncFlickrData = async (
   documentStore: DocumentStore,

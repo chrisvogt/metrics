@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { configureLogger } from './logger.js'
-import { processShadowSyncJob, runNextShadowSyncJob } from './shadow-sync-worker.js'
+import { processSyncJob, runNextSyncJob } from './shadow-sync-worker.js'
 
 vi.mock('../jobs/sync-discogs-data.js', () => ({
   default: vi.fn(),
@@ -36,7 +36,7 @@ import syncInstagramData from '../jobs/sync-instagram-data.js'
 import syncSpotifyData from '../jobs/sync-spotify-data.js'
 import syncSteamData from '../jobs/sync-steam-data.js'
 
-describe('runNextShadowSyncJob', () => {
+describe('runNextSyncJob', () => {
   let documentStore: DocumentStore
   let syncJobQueue: SyncJobQueue
 
@@ -64,19 +64,19 @@ describe('runNextShadowSyncJob', () => {
   it('returns NOOP when no queued job is available', async () => {
     vi.mocked(syncJobQueue.claimNextJob).mockResolvedValue(null)
 
-    await expect(runNextShadowSyncJob({ documentStore, syncJobQueue })).resolves.toEqual({
+    await expect(runNextSyncJob({ documentStore, syncJobQueue })).resolves.toEqual({
       result: 'NOOP',
     })
   })
 
-  it('runs the Steam shadow sync and completes the queue job', async () => {
+  it('runs the Steam sync and completes the queue job', async () => {
     vi.mocked(syncJobQueue.claimNextJob).mockResolvedValue({
       runCount: 1,
       enqueuedAt: '2026-03-21T02:00:00.000Z',
-      jobId: 'shadow-chrisvogt-steam-shadow',
-      mode: 'shadow',
+      jobId: 'sync-chrisvogt-steam-live',
+      mode: 'sync',
       provider: 'steam',
-      source: 'shadow',
+      source: 'live',
       status: 'processing',
       updatedAt: '2026-03-21T02:00:00.000Z',
       userId: 'chrisvogt',
@@ -91,16 +91,16 @@ describe('runNextShadowSyncJob', () => {
       result: 'SUCCESS',
     })
 
-    await expect(runNextShadowSyncJob({ documentStore, syncJobQueue })).resolves.toEqual({
-      jobId: 'shadow-chrisvogt-steam-shadow',
+    await expect(runNextSyncJob({ documentStore, syncJobQueue })).resolves.toEqual({
+      jobId: 'sync-chrisvogt-steam-live',
       result: 'SUCCESS',
     })
     expect(syncSteamData).toHaveBeenCalledWith(documentStore, {
-      source: 'shadow',
+      source: 'live',
       userId: 'chrisvogt',
     })
     expect(syncJobQueue.completeJob).toHaveBeenCalledWith(
-      'shadow-chrisvogt-steam-shadow',
+      'sync-chrisvogt-steam-live',
       expect.objectContaining({
         metrics: {
           ownedGamesCount: 2,
@@ -115,10 +115,10 @@ describe('runNextShadowSyncJob', () => {
     vi.mocked(syncJobQueue.claimNextJob).mockResolvedValue({
       runCount: 1,
       enqueuedAt: '2026-03-21T02:00:00.000Z',
-      jobId: 'shadow-chrisvogt-steam-shadow',
-      mode: 'shadow',
+      jobId: 'sync-chrisvogt-steam-live',
+      mode: 'sync',
       provider: 'steam',
-      source: 'shadow',
+      source: 'live',
       status: 'processing',
       updatedAt: '2026-03-21T02:00:00.000Z',
       userId: 'chrisvogt',
@@ -128,12 +128,12 @@ describe('runNextShadowSyncJob', () => {
       result: 'FAILURE',
     })
 
-    await expect(runNextShadowSyncJob({ documentStore, syncJobQueue })).resolves.toEqual({
-      jobId: 'shadow-chrisvogt-steam-shadow',
+    await expect(runNextSyncJob({ documentStore, syncJobQueue })).resolves.toEqual({
+      jobId: 'sync-chrisvogt-steam-live',
       result: 'FAILURE',
     })
     expect(syncJobQueue.failJob).toHaveBeenCalledWith(
-      'shadow-chrisvogt-steam-shadow',
+      'sync-chrisvogt-steam-live',
       'Steam unavailable',
       expect.objectContaining({
         result: 'FAILURE',
@@ -141,7 +141,7 @@ describe('runNextShadowSyncJob', () => {
     )
   })
 
-  it('processes an already claimed shadow sync job directly', async () => {
+  it('processes an already claimed sync job directly', async () => {
     vi.mocked(syncSteamData).mockResolvedValue({
       data: {
         collections: {
@@ -152,22 +152,22 @@ describe('runNextShadowSyncJob', () => {
       result: 'SUCCESS',
     })
 
-    await expect(processShadowSyncJob({
+    await expect(processSyncJob({
       documentStore,
       job: {
         runCount: 1,
         enqueuedAt: '2026-03-21T02:00:00.000Z',
-        jobId: 'shadow-chrisvogt-steam-shadow',
-        mode: 'shadow',
+        jobId: 'sync-chrisvogt-steam-live',
+        mode: 'sync',
         provider: 'steam',
-        source: 'shadow',
+        source: 'live',
         status: 'processing',
         updatedAt: '2026-03-21T02:00:00.000Z',
         userId: 'chrisvogt',
       },
       syncJobQueue,
     })).resolves.toEqual({
-      jobId: 'shadow-chrisvogt-steam-shadow',
+      jobId: 'sync-chrisvogt-steam-live',
       result: 'SUCCESS',
     })
   })
@@ -178,31 +178,31 @@ describe('runNextShadowSyncJob', () => {
     ['goodreads', syncGoodreadsData],
     ['instagram', syncInstagramData],
     ['spotify', syncSpotifyData],
-  ] as const)('dispatches %s shadow jobs through the matching sync job', async (provider, jobModule) => {
+  ] as const)('dispatches %s jobs through the matching sync job', async (provider, jobModule) => {
     vi.mocked(jobModule).mockResolvedValueOnce({
       result: 'SUCCESS',
     })
 
-    await expect(processShadowSyncJob({
+    await expect(processSyncJob({
       documentStore,
       job: {
         runCount: 1,
         enqueuedAt: '2026-03-21T02:00:00.000Z',
-        jobId: `shadow-chrisvogt-${provider}-shadow`,
-        mode: 'shadow',
+        jobId: `sync-chrisvogt-${provider}-live`,
+        mode: 'sync',
         provider,
-        source: 'shadow',
+        source: 'live',
         status: 'processing',
         updatedAt: '2026-03-21T02:00:00.000Z',
         userId: 'chrisvogt',
       },
       syncJobQueue,
     })).resolves.toEqual({
-      jobId: `shadow-chrisvogt-${provider}-shadow`,
+      jobId: `sync-chrisvogt-${provider}-live`,
       result: 'SUCCESS',
     })
     expect(jobModule).toHaveBeenCalledWith(documentStore, {
-      source: 'shadow',
+      source: 'live',
       userId: 'chrisvogt',
     })
   })

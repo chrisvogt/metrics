@@ -83,7 +83,7 @@ const syncDiscogsData = async (
 ) => {
   const logger = getLogger()
   try {
-    const discogsCollectionPath = toProviderCollectionPath('discogs', userId, source)
+    const discogsCollectionPath = toProviderCollectionPath('discogs', userId)
     const discogsResponse = await fetchDiscogsReleases()
 
     const { releases, pagination } = discogsResponse

@@ -39,7 +39,7 @@ const buildSummary = (
   result: result.result,
 })
 
-const runShadowSyncJob = async (
+const runSyncJob = async (
   job: QueuedSyncJob,
   documentStore: DocumentStore
 ): Promise<ShadowSyncExecutionResult> => {
@@ -76,18 +76,18 @@ const runShadowSyncJob = async (
       }) as Promise<ShadowSyncExecutionResult>
   default:
     return {
-      error: `Shadow sync is not implemented for provider: ${job.provider}`,
+      error: `Sync is not implemented for provider: ${job.provider}`,
       result: 'FAILURE',
     }
   }
 }
 
-export interface ShadowSyncWorkerResult {
+export interface SyncWorkerResult {
   jobId?: string
   result: 'FAILURE' | 'NOOP' | 'SUCCESS'
 }
 
-export const processShadowSyncJob = async ({
+export const processSyncJob = async ({
   documentStore,
   job,
   syncJobQueue,
@@ -95,11 +95,11 @@ export const processShadowSyncJob = async ({
   documentStore: DocumentStore
   job: QueuedSyncJob
   syncJobQueue: SyncJobQueue
-}): Promise<ShadowSyncWorkerResult> => {
+}): Promise<SyncWorkerResult> => {
   const logger = getLogger()
   const startedAt = Date.now()
   try {
-    const result = await runShadowSyncJob(job, documentStore)
+    const result = await runSyncJob(job, documentStore)
     const durationMs = Date.now() - startedAt
     const metrics = job.provider === 'steam' && result.result === 'SUCCESS'
       ? toSteamSyncMetrics(('data' in result ? result.data : undefined))
@@ -108,7 +108,7 @@ export const processShadowSyncJob = async ({
 
     if (result.result === 'SUCCESS') {
       await syncJobQueue.completeJob(job.jobId, summary)
-      logger.info('Shadow sync job completed', {
+      logger.info('Sync job completed', {
         durationMs,
         jobId: job.jobId,
         provider: job.provider,
@@ -122,7 +122,7 @@ export const processShadowSyncJob = async ({
     }
 
     await syncJobQueue.failJob(job.jobId, result.error, summary)
-    logger.error('Shadow sync job failed', {
+    logger.error('Sync job failed', {
       durationMs,
       error: result.error,
       jobId: job.jobId,
@@ -141,7 +141,7 @@ export const processShadowSyncJob = async ({
       result: 'FAILURE',
     }
     await syncJobQueue.failJob(job.jobId, error, summary)
-    logger.error('Shadow sync job threw unexpectedly', {
+    logger.error('Sync job threw unexpectedly', {
       durationMs,
       error,
       jobId: job.jobId,
@@ -156,13 +156,13 @@ export const processShadowSyncJob = async ({
   }
 }
 
-export const runNextShadowSyncJob = async ({
+export const runNextSyncJob = async ({
   documentStore,
   syncJobQueue,
 }: {
   documentStore: DocumentStore
   syncJobQueue: SyncJobQueue
-}): Promise<ShadowSyncWorkerResult> => {
+}): Promise<SyncWorkerResult> => {
   const job = await syncJobQueue.claimNextJob()
 
   if (!job) {
@@ -171,7 +171,7 @@ export const runNextShadowSyncJob = async ({
     }
   }
 
-  return processShadowSyncJob({
+  return processSyncJob({
     documentStore,
     job,
     syncJobQueue,

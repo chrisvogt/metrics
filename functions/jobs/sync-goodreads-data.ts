@@ -506,7 +506,7 @@ const syncGoodreadsData = async (
   { source = 'live', userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
-  const goodreadsCollectionPath = toProviderCollectionPath('goodreads', userId, source)
+  const goodreadsCollectionPath = toProviderCollectionPath('goodreads', userId)
   const result = await fetchAllGoodreadsPromises()
 
   if ('error' in result) {

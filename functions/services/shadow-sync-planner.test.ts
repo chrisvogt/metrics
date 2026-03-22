@@ -2,18 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 
-vi.mock('../config/backend-config.js', () => ({
-  getShadowSyncConfig: vi.fn(),
-}))
-
 vi.mock('../config/backend-paths.js', () => ({
   getDefaultWidgetUserId: vi.fn(() => 'chrisvogt'),
 }))
 
-import { getShadowSyncConfig } from '../config/backend-config.js'
-import { planShadowSyncJobs } from './shadow-sync-planner.js'
+import { planSyncJobs } from './shadow-sync-planner.js'
 
-describe('planShadowSyncJobs', () => {
+describe('planSyncJobs', () => {
   let syncJobQueue: SyncJobQueue
 
   beforeEach(() => {
@@ -23,7 +18,7 @@ describe('planShadowSyncJobs', () => {
       claimNextJob: vi.fn(),
       completeJob: vi.fn(),
       enqueue: vi.fn(async ({ provider }) => ({
-        jobId: `shadow-chrisvogt-${provider}-shadow`,
+        jobId: `sync-chrisvogt-${provider}-live`,
         status: 'enqueued',
       })),
       failJob: vi.fn(),
@@ -31,44 +26,29 @@ describe('planShadowSyncJobs', () => {
     }
   })
 
-  it('returns NOOP when shadow sync is disabled', async () => {
-    vi.mocked(getShadowSyncConfig).mockReturnValue({
-      enabled: false,
-      providers: [],
-    })
-
-    await expect(planShadowSyncJobs(syncJobQueue)).resolves.toEqual({
-      enqueuedJobIds: [],
-      providerCount: 0,
-      result: 'NOOP',
-    })
-    expect(syncJobQueue.enqueue).not.toHaveBeenCalled()
-  })
-
-  it('enqueues configured providers in shadow mode', async () => {
-    vi.mocked(getShadowSyncConfig).mockReturnValue({
-      enabled: true,
-      providers: ['steam', 'spotify'],
-    })
-
-    await expect(planShadowSyncJobs(syncJobQueue)).resolves.toEqual({
+  it('enqueues all syncable providers in live mode', async () => {
+    await expect(planSyncJobs(syncJobQueue)).resolves.toEqual({
       enqueuedJobIds: [
-        'shadow-chrisvogt-steam-shadow',
-        'shadow-chrisvogt-spotify-shadow',
+        'sync-chrisvogt-discogs-live',
+        'sync-chrisvogt-goodreads-live',
+        'sync-chrisvogt-instagram-live',
+        'sync-chrisvogt-spotify-live',
+        'sync-chrisvogt-steam-live',
+        'sync-chrisvogt-flickr-live',
       ],
-      providerCount: 2,
+      providerCount: 6,
       result: 'SUCCESS',
     })
     expect(syncJobQueue.enqueue).toHaveBeenCalledWith({
-      mode: 'shadow',
+      mode: 'sync',
       provider: 'steam',
-      source: 'shadow',
+      source: 'live',
       userId: 'chrisvogt',
     })
     expect(syncJobQueue.enqueue).toHaveBeenCalledWith({
-      mode: 'shadow',
+      mode: 'sync',
       provider: 'spotify',
-      source: 'shadow',
+      source: 'live',
       userId: 'chrisvogt',
     })
   })

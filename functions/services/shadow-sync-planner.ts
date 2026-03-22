@@ -1,33 +1,23 @@
-import { getShadowSyncConfig } from '../config/backend-config.js'
 import { getDefaultWidgetUserId } from '../config/backend-paths.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
+import { syncableWidgetIds } from '../types/widget-content.js'
 
-export interface ShadowSyncPlannerResult {
+export interface SyncPlannerResult {
   enqueuedJobIds: string[]
   providerCount: number
-  result: 'NOOP' | 'SUCCESS'
+  result: 'SUCCESS'
 }
 
-export const planShadowSyncJobs = async (
+export const planSyncJobs = async (
   syncJobQueue: SyncJobQueue
-): Promise<ShadowSyncPlannerResult> => {
-  const { enabled, providers } = getShadowSyncConfig()
-
-  if (!enabled || providers.length === 0) {
-    return {
-      enqueuedJobIds: [],
-      providerCount: 0,
-      result: 'NOOP',
-    }
-  }
-
+): Promise<SyncPlannerResult> => {
   const userId = getDefaultWidgetUserId()
   const enqueueResults = await Promise.all(
-    providers.map((provider) =>
+    syncableWidgetIds.map((provider) =>
       syncJobQueue.enqueue({
-        mode: 'shadow',
+        mode: 'sync',
         provider,
-        source: 'shadow',
+        source: 'live',
         userId,
       })
     )
@@ -37,7 +27,7 @@ export const planShadowSyncJobs = async (
     enqueuedJobIds: enqueueResults
       .filter((entry) => entry.status === 'enqueued')
       .map((entry) => entry.jobId),
-    providerCount: providers.length,
+    providerCount: syncableWidgetIds.length,
     result: 'SUCCESS',
   }
 }

@@ -167,7 +167,7 @@ describe('syncSteamData', () => {
     )
   })
 
-  it('should support writing Steam shadow data to tmp collections', async () => {
+  it('should continue writing Steam data to canonical collections', async () => {
     vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
     vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 0, games: [] })
     vi.mocked(getPlayerSummary).mockResolvedValue({})
@@ -179,7 +179,7 @@ describe('syncSteamData', () => {
     })
 
     expect(documentStore.setDocument).toHaveBeenCalledWith(
-      'users/chrisvogt/steam_tmp/widget-content',
+      'users/chrisvogt/steam/widget-content',
       expect.objectContaining({
         meta: {
           synced: expect.any(String),
