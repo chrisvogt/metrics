@@ -4,24 +4,12 @@ import { getInstagramAccessToken, getInstagramUserId } from '../../config/backen
 
 const INSTAGRAM_API_VERSION = 'v25.0'
 const INSTAGRAM_BASE_URL = 'https://graph.instagram.com'
+const MAX_TOP_LEVEL_MEDIA_ITEMS = 24
 
 const profileFields =
   'id,user_id,username,account_type,profile_picture_url,followers_count,follows_count,media_count'
-const mediaFields = [
-  'alt_text',
-  'caption',
-  'children{alt_text,id,media_url,thumbnail_url}',
-  'comments_count',
-  'id',
-  'ig_id',
-  'like_count',
-  'media_type',
-  'media_url',
-  'permalink',
-  'thumbnail_url',
-  'timestamp',
-  'username',
-]
+const mediaFields =
+  'alt_text,caption,children{alt_text,id,media_url,thumbnail_url},comments_count,id,ig_id,like_count,media_type,media_url,permalink,thumbnail_url,timestamp,username'
 
 const fetchInstagramMedia = async () => {
   const accessToken = getInstagramAccessToken()
@@ -39,14 +27,12 @@ const fetchInstagramMedia = async () => {
     got(`${INSTAGRAM_BASE_URL}/${INSTAGRAM_API_VERSION}/me?access_token=${accessToken}&fields=${profileFields}`, {
       responseType: 'json',
     }),
-    got(`${INSTAGRAM_API_VERSION}/${instagramUserId}/media`, {
+    got(
+      `${INSTAGRAM_BASE_URL}/${INSTAGRAM_API_VERSION}/${instagramUserId}/media?access_token=${accessToken}&limit=${MAX_TOP_LEVEL_MEDIA_ITEMS}&fields=${mediaFields}`,
+      {
       responseType: 'json',
-      prefixUrl: INSTAGRAM_BASE_URL,
-      searchParams: {
-        access_token: accessToken,
-        fields: mediaFields.join(','),
-      },
-    }),
+      }
+    ),
   ])
 
   return {
