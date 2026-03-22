@@ -33,7 +33,14 @@ export { getSessionAuthError }
 
 export const runSyncPlanner = runtimePlatform.registerScheduledFunction(async () => {
   await ensureRuntimeConfigApplied()
-  await planSyncJobs(syncJobQueue)
+  const plannerResult = await planSyncJobs(syncJobQueue)
+  logger.info('Sync planner finished', {
+    enqueuedCount: plannerResult.enqueuedJobIds.length,
+    enqueuedJobIds: plannerResult.enqueuedJobIds,
+    providerCount: plannerResult.providerCount,
+    skippedCount: plannerResult.skippedJobIds.length,
+    skippedJobIds: plannerResult.skippedJobIds,
+  })
 }, runtimeSecrets)
 
 export const runSyncWorker = runtimePlatform.registerScheduledFunction(async () => {

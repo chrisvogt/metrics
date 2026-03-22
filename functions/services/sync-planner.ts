@@ -10,6 +10,7 @@ export interface SyncPlannerResult {
   enqueuedJobIds: string[]
   providerCount: number
   result: 'SUCCESS'
+  skippedJobIds: string[]
 }
 
 export const planSyncJobs = async (
@@ -26,11 +27,17 @@ export const planSyncJobs = async (
     )
   )
 
+  const enqueuedJobIds = enqueueResults
+    .filter((entry) => entry.status === 'enqueued')
+    .map((entry) => entry.jobId)
+  const skippedJobIds = enqueueResults
+    .filter((entry) => entry.status === 'skipped')
+    .map((entry) => entry.jobId)
+
   return {
-    enqueuedJobIds: enqueueResults
-      .filter((entry) => entry.status === 'enqueued')
-      .map((entry) => entry.jobId),
+    enqueuedJobIds,
     providerCount: syncableWidgetIds.length,
     result: 'SUCCESS',
+    skippedJobIds,
   }
 }

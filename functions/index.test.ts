@@ -100,7 +100,14 @@ vi.mock('./jobs/sync-flickr-data.js', () => ({
 }))
 
 vi.mock('./services/sync-planner.js', () => ({
-  planSyncJobs: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
+  planSyncJobs: vi.fn(() =>
+    Promise.resolve({
+      enqueuedJobIds: ['sync-test-discogs'],
+      providerCount: 6,
+      result: 'SUCCESS' as const,
+      skippedJobIds: [],
+    })
+  ),
 }))
 
 vi.mock('./services/sync-worker.js', () => ({
@@ -1094,8 +1101,19 @@ describe('index.js', () => {
     it('should run sync planner handler', async () => {
       const { runSyncPlanner } = await import('./index.js')
       const { planSyncJobs } = await import('./services/sync-planner.js')
+      vi.mocked(logger.info).mockClear()
       await runSyncPlanner()
       expect(planSyncJobs).toHaveBeenCalled()
+      expect(logger.info).toHaveBeenCalledWith(
+        'Sync planner finished',
+        expect.objectContaining({
+          enqueuedCount: 1,
+          enqueuedJobIds: ['sync-test-discogs'],
+          providerCount: 6,
+          skippedCount: 0,
+          skippedJobIds: [],
+        })
+      )
     })
 
     it('should run sync worker handler', async () => {
