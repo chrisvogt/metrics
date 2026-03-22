@@ -26,130 +26,50 @@ This repository contains a portable metrics service I use to fetch and sync data
 
 ## How It Works
 
-The diagram below shows how this service powers the social widgets on [www.chrisvogt.me](https://www.chrisvogt.me). The **website** calls public read endpoints to fetch widget data; the **admin dashboard** triggers manual syncs and manages auth. Behind the scenes, a Firestore-backed job queue orchestrates nightly data syncs across six platform APIs.
+This service backs the widgets on [www.chrisvogt.me](https://www.chrisvogt.me). The diagrams are intentionally small—each shows one slice. For queue semantics, schedules, and job fields, see [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md).
+
+### 1. Public widget reads
+
+The site calls the metrics API; responses are cached at the edge. No auth required.
+
+```mermaid
+flowchart LR
+  site[www.chrisvogt.me] --> fn[Cloud Functions<br/>GET /api/widgets/:provider]
+  fn --> fs[(Firestore<br/>users/.../widget-content)]
+```
+
+### 2. Scheduled sync (queue + worker)
+
+The **planner** seeds one job per provider per day; the **worker** drains the queue on a short interval. Each run fetches from the right platform API and writes widget documents.
 
 ```mermaid
 flowchart TB
-  %% ── External Clients ──────────────────────────────────────────────
-  website["<b>www.chrisvogt.me</b><br/>(Gatsby · Netlify)"]
-  admin["<b>metrics.chrisvogt.me</b><br/>(React admin dashboard)"]
-
-  %% ── Cloud Scheduler ───────────────────────────────────────────────
-  subgraph scheduler["Cloud Scheduler"]
-    cron_plan["<b>runSyncPlanner</b><br/>every day 02:00"]
-    cron_worker["<b>runSyncWorker</b><br/>every 15 min"]
+  subgraph sched[Cloud Scheduler]
+    p[runSyncPlanner · daily 02:00]
+    w[runSyncWorker · every 15 min]
   end
+  p --> plan[planSyncJobs]
+  plan --> q[(Firestore · sync_jobs)]
+  w --> next[runNextSyncJob]
+  next --> q
+  next --> job[processSyncJob + provider sync]
+  job --> apis[Platform APIs]
+  job --> docs[(Firestore · widget documents)]
+```
 
-  %% ── Cloud Functions (Express) ─────────────────────────────────────
-  subgraph functions["Cloud Functions · Express App"]
-    direction TB
+### 3. Admin dashboard
 
-    subgraph read_endpoints["Public Widget Read Endpoints"]
-      get_widget["GET /api/widgets/:provider<br/><i>getWidgetContent()</i>"]
-    end
+[metrics.chrisvogt.me](https://metrics.chrisvogt.me) uses Firebase Auth and session cookies. Manual sync hits the same backend and runs the job **inline** (enqueue → claim → sync) instead of waiting for the worker tick.
 
-    subgraph auth_endpoints["Auth & Config Endpoints"]
-      session_ep["POST /api/auth/session"]
-      config_ep["GET /api/client-auth-config"]
-    end
-
-    subgraph sync_endpoints["Manual Sync Endpoint <i>(auth required)</i>"]
-      manual_sync["GET /api/widgets/sync/:provider<br/><i>runSyncForProvider()</i>"]
-    end
-
-    subgraph orchestration["Sync Orchestration"]
-      planner["<b>planSyncJobs</b><br/>enqueue one job per provider<br/>for default widget user"]
-      worker["<b>runNextSyncJob</b><br/>claimNextJob → processSyncJob"]
-    end
-
-    subgraph provider_jobs["Provider Sync Jobs"]
-      direction LR
-      job_steam["sync-steam-data"]
-      job_spotify["sync-spotify-data"]
-      job_instagram["sync-instagram-data"]
-      job_goodreads["sync-goodreads-data"]
-      job_discogs["sync-discogs-data"]
-      job_flickr["sync-flickr-data"]
-    end
-  end
-
-  %% ── Firestore ─────────────────────────────────────────────────────
-  subgraph firestore["Cloud Firestore"]
-    queue_docs[("sync_jobs<br/><i>queue documents</i><br/>status · runCount · summary")]
-    widget_docs[("users/{userId}/{provider}<br/><i>widget-content</i><br/>profile · collections · metrics")]
-  end
-
-  %% ── Firebase Auth ─────────────────────────────────────────────────
-  fb_auth["Firebase Auth<br/>(Google · email · phone)"]
-
-  %% ── External Platform APIs ────────────────────────────────────────
-  subgraph apis["External Platform APIs"]
-    direction LR
-    api_steam["Steam Web API"]
-    api_spotify["Spotify API"]
-    api_instagram["Instagram Graph API<br/>(v25.0)"]
-    api_goodreads["Goodreads"]
-    api_discogs["Discogs API"]
-    api_flickr["Flickr API"]
-  end
-
-  %% ── Widget Read Path ──────────────────────────────────────────────
-  website -- "GET /api/widgets/:provider" --> get_widget
-  get_widget -- "read" --> widget_docs
-
-  %% ── Admin Auth Path ───────────────────────────────────────────────
-  admin -- "sign-in / session" --> session_ep
-  admin -- "load config" --> config_ep
-  session_ep --> fb_auth
-  config_ep --> fb_auth
-
-  %% ── Manual Sync Path ──────────────────────────────────────────────
-  admin -- "trigger sync<br/>(authenticated)" --> manual_sync
-  manual_sync -- "enqueue + claimJob" --> queue_docs
-  manual_sync --> worker
-
-  %% ── Scheduled Sync Path ───────────────────────────────────────────
-  cron_plan --> planner
-  planner -- "enqueue<br/>(skip if already active)" --> queue_docs
-  cron_worker --> worker
-  worker -- "claimNextJob" --> queue_docs
-
-  %% ── Worker → Provider Jobs ────────────────────────────────────────
-  worker --> job_steam & job_spotify & job_instagram & job_goodreads & job_discogs & job_flickr
-
-  %% ── Provider Jobs → External APIs ─────────────────────────────────
-  job_steam --> api_steam
-  job_spotify --> api_spotify
-  job_instagram --> api_instagram
-  job_goodreads --> api_goodreads
-  job_discogs --> api_discogs
-  job_flickr --> api_flickr
-
-  %% ── Provider Jobs → Firestore widget data ─────────────────────────
-  job_steam -- "write" --> widget_docs
-  job_spotify -- "write" --> widget_docs
-  job_instagram -- "write" --> widget_docs
-  job_goodreads -- "write" --> widget_docs
-  job_discogs -- "write" --> widget_docs
-  job_flickr -- "write" --> widget_docs
-
-  %% ── Worker updates queue status ───────────────────────────────────
-  worker -. "completeJob / failJob" .-> queue_docs
-
-  %% ── Styles ────────────────────────────────────────────────────────
-  classDef client fill:#e8f4fd,stroke:#2196f3,stroke-width:2px,color:#0d47a1
-  classDef sched fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#e65100
-  classDef func fill:#f3e5f5,stroke:#9c27b0,stroke-width:1px,color:#4a148c
-  classDef store fill:#e8f5e9,stroke:#4caf50,stroke-width:2px,color:#1b5e20
-  classDef extapi fill:#fce4ec,stroke:#e91e63,stroke-width:1px,color:#880e4f
-  classDef authnode fill:#fff8e1,stroke:#ffc107,stroke-width:2px,color:#f57f17
-
-  class website,admin client
-  class cron_plan,cron_worker sched
-  class get_widget,session_ep,config_ep,manual_sync,planner,worker,job_steam,job_spotify,job_instagram,job_goodreads,job_discogs,job_flickr func
-  class queue_docs,widget_docs store
-  class api_steam,api_spotify,api_instagram,api_goodreads,api_discogs,api_flickr extapi
-  class fb_auth authnode
+```mermaid
+flowchart TB
+  admin[metrics.chrisvogt.me] --> auth[Firebase Auth]
+  admin --> sess[POST /api/auth/session]
+  admin --> sync[GET /api/widgets/sync/:provider]
+  sync --> fn[runSyncForProvider]
+  fn --> q[(sync_jobs)]
+  fn --> job[processSyncJob]
+  job --> out[Platform APIs + widget writes]
 ```
 
 **Key flows:**
