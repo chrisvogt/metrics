@@ -1,5 +1,6 @@
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobResult } from '../types/sync-job.js'
+import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
 
@@ -10,10 +11,6 @@ import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
 
 import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
 import { getSteamConfig } from '../config/backend-config.js'
-
-interface SyncSteamDataOptions {
-  userId?: string
-}
 
 const transformSteamGame = (game) => {
   const {
@@ -58,7 +55,7 @@ const transformSteamGame = (game) => {
  */
 const syncSteamData = async (
   documentStore: DocumentStore,
-  { userId: targetUserId = getDefaultWidgetUserId() }: SyncSteamDataOptions = {}
+  { userId: targetUserId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
 ): Promise<SyncJobResult<Record<string, unknown>>> => {
   const logger = getLogger()
   const { apiKey, userId } = getSteamConfig()
