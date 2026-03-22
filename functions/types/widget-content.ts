@@ -20,6 +20,21 @@ export function isWidgetId(value: string): value is WidgetId {
   return (widgetIds as readonly string[]).includes(value)
 }
 
+export const syncableWidgetIds = [
+  'discogs',
+  'goodreads',
+  'instagram',
+  'spotify',
+  'steam',
+  'flickr',
+] as const
+
+export type SyncProviderId = (typeof syncableWidgetIds)[number]
+
+export function isSyncProviderId(value: string): value is SyncProviderId {
+  return (syncableWidgetIds as readonly string[]).includes(value)
+}
+
 export interface WidgetMeta<TSynced = unknown> {
   synced?: TSynced
 }
@@ -82,6 +97,7 @@ export interface InstagramWidgetDocument {
   profile?: {
     biography?: string
     followersCount?: number
+    followsCount?: number
     mediaCount?: number
     username?: string
   }

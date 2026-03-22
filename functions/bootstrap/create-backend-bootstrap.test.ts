@@ -43,6 +43,9 @@ const adminModuleMock = vi.hoisted(() => ({ auth: vi.fn(), firestore: vi.fn(), i
 const firestoreDocumentStoreCtorMock = vi.hoisted(() =>
   vi.fn(function MockFirestoreDocumentStore(this: object) {})
 )
+const firestoreSyncJobQueueCtorMock = vi.hoisted(() =>
+  vi.fn(function MockFirestoreSyncJobQueue(this: object) {})
+)
 const firebaseAuthServiceCtorMock = vi.hoisted(() =>
   vi.fn(function MockFirebaseAuthService(this: object, _admin: unknown) {})
 )
@@ -102,6 +105,10 @@ vi.mock('../adapters/storage/firestore-document-store.js', () => ({
   FirestoreDocumentStore: firestoreDocumentStoreCtorMock,
 }))
 
+vi.mock('../adapters/sync/firestore-sync-job-queue.js', () => ({
+  FirestoreSyncJobQueue: firestoreSyncJobQueueCtorMock,
+}))
+
 vi.mock('../adapters/auth/firebase-auth-service.js', () => ({
   FirebaseAuthService: firebaseAuthServiceCtorMock,
 }))
@@ -129,6 +136,7 @@ describe('createBackendBootstrap', () => {
     expect(resetMediaStoreForTestsMock).toHaveBeenCalledTimes(1)
     expect(process.env.MEDIA_STORE_BACKEND).toBe('gcs')
     expect(firestoreDocumentStoreCtorMock).toHaveBeenCalledTimes(1)
+    expect(firestoreSyncJobQueueCtorMock).toHaveBeenCalledTimes(1)
     expect(firebaseAuthServiceCtorMock).toHaveBeenCalledWith(adminModuleMock)
     expect(configureClockMock).toHaveBeenCalledWith(bootstrap.clock)
     expect(configureLoggerMock).toHaveBeenCalledWith(firebaseLoggerMock)
@@ -139,6 +147,7 @@ describe('createBackendBootstrap', () => {
       projectId: 'project-id',
     })
     expect(bootstrap.runtimeSecrets).toEqual(['secret'])
+    expect(bootstrap.syncJobQueue).toBeInstanceOf(Object)
     expect(bootstrap.logger).toBe(firebaseLoggerMock)
     expect(bootstrap.runtimePlatform.registerHttpFunction).toBe(registerFirebaseHttpFunctionMock)
     expect(bootstrap.runtimePlatform.registerScheduledFunction).toBe(

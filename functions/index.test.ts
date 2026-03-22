@@ -99,6 +99,23 @@ vi.mock('./jobs/sync-flickr-data.js', () => ({
   default: vi.fn(() => Promise.resolve({ success: true }))
 }))
 
+vi.mock('./services/sync-planner.js', () => ({
+  planSyncJobs: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
+}))
+
+vi.mock('./services/sync-worker.js', () => ({
+  runNextSyncJob: vi.fn(() => Promise.resolve({ result: 'NOOP' })),
+}))
+
+vi.mock('./services/sync-manual.js', () => ({
+  runSyncForProvider: vi.fn(() => Promise.resolve({
+    afterJob: { jobId: 'sync-chrisvogt-spotify', status: 'completed' },
+    beforeJob: { jobId: 'sync-chrisvogt-spotify', status: 'queued' },
+    enqueue: { jobId: 'sync-chrisvogt-spotify', status: 'enqueued' },
+    worker: { jobId: 'sync-chrisvogt-spotify', result: 'SUCCESS' },
+  })),
+}))
+
 vi.mock('./jobs/create-user.js', () => ({
   default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' }))
 }))
@@ -253,36 +270,30 @@ describe('index.js', () => {
 
     describe('GET /api/widgets/sync/:provider', () => {
       it('should sync data for valid provider', async () => {
-        const { default: syncSpotifyDataJob } = await import('./jobs/sync-spotify-data.js')
-        vi.mocked(syncSpotifyDataJob).mockResolvedValueOnce({
-          result: 'SUCCESS',
-          tracksSyncedCount: 10,
-          totalUploadedMediaCount: 5,
-          widgetContent: { mock: 'content' }
-        })
+        const { runSyncForProvider } = await import('./services/sync-manual.js')
 
         const response = await request(app)
           .get('/api/widgets/sync/spotify')
           .expect(200)
 
-        expect(response.body.result).toBe('SUCCESS')
-        expect(response.body.tracksSyncedCount).toBe(10)
-        expect(response.body.totalUploadedMediaCount).toBe(5)
+        expect(runSyncForProvider).toHaveBeenCalledWith(expect.objectContaining({
+          provider: 'spotify',
+        }))
+        expect(response.body.enqueue.status).toBe('enqueued')
+        expect(response.body.worker.result).toBe('SUCCESS')
       })
 
-      it('should sync Flickr data through the document-store-backed handler', async () => {
-        const { default: syncFlickrDataJob } = await import('./jobs/sync-flickr-data.js')
-        vi.mocked(syncFlickrDataJob).mockResolvedValueOnce({
-          result: 'SUCCESS',
-          widgetContent: { collections: { photos: [] } }
-        })
+      it('should sync Flickr data through the queue-backed handler', async () => {
+        const { runSyncForProvider } = await import('./services/sync-manual.js')
 
         const response = await request(app)
           .get('/api/widgets/sync/flickr')
           .expect(200)
 
-        expect(response.body.result).toBe('SUCCESS')
-        expect(syncFlickrDataJob).toHaveBeenCalledTimes(1)
+        expect(response.body.worker.result).toBe('SUCCESS')
+        expect(runSyncForProvider).toHaveBeenCalledWith(expect.objectContaining({
+          provider: 'flickr',
+        }))
       })
 
       it('should return 400 for invalid provider', async () => {
@@ -294,8 +305,8 @@ describe('index.js', () => {
       })
 
       it('should handle sync errors gracefully', async () => {
-        const { default: syncSpotifyDataJob } = await import('./jobs/sync-spotify-data.js')
-        vi.mocked(syncSpotifyDataJob).mockRejectedValueOnce(new Error('Sync failed'))
+        const { runSyncForProvider } = await import('./services/sync-manual.js')
+        vi.mocked(runSyncForProvider).mockRejectedValueOnce(new Error('Sync failed'))
 
         const response = await request(app)
           .get('/api/widgets/sync/spotify')
@@ -1070,69 +1081,28 @@ describe('index.js', () => {
   })
 
   describe('Scheduled Functions', () => {
-    it('should export syncGoodreadsData function', async () => {
-      const { syncGoodreadsData } = await import('./index.js')
-      expect(typeof syncGoodreadsData).toBe('function')
+    it('should export runSyncPlanner function', async () => {
+      const { runSyncPlanner } = await import('./index.js')
+      expect(typeof runSyncPlanner).toBe('function')
     })
 
-    it('should export syncSpotifyData function', async () => {
-      const { syncSpotifyData } = await import('./index.js')
-      expect(typeof syncSpotifyData).toBe('function')
+    it('should export runSyncWorker function', async () => {
+      const { runSyncWorker } = await import('./index.js')
+      expect(typeof runSyncWorker).toBe('function')
     })
 
-    it('should export syncSteamData function', async () => {
-      const { syncSteamData } = await import('./index.js')
-      expect(typeof syncSteamData).toBe('function')
+    it('should run sync planner handler', async () => {
+      const { runSyncPlanner } = await import('./index.js')
+      const { planSyncJobs } = await import('./services/sync-planner.js')
+      await runSyncPlanner()
+      expect(planSyncJobs).toHaveBeenCalled()
     })
 
-    it('should export syncInstagramData function', async () => {
-      const { syncInstagramData } = await import('./index.js')
-      expect(typeof syncInstagramData).toBe('function')
-    })
-
-    it('should export syncFlickrData function', async () => {
-      const { syncFlickrData } = await import('./index.js')
-      expect(typeof syncFlickrData).toBe('function')
-    })
-
-    it('should run syncGoodreadsData handler', async () => {
-      const { syncGoodreadsData } = await import('./index.js')
-      const { default: syncGoodreadsDataJob } = await import('./jobs/sync-goodreads-data.js')
-      vi.mocked(syncGoodreadsDataJob).mockResolvedValueOnce(undefined)
-      await syncGoodreadsData()
-      expect(syncGoodreadsDataJob).toHaveBeenCalled()
-    })
-
-    it('should run syncSpotifyData handler', async () => {
-      const { syncSpotifyData } = await import('./index.js')
-      const { default: syncSpotifyDataJob } = await import('./jobs/sync-spotify-data.js')
-      vi.mocked(syncSpotifyDataJob).mockResolvedValueOnce(undefined)
-      await syncSpotifyData()
-      expect(syncSpotifyDataJob).toHaveBeenCalled()
-    })
-
-    it('should run syncSteamData handler', async () => {
-      const { syncSteamData } = await import('./index.js')
-      const { default: syncSteamDataJob } = await import('./jobs/sync-steam-data.js')
-      vi.mocked(syncSteamDataJob).mockResolvedValueOnce(undefined)
-      await syncSteamData()
-      expect(syncSteamDataJob).toHaveBeenCalled()
-    })
-
-    it('should run syncInstagramData handler', async () => {
-      const { syncInstagramData } = await import('./index.js')
-      const { default: syncInstagramDataJob } = await import('./jobs/sync-instagram-data.js')
-      vi.mocked(syncInstagramDataJob).mockResolvedValueOnce(undefined)
-      await syncInstagramData()
-      expect(syncInstagramDataJob).toHaveBeenCalled()
-    })
-
-    it('should run syncFlickrData handler', async () => {
-      const { syncFlickrData } = await import('./index.js')
-      const { default: syncFlickrDataJob } = await import('./jobs/sync-flickr-data.js')
-      vi.mocked(syncFlickrDataJob).mockResolvedValueOnce(undefined)
-      await syncFlickrData()
-      expect(syncFlickrDataJob).toHaveBeenCalled()
+    it('should run sync worker handler', async () => {
+      const { runSyncWorker } = await import('./index.js')
+      const { runNextSyncJob } = await import('./services/sync-worker.js')
+      await runSyncWorker()
+      expect(runNextSyncJob).toHaveBeenCalled()
     })
   })
 
@@ -1396,6 +1366,14 @@ describe('index.js', () => {
             registerUserCreationTrigger,
           },
           runtimeSecrets: [],
+          syncJobQueue: {
+            claimJob: vi.fn(),
+            claimNextJob: vi.fn(),
+            completeJob: vi.fn(),
+            enqueue: vi.fn(),
+            failJob: vi.fn(),
+            getJob: vi.fn(),
+          },
         })),
       }))
 

@@ -6,30 +6,6 @@ vi.mock('express-rate-limit', () => ({
   rateLimit: vi.fn(() => (_req, _res, next) => next?.()),
 }))
 
-vi.mock('../jobs/sync-discogs-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'discogs' })),
-}))
-
-vi.mock('../jobs/sync-flickr-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'flickr' })),
-}))
-
-vi.mock('../jobs/sync-goodreads-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'goodreads' })),
-}))
-
-vi.mock('../jobs/sync-instagram-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'instagram' })),
-}))
-
-vi.mock('../jobs/sync-spotify-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'spotify' })),
-}))
-
-vi.mock('../jobs/sync-steam-data.js', () => ({
-  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS', provider: 'steam' })),
-}))
-
 vi.mock('../jobs/delete-user.js', () => ({
   default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
 }))
@@ -37,6 +13,15 @@ vi.mock('../jobs/delete-user.js', () => ({
 vi.mock('../widgets/get-widget-content.js', () => ({
   getWidgetContent: vi.fn(() => Promise.resolve({ ok: true })),
   validWidgetIds: ['spotify'],
+}))
+
+vi.mock('../services/sync-manual.js', () => ({
+  runSyncForProvider: vi.fn(() => Promise.resolve({
+    afterJob: { jobId: 'sync-chrisvogt-steam', status: 'completed' },
+    beforeJob: { jobId: 'sync-chrisvogt-steam', status: 'queued' },
+    enqueue: { jobId: 'sync-chrisvogt-steam', status: 'enqueued' },
+    worker: { jobId: 'sync-chrisvogt-steam', result: 'SUCCESS' },
+  })),
 }))
 
 const findRouteHandler = (
@@ -103,6 +88,14 @@ describe('createExpressApp route coverage', () => {
     getDocument: vi.fn(),
     setDocument: vi.fn(),
   }
+  const syncJobQueue = {
+    claimJob: vi.fn(),
+    claimNextJob: vi.fn(),
+    completeJob: vi.fn(),
+    enqueue: vi.fn(),
+    failJob: vi.fn(),
+    getJob: vi.fn(),
+  }
   const ensureRuntimeConfigApplied = vi.fn().mockResolvedValue(undefined)
   const getClientAuthConfig = vi.fn(() => ({
     apiKey: 'public-key',
@@ -124,6 +117,7 @@ describe('createExpressApp route coverage', () => {
       getClientAuthConfig,
       logger,
       resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
     })
 
     const clientAuthHandler = findRouteHandler(app, 'get', '/api/client-auth-config')
@@ -159,11 +153,11 @@ describe('createExpressApp route coverage', () => {
   })
 
   it.each([
-    ['discogs', '../jobs/sync-discogs-data.js'],
-    ['goodreads', '../jobs/sync-goodreads-data.js'],
-    ['instagram', '../jobs/sync-instagram-data.js'],
-    ['steam', '../jobs/sync-steam-data.js'],
-  ])('dispatches the %s sync route through the injected document store', async (provider, modulePath) => {
+    'discogs',
+    'goodreads',
+    'instagram',
+    'steam',
+  ])('dispatches the %s sync route through the queue-backed runner', async (provider) => {
     const { createExpressApp } = await import('./create-express-app.js')
     const app = createExpressApp({
       authService,
@@ -172,17 +166,25 @@ describe('createExpressApp route coverage', () => {
       getClientAuthConfig,
       logger,
       resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
     })
     const syncRouteHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider')
     const response = createResponse()
-    const jobModule = await import(modulePath)
+    const { runSyncForProvider } = await import('../services/sync-manual.js')
 
     await syncRouteHandler({ params: { provider } }, response)
 
-    expect(jobModule.default).toHaveBeenCalledWith(documentStore)
+    expect(runSyncForProvider).toHaveBeenCalledWith({
+      documentStore,
+      provider,
+      syncJobQueue,
+    })
     expect(response.status).toHaveBeenCalledWith(200)
-    expect(response.send).toHaveBeenCalledWith({ result: 'SUCCESS', provider })
+    expect(response.send).toHaveBeenCalledWith(expect.objectContaining({
+      enqueue: { jobId: 'sync-chrisvogt-steam', status: 'enqueued' },
+    }))
   })
+
 
   it('returns 401 when session auth reaches the defensive no-token branch', async () => {
     const { createExpressApp } = await import('./create-express-app.js')
@@ -193,6 +195,7 @@ describe('createExpressApp route coverage', () => {
       getClientAuthConfig,
       logger,
       resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
     })
 
     const sessionHandler = findRouteHandler(app, 'post', '/api/auth/session')
@@ -223,6 +226,7 @@ describe('createExpressApp route coverage', () => {
       getClientAuthConfig,
       logger,
       resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
     })
 
     const authenticateUser = findProtectedRouteMiddleware(app, 'get', '/api/user/profile')

@@ -7,6 +7,7 @@ describe('getSteamWidgetContent', () => {
   let documentStore: DocumentStore
 
   beforeEach(() => {
+    vi.resetModules()
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn(),

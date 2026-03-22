@@ -72,6 +72,9 @@ export const getGeminiApiKey = (): string | undefined => process.env.GEMINI_API_
 export const getInstagramAccessToken = (): string | undefined =>
   process.env.INSTAGRAM_ACCESS_TOKEN
 
+export const getInstagramUserId = (): string | undefined =>
+  process.env.INSTAGRAM_USER_ID
+
 export const getSpotifyConfig = () => ({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
@@ -89,20 +92,21 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null &&
   !Array.isArray(value)
 
-const parseWidgetUserMap = (
-  rawValue: string | undefined
+const parseStringMap = (
+  rawValue: string | undefined,
+  defaults: Record<string, string> = {}
 ): Record<string, string> => {
   if (!rawValue) {
-    return { ...DEFAULT_WIDGET_HOSTNAME_USER_MAP }
+    return { ...defaults }
   }
 
   try {
     const parsed = JSON.parse(rawValue) as unknown
-    const widgetUserMap = isRecord(parsed) ? parsed : {}
+    const stringMap = isRecord(parsed) ? parsed : {}
 
-    return Object.entries(widgetUserMap).reduce<Record<string, string>>((acc, [hostname, userId]) => {
-      if (hostname.length > 0 && typeof userId === 'string' && userId.length > 0) {
-        acc[hostname] = userId
+    return Object.entries(stringMap).reduce<Record<string, string>>((acc, [key, value]) => {
+      if (key.length > 0 && typeof value === 'string' && value.length > 0) {
+        acc[key] = value
       }
       return acc
     }, {})
@@ -112,13 +116,19 @@ const parseWidgetUserMap = (
       .map((entry) => entry.trim())
       .filter(Boolean)
       .reduce<Record<string, string>>((acc, entry) => {
-        const [hostname, userId] = entry.split('=').map((part) => part?.trim())
-        if (hostname && userId) {
-          acc[hostname] = userId
+        const [key, value] = entry.split('=').map((part) => part?.trim())
+        if (key && value) {
+          acc[key] = value
         }
         return acc
       }, {})
   }
+}
+
+const parseWidgetUserMap = (
+  rawValue: string | undefined
+): Record<string, string> => {
+  return parseStringMap(rawValue, DEFAULT_WIDGET_HOSTNAME_USER_MAP)
 }
 
 export const getBackendPathConfig = () => ({

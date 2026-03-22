@@ -1178,6 +1178,28 @@ describe('syncGoodreadsData', () => {
       expect(result.result).toBe('SUCCESS')
     })
 
+    it('should continue writing Goodreads data to canonical collections', async () => {
+      fetchUser.mockResolvedValue({
+        profile: { displayName: 'Test User' },
+        updates: [],
+        jsonResponse: { user: 'data' },
+      })
+      fetchRecentlyReadBooks.mockResolvedValue({
+        books: [],
+        rawReviewsResponse: { reviews: 'data' },
+      })
+      generateGoodreadsSummary.mockResolvedValue('<p>Summary</p>')
+
+      await syncGoodreadsData(documentStore, {
+        userId: 'chrisvogt',
+      })
+
+      expect(documentStore.setDocument).toHaveBeenCalledWith(
+        'users/chrisvogt/goodreads/widget-content',
+        expect.any(Object)
+      )
+    })
+
     it('should handle quota exceeded errors without retry', async () => {
       const mockUserData = {
         profile: { displayName: 'Test User' },

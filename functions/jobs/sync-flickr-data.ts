@@ -1,21 +1,29 @@
 import type { DocumentStore } from '../ports/document-store.js'
 import { getFlickrConfig } from '../config/backend-config.js'
-import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
 import fetchPhotos from '../api/flickr/fetch-photos.js'
+import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
-export const toFlickrLastResponsePath = () => `${toProviderCollectionPath('flickr')}/last-response`
-export const toFlickrWidgetContentPath = () => `${toProviderCollectionPath('flickr')}/widget-content`
+export const toFlickrLastResponsePath = ({
+  userId = getDefaultWidgetUserId(),
+}: SyncJobExecutionOptions = {}) => `${toProviderCollectionPath('flickr', userId)}/last-response`
+export const toFlickrWidgetContentPath = ({
+  userId = getDefaultWidgetUserId(),
+}: SyncJobExecutionOptions = {}) => `${toProviderCollectionPath('flickr', userId)}/widget-content`
 
-const syncFlickrData = async (documentStore: DocumentStore) => {
+const syncFlickrData = async (
+  documentStore: DocumentStore,
+  options: SyncJobExecutionOptions = {}
+) => {
   const logger = getLogger()
   const { userId: flickrUsername } = getFlickrConfig()
 
   try {
     const photosResponse = await fetchPhotos()
 
-    await documentStore.setDocument(toFlickrLastResponsePath(), {
+    await documentStore.setDocument(toFlickrLastResponsePath(options), {
       response: photosResponse,
       fetchedAt: toStoredDateTime(),
     })
@@ -47,7 +55,7 @@ const syncFlickrData = async (documentStore: DocumentStore) => {
       },
     }
 
-    await documentStore.setDocument(toFlickrWidgetContentPath(), widgetContent)
+    await documentStore.setDocument(toFlickrWidgetContentPath(options), widgetContent)
 
     logger.info('Flickr data sync completed successfully', {
       totalPhotos: photoCount,

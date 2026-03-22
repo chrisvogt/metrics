@@ -1,4 +1,6 @@
 import type { DocumentStore } from '../ports/document-store.js'
+import type { SyncJobResult } from '../types/sync-job.js'
+import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
 
@@ -7,7 +9,7 @@ import getPlayerSummary from '../api/steam/get-player-summary.js'
 import getRecentlyPlayedGames from '../api/steam/get-recently-played-games.js'
 import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
 
-import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
 import { getSteamConfig } from '../config/backend-config.js'
 
 const transformSteamGame = (game) => {
@@ -51,10 +53,13 @@ const transformSteamGame = (game) => {
  *  - header.jpg
  *  - capsule_231x87.jpg
  */
-const syncSteamData = async (documentStore: DocumentStore) => {
+const syncSteamData = async (
+  documentStore: DocumentStore,
+  { userId: targetUserId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+): Promise<SyncJobResult<Record<string, unknown>>> => {
   const logger = getLogger()
   const { apiKey, userId } = getSteamConfig()
-  const steamCollectionPath = toProviderCollectionPath('steam')
+  const steamCollectionPath = toProviderCollectionPath('steam', targetUserId)
 
   const [recentlyPlayedGames, ownedGames, playerSummary] = await Promise.all([
     getRecentlyPlayedGames(apiKey, userId),
@@ -155,8 +160,8 @@ const syncSteamData = async (documentStore: DocumentStore) => {
       saveAISummary(),
     ])
     return {
+      data: widgetContent,
       result: 'SUCCESS',
-      data: widgetContent
     }
   } catch (err) {
     logger.error('Failed to save Steam data to database.', err)

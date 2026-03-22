@@ -41,7 +41,11 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
   const [widgetResult, setWidgetResult] = useState<FetchResult | null>(null)
   const [sessionResult, setSessionResult] = useState<FetchResult | null>(null)
   const [syncResult, setSyncResult] = useState<FetchResult | null>(null)
-  const [loading, setLoading] = useState<LoadingState>({ widgets: false, session: false, sync: false })
+  const [loading, setLoading] = useState<LoadingState>({
+    widgets: false,
+    session: false,
+    sync: false,
+  })
   const baseUrl = useBaseUrl()
   const apiClient = new ApiClient(baseUrl)
 
@@ -226,6 +230,9 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
           </div>
           <div className={styles.block}>
             <h3 className={styles.blockTitle}>Sync provider</h3>
+            <p className={styles.blockText}>
+              Runs the queue-backed sync flow for a provider and returns the enqueue plus worker state.
+            </p>
             <div className={styles.endpoint}>
               <span className={styles.methodGet}>GET</span>
               <code className={styles.path}>/api/widgets/sync/&#123;provider&#125;</code>

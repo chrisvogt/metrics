@@ -57,6 +57,25 @@ describe('firebase-functions-runtime', () => {
     expect(wrappedHandler).toBe(handler)
   })
 
+  it('allows scheduled functions to override the default schedule', async () => {
+    const { registerFirebaseScheduledFunction } = await import('./firebase-functions-runtime.js')
+    const handler = vi.fn()
+    const secrets = ['secret']
+
+    registerFirebaseScheduledFunction(handler, secrets, {
+      schedule: 'every 15 minutes',
+    })
+
+    expect(onScheduleMock).toHaveBeenCalledWith(
+      {
+        schedule: 'every 15 minutes',
+        region: 'us-central1',
+        secrets,
+      },
+      handler
+    )
+  })
+
   it('registers before-user-created triggers with the shared Firebase runtime config', async () => {
     const { registerFirebaseUserCreationTrigger } = await import('./firebase-functions-runtime.js')
     const handler = vi.fn()

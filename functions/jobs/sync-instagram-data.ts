@@ -11,7 +11,8 @@ import { getLogger } from '../services/logger.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
 import { toStoredDateTime } from '../utils/time.js'
-import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
+import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
 /*
 
@@ -78,14 +79,17 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
   return acc
 }
 
-const syncInstagramData = async (documentStore: DocumentStore) => {
+const syncInstagramData = async (
+  documentStore: DocumentStore,
+  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+) => {
   const logger = getLogger()
   try {
-    const instagramCollectionPath = toProviderCollectionPath('instagram')
+    const instagramCollectionPath = toProviderCollectionPath('instagram', userId)
     const instagramResponse = (await fetchInstagramData()) as {
       media?: { data?: unknown[] }
-      biography?: string
       followers_count?: number
+      follows_count?: number
       media_count?: number
       username?: string
     }
@@ -116,8 +120,8 @@ const syncInstagramData = async (documentStore: DocumentStore) => {
         synced: toStoredDateTime(),
       },
       profile: {
-        biography: instagramResponse.biography,
         followersCount: instagramResponse.followers_count,
+        followsCount: instagramResponse.follows_count,
         mediaCount: instagramResponse.media_count,
         username: instagramResponse.username,
       },

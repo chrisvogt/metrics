@@ -6,16 +6,23 @@ export const getDefaultWidgetUserId = () => getBackendPathConfig().defaultWidget
 
 export const getUsersCollectionPath = () => USERS_COLLECTION
 
-export const toUserCollectionPath = (userId: string, provider: string) =>
-  `${USERS_COLLECTION}/${userId}/${provider}`
+export const toProviderPathSegment = (provider: string) => provider
+
+export const toUserCollectionPath = (
+  userId: string,
+  provider: string
+) => `${USERS_COLLECTION}/${userId}/${toProviderPathSegment(provider)}`
 
 export const toProviderCollectionPath = (
   provider: string,
   userId: string = getDefaultWidgetUserId()
 ) => toUserCollectionPath(userId, provider)
 
-export const toMediaPrefix = (userId: string, provider: string, suffix = '') =>
-  `${userId}/${provider}/${suffix}`
+export const toMediaPrefix = (
+  userId: string,
+  provider: string,
+  suffix = ''
+) => `${userId}/${toProviderPathSegment(provider)}/${suffix}`
 
 export const toProviderMediaPrefix = (
   provider: string,

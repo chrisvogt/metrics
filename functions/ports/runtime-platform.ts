@@ -8,6 +8,10 @@ export interface RuntimeUserCreationEvent {
   data?: RuntimeUserCreationData
 }
 
+export interface RuntimeScheduleOptions {
+  schedule?: string
+}
+
 export interface RuntimePlatform {
   registerHttpFunction: (
     handler: (req: unknown, res: unknown) => void | Promise<void>,
@@ -15,7 +19,8 @@ export interface RuntimePlatform {
   ) => unknown
   registerScheduledFunction: (
     handler: (event: unknown) => void | Promise<void>,
-    secrets: readonly unknown[]
+    secrets: readonly unknown[],
+    options?: RuntimeScheduleOptions
   ) => unknown
   registerUserCreationTrigger: (
     handler: (event: RuntimeUserCreationEvent) => void | Promise<void>,

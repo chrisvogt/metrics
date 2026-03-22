@@ -1,32 +1,53 @@
 import got from 'got'
 
-import { getInstagramAccessToken } from '../../config/backend-config.js'
+import { getInstagramAccessToken, getInstagramUserId } from '../../config/backend-config.js'
 
-const defaultFields = [
-  'account_type',
-  'biography',
-  'followers_count',
-  'id',
-  'media_count',
-  'media{caption,children{id,media_url,thumbnail_url},id,ig_id,media_type,media_url,permalink,thumbnail_url,timestamp,username}',
-  'username',
-]
-
+const INSTAGRAM_API_VERSION = 'v25.0'
 const INSTAGRAM_BASE_URL = 'https://graph.instagram.com'
+const INSTAGRAM_GRAPH_PREFIX_URL = `${INSTAGRAM_BASE_URL}/${INSTAGRAM_API_VERSION}/`
+const MAX_TOP_LEVEL_MEDIA_ITEMS = 24
+
+const profileFields =
+  'id,user_id,username,account_type,profile_picture_url,followers_count,follows_count,media_count'
+const mediaFields =
+  'alt_text,caption,children{alt_text,id,media_url,thumbnail_url},comments_count,id,ig_id,like_count,media_type,media_url,permalink,thumbnail_url,timestamp,username'
 
 const fetchInstagramMedia = async () => {
   const accessToken = getInstagramAccessToken()
+  const instagramUserId = getInstagramUserId()
 
-  const { body } = await got('me', {
-    responseType: 'json',
-    prefixUrl: INSTAGRAM_BASE_URL,
-    searchParams: {
-      access_token: accessToken,
-      fields: defaultFields.join(',')
-    }
-  })
+  if (!accessToken) {
+    throw new Error('Missing INSTAGRAM_ACCESS_TOKEN environment variable.')
+  }
 
-  return body
+  if (!instagramUserId) {
+    throw new Error('Missing INSTAGRAM_USER_ID environment variable.')
+  }
+
+  const [{ body: profileBody }, { body: mediaBody }] = await Promise.all([
+    got('me', {
+      prefixUrl: INSTAGRAM_GRAPH_PREFIX_URL,
+      responseType: 'json',
+      searchParams: {
+        access_token: accessToken,
+        fields: profileFields,
+      },
+    }),
+    got(`${instagramUserId}/media`, {
+      prefixUrl: INSTAGRAM_GRAPH_PREFIX_URL,
+      responseType: 'json',
+      searchParams: {
+        access_token: accessToken,
+        fields: mediaFields,
+        limit: MAX_TOP_LEVEL_MEDIA_ITEMS,
+      },
+    }),
+  ])
+
+  return {
+    ...(profileBody as Record<string, unknown>),
+    media: mediaBody,
+  }
 }
 
 export default fetchInstagramMedia

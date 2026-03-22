@@ -15,6 +15,7 @@ import toIGDestinationPath from './to-ig-destination-path.js'
 
 describe('transformInstagramMedia', () => {
   const mockRawMedia = {
+    alt_text: 'A scenic test photo',
     caption: 'Test caption',
     comments_count: 5,
     id: '123456789',
@@ -37,6 +38,7 @@ describe('transformInstagramMedia', () => {
 
     expect(toIGDestinationPath).toHaveBeenCalledWith('https://example.com/image.jpg', '123456789')
     expect(result).toEqual({
+      altText: 'A scenic test photo',
       caption: 'Test caption',
       cdnMediaURL: 'https://cdn.example.cominstagram/123456789.jpg',
       children: undefined,
@@ -129,6 +131,7 @@ describe('transformInstagramMedia', () => {
     const result = transformInstagramMedia(minimalMedia)
 
     expect(result).toEqual({
+      altText: undefined,
       caption: undefined,
       cdnMediaURL: 'https://cdn.example.cominstagram/123456789.jpg',
       children: undefined,
@@ -205,6 +208,7 @@ describe('transformInstagramMedia', () => {
 
     // Check that all original properties are preserved
     expect(result.caption).toBe(mockRawMedia.caption)
+    expect(result.altText).toBe(mockRawMedia.alt_text)
     expect(result.id).toBe(mockRawMedia.id)
     expect(result.mediaType).toBe(mockRawMedia.media_type)
     expect(result.mediaURL).toBe(mockRawMedia.media_url)

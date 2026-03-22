@@ -9,19 +9,16 @@ import { rateLimit } from 'express-rate-limit'
 import type { AuthService } from '../ports/auth-service.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { MediaStore } from '../ports/media-store.js'
+import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { getWidgetUserIdForHostname } from '../config/backend-paths.js'
 import { isProductionEnvironment } from '../config/backend-config.js'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
-import type { WidgetContentUnion, WidgetId } from '../types/widget-content.js'
-import { isWidgetId, widgetIds } from '../types/widget-content.js'
+import type { SyncProviderId, WidgetContentUnion } from '../types/widget-content.js'
+import { isSyncProviderId, isWidgetId, widgetIds } from '../types/widget-content.js'
 import deleteUserJob from '../jobs/delete-user.js'
-import syncDiscogsDataJob from '../jobs/sync-discogs-data.js'
-import syncFlickrDataJob from '../jobs/sync-flickr-data.js'
-import syncGoodreadsDataJob from '../jobs/sync-goodreads-data.js'
-import syncInstagramDataJob from '../jobs/sync-instagram-data.js'
-import syncSpotifyDataJob from '../jobs/sync-spotify-data.js'
-import syncSteamDataJob from '../jobs/sync-steam-data.js'
+import { runSyncForProvider } from '../services/sync-manual.js'
+import type { ManualSyncResult } from '../services/sync-manual.js'
 import { getWidgetContent } from '../widgets/get-widget-content.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 
@@ -38,6 +35,7 @@ interface CreateExpressAppOptions {
   getClientAuthConfig: () => Record<string, string | undefined>
   logger: LoggerLike
   resolveMediaStore: () => MediaStore
+  syncJobQueue: SyncJobQueue
 }
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
@@ -76,9 +74,6 @@ const CSRF_EXCLUDED_PATHS_WIDGET_READS = widgetIds.map((id) => ({
   path: `/api/widgets/${id}`,
   type: 'exact' as const,
 }))
-type ProviderSyncId = Exclude<WidgetId, 'github'>
-type ProviderSyncResult = { result: string } & Record<string, unknown>
-
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader?.startsWith('Bearer ')) {
     return null
@@ -110,6 +105,7 @@ export function createExpressApp({
   getClientAuthConfig,
   logger,
   resolveMediaStore,
+  syncJobQueue,
 }: CreateExpressAppOptions): express.Express {
   const expressApp = express()
 
@@ -275,14 +271,13 @@ export function createExpressApp({
     credentials: true,
   }
 
-  const syncHandlersByProvider: Record<ProviderSyncId, () => Promise<ProviderSyncResult>> = {
-    discogs: () => syncDiscogsDataJob(documentStore),
-    goodreads: () => syncGoodreadsDataJob(documentStore),
-    instagram: () => syncInstagramDataJob(documentStore),
-    spotify: () => syncSpotifyDataJob(documentStore),
-    steam: () => syncSteamDataJob(documentStore),
-    flickr: () => syncFlickrDataJob(documentStore),
-  }
+  const runSyncHandler = async (
+    provider: SyncProviderId
+  ): Promise<ManualSyncResult> => runSyncForProvider({
+    documentStore,
+    provider,
+    syncJobQueue,
+  })
 
   expressApp.get(
     '/api/media/{*mediaPath}',
@@ -334,19 +329,15 @@ export function createExpressApp({
     async (req, res) => {
       const providerParam = req.params.provider
       const provider = typeof providerParam === 'string' ? providerParam : undefined
-      const handler =
-        provider && provider in syncHandlersByProvider
-          ? syncHandlersByProvider[provider as ProviderSyncId]
-          : undefined
 
-      if (!handler) {
+      if (!provider || !isSyncProviderId(provider)) {
         logger.info(`Attempted to sync an unrecognized provider: ${provider}`)
         res.status(400).send('Unrecognized or unsupported provider.')
         return
       }
 
       try {
-        const result = await handler()
+        const result = await runSyncHandler(provider)
         res.status(200).send(result)
       } catch (err) {
         logger.error(`Error syncing ${provider} data.`, err)

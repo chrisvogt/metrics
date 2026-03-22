@@ -5,6 +5,8 @@ import {
 import { onRequest } from 'firebase-functions/v2/https'
 import { onSchedule, type ScheduledEvent } from 'firebase-functions/v2/scheduler'
 
+import type { RuntimeScheduleOptions } from '../ports/runtime-platform.js'
+
 export const FIREBASE_FUNCTIONS_REGION = 'us-central1'
 export const FIREBASE_SCHEDULE = 'every day 02:00'
 
@@ -25,11 +27,12 @@ export const registerFirebaseHttpFunction = (
 
 export const registerFirebaseScheduledFunction = (
   handler: (event: ScheduledEvent) => void | Promise<void>,
-  secrets: readonly unknown[]
+  secrets: readonly unknown[],
+  options: RuntimeScheduleOptions = {}
 ) =>
   onSchedule(
     {
-      schedule: FIREBASE_SCHEDULE,
+      schedule: options.schedule ?? FIREBASE_SCHEDULE,
       region: FIREBASE_FUNCTIONS_REGION,
       secrets: secrets as never,
     },

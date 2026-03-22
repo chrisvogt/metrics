@@ -29,6 +29,7 @@ describe('backend paths', () => {
     expect(toUserCollectionPath('chrisvogt', 'spotify')).toBe('users/chrisvogt/spotify')
     expect(toUserCollectionPath('chronogrove', 'instagram')).toBe('users/chronogrove/instagram')
     expect(toProviderCollectionPath('spotify')).toBe('users/chrisvogt/spotify')
+    expect(toProviderCollectionPath('spotify', 'chrisvogt')).toBe('users/chrisvogt/spotify')
   })
 
   it('builds user-scoped media prefixes explicitly', async () => {

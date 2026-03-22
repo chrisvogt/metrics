@@ -169,4 +169,27 @@ describe('syncDiscogsData', () => {
     expect(result.result).toBe('SUCCESS')
     expect(result.totalUploadedCount).toBe(0)
   })
+
+  it('should continue writing Discogs data to canonical collections', async () => {
+    vi.mocked(fetchDiscogsReleases).mockResolvedValue({
+      pagination: { items: 0, page: 1, pages: 1, per_page: 0, urls: {} },
+      releases: [],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncDiscogsData(documentStore, {
+      userId: 'chrisvogt',
+    })
+
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
+      1,
+      'users/chrisvogt/discogs/last-response',
+      expect.any(Object)
+    )
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
+      2,
+      'users/chrisvogt/discogs/widget-content',
+      expect.any(Object)
+    )
+  })
 })

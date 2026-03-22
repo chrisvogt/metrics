@@ -30,6 +30,7 @@ describe('getInstagramWidgetContent', () => {
       profile: {
         biography: 'Test bio',
         followersCount: 1000,
+        followsCount: 500,
         mediaCount: 50,
         username: 'testuser',
       },
@@ -54,6 +55,11 @@ describe('getInstagramWidgetContent', () => {
           displayName: 'Followers',
           id: 'followers-count',
           value: 1000,
+        },
+        {
+          displayName: 'Following',
+          id: 'follows-count',
+          value: 500,
         },
         {
           displayName: 'Posts',
@@ -92,6 +98,7 @@ describe('getInstagramWidgetContent', () => {
       profile: {
         biography: 'Chronogrove bio',
         followersCount: 500,
+        followsCount: 125,
         mediaCount: 25,
         username: 'chronogrove',
       },
@@ -131,6 +138,11 @@ describe('getInstagramWidgetContent', () => {
       {
         displayName: 'Followers',
         id: 'followers-count',
+        value: 0,
+      },
+      {
+        displayName: 'Following',
+        id: 'follows-count',
         value: 0,
       },
       {

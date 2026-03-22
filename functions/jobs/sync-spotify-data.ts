@@ -11,11 +11,16 @@ import getSpotifyAccessToken from '../api/spotify/get-access-token.js'
 import getSpotifyPlaylists from '../api/spotify/get-playlists.js'
 import getSpotifyTopTracks from '../api/spotify/get-top-tracks.js'
 import getSpotifyUserProfile from '../api/spotify/get-user-profile.js'
-import { toProviderCollectionPath, toProviderMediaPrefix } from '../config/backend-paths.js'
+import {
+  getDefaultWidgetUserId,
+  toProviderCollectionPath,
+  toProviderMediaPrefix,
+} from '../config/backend-paths.js'
 import { getSpotifyConfig } from '../config/backend-config.js'
 import { getLogger } from '../services/logger.js'
 import transformTrackToCollectionItem from '../transformers/track-to-collection-item.js'
 import { toStoredDateTime } from '../utils/time.js'
+import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
 const SPOTIFY_MOSAIC_BASE_URL = 'https://mosaic.scdn.co/300/'
 
@@ -23,7 +28,10 @@ const SPOTIFY_MOSAIC_BASE_URL = 'https://mosaic.scdn.co/300/'
 const getMediaURLFromPlaylist = playlist => playlist.images?.find(playlist => playlist.height === 300 || playlist.width === 300)?.url
 
 // Reducer to handle media filtering and transformation
-const getMediaToDownloadReducer = (storedMediaFileNames = []) => (acc, playlist) => {
+const getMediaToDownloadReducer = (
+  storedMediaFileNames = [],
+  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+) => (acc, playlist) => {
   const mediaURL = getMediaURLFromPlaylist(playlist)
   if (!mediaURL) {
     return acc
@@ -32,7 +40,7 @@ const getMediaToDownloadReducer = (storedMediaFileNames = []) => (acc, playlist)
   // I'm using the media filename — a hash — to identify the media file in GCP Storage because I assume the
   // images on mosaic.scdn.co rotate and change over time based on the playlist.
   const id = mediaURL.replace(SPOTIFY_MOSAIC_BASE_URL, '')
-  const destinationPath = `${toProviderMediaPrefix('spotify', undefined, 'playlists/')}${id}.jpg`
+  const destinationPath = `${toProviderMediaPrefix('spotify', userId, 'playlists/')}${id}.jpg`
   const isAlreadyDownloaded = storedMediaFileNames.includes(destinationPath)
 
   if (!isAlreadyDownloaded) {
@@ -46,10 +54,13 @@ const getMediaToDownloadReducer = (storedMediaFileNames = []) => (acc, playlist)
   return acc
 }
 
-const transformPlaylists = (playlists) => playlists.map(playlist => {
+const transformPlaylists = (
+  playlists,
+  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+) => playlists.map(playlist => {
   const id = getMediaURLFromPlaylist(playlist)?.replace(SPOTIFY_MOSAIC_BASE_URL, '')
   const cdnImageURL = toPublicMediaUrl(
-    `${toProviderMediaPrefix('spotify', undefined, 'playlists/')}${id}.jpg`
+    `${toProviderMediaPrefix('spotify', userId, 'playlists/')}${id}.jpg`
   )
   return {
     ...playlist,
@@ -57,9 +68,13 @@ const transformPlaylists = (playlists) => playlists.map(playlist => {
   }
 })
 
-const syncSpotifyTopTracks = async (documentStore: DocumentStore) => {
+const syncSpotifyTopTracks = async (
+  documentStore: DocumentStore,
+  options: SyncJobExecutionOptions = {}
+) => {
   const logger = getLogger()
-  const spotifyCollectionPath = toProviderCollectionPath('spotify')
+  const { userId = getDefaultWidgetUserId() } = options
+  const spotifyCollectionPath = toProviderCollectionPath('spotify', userId)
   const { clientId, clientSecret, redirectUri: redirectURI, refreshToken } = getSpotifyConfig()
 
   const { accessToken } = await getSpotifyAccessToken({
@@ -103,7 +118,7 @@ const syncSpotifyTopTracks = async (documentStore: DocumentStore) => {
   let playlistsResponse
   try {
     playlistsResponse = await getSpotifyPlaylists(accessToken)
-    playlists = transformPlaylists(playlistsResponse.items)
+    playlists = transformPlaylists(playlistsResponse.items, options)
     playlistsCount = playlistsResponse.total
   } catch (error) {
     logger.error('Failed to fetch Spotify playlists.', error)
@@ -115,7 +130,7 @@ const syncSpotifyTopTracks = async (documentStore: DocumentStore) => {
 
   const storedMediaFileNames = await listStoredMedia()
 
-  const mediaToDownloadReducer = getMediaToDownloadReducer(storedMediaFileNames)
+  const mediaToDownloadReducer = getMediaToDownloadReducer(storedMediaFileNames, options)
   const mediaToDownload = playlists.reduce(mediaToDownloadReducer, [])
 
   let uploadResult

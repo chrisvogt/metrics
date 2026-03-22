@@ -2,11 +2,10 @@ import { createExpressApp, getSessionAuthError } from './app/create-express-app.
 import { createBackendBootstrap } from './bootstrap/create-backend-bootstrap.js'
 import createUserJob from './jobs/create-user.js'
 import type { RuntimeUserCreationData } from './ports/runtime-platform.js'
-import syncGoodreadsDataJob from './jobs/sync-goodreads-data.js'
-import syncInstagramDataJob from './jobs/sync-instagram-data.js'
-import syncSpotifyDataJob from './jobs/sync-spotify-data.js'
-import syncSteamDataJob from './jobs/sync-steam-data.js'
-import syncFlickrDataJob from './jobs/sync-flickr-data.js'
+import { planSyncJobs } from './services/sync-planner.js'
+import { runNextSyncJob } from './services/sync-worker.js'
+
+const SYNC_WORKER_SCHEDULE = 'every 15 minutes'
 
 const {
   authService,
@@ -17,6 +16,7 @@ const {
   resolveMediaStore,
   runtimePlatform,
   runtimeSecrets,
+  syncJobQueue,
 } = createBackendBootstrap()
 
 export const expressApp = createExpressApp({
@@ -26,34 +26,25 @@ export const expressApp = createExpressApp({
   getClientAuthConfig,
   logger,
   resolveMediaStore,
+  syncJobQueue,
 })
 
 export { getSessionAuthError }
 
-export const syncGoodreadsData = runtimePlatform.registerScheduledFunction(async () => {
+export const runSyncPlanner = runtimePlatform.registerScheduledFunction(async () => {
   await ensureRuntimeConfigApplied()
-  await syncGoodreadsDataJob(documentStore)
+  await planSyncJobs(syncJobQueue)
 }, runtimeSecrets)
 
-export const syncSpotifyData = runtimePlatform.registerScheduledFunction(async () => {
+export const runSyncWorker = runtimePlatform.registerScheduledFunction(async () => {
   await ensureRuntimeConfigApplied()
-  await syncSpotifyDataJob(documentStore)
-}, runtimeSecrets)
-
-export const syncSteamData = runtimePlatform.registerScheduledFunction(async () => {
-  await ensureRuntimeConfigApplied()
-  await syncSteamDataJob(documentStore)
-}, runtimeSecrets)
-
-export const syncInstagramData = runtimePlatform.registerScheduledFunction(async () => {
-  await ensureRuntimeConfigApplied()
-  await syncInstagramDataJob(documentStore)
-}, runtimeSecrets)
-
-export const syncFlickrData = runtimePlatform.registerScheduledFunction(async () => {
-  await ensureRuntimeConfigApplied()
-  await syncFlickrDataJob(documentStore)
-}, runtimeSecrets)
+  await runNextSyncJob({
+    documentStore,
+    syncJobQueue,
+  })
+}, runtimeSecrets, {
+  schedule: SYNC_WORKER_SCHEDULE,
+})
 
 export const handleUserCreation = runtimePlatform.registerUserCreationTrigger(async (event) => {
   await ensureRuntimeConfigApplied()

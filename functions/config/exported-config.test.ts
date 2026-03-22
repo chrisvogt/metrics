@@ -55,5 +55,22 @@ describe('exported-config', () => {
       expect(process.env.GITHUB_ACCESS_TOKEN).toBeUndefined()
       expect(process.env.GITHUB_USERNAME).toBe('user')
     })
+
+    it('preserves existing env values', () => {
+      process.env.INSTAGRAM_ACCESS_TOKEN = 'local-token'
+      process.env.INSTAGRAM_USER_ID = 'local-user-id'
+
+      const data = {
+        instagram: {
+          access_token: 'secret-token',
+          user_id: 'secret-user-id',
+        },
+      }
+
+      applyExportedConfigToEnv(data)
+
+      expect(process.env.INSTAGRAM_ACCESS_TOKEN).toBe('local-token')
+      expect(process.env.INSTAGRAM_USER_ID).toBe('local-user-id')
+    })
   })
 })

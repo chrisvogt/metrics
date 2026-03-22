@@ -5,6 +5,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 import { FirebaseAuthService } from '../adapters/auth/firebase-auth-service.js'
+import { FirestoreSyncJobQueue } from '../adapters/sync/firestore-sync-job-queue.js'
 import { FirestoreDocumentStore } from '../adapters/storage/firestore-document-store.js'
 import {
   getClientAuthConfig,
@@ -17,6 +18,7 @@ import {
 import type { Clock } from '../ports/clock.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { RuntimePlatform } from '../ports/runtime-platform.js'
+import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { configureClock } from '../services/clock.js'
 import { configureLogger } from '../services/logger.js'
 import { resetMediaStoreForTests, getMediaStore } from '../selectors/media-store.js'
@@ -56,6 +58,7 @@ export interface BackendBootstrap {
   resolveMediaStore: typeof getMediaStore
   runtimePlatform: RuntimePlatform
   runtimeSecrets: ReturnType<typeof getFirebaseRuntimeSecrets>
+  syncJobQueue: SyncJobQueue
 }
 
 const resolveLocalEnvPath = (): string => {
@@ -93,6 +96,7 @@ export const createBackendBootstrap = (): BackendBootstrap => {
   const documentStore = new FirestoreDocumentStore()
   const authService = new FirebaseAuthService(admin)
   const runtimeSecrets = getFirebaseRuntimeSecrets()
+  const syncJobQueue = new FirestoreSyncJobQueue()
 
   configureClock(clock)
   configureLogger(logger)
@@ -108,5 +112,6 @@ export const createBackendBootstrap = (): BackendBootstrap => {
     resolveMediaStore: getMediaStore,
     runtimePlatform: firebaseRuntimePlatform,
     runtimeSecrets,
+    syncJobQueue,
   }
 }

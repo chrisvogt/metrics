@@ -151,8 +151,9 @@ describe('syncSteamData', () => {
     vi.mocked(getPlayerSummary).mockResolvedValue({})
     vi.mocked(generateSteamSummary).mockResolvedValue(null)
 
-    await syncSteamData(documentStore)
+    const result = await syncSteamData(documentStore)
 
+    expect(result.result).toBe('SUCCESS')
     expect(documentStore.setDocument).toHaveBeenCalledWith(
       'users/chrisvogt/steam/widget-content',
       expect.objectContaining({
@@ -162,6 +163,26 @@ describe('syncSteamData', () => {
             expect.objectContaining({ id: 3, displayName: 'Mid Playtime' }),
           ],
           recentlyPlayedGames: [],
+        },
+      })
+    )
+  })
+
+  it('should continue writing Steam data to canonical collections', async () => {
+    vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
+    vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 0, games: [] })
+    vi.mocked(getPlayerSummary).mockResolvedValue({})
+    vi.mocked(generateSteamSummary).mockResolvedValue(null)
+
+    await syncSteamData(documentStore, {
+      userId: 'chrisvogt',
+    })
+
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/steam/widget-content',
+      expect.objectContaining({
+        meta: {
+          synced: expect.any(String),
         },
       })
     )

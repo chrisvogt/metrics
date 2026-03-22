@@ -14,7 +14,7 @@ import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summar
 import type { DocumentStore } from '../ports/document-store.js'
 import fetchBookFromGoogle from '../api/google-books/fetch-book.js'
 import { getGoogleBooksApiKey } from '../config/backend-config.js'
-import { toProviderCollectionPath } from '../config/backend-paths.js'
+import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
 import { GOODREADS_BOOKS_TO_DISPLAY } from '../config/goodreads-config.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
@@ -36,6 +36,7 @@ import type {
   GoodreadsReviewBook,
 } from '../types/goodreads.js'
 import type { GoodreadsWidgetDocument } from '../types/widget-content.js'
+import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
@@ -500,9 +501,12 @@ const fetchAllGoodreadsPromises = async (): Promise<FetchAllGoodreadsPromisesRes
 /**
  * Sync Goodreads Data
  */
-const syncGoodreadsData = async (documentStore: DocumentStore) => {
+const syncGoodreadsData = async (
+  documentStore: DocumentStore,
+  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+) => {
   const logger = getLogger()
-  const goodreadsCollectionPath = toProviderCollectionPath('goodreads')
+  const goodreadsCollectionPath = toProviderCollectionPath('goodreads', userId)
   const result = await fetchAllGoodreadsPromises()
 
   if ('error' in result) {

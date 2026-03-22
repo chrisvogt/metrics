@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-03-21
+
+### BREAKING
+
+- **Manual widget sync HTTP response** – `GET /api/widgets/sync/:provider` no longer returns `{ result, provider }`. It now returns a queue-backed payload (`enqueue`, `beforeJob`, `afterJob`, `worker`) from `runSyncForProvider`. Clients must parse the new shape.
+- **Instagram configuration** – `INSTAGRAM_USER_ID` is required (see `.env.template`). `fetchInstagramMedia` throws if it is missing. Instagram Graph calls use separate profile and media requests (`v25.0`), merged into the previous top-level response shape with a `media` field.
+
+### Added
+
+- **Firestore sync job queue** – Widget syncs are enqueued in the `sync_jobs` collection (`FirestoreSyncJobQueue`), claimed by a scheduled worker (`runSyncWorker`, every 15 minutes), and planned by `runSyncPlanner` (daily). Manual sync enqueues then claims the same job id and runs inline so the HTTP response includes queue state. See [docs/SYNC_JOB_QUEUE.md](../docs/SYNC_JOB_QUEUE.md).
+- **Queue port and types** – `SyncJobQueue` (`ports/sync-job-queue.ts`), pipeline types (`types/sync-pipeline.ts`), and adapter tests (`adapters/sync/firestore-sync-job-queue.test.ts`).
+
+### Changed
+
+- **Sync queue metrics** – Optional **`metrics`** on successful `SyncJobResult` (`types/sync-job.ts`) are merged into the Firestore job **`summary`** by `processSyncJob` (`services/sync-worker.ts`). Provider jobs own the numbers (e.g. Steam’s `ownedGamesCount` / `recentlyPlayedGamesCount` from `sync-steam-data.ts`); the worker does not parse provider-specific `data` for metrics.
+- **Instagram Graph fetch** – Uses `prefixUrl` and `searchParams` for `got` instead of embedding the access token in a URL string literal. Caps top-level media at 24 items via a dedicated `{userId}/media` request.
+- **Build output** – `functions/lib/` is gitignored; compile with `pnpm run build` before deploy (aligned with the existing TypeScript layout).
+
 ### Fixed
 
 - **Goodreads sync optimization** – Previously fetched 100 books from Goodreads, then called Google Books API and downloaded thumbnails for all of them, but only stored 18. Now fetches 30 books (per_page), processes only those 30 (early slice before pMap), and stores 24 for display. Reduces Google Books API usage and rate limiting. See [#175](https://github.com/chrisvogt/metrics/issues/175).
