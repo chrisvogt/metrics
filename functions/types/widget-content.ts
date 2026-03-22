@@ -97,6 +97,7 @@ export interface InstagramWidgetDocument {
   profile?: {
     biography?: string
     followersCount?: number
+    followsCount?: number
     mediaCount?: number
     username?: string
   }

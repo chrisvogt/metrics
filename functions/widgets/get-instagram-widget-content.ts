@@ -24,6 +24,7 @@ const getInstagramWidgetContent = async (
     profile: {
       biography = '',
       followersCount = 0,
+      followsCount = 0,
       mediaCount = 0,
       username = '',
     } = {},
@@ -41,6 +42,11 @@ const getInstagramWidgetContent = async (
         displayName: 'Followers',
         id: 'followers-count',
         value: followersCount,
+      },
+      {
+        displayName: 'Following',
+        id: 'follows-count',
+        value: followsCount,
       },
       {
         displayName: 'Posts',

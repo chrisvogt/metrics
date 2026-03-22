@@ -40,11 +40,7 @@ describe('syncInstagramData', () => {
     vi.clearAllMocks()
     configureLogger(logger)
     documentStore = {
-      getDocument: vi.fn().mockResolvedValue({
-        instagram: {
-          userId: '17841401593834162',
-        },
-      }),
+      getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
     }
   })
@@ -75,8 +71,8 @@ describe('syncInstagramData', () => {
           },
         ],
       },
-      biography: 'Test bio',
       followers_count: 1000,
+      follows_count: 120,
       media_count: 50,
       username: 'testuser',
     })
@@ -103,7 +99,7 @@ describe('syncInstagramData', () => {
           synced: expect.any(String),
         },
         profile: {
-          biography: 'Test bio',
+          followsCount: 120,
           followersCount: 1000,
           mediaCount: 50,
           username: 'testuser',
@@ -126,7 +122,6 @@ describe('syncInstagramData', () => {
   it('should handle document store save errors', async () => {
     vi.mocked(fetchInstagramData).mockResolvedValue({
       media: { data: [] },
-      biography: 'Test bio',
       followers_count: 1000,
       media_count: 50,
       username: 'testuser',
@@ -151,7 +146,6 @@ describe('syncInstagramData', () => {
           { id: 'media3', media_type: 'INVALID_TYPE', media_url: 'https://example.com/invalid.jpg' },
         ],
       },
-      biography: 'Test bio',
       followers_count: 1000,
       media_count: 50,
       username: 'testuser',
@@ -170,7 +164,6 @@ describe('syncInstagramData', () => {
           { id: 'media1', media_type: 'IMAGE', media_url: 'https://example.com/image1.jpg' },
         ],
       },
-      biography: 'Test bio',
       followers_count: 1000,
       media_count: 50,
       username: 'testuser',
@@ -187,7 +180,6 @@ describe('syncInstagramData', () => {
   it('should continue writing Instagram data to canonical collections', async () => {
     vi.mocked(fetchInstagramData).mockResolvedValue({
       media: { data: [] },
-      biography: 'Test bio',
       followers_count: 1000,
       media_count: 50,
       username: 'testuser',
@@ -210,14 +202,13 @@ describe('syncInstagramData', () => {
     )
   })
 
-  it('should fail clearly when the Instagram user id is missing from the user document', async () => {
-    vi.mocked(documentStore.getDocument).mockResolvedValue({})
-
+  it('should fail clearly when the Instagram fetcher rejects', async () => {
+    vi.mocked(fetchInstagramData).mockRejectedValue(new Error('Missing INSTAGRAM_USER_ID environment variable.'))
     const result = await syncInstagramData(documentStore)
 
     expect(result).toEqual({
       result: 'FAILURE',
-      error: 'Missing Instagram user id for chrisvogt. Save it to users/chrisvogt under instagram.userId.',
+      error: 'Missing INSTAGRAM_USER_ID environment variable.',
     })
   })
 })

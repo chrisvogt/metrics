@@ -72,6 +72,9 @@ export const getGeminiApiKey = (): string | undefined => process.env.GEMINI_API_
 export const getInstagramAccessToken = (): string | undefined =>
   process.env.INSTAGRAM_ACCESS_TOKEN
 
+export const getInstagramUserId = (): string | undefined =>
+  process.env.INSTAGRAM_USER_ID
+
 export const getSpotifyConfig = () => ({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,

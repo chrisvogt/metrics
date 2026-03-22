@@ -27,6 +27,7 @@ export const CONFIG_PATH_TO_ENV: Record<string, string> = {
   'goodreads.key': 'GOODREADS_API_KEY',
   'goodreads.user_id': 'GOODREADS_USER_ID',
   'instagram.access_token': 'INSTAGRAM_ACCESS_TOKEN',
+  'instagram.user_id': 'INSTAGRAM_USER_ID',
   'google.books_api_key': 'GOOGLE_BOOKS_API_KEY',
 }
 
@@ -36,6 +37,9 @@ export const CONFIG_PATH_TO_ENV: Record<string, string> = {
 export function applyExportedConfigToEnv(data: Record<string, unknown>): void {
   if (!data || typeof data !== 'object') return
   for (const [configPath, envVar] of Object.entries(CONFIG_PATH_TO_ENV)) {
+    if (process.env[envVar]) {
+      continue
+    }
     const value = configPath
       .split('.')
       .reduce((obj: unknown, key: string) => (obj as Record<string, unknown>)?.[key], data)

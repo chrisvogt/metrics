@@ -1,33 +1,58 @@
 import got from 'got'
 
-import { getInstagramAccessToken } from '../../config/backend-config.js'
+import { getInstagramAccessToken, getInstagramUserId } from '../../config/backend-config.js'
 
 const INSTAGRAM_API_VERSION = 'v25.0'
 const INSTAGRAM_BASE_URL = 'https://graph.instagram.com'
 
-const fields = [
-  'account_type',
-  'biography',
-  'followers_count',
+const profileFields =
+  'id,user_id,username,account_type,profile_picture_url,followers_count,follows_count,media_count'
+const mediaFields = [
+  'alt_text',
+  'caption',
+  'children{alt_text,id,media_url,thumbnail_url}',
+  'comments_count',
   'id',
-  'media_count',
-  'media{alt_text,caption,children{alt_text,id,media_url,thumbnail_url},comments_count,id,ig_id,like_count,media_type,media_url,permalink,thumbnail_url,timestamp,username}',
+  'ig_id',
+  'like_count',
+  'media_type',
+  'media_url',
+  'permalink',
+  'thumbnail_url',
+  'timestamp',
   'username',
 ]
 
-const fetchInstagramMedia = async (instagramUserId: string) => {
+const fetchInstagramMedia = async () => {
   const accessToken = getInstagramAccessToken()
+  const instagramUserId = getInstagramUserId()
 
-  const { body } = await got(`${INSTAGRAM_API_VERSION}/${instagramUserId}`, {
-    responseType: 'json',
-    prefixUrl: INSTAGRAM_BASE_URL,
-    searchParams: {
-      access_token: accessToken,
-      fields: fields.join(','),
-    },
-  })
+  if (!accessToken) {
+    throw new Error('Missing INSTAGRAM_ACCESS_TOKEN environment variable.')
+  }
 
-  return body
+  if (!instagramUserId) {
+    throw new Error('Missing INSTAGRAM_USER_ID environment variable.')
+  }
+
+  const [{ body: profileBody }, { body: mediaBody }] = await Promise.all([
+    got(`${INSTAGRAM_BASE_URL}/${INSTAGRAM_API_VERSION}/me?access_token=${accessToken}&fields=${profileFields}`, {
+      responseType: 'json',
+    }),
+    got(`${INSTAGRAM_API_VERSION}/${instagramUserId}/media`, {
+      responseType: 'json',
+      prefixUrl: INSTAGRAM_BASE_URL,
+      searchParams: {
+        access_token: accessToken,
+        fields: mediaFields.join(','),
+      },
+    }),
+  ])
+
+  return {
+    ...(profileBody as Record<string, unknown>),
+    media: mediaBody,
+  }
 }
 
 export default fetchInstagramMedia

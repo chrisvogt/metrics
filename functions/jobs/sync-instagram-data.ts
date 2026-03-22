@@ -11,7 +11,6 @@ import { getLogger } from '../services/logger.js'
 import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
 import { toStoredDateTime } from '../utils/time.js'
-import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
 import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
 import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
@@ -47,37 +46,6 @@ Valid media URL path beginnings:
 */
 
 const validMediaTypes = ['CAROUSEL_ALBUM', 'IMAGE', 'VIDEO']
-
-type InstagramUserRecord = {
-  instagram?: {
-    userId?: string
-  }
-  tokens?: {
-    instagram?: {
-      userId?: string
-    }
-  }
-  widgets?: {
-    instagram?: {
-      userId?: string
-    }
-  }
-}
-
-const getInstagramUserId = async (
-  documentStore: DocumentStore,
-  userId: string
-): Promise<string | undefined> => {
-  const userRecord = await documentStore.getDocument<InstagramUserRecord>(
-    `${DATABASE_COLLECTION_USERS}/${userId}`
-  )
-
-  return (
-    userRecord?.instagram?.userId ??
-    userRecord?.widgets?.instagram?.userId ??
-    userRecord?.tokens?.instagram?.userId
-  )
-}
 
 // Reducer to handle media filtering and transformation
 const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
@@ -118,18 +86,10 @@ const syncInstagramData = async (
   const logger = getLogger()
   try {
     const instagramCollectionPath = toProviderCollectionPath('instagram', userId)
-    const instagramUserId = await getInstagramUserId(documentStore, userId)
-
-    if (!instagramUserId) {
-      throw new Error(
-        `Missing Instagram user id for ${userId}. Save it to users/${userId} under instagram.userId.`
-      )
-    }
-
-    const instagramResponse = (await fetchInstagramData(instagramUserId)) as {
+    const instagramResponse = (await fetchInstagramData()) as {
       media?: { data?: unknown[] }
-      biography?: string
       followers_count?: number
+      follows_count?: number
       media_count?: number
       username?: string
     }
@@ -160,8 +120,8 @@ const syncInstagramData = async (
         synced: toStoredDateTime(),
       },
       profile: {
-        biography: instagramResponse.biography,
         followersCount: instagramResponse.followers_count,
+        followsCount: instagramResponse.follows_count,
         mediaCount: instagramResponse.media_count,
         username: instagramResponse.username,
       },

@@ -24,6 +24,7 @@ describe('backend config', () => {
     delete process.env.GOOGLE_BOOKS_API_KEY
     delete process.env.GEMINI_API_KEY
     delete process.env.INSTAGRAM_ACCESS_TOKEN
+    delete process.env.INSTAGRAM_USER_ID
     delete process.env.SPOTIFY_CLIENT_ID
     delete process.env.SPOTIFY_CLIENT_SECRET
     delete process.env.SPOTIFY_REDIRECT_URI
@@ -99,6 +100,7 @@ describe('backend config', () => {
     process.env.GOOGLE_BOOKS_API_KEY = 'google-key'
     process.env.GEMINI_API_KEY = 'gemini-key'
     process.env.INSTAGRAM_ACCESS_TOKEN = 'ig-token'
+    process.env.INSTAGRAM_USER_ID = 'ig-user-id'
     process.env.SPOTIFY_CLIENT_ID = 'spotify-id'
     process.env.SPOTIFY_CLIENT_SECRET = 'spotify-secret'
     process.env.SPOTIFY_REDIRECT_URI = 'https://example.com/callback'
@@ -114,6 +116,7 @@ describe('backend config', () => {
       getGoodreadsConfig,
       getGoogleBooksApiKey,
       getInstagramAccessToken,
+      getInstagramUserId,
       getSpotifyConfig,
       getSteamConfig,
     } = await import('./backend-config.js')
@@ -125,6 +128,7 @@ describe('backend config', () => {
     expect(getGoogleBooksApiKey()).toBe('google-key')
     expect(getGeminiApiKey()).toBe('gemini-key')
     expect(getInstagramAccessToken()).toBe('ig-token')
+    expect(getInstagramUserId()).toBe('ig-user-id')
     expect(getSpotifyConfig()).toEqual({
       clientId: 'spotify-id',
       clientSecret: 'spotify-secret',
