@@ -44,36 +44,36 @@ const runSyncJob = async (
   documentStore: DocumentStore
 ): Promise<ShadowSyncExecutionResult> => {
   switch (job.provider) {
-    case 'discogs':
-      return syncDiscogsData(documentStore, {
-        source: job.source,
-        userId: job.userId,
-      }) as Promise<ShadowSyncExecutionResult>
-    case 'flickr':
-      return syncFlickrData(documentStore, {
-        source: job.source,
-        userId: job.userId,
-      }) as Promise<ShadowSyncExecutionResult>
-    case 'goodreads':
-      return syncGoodreadsData(documentStore, {
-        source: job.source,
-        userId: job.userId,
-      }) as Promise<ShadowSyncExecutionResult>
-    case 'instagram':
-      return syncInstagramData(documentStore, {
-        source: job.source,
-        userId: job.userId,
-      }) as Promise<ShadowSyncExecutionResult>
-    case 'spotify':
-      return syncSpotifyData(documentStore, {
-        source: job.source,
-        userId: job.userId,
-      }) as Promise<ShadowSyncExecutionResult>
+  case 'discogs':
+    return syncDiscogsData(documentStore, {
+      source: job.source,
+      userId: job.userId,
+    }) as Promise<ShadowSyncExecutionResult>
+  case 'flickr':
+    return syncFlickrData(documentStore, {
+      source: job.source,
+      userId: job.userId,
+    }) as Promise<ShadowSyncExecutionResult>
+  case 'goodreads':
+    return syncGoodreadsData(documentStore, {
+      source: job.source,
+      userId: job.userId,
+    }) as Promise<ShadowSyncExecutionResult>
+  case 'instagram':
+    return syncInstagramData(documentStore, {
+      source: job.source,
+      userId: job.userId,
+    }) as Promise<ShadowSyncExecutionResult>
+  case 'spotify':
+    return syncSpotifyData(documentStore, {
+      source: job.source,
+      userId: job.userId,
+    }) as Promise<ShadowSyncExecutionResult>
   case 'steam':
     return syncSteamData(documentStore, {
       source: job.source,
       userId: job.userId,
-      }) as Promise<ShadowSyncExecutionResult>
+    }) as Promise<ShadowSyncExecutionResult>
   default:
     return {
       error: `Sync is not implemented for provider: ${job.provider}`,
