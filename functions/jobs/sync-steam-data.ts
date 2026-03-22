@@ -159,16 +159,8 @@ const syncSteamData = async (
       saveWidgetContent(),
       saveAISummary(),
     ])
-    const { ownedGames, recentlyPlayedGames } = widgetContent.collections as {
-      ownedGames: unknown[]
-      recentlyPlayedGames: unknown[]
-    }
     return {
       data: widgetContent,
-      metrics: {
-        ownedGamesCount: ownedGames.length,
-        recentlyPlayedGamesCount: recentlyPlayedGames.length,
-      },
       result: 'SUCCESS',
     }
   } catch (err) {

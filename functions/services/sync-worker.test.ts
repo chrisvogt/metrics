@@ -87,10 +87,6 @@ describe('runNextSyncJob', () => {
           recentlyPlayedGames: [{ id: 3 }],
         },
       },
-      metrics: {
-        ownedGamesCount: 2,
-        recentlyPlayedGamesCount: 1,
-      },
       result: 'SUCCESS',
     })
 
@@ -104,13 +100,11 @@ describe('runNextSyncJob', () => {
     expect(syncJobQueue.completeJob).toHaveBeenCalledWith(
       'sync-chrisvogt-steam',
       expect.objectContaining({
-        metrics: {
-          ownedGamesCount: 2,
-          recentlyPlayedGamesCount: 1,
-        },
         result: 'SUCCESS',
       })
     )
+    const completedSummary = vi.mocked(syncJobQueue.completeJob).mock.calls[0][1]
+    expect(completedSummary).not.toHaveProperty('metrics')
   })
 
   it('completes Steam jobs without queue metrics when sync omits metrics', async () => {
@@ -139,7 +133,35 @@ describe('runNextSyncJob', () => {
     expect(completedSummary.result).toBe('SUCCESS')
   })
 
-  it('forwards queue metrics from the Steam sync result', async () => {
+  it('does not throw when Steam returns SUCCESS with undefined data', async () => {
+    vi.mocked(syncSteamData).mockResolvedValue({
+      data: undefined,
+      result: 'SUCCESS',
+    })
+
+    await expect(processSyncJob({
+      documentStore,
+      job: {
+        runCount: 1,
+        enqueuedAt: '2026-03-21T02:00:00.000Z',
+        jobId: 'sync-chrisvogt-steam',
+        mode: 'sync',
+        provider: 'steam',
+        status: 'processing',
+        updatedAt: '2026-03-21T02:00:00.000Z',
+        userId: 'chrisvogt',
+      },
+      syncJobQueue,
+    })).resolves.toEqual({
+      jobId: 'sync-chrisvogt-steam',
+      result: 'SUCCESS',
+    })
+
+    const completedSummary = vi.mocked(syncJobQueue.completeJob).mock.calls[0][1]
+    expect(completedSummary).not.toHaveProperty('metrics')
+  })
+
+  it('does not put queue metrics on the job summary for Steam even if the job returns metrics', async () => {
     vi.mocked(syncSteamData).mockResolvedValue({
       data: {
         collections: {
@@ -168,55 +190,9 @@ describe('runNextSyncJob', () => {
       syncJobQueue,
     })
 
-    expect(syncJobQueue.completeJob).toHaveBeenCalledWith(
-      'sync-chrisvogt-steam',
-      expect.objectContaining({
-        metrics: {
-          ownedGamesCount: 1,
-          recentlyPlayedGamesCount: 0,
-        },
-      })
-    )
-  })
-
-  it('forwards queue metrics when only recently played games are counted', async () => {
-    vi.mocked(syncSteamData).mockResolvedValue({
-      data: {
-        collections: {
-          recentlyPlayedGames: [{ id: 9 }],
-        },
-      },
-      metrics: {
-        ownedGamesCount: 0,
-        recentlyPlayedGamesCount: 1,
-      },
-      result: 'SUCCESS',
-    })
-
-    await processSyncJob({
-      documentStore,
-      job: {
-        runCount: 1,
-        enqueuedAt: '2026-03-21T02:00:00.000Z',
-        jobId: 'sync-chrisvogt-steam',
-        mode: 'sync',
-        provider: 'steam',
-        status: 'processing',
-        updatedAt: '2026-03-21T02:00:00.000Z',
-        userId: 'chrisvogt',
-      },
-      syncJobQueue,
-    })
-
-    expect(syncJobQueue.completeJob).toHaveBeenCalledWith(
-      'sync-chrisvogt-steam',
-      expect.objectContaining({
-        metrics: {
-          ownedGamesCount: 0,
-          recentlyPlayedGamesCount: 1,
-        },
-      })
-    )
+    const completedSummary = vi.mocked(syncJobQueue.completeJob).mock.calls[0][1]
+    expect(completedSummary).not.toHaveProperty('metrics')
+    expect(completedSummary.result).toBe('SUCCESS')
   })
 
   it('marks the job failed when the sync job returns FAILURE', async () => {
@@ -255,10 +231,6 @@ describe('runNextSyncJob', () => {
           ownedGames: [],
           recentlyPlayedGames: [],
         },
-      },
-      metrics: {
-        ownedGamesCount: 0,
-        recentlyPlayedGamesCount: 0,
       },
       result: 'SUCCESS',
     })

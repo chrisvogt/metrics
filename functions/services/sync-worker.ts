@@ -12,6 +12,7 @@ import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { getLogger } from './logger.js'
 import type { QueuedSyncJob, SyncJobSummary } from '../types/sync-pipeline.js'
+import type { SyncProviderId } from '../types/widget-content.js'
 
 interface SyncExecutionResult {
   data?: unknown
@@ -20,15 +21,34 @@ interface SyncExecutionResult {
   result: 'FAILURE' | 'SUCCESS'
 }
 
-const queueMetricsFromResult = (result: SyncExecutionResult): Record<string, number> => {
-  if (result.result !== 'SUCCESS' || result.metrics === undefined) {
+const queueMetricsFromResult = (
+  result: SyncExecutionResult,
+  provider: SyncProviderId
+): Record<string, number> => {
+  if (result.result !== 'SUCCESS' || provider === 'steam') {
     return {}
   }
-  return result.metrics
+
+  const explicit = result.metrics
+  if (
+    explicit !== undefined &&
+    explicit !== null &&
+    typeof explicit === 'object' &&
+    !Array.isArray(explicit) &&
+    Object.keys(explicit).length > 0
+  ) {
+    return explicit
+  }
+
+  return {}
 }
 
-const buildSummary = (result: SyncExecutionResult, durationMs: number): SyncJobSummary => {
-  const metrics = queueMetricsFromResult(result)
+const buildSummary = (
+  result: SyncExecutionResult,
+  durationMs: number,
+  provider: SyncProviderId
+): SyncJobSummary => {
+  const metrics = queueMetricsFromResult(result, provider)
   return {
     durationMs,
     ...(Object.keys(metrics).length > 0 ? { metrics } : {}),
@@ -92,7 +112,7 @@ export const processSyncJob = async ({
   try {
     const result = await runSyncJob(job, documentStore)
     const durationMs = Date.now() - startedAt
-    const summary = buildSummary(result, durationMs)
+    const summary = buildSummary(result, durationMs, job.provider)
 
     if (result.result === 'SUCCESS') {
       await syncJobQueue.completeJob(job.jobId, summary)
