@@ -436,12 +436,7 @@ export function createExpressApp({
           return
         }
 
-        const token = extractBearerToken(req.headers.authorization)
-        if (!token) {
-          res.status(401).json({ ok: false, error: 'No token' })
-          return
-        }
-
+        const token = extractBearerToken(req.headers.authorization)!
         const decodedToken = await authService.verifyIdToken(token)
 
         if (!isAllowedEmail(decodedToken.email)) {

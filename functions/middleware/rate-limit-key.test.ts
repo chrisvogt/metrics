@@ -50,4 +50,30 @@ describe('getRateLimitKey', () => {
 
     expect(getRateLimitKey(req)).toBe('POST:/api/widgets/sync/spotify:local-dev')
   })
+
+  it('uses the first x-forwarded-for entry when it is a non-empty array', () => {
+    const req = createRequest({
+      headers: { 'x-forwarded-for': ['203.0.113.2', '10.0.0.9'] },
+    })
+
+    expect(getRateLimitKey(req)).toBe('203.0.113.2')
+  })
+
+  it('ignores an empty first forwarded-for array entry and falls back to the socket', () => {
+    const req = createRequest({
+      headers: { 'x-forwarded-for': [''] },
+      socket: { remoteAddress: '10.0.0.4' } as Request['socket'],
+    })
+
+    expect(getRateLimitKey(req)).toBe('10.0.0.4')
+  })
+
+  it('ignores a whitespace-only forwarded-for string', () => {
+    const req = createRequest({
+      headers: { 'x-forwarded-for': '   ' },
+      socket: { remoteAddress: '10.0.0.5' } as Request['socket'],
+    })
+
+    expect(getRateLimitKey(req)).toBe('10.0.0.5')
+  })
 })

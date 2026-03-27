@@ -20,6 +20,7 @@ Package-specific changes:
 - **Functions 0.23.0** – Firestore-backed sync job queue, breaking change to `GET /api/widgets/sync/:provider` JSON, Instagram `INSTAGRAM_USER_ID` and Graph fetch updates. See [functions/CHANGELOG.md](functions/CHANGELOG.md) **0.23.0** (BREAKING).
 - **Dependency updates** – Functions: axios, express-rate-limit 8.x, firebase, firebase-admin, firebase-functions, eslint, globals; @types/node kept at ^24 for Node 24. Hosting: Next.js 15, three 0.183.x, `@types/three` (Clock → Timer in FloatingLines; Vite and `react-router-dom` removed). See [functions/CHANGELOG.md](functions/CHANGELOG.md) and [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Functions source layout** – Source previously under `functions/lib/` is now split by role into `config/`, `widgets/`, `utils/`, and `helpers/`. The `functions/lib/` directory is TypeScript build output only and is fully gitignored. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
+- **Functions test coverage** – New/expanded tests (CSRF validate, Google Books type guard, GCS errors, rate-limit forwarded-for, sync metrics, Gemini prompt branches, Express 5 error middleware, runtime-config non-Error catch); Vitest coverage thresholds and excludes for `scripts/**/*.cjs` and `list-stored-media` re-export; removed unreachable duplicate check after `getSessionAuthError` on `POST /api/auth/session`.
 
 ### Fixed
 

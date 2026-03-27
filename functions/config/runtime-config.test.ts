@@ -92,4 +92,31 @@ describe('runtime config', () => {
       { message: 'Config unavailable' }
     )
   })
+
+  it('warns with String(err) when load throws a non-Error', async () => {
+    vi.doMock('./backend-config.js', () => ({
+      hasAppliedRuntimeConfig: vi.fn(() => false),
+      loadLocalDevelopmentEnv: vi.fn(),
+      markRuntimeConfigApplied: vi.fn(),
+    }))
+
+    const { ensureRuntimeConfigApplied } = await import('./runtime-config.js')
+    const warn = vi.fn()
+
+    await ensureRuntimeConfigApplied(
+      {
+        name: 'THROW_STRING',
+        load: () => {
+          throw 'not-an-error-object'
+        },
+        applyToEnv: vi.fn(),
+      },
+      warn,
+    )
+
+    expect(warn).toHaveBeenCalledWith(
+      'Could not load THROW_STRING (e.g. local dev with .env)',
+      { message: 'not-an-error-object' },
+    )
+  })
 })

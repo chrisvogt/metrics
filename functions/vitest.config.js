@@ -10,8 +10,17 @@ export default defineConfig({
         'node_modules/',
         '__tests__/',
         'coverage/',
-        '*.config.js'
-      ]
+        '*.config.js',
+        'scripts/**/*.cjs',
+        'lib/**',
+        'api/cloud-storage/list-stored-media.ts'
+      ],
+      thresholds: {
+        lines: 99,
+        statements: 99,
+        functions: 99,
+        branches: 94
+      }
     },
     include: ['**/*.test.ts', '**/*.test.js', '**/*.spec.ts', '**/*.spec.js'],
     exclude: [
