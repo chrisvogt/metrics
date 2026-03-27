@@ -15,6 +15,10 @@ vi.mock('../api/goodreads/fetch-recently-read-books.js', () => ({
   default: vi.fn()
 }))
 
+vi.mock('../api/goodreads/fetch-full-read-shelf-for-ai.js', () => ({
+  default: vi.fn()
+}))
+
 vi.mock('../api/goodreads/generate-goodreads-summary.js', () => ({
   default: vi.fn()
 }))
@@ -39,6 +43,7 @@ vi.mock('../services/media/media-service.js', () => ({
 }))
 
 import fetchUser from '../api/goodreads/fetch-user.js'
+import fetchFullReadShelfForAi from '../api/goodreads/fetch-full-read-shelf-for-ai.js'
 import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.js'
 import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summary.js'
 
@@ -57,6 +62,7 @@ describe('syncGoodreadsData', () => {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
     }
+    fetchFullReadShelfForAi.mockResolvedValue([])
 
     // Mock pMap to just execute the mapper function synchronously
     const pMapModule = await import('p-map')
@@ -109,6 +115,7 @@ describe('syncGoodreadsData', () => {
 
     const result = await syncGoodreadsData(documentStore)
 
+    expect(generateGoodreadsSummary).toHaveBeenCalledWith(expect.any(Object), { fullReadShelf: [] })
     expect(result.result).toBe('SUCCESS')
     expect(result.data.collections).toEqual({
       recentlyReadBooks: mockRecentlyReadData.books,
@@ -184,6 +191,32 @@ describe('syncGoodreadsData', () => {
       result: 'FAILURE',
       error: 'Database Error'
     })
+  })
+
+  it('continues when full read shelf pagination fails and passes empty shelf to the AI summary', async () => {
+    const mockUserData = {
+      profile: { displayName: 'Test User' },
+      updates: [],
+      jsonResponse: {},
+    }
+    const mockRecentlyReadData = {
+      books: [{ id: 'b1', title: 'Still Here' }],
+      rawReviewsResponse: [],
+    }
+
+    fetchUser.mockResolvedValue(mockUserData)
+    fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
+    fetchFullReadShelfForAi.mockRejectedValue(new Error('Goodreads timeout'))
+    generateGoodreadsSummary.mockResolvedValue('<p>One</p><p>Two</p>')
+
+    const result = await syncGoodreadsData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Could not paginate full Goodreads read shelf for AI summary; summary will use widget books only.',
+      'Goodreads timeout',
+    )
+    expect(generateGoodreadsSummary).toHaveBeenCalledWith(expect.any(Object), { fullReadShelf: [] })
   })
 
   it('should handle partial API failures', async () => {

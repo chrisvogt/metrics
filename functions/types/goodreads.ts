@@ -139,3 +139,16 @@ export interface GoodreadsWidgetCollections {
   updates?: GoodreadsUpdate[] | null
 }
 
+/**
+ * Minimal book row from Goodreads XML only (no Google Books enrichment).
+ * Used as context for the Goodreads AI summary across the full read shelf.
+ */
+export interface GoodreadsAiReadShelfEntry {
+  authors: string[]
+  /** When present, preferred finish/read date from Goodreads; else date added to shelf */
+  finishedOrAddedDate?: string | null
+  isbn?: string | null
+  rating?: string | null
+  title?: string
+}
+

@@ -9,6 +9,7 @@ import {
 } from '../services/media/media-service.js'
 
 import fetchUser from '../api/goodreads/fetch-user.js'
+import fetchFullReadShelfForAi from '../api/goodreads/fetch-full-read-shelf-for-ai.js'
 import fetchRecentlyReadBooks from '../api/goodreads/fetch-recently-read-books.js'
 import generateGoodreadsSummary from '../api/goodreads/generate-goodreads-summary.js'
 import type { DocumentStore } from '../ports/document-store.js'
@@ -26,6 +27,7 @@ import type {
 } from '../types/google-books.js'
 import { isGoogleBooksVolumesResponseSubset } from '../types/google-books.js'
 import type {
+  GoodreadsAiReadShelfEntry,
   GoodreadsProfile,
   GoodreadsRecentlyReadBook,
   GoodreadsRecentlyReadBookFromGoogle,
@@ -462,6 +464,7 @@ const processUpdatesWithMedia = async (
 
 type FetchAllGoodreadsPromisesSuccess = {
   collections: GoodreadsWidgetCollections
+  fullReadShelf: GoodreadsAiReadShelfEntry[]
   profile?: GoodreadsProfile
   responses: { user?: unknown; reviews?: GoodreadsReviewListRawReview[] }
 }
@@ -469,11 +472,22 @@ type FetchAllGoodreadsPromisesSuccess = {
 type FetchAllGoodreadsPromisesResult = FetchAllGoodreadsPromisesSuccess | { error: string }
 
 const fetchAllGoodreadsPromises = async (): Promise<FetchAllGoodreadsPromisesResult> => {
+  const logger = getLogger()
   try {
     const [user, recentlyRead] = await Promise.all([
       fetchUser(),
       fetchRecentlyReadBooks(),
     ])
+
+    let fullReadShelf: GoodreadsAiReadShelfEntry[] = []
+    try {
+      fullReadShelf = await fetchFullReadShelfForAi()
+    } catch (error: unknown) {
+      logger.warn(
+        'Could not paginate full Goodreads read shelf for AI summary; summary will use widget books only.',
+        error instanceof Error ? error.message : error,
+      )
+    }
 
     const processedUpdates =
       user.updates == null
@@ -485,6 +499,7 @@ const fetchAllGoodreadsPromises = async (): Promise<FetchAllGoodreadsPromisesRes
         recentlyReadBooks: (recentlyRead.books ?? []).slice(0, GOODREADS_BOOKS_TO_DISPLAY),
         updates: processedUpdates,
       },
+      fullReadShelf,
       profile: user.profile,
       responses: {
         user: user.jsonResponse,
@@ -528,7 +543,9 @@ const syncGoodreadsData = async (
   // Generate AI summary using Gemini
   let aiSummary: string | undefined
   try {
-    aiSummary = await generateGoodreadsSummary(widgetContent)
+    aiSummary = await generateGoodreadsSummary(widgetContent, {
+      fullReadShelf: result.fullReadShelf,
+    })
     widgetContent.aiSummary = aiSummary
   } catch (error) {
     logger.error('Failed to generate Goodreads AI summary:', error)
