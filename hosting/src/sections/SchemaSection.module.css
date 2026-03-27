@@ -1,0 +1,116 @@
+.hero {
+  margin-bottom: 2rem;
+}
+
+.title {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 52rem;
+  line-height: 1.65;
+}
+
+.leadMuted {
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.inlineCode {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.sectionTitle {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.sectionText {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  max-width: 48rem;
+}
+
+.tableWrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: auto;
+  background: var(--surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.table th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--surface) 70%, var(--bg));
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.path {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  word-break: break-all;
+}
+
+.notes {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.methodGet,
+.methodPost,
+.methodDel {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+}
+
+.methodGet {
+  color: var(--success);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.methodPost {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.methodDel {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.12);
+}

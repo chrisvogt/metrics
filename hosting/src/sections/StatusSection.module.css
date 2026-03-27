@@ -1,0 +1,114 @@
+.hero {
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  max-width: 52rem;
+  line-height: 1.65;
+  font-size: 0.95rem;
+}
+
+.inlineCode {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+.leadMuted {
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.refresh {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.refresh:hover:not(:disabled) {
+  border-color: rgba(139, 92, 246, 0.45);
+  color: var(--accent-hover);
+}
+
+.tableWrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: auto;
+  background: var(--surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.table th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--surface) 70%, var(--bg));
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.routeLabel {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.path {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.cellOk {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.cellBad {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.pending {
+  color: var(--text-muted);
+}
+
+.errText {
+  cursor: help;
+  border-bottom: 1px dotted var(--text-muted);
+}
+
+.syncedCell {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
