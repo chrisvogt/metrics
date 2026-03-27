@@ -170,6 +170,177 @@ describe('fetchFullReadShelfForAi', () => {
     expect(entries).toEqual([])
   })
 
+  it('uses null rating when the review has no rating element', async () => {
+    const body = `<GoodreadsResponse><reviews>
+      <review><read_at>2019-09-09</read_at>
+        <book><title>Unrated</title><isbn13>9781212121212</isbn13></book>
+      </review>
+    </reviews></GoodreadsResponse>`
+
+    vi.mocked(got).mockResolvedValueOnce({ body } as never)
+
+    const entries = await fetchFullReadShelfForAi()
+    expect(entries[0].rating).toBeNull()
+  })
+
+  it('uses ISBN-10 when ISBN-13 is absent', async () => {
+    const body = `<GoodreadsResponse><reviews>
+      <review><read_at>2020-03-03</read_at><rating>4</rating>
+        <book><title>Paperback</title><isbn>0451526538</isbn></book>
+      </review>
+    </reviews></GoodreadsResponse>`
+
+    vi.mocked(got).mockResolvedValueOnce({ body } as never)
+
+    const entries = await fetchFullReadShelfForAi()
+    expect(entries[0]).toMatchObject({
+      title: 'Paperback',
+      isbn: '0451526538',
+    })
+  })
+
+  it('leaves finishedOrAddedDate null when read and added dates are too short', async () => {
+    const body = `<GoodreadsResponse><reviews>
+      <review><read_at>n/a</read_at><date_added>no</date_added><rating>3</rating>
+        <book><title>Fuzzy Dates</title><isbn13>9787777777777</isbn13></book>
+      </review>
+    </reviews></GoodreadsResponse>`
+
+    vi.mocked(got).mockResolvedValueOnce({ body } as never)
+
+    const entries = await fetchFullReadShelfForAi()
+    expect(entries[0].finishedOrAddedDate).toBeNull()
+  })
+
+  it('handles malformed authors and odd author nodes from xml2js', async () => {
+    vi.mocked(parseStringMock).mockImplementationOnce((body, cb) => {
+      cb(null, {
+        GoodreadsResponse: {
+          reviews: [
+            {
+              review: [
+                {
+                  read_at: ['2020-04-04'],
+                  rating: ['5'],
+                  book: [
+                    {
+                      title: ['Odd Authors'],
+                      isbn13: ['9788888888888'],
+                      authors: 'not-an-array',
+                    },
+                  ],
+                },
+                {
+                  read_at: ['2020-05-05'],
+                  rating: ['4'],
+                  book: [
+                    {
+                      title: ['Mixed Author Nodes'],
+                      isbn13: ['9789999999999'],
+                      authors: [
+                        {
+                          author: [null, 'skip-me', { name: [''] }, { name: ['Kept Name'] }],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      } as never)
+    })
+
+    vi.mocked(got)
+      .mockResolvedValueOnce({ body: '<first/>' } as never)
+      .mockResolvedValueOnce({
+        body: '<GoodreadsResponse><reviews></reviews></GoodreadsResponse>',
+      } as never)
+
+    const entries = await fetchFullReadShelfForAi()
+
+    expect(entries).toEqual([
+      {
+        title: 'Odd Authors',
+        authors: [],
+        finishedOrAddedDate: '2020-04-04',
+        isbn: '9788888888888',
+        rating: '5',
+      },
+      {
+        title: 'Mixed Author Nodes',
+        authors: ['Kept Name'],
+        finishedOrAddedDate: '2020-05-05',
+        isbn: '9789999999999',
+        rating: '4',
+      },
+    ])
+  })
+
+  it('treats a single review object as an empty page', async () => {
+    vi.mocked(parseStringMock).mockImplementationOnce((body, cb) => {
+      cb(null, {
+        GoodreadsResponse: {
+          reviews: [
+            {
+              review: {
+                read_at: ['2020-06-06'],
+                rating: ['5'],
+                book: [{ title: ['Lonely'], isbn13: ['9781010101010'] }],
+              },
+            },
+          ],
+        },
+      } as never)
+    })
+
+    vi.mocked(got).mockResolvedValueOnce({ body: '<x/>' } as never)
+
+    const entries = await fetchFullReadShelfForAi()
+    expect(entries).toEqual([])
+  })
+
+  it('returns empty author list when the authors wrapper omits author entries', async () => {
+    vi.mocked(parseStringMock).mockImplementationOnce((body, cb) => {
+      cb(null, {
+        GoodreadsResponse: {
+          reviews: [
+            {
+              review: [
+                {
+                  read_at: ['2018-03-03'],
+                  rating: ['5'],
+                  book: [
+                    {
+                      title: ['Wrapped Authors'],
+                      isbn13: ['9786666666666'],
+                      authors: [{}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      } as never)
+    })
+
+    vi.mocked(got).mockResolvedValueOnce({ body: '<ignored/>' } as never)
+
+    const entries = await fetchFullReadShelfForAi()
+
+    expect(entries).toEqual([
+      {
+        title: 'Wrapped Authors',
+        authors: [],
+        finishedOrAddedDate: '2018-03-03',
+        isbn: '9786666666666',
+        rating: '5',
+      },
+    ])
+  })
+
   it('includes ISBN-only rows and single-author shapes from xml2js', async () => {
     const body = `<GoodreadsResponse><reviews>
       <review><read_at>2021-01-01</read_at><rating>4</rating>

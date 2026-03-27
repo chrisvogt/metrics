@@ -219,6 +219,30 @@ describe('syncGoodreadsData', () => {
     expect(generateGoodreadsSummary).toHaveBeenCalledWith(expect.any(Object), { fullReadShelf: [] })
   })
 
+  it('logs non-Error rejections from full read shelf fetch as-is', async () => {
+    const mockUserData = {
+      profile: { displayName: 'Test User' },
+      updates: [],
+      jsonResponse: {},
+    }
+    const mockRecentlyReadData = {
+      books: [],
+      rawReviewsResponse: [],
+    }
+
+    fetchUser.mockResolvedValue(mockUserData)
+    fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
+    fetchFullReadShelfForAi.mockRejectedValue('upstream unavailable')
+    generateGoodreadsSummary.mockResolvedValue('<p>a</p><p>b</p>')
+
+    await syncGoodreadsData(documentStore)
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Could not paginate full Goodreads read shelf for AI summary; summary will use widget books only.',
+      'upstream unavailable',
+    )
+  })
+
   it('should handle partial API failures', async () => {
     fetchUser.mockResolvedValue({
       profile: { displayName: 'Test User' },
@@ -385,6 +409,127 @@ describe('syncGoodreadsData', () => {
       expect(result.result).toBe('SUCCESS')
       expect(result.data.collections.updates[0].cdnMediaURL).toBe('https://cdn.example.com/books/book1-thumbnail.jpg')
       expect(result.data.collections.updates[0].mediaDestinationPath).toBe('books/book1-thumbnail.jpg')
+    })
+
+    it('applies delay after the first Google Books fetch when multiple new books are needed', async () => {
+      const mockUserData = {
+        profile: { displayName: 'Test User' },
+        updates: [
+          {
+            id: 'u1',
+            type: 'userstatus',
+            book: { isbn13: '9781000000001', title: 'Alpha' },
+          },
+          {
+            id: 'u2',
+            type: 'userstatus',
+            book: { isbn13: '9782000000002', title: 'Beta' },
+          },
+        ],
+        jsonResponse: { user: 'data' },
+      }
+
+      const mockRecentlyReadData = {
+        books: [],
+        rawReviewsResponse: { reviews: 'data' },
+      }
+
+      const makeBook = (id: string) => ({
+        book: {
+          id,
+          volumeInfo: {
+            title: 'x',
+            imageLinks: { thumbnail: 'http://books.google.com/t.jpg' },
+          },
+        },
+        rating: null,
+      })
+
+      fetchUser.mockResolvedValue(mockUserData)
+      fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
+      mockFetchBookFromGoogle
+        .mockResolvedValueOnce(makeBook('g1'))
+        .mockResolvedValueOnce(makeBook('g2'))
+      mockListStoredMedia.mockResolvedValue([])
+
+      mockPMap.mockImplementation(async (items, mapper) => {
+        const results = []
+        for (let i = 0; i < items.length; i++) {
+          results.push(await mapper(items[i], i))
+        }
+        return results
+      })
+
+      const resultPromise = syncGoodreadsData(documentStore)
+      await vi.runAllTimersAsync()
+      const result = await resultPromise
+
+      expect(result.result).toBe('SUCCESS')
+      expect(mockFetchBookFromGoogle).toHaveBeenCalledTimes(2)
+    })
+
+    it('keeps CDN from existing books while still fetching covers for other updates', async () => {
+      const mockUserData = {
+        profile: { displayName: 'Test User' },
+        updates: [
+          {
+            id: 'u1',
+            type: 'userstatus',
+            book: { isbn13: '9781111111111', title: 'Cached' },
+          },
+          {
+            id: 'u2',
+            type: 'userstatus',
+            book: { isbn13: '9782222222222', title: 'Need Fetch' },
+          },
+        ],
+        jsonResponse: { user: 'data' },
+      }
+
+      const mockRecentlyReadData = {
+        books: [
+          {
+            id: 'b1',
+            isbn: '9781111111111',
+            title: 'Cached',
+            cdnMediaURL: 'https://cdn.example.com/cached.jpg',
+            mediaDestinationPath: 'books/cached.jpg',
+          },
+        ],
+        rawReviewsResponse: { reviews: 'data' },
+      }
+
+      const mockGoogleBookResult = {
+        book: {
+          id: 'gb2',
+          volumeInfo: {
+            title: 'Need Fetch',
+            imageLinks: { thumbnail: 'http://books.google.com/t2.jpg' },
+          },
+        },
+        rating: null,
+      }
+
+      fetchUser.mockResolvedValue(mockUserData)
+      fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
+      mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBookResult)
+      mockListStoredMedia.mockResolvedValue([])
+
+      mockPMap.mockImplementation(async (items, mapper) => {
+        const results = []
+        for (let i = 0; i < items.length; i++) {
+          results.push(await mapper(items[i], i))
+        }
+        return results
+      })
+
+      const resultPromise = syncGoodreadsData(documentStore)
+      await vi.runAllTimersAsync()
+      const result = await resultPromise
+
+      expect(result.result).toBe('SUCCESS')
+      expect(result.data.collections.updates[0].cdnMediaURL).toBe('https://cdn.example.com/cached.jpg')
+      expect(result.data.collections.updates[1].cdnMediaURL).toBeDefined()
     })
 
     it('should match userstatus updates with existing books by ISBN10 when ISBN13 not available', async () => {

@@ -384,6 +384,50 @@ describe('generateGoodreadsSummary', () => {
     expect(result).toBe('<p>First graph.</p><p>Second graph.</p>')
   })
 
+  it('maps sparse widget books into completeReadShelf and omits categories when absent', async () => {
+    process.env.GEMINI_API_KEY = 'test-api-key'
+
+    mockGenerateContent.mockResolvedValue({
+      response: {
+        text: () => '{"response":"<p>x</p><p>y</p>","debug":{}}',
+      },
+    })
+
+    const sparseBook: import('../../types/goodreads.js').GoodreadsRecentlyReadBook = {
+      id: 'vol1',
+      title: 'Minimal Vol',
+      cdnMediaURL: 'https://cdn.example/x',
+      mediaDestinationPath: 'books/vol1.jpg',
+      smallThumbnail: '',
+      thumbnail: '',
+      categories: [],
+    }
+    // Exercise `??` / `||` fallbacks by omitting optional fields at runtime
+    delete (sparseBook as { authors?: string[] }).authors
+    delete (sparseBook as { isbn?: string | null }).isbn
+    delete (sparseBook as { rating?: string | null }).rating
+    delete (sparseBook as { categories?: string[] }).categories
+
+    await generateGoodreadsSummary(
+      {
+        collections: {
+          recentlyReadBooks: [sparseBook],
+        },
+        profile: { username: 'chrisvogt', readCount: 0 },
+      },
+      { fullReadShelf: [] },
+    )
+
+    const promptCall = mockGenerateContent.mock.calls[0][0] as string
+    expect(promptCall).toContain('Goodreads Profile: chrisvogt')
+    expect(promptCall).toContain('"authors":[]')
+    expect(promptCall).toContain('"isbn":null')
+    expect(promptCall).toContain('"rating":null')
+    expect(promptCall).toContain('"categories":[]')
+    expect(promptCall).toContain('"completeReadShelf":')
+    expect(promptCall).toMatch(/"title":"Minimal Vol".*"authors":\[\]/)
+  })
+
   it('should put full read shelf in completeReadShelf when provided', async () => {
     process.env.GEMINI_API_KEY = 'test-api-key'
 
