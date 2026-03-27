@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useRef } from 'react'
 import {
   Scene,
@@ -459,7 +461,7 @@ export default function FloatingLines({
       renderer.render(scene, camera)
       raf = requestAnimationFrame(renderLoop)
     }
-    renderLoop()
+    raf = requestAnimationFrame(renderLoop)
 
     return () => {
       cancelAnimationFrame(raf)

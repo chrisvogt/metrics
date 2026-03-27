@@ -14,7 +14,7 @@
     "codebase": "default"
   },
   "hosting": {
-    "public": "hosting/dist",
+    "public": "hosting/out",
     "rewrites": [
       {
         "source": "/api/**",

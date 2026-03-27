@@ -6,7 +6,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "dev:full": "concurrently -n emulators,vite -c blue,green \"firebase emulators:start\" \"pnpm run dev\"",
+    "dev:full": "concurrently -n emulators,next -c blue,green \"firebase emulators:start\" \"pnpm run dev\"",
     "dev:full:fresh": "pnpm run build && pnpm run dev:full",
     "lint": "turbo run lint",
     "test": "turbo run test",

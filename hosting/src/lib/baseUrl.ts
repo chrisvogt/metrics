@@ -1,4 +1,4 @@
-/** Origin for API calls: same host in dev (Vite proxy); production HTTPS absolute URL. */
+/** Origin for API calls: same host in dev (Next rewrites /api to emulators); production HTTPS absolute URL. */
 export function getAppBaseUrl(): string {
   if (typeof window === 'undefined') return ''
   const h = window.location.hostname

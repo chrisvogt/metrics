@@ -52,7 +52,8 @@ node_modules/
 .turbo
 
 # Hosting build output (built on deploy)
-hosting/dist
+hosting/out
+hosting/.next
 
 # Functions TypeScript build output (tsc → lib/); source lives in config/, widgets/, utils/, helpers/
 functions/lib/
