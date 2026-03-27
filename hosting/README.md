@@ -1,4 +1,4 @@
-# Metrics Hosting (React app)
+# Metrics Hosting (Next.js app)
 
 React dashboard for the Metrics API: sign-in (Google / email / phone) and API testing.
 
@@ -14,8 +14,8 @@ pnpm install
 
 ## Develop locally
 
-**Option A – Vite dev server (hot reload)**  
-Run the app and proxy `/api` to the Cloud Functions emulator:
+**Option A – Next.js dev server (hot reload)**  
+Run the app and proxy `/api` to the Cloud Functions emulator (`next.config.ts` rewrites; dev only):
 
 ```bash
 # from repo root
@@ -29,7 +29,7 @@ Start the Functions (and Auth) emulators in another terminal so `/api` works:
 firebase emulators:start --only functions,auth
 ```
 
-Then open http://localhost:5173. The Vite proxy forwards `/api` to the emulator.
+Then open http://localhost:5173.
 
 **Option B – Firebase Hosting + Functions emulators**  
 Build once, then run both hosting and functions so `/api` rewrites hit the emulated function:
@@ -50,7 +50,7 @@ From the repo root:
 pnpm run build
 ```
 
-Output is in `hosting/dist`. The root scripts `deploy:all` and `deploy:hosting` run this before deploying.
+Output is in `hosting/out` (Next.js `output: 'export'`). The root scripts `deploy:all` and `deploy:hosting` run this before deploying.
 
 ## Deploy
 
@@ -59,4 +59,14 @@ From the **repo root**:
 - **Hosting only:** `pnpm run deploy:hosting` (builds then deploys hosting)
 - **Full deploy:** `pnpm run deploy:all` (builds hosting, then deploys hosting + functions + other targets)
 
-Firebase Hosting serves files from `hosting/dist` and rewrites `/api/**` to the `app` Cloud Function and `**` to `/index.html` for the SPA.
+Firebase Hosting serves files from `hosting/out`, rewrites `/api/**` to the `app` Cloud Function, and uses a catch-all rewrite to `/index.html` for paths without a matching static file.
+
+## Routes
+
+| Path | Purpose |
+|------|---------|
+| `/schema/` | API schema reference |
+| `/status/` | Health checks |
+| `/auth/` | Sign-in UI |
+| `/endpoints/` | Authenticated API testing (not `/api/…` — that prefix is reserved for the Cloud Function) |
+| `/sync/` | Sync testing |

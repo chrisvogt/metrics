@@ -1,11 +1,20 @@
 # Changelog
 
-All notable changes to **metrics-hosting** (the Vite admin UI and static assets for Firebase Hosting) are documented in this file.
+All notable changes to **metrics-hosting** (the Next.js admin UI and static export for Firebase Hosting) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
+
+- **Framework** – Replaced Vite with **Next.js 15** (App Router, `output: 'export'` → `hosting/out`). Routes: `/schema/`, `/status/`, `/auth/`, `/endpoints/` (API testing; avoids clashing with Firebase `/api/**` → function), `/sync/`; `/` redirects to `/schema/`. Build metadata: `NEXT_PUBLIC_GIT_SHA` via `next.config.ts` (replaces Vite `define` / `VITE_GIT_SHA`).
+- **Dev proxy** – `next.config.ts` rewrites forward `/api` to the Functions emulator in development only (static export does not ship those rewrites; production uses `firebase.json`).
+
+### Removed
+
+- **Vite** – `vite.config.ts`, SPA entry (`main.tsx` / `App.tsx`), and unused `react-router-dom` wrapper.
 
 ## [0.4.0] - 2026-03-26
 

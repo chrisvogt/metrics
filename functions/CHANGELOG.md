@@ -304,6 +304,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Local dev: from repo root run `pnpm run dev` with Functions + Auth emulators, or build and use `firebase emulators:start --only hosting,functions,auth`. See root [README](../README.md) and [hosting/README.md](../hosting/README.md).
 
+**Update:** Hosting later moved from Vite to **Next.js** (static export to `hosting/out`). See [hosting/CHANGELOG.md](../hosting/CHANGELOG.md).
+
 ## [0.20.2] - 2025-02-14
 
 ### Fixed
