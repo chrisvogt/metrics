@@ -38,4 +38,10 @@ describe('listStoredMedia', () => {
     const result = await listStoredMedia()
     expect(result).toEqual([])
   })
+
+  it('re-exports listStoredMedia from media-service', async () => {
+    const handler = (await import('./list-stored-media.js')).default
+    const { listStoredMedia: fromService } = await import('../../services/media/media-service.js')
+    expect(handler).toBe(fromService)
+  })
 })

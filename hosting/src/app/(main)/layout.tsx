@@ -1,0 +1,66 @@
+'use client'
+
+import { useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useAuth } from '@/auth/AuthContext'
+import { Layout, type SectionId } from '@/layout/Layout'
+
+function pathnameToSection(pathname: string): SectionId {
+  const base = pathname.replace(/\/$/, '') || '/'
+  if (base === '/auth') return 'auth'
+  if (base === '/status') return 'status'
+  if (base === '/endpoints') return 'api'
+  if (base === '/sync') return 'sync'
+  return 'schema'
+}
+
+const sectionToPath: Record<SectionId, string> = {
+  schema: '/schema/',
+  status: '/status/',
+  api: '/endpoints/',
+  sync: '/sync/',
+  auth: '/auth/',
+}
+
+export default function MainLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname() ?? '/schema/'
+  const router = useRouter()
+  const { user, loading } = useAuth()
+  const section = pathnameToSection(pathname)
+
+  useEffect(() => {
+    if (loading) return
+    if (!user && (section === 'api' || section === 'sync')) {
+      router.replace('/schema/')
+    }
+    if (user && section === 'auth') {
+      router.replace('/schema/')
+    }
+  }, [user, loading, section, router])
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <div className="spinner" aria-hidden />
+        <span style={{ marginLeft: 12 }}>Loading…</span>
+      </div>
+    )
+  }
+
+  const onSectionChange = (id: SectionId) => {
+    router.push(sectionToPath[id])
+  }
+
+  return (
+    <Layout user={user} activeSection={section} onSectionChange={onSectionChange}>
+      {children}
+    </Layout>
+  )
+}

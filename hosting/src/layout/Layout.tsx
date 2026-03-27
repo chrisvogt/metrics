@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, type ReactNode } from 'react'
 import type { User } from 'firebase/auth'
 import { useAuth } from '../auth/AuthContext'
@@ -29,7 +31,7 @@ export function Layout({ children, user, activeSection, onSectionChange }: Layou
         <div className={styles.sidebarHeader}>
           <span className={styles.logo}>METRICS API</span>
           <span className={styles.logoSub} title="Git commit when this UI was built">
-            {__GIT_SHORT_SHA__}
+            {process.env.NEXT_PUBLIC_GIT_SHA ?? 'unknown'}
           </span>
         </div>
         <nav className={styles.nav}>

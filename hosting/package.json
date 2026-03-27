@@ -2,24 +2,23 @@
   "name": "metrics-hosting",
   "private": true,
   "version": "0.4.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "next dev --port 5173",
+    "build": "next build",
+    "preview": "next build && npx --yes serve@14 out -l 4173"
   },
   "dependencies": {
     "firebase": "^12.10.0",
+    "next": "^15.2.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.1",
     "three": "^0.183.2"
   },
   "devDependencies": {
+    "@types/node": "^22.15.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.0"
+    "@types/three": "^0.183.1",
+    "typescript": "^5.9.3"
   }
 }

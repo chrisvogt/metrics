@@ -253,4 +253,45 @@ describe('createExpressApp route coverage', () => {
     })
     expect(next).not.toHaveBeenCalled()
   })
+
+  it('handles CSRF-shaped errors in the error middleware before delegating others', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+
+    type ErrorLayer = { handle?: (a: unknown, b: unknown, c: unknown, d: unknown) => void }
+    const stack = (app as { router?: { stack: ErrorLayer[] } }).router?.stack ?? []
+    const errorHandlers = stack.filter((l) => l.handle && l.handle.length === 4)
+    const csrfAware = errorHandlers[errorHandlers.length - 1]?.handle
+    if (!csrfAware) throw new Error('Expected Express error middleware')
+
+    const res403 = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+    }
+    const nextCsrf = vi.fn()
+    csrfAware(new Error('CSRF token mismatch'), {}, res403, nextCsrf)
+    expect(res403.status).toHaveBeenCalledWith(403)
+    expect(res403.json).toHaveBeenCalledWith({
+      ok: false,
+      error: 'CSRF token mismatch',
+    })
+    expect(nextCsrf).not.toHaveBeenCalled()
+
+    const resPass = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+    }
+    const nextPass = vi.fn()
+    const passthroughErr = new Error('database unavailable')
+    csrfAware(passthroughErr, {}, resPass, nextPass)
+    expect(nextPass).toHaveBeenCalledWith(passthroughErr)
+  })
 })

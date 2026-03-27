@@ -1,3 +1,5 @@
+'use client'
+
 import { useAuth } from '../auth/AuthContext'
 import styles from './SchemaSection.module.css'
 

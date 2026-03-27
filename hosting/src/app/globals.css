@@ -18,6 +18,12 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  max-width: 100vw;
+  min-height: 100vh;
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
@@ -25,10 +31,6 @@ body {
   color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-}
-
-#root {
-  min-height: 100vh;
 }
 
 a {

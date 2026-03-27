@@ -166,9 +166,9 @@ This repo is a **pnpm workspace** with two packages: `hosting` (React app) and `
 | Command | What it does |
 |--------|----------------|
 | `pnpm install` | Install dependencies for root and all workspace packages (single lockfile: `pnpm-lock.yaml`). |
-| `pnpm run build` | Build the hosting app (Vite → `hosting/dist`). Only the hosting package has a `build` script. |
-| `pnpm run dev` | Start the hosting app’s Vite dev server (hot reload). For API calls to work, also run the Functions + Auth emulators (see [Development](#development)). |
-| `pnpm run dev:full` | Start the Functions + Auth emulators and the Vite dev server in one command (recommended for local dev). |
+| `pnpm run build` | Build the hosting app (Next.js static export → `hosting/out`). Only the hosting package has a `build` script. |
+| `pnpm run dev` | Start the hosting app’s Next.js dev server (`next dev`, port 5173). For API calls to work, also run the Functions + Auth emulators (see [Development](#development)). |
+| `pnpm run dev:full` | Start the Functions + Auth emulators and the Next dev server in one command (recommended for local dev). |
 | `pnpm run lint` | Lint the functions package (ESLint). |
 | `pnpm run test` | Run functions unit tests (Vitest), single run. |
 | `pnpm run test:coverage` | Run functions tests with coverage. |
@@ -182,7 +182,7 @@ This repo is a **pnpm workspace** with two packages: `hosting` (React app) and `
 
 ### Option A – Hosting app with hot reload (recommended)
 
-**One command** (emulators + Vite together):
+**One command** (emulators + Next dev together):
 
 ```bash
 pnpm run dev:full
@@ -198,7 +198,7 @@ firebase emulators:start --only functions,auth
 pnpm run dev
 ```
 
-Open **http://localhost:5173**. The Vite dev server proxies `/api` to the Functions emulator. Sign-in and API testing work against the emulators. If you run only `pnpm run dev` without the emulators, API requests will receive a 503 with a message to start the backend.
+Open **http://localhost:5173**. Next.js dev (`next.config` rewrites) proxies `/api` to the Functions emulator. Sign-in and API testing work against the emulators. If you run only `pnpm run dev` without the emulators, `/api` requests may fail when the proxy cannot reach the emulator.
 
 ### Option B – Full Firebase emulators (Hosting + Functions + Auth)
 
@@ -210,7 +210,7 @@ pnpm run build
 firebase emulators:start --only hosting,functions,auth
 ```
 
-Open the Hosting URL (e.g. **http://metrics.dev-chrisvogt.me:8084**). Same rewrites as production: `/api/**` → Cloud Function, `**` → SPA.
+Open the Hosting URL (e.g. **http://metrics.dev-chrisvogt.me:8084**). Same behavior as production: `/api/**` → Cloud Function; everything else is a static file from `hosting/out` (see [Firebase Hosting rewrites](#firebase-hosting-rewrites)).
 
 ### Emulator URLs
 
@@ -260,12 +260,19 @@ The following endpoints are available:
 ## Architecture
 
 ### Frontend (hosting)
-- **React + Vite** app in `hosting/`: sign-in (Google, email, phone) and API testing dashboard
+- **React + Next.js 15** (App Router) in `hosting/`: sign-in (Google, email, phone) and API testing dashboard; routes include `/schema/`, `/status/`, `/auth/`, `/endpoints/`, `/sync/`
 - **Firebase SDK**: Client-side auth for the current auth provider; config loaded at runtime from `/api/client-auth-config`
 - **Session**: Cookie-based sessions (created via `/api/auth/session`) with JWT fallback
-- **Build**: From repo root, `pnpm run build` → `hosting/dist`; Firebase Hosting serves that folder and rewrites `/api/**` to the Cloud Function and `**` to `/index.html` (SPA)
+- **Build**: From repo root, `pnpm run build` → `hosting/out` (static export). Firebase Hosting serves that folder; see [Firebase Hosting rewrites](#firebase-hosting-rewrites).
 
 See [hosting/README.md](hosting/README.md) for hosting-only scripts and local dev details.
+
+### Firebase Hosting rewrites
+
+Configured in `firebase.json` under `hosting`:
+
+1. **`/api/**` → Cloud Function `app`** — All backend API traffic.
+2. **No SPA catch-all** — Pre‑Next setups often used `**` → `/index.html` so a single-page bundle could own every URL. This app ships **static HTML per route** (`/schema/`, `/auth/`, …), so that rewrite is omitted. URLs that do not match a file or `/api/**` are **not found**; Firebase Hosting serves the exported **`404.html`** from `hosting/out` automatically (no extra rewrite).
 
 ### Backend (functions)
 - **Provider-neutral bootstrap**: Backend composition selects runtime, config source, document store, media store, auth service, and clock from a single bootstrap layer
@@ -298,7 +305,7 @@ For watch mode, run from the functions package: `pnpm --filter metrics-functions
 The hosting app must be **built** before deploy (the root `deploy:all` script does this automatically). All commands from repo root; see [Monorepo](#monorepo) for the full command list.
 
 ```bash
-pnpm run build          # build hosting app only (output: hosting/dist)
+pnpm run build          # build hosting app only (output: hosting/out)
 pnpm run deploy:all     # build + deploy everything (hosting + functions + Firestore, etc.)
 pnpm run deploy:hosting # build + deploy hosting only
 pnpm run deploy:functions # deploy Cloud Functions only (no build)

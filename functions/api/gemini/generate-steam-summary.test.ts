@@ -82,6 +82,37 @@ describe('generateSteamSummary', () => {
       .toThrow('GEMINI_API_KEY environment variable is required')
   })
 
+  it('uses zero for missing playtime fields when building the prompt', async () => {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai')
+    const mockGenerateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          '```json\n{"response": "ok", "debug": {"recentlyPlayedGames": [], "topPlayedGames": []}}\n```',
+      },
+    })
+    GoogleGenerativeAI.mockImplementationOnce(function () {
+      return {
+        getGenerativeModel: vi.fn().mockReturnValue({
+          generateContent: mockGenerateContent,
+        }),
+      }
+    })
+
+    await generateSteamSummary({
+      collections: {
+        recentlyPlayedGames: [{ displayName: 'NoPlaytimeFields' }],
+        ownedGames: [{ displayName: 'AlsoNoPlaytime' }],
+      },
+      profile: { displayName: 'Tester' },
+      metrics: [],
+    })
+
+    expect(mockGenerateContent).toHaveBeenCalledTimes(1)
+    const prompt = mockGenerateContent.mock.calls[0][0] as string
+    expect(prompt).toMatch(/"playTime2Weeks"\s*:\s*0/)
+    expect(prompt).toMatch(/"playTimeForever"\s*:\s*0/)
+  })
+
   it('should handle empty collections gracefully', async () => {
     const emptyData = {
       collections: {

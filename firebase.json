@@ -14,15 +14,11 @@
     "codebase": "default"
   },
   "hosting": {
-    "public": "hosting/dist",
+    "public": "hosting/out",
     "rewrites": [
       {
         "source": "/api/**",
         "function": "app"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
       }
     ]
   },

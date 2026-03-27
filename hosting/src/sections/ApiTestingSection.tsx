@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import type { SectionId } from '../layout/Layout'
 import { useAuth } from '../auth/AuthContext'

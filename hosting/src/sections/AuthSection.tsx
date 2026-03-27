@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, type FormEvent } from 'react'
 import type { ConfirmationResult } from 'firebase/auth'
 import { useAuth } from '../auth/AuthContext'

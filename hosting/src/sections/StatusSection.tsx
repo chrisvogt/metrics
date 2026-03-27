@@ -1,3 +1,5 @@
+'use client'
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { getAppBaseUrl } from '../lib/baseUrl'

@@ -15,10 +15,12 @@ Package-specific changes:
 
 ### Changed
 
+- **Hosting** – Admin UI migrated from Vite to **Next.js 15** (App Router, static export to `hosting/out`); docs and changelogs updated. Firebase Hosting no longer uses an SPA catch-all rewrite (unknown URLs → `404.html`). See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Hosting 0.4.0** – Admin UI: Schema and Status pages, layout and header auth, build-time git SHA. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Functions 0.23.0** – Firestore-backed sync job queue, breaking change to `GET /api/widgets/sync/:provider` JSON, Instagram `INSTAGRAM_USER_ID` and Graph fetch updates. See [functions/CHANGELOG.md](functions/CHANGELOG.md) **0.23.0** (BREAKING).
-- **Dependency updates** – Functions: axios, express-rate-limit 8.x, firebase, firebase-admin, firebase-functions, eslint, globals; @types/node kept at ^24 for Node 24. Hosting: react-router-dom, three 0.183.x (Clock → Timer in FloatingLines). See [functions/CHANGELOG.md](functions/CHANGELOG.md) and [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
+- **Dependency updates** – Functions: axios, express-rate-limit 8.x, firebase, firebase-admin, firebase-functions, eslint, globals; @types/node kept at ^24 for Node 24. Hosting: Next.js 15, three 0.183.x, `@types/three` (Clock → Timer in FloatingLines; Vite and `react-router-dom` removed). See [functions/CHANGELOG.md](functions/CHANGELOG.md) and [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Functions source layout** – Source previously under `functions/lib/` is now split by role into `config/`, `widgets/`, `utils/`, and `helpers/`. The `functions/lib/` directory is TypeScript build output only and is fully gitignored. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
+- **Functions test coverage** – New/expanded tests (CSRF validate, Google Books type guard, GCS errors, rate-limit forwarded-for, sync metrics, Gemini prompt branches, Express 5 error middleware, runtime-config non-Error catch); Vitest coverage thresholds and excludes for `scripts/**/*.cjs` and `list-stored-media` re-export; removed unreachable duplicate check after `getSessionAuthError` on `POST /api/auth/session`.
 
 ### Fixed
 

@@ -99,6 +99,51 @@ describe('GcsMediaStore', () => {
     })
   })
 
+  it('rejects when the write stream errors', async () => {
+    const response = { headers: { 'content-type': 'image/jpeg' }, pipe: vi.fn() }
+    const writeStream = {
+      on: vi.fn((event: string, callback: (err?: Error) => void) => {
+        if (event === 'error') {
+          queueMicrotask(() => callback(new Error('upload boom')))
+        }
+        return writeStream
+      }),
+    }
+
+    mockCreateWriteStream.mockReturnValue(writeStream)
+    mockHttpsGet.mockImplementation((_url, callback) => {
+      callback(response)
+      return { on: vi.fn() }
+    })
+
+    await expect(
+      adapter.fetchAndStore({
+        destinationPath: 'media/bad.jpg',
+        id: 'media123',
+        mediaURL: 'https://example.com/bad.jpg',
+      }),
+    ).rejects.toThrow('Failed to upload media/bad.jpg: upload boom')
+  })
+
+  it('rejects when the HTTPS client errors before the response', async () => {
+    mockHttpsGet.mockImplementation(() => ({
+      on(event: string, cb: (err: Error) => void) {
+        if (event === 'error') {
+          queueMicrotask(() => cb(new Error('socket fail')))
+        }
+        return this
+      },
+    }))
+
+    await expect(
+      adapter.fetchAndStore({
+        destinationPath: 'media/nope.jpg',
+        id: 'media456',
+        mediaURL: 'https://example.com/nope.jpg',
+      }),
+    ).rejects.toThrow('Failed to download media for media456: socket fail')
+  })
+
   it('throws when bucket is not configured', async () => {
     const { getStorageConfig } = await import('../../config/backend-config.js')
     vi.mocked(getStorageConfig).mockReturnValueOnce({

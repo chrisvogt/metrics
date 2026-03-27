@@ -161,6 +161,36 @@ describe('runNextSyncJob', () => {
     expect(completedSummary).not.toHaveProperty('metrics')
   })
 
+  it('includes explicit metrics on the job summary for non-Steam SUCCESS', async () => {
+    vi.mocked(syncJobQueue.claimNextJob).mockResolvedValue({
+      runCount: 1,
+      enqueuedAt: '2026-03-21T02:00:00.000Z',
+      jobId: 'sync-chrisvogt-spotify',
+      mode: 'sync',
+      provider: 'spotify',
+      status: 'processing',
+      updatedAt: '2026-03-21T02:00:00.000Z',
+      userId: 'chrisvogt',
+    })
+    vi.mocked(syncSpotifyData).mockResolvedValue({
+      result: 'SUCCESS',
+      metrics: { playlistsSynced: 3 },
+    })
+
+    await expect(runNextSyncJob({ documentStore, syncJobQueue })).resolves.toEqual({
+      jobId: 'sync-chrisvogt-spotify',
+      result: 'SUCCESS',
+    })
+
+    expect(syncJobQueue.completeJob).toHaveBeenCalledWith(
+      'sync-chrisvogt-spotify',
+      expect.objectContaining({
+        result: 'SUCCESS',
+        metrics: { playlistsSynced: 3 },
+      }),
+    )
+  })
+
   it('does not put queue metrics on the job summary for Steam even if the job returns metrics', async () => {
     vi.mocked(syncSteamData).mockResolvedValue({
       data: {
