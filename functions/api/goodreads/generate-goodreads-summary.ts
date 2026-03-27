@@ -64,12 +64,12 @@ const generateGoodreadsSummary = async (
     fullReadShelf.length > 0
       ? fullReadShelf
       : (collections?.recentlyReadBooks?.map((book) => ({
-          title: book.title,
-          authors: book.authors ?? [],
-          isbn: book.isbn ?? null,
-          rating: book.rating ?? null,
-          finishedOrAddedDate: null,
-        })) ?? [])
+        title: book.title,
+        authors: book.authors ?? [],
+        isbn: book.isbn ?? null,
+        rating: book.rating ?? null,
+        finishedOrAddedDate: null,
+      })) ?? [])
 
   const prompt = `
 You are writing a short, reader-facing “AI reading summary” for Chris Vogt’s personal homepage (chrisvogt.me). It appears next to a live list of books he recently finished and what he is reading now, so visitors already see titles and ratings there.
