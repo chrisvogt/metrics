@@ -15,6 +15,7 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **Vite** – `vite.config.ts`, SPA entry (`main.tsx` / `App.tsx`), and unused `react-router-dom` wrapper.
+- **Hosting SPA catch-all** – Dropped `firebase.json` rewrite `**` → `/index.html` so unknown paths use Firebase’s **`404.html`** from `hosting/out` instead of always loading the home shell.
 
 ## [0.4.0] - 2026-03-26
 

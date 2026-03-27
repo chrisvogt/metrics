@@ -59,7 +59,7 @@ From the **repo root**:
 - **Hosting only:** `pnpm run deploy:hosting` (builds then deploys hosting)
 - **Full deploy:** `pnpm run deploy:all` (builds hosting, then deploys hosting + functions + other targets)
 
-Firebase Hosting serves files from `hosting/out`, rewrites `/api/**` to the `app` Cloud Function, and uses a catch-all rewrite to `/index.html` for paths without a matching static file.
+Firebase Hosting serves files from `hosting/out` and rewrites **`/api/**`** to the `app` Cloud Function. There is **no** `**` → `/index.html` SPA fallback: real routes are static files from the Next export, and unknown URLs get the exported **`404.html`** (see root [README](../README.md#firebase-hosting-rewrites)).
 
 ## Routes
 

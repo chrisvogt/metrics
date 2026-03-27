@@ -210,7 +210,7 @@ pnpm run build
 firebase emulators:start --only hosting,functions,auth
 ```
 
-Open the Hosting URL (e.g. **http://metrics.dev-chrisvogt.me:8084**). Same rewrites as production: `/api/**` → Cloud Function; other paths serve pre-rendered HTML from `hosting/out`, with a catch-all to `/index.html` for URLs that have no static file.
+Open the Hosting URL (e.g. **http://metrics.dev-chrisvogt.me:8084**). Same behavior as production: `/api/**` → Cloud Function; everything else is a static file from `hosting/out` (see [Firebase Hosting rewrites](#firebase-hosting-rewrites)).
 
 ### Emulator URLs
 
@@ -263,9 +263,16 @@ The following endpoints are available:
 - **React + Next.js 15** (App Router) in `hosting/`: sign-in (Google, email, phone) and API testing dashboard; routes include `/schema/`, `/status/`, `/auth/`, `/endpoints/`, `/sync/`
 - **Firebase SDK**: Client-side auth for the current auth provider; config loaded at runtime from `/api/client-auth-config`
 - **Session**: Cookie-based sessions (created via `/api/auth/session`) with JWT fallback
-- **Build**: From repo root, `pnpm run build` → `hosting/out` (static export); Firebase Hosting serves that folder and rewrites `/api/**` to the Cloud Function (catch-all rewrite remains for unmatched paths)
+- **Build**: From repo root, `pnpm run build` → `hosting/out` (static export). Firebase Hosting serves that folder; see [Firebase Hosting rewrites](#firebase-hosting-rewrites).
 
 See [hosting/README.md](hosting/README.md) for hosting-only scripts and local dev details.
+
+### Firebase Hosting rewrites
+
+Configured in `firebase.json` under `hosting`:
+
+1. **`/api/**` → Cloud Function `app`** — All backend API traffic.
+2. **No SPA catch-all** — Pre‑Next setups often used `**` → `/index.html` so a single-page bundle could own every URL. This app ships **static HTML per route** (`/schema/`, `/auth/`, …), so that rewrite is omitted. URLs that do not match a file or `/api/**` are **not found**; Firebase Hosting serves the exported **`404.html`** from `hosting/out` automatically (no extra rewrite).
 
 ### Backend (functions)
 - **Provider-neutral bootstrap**: Backend composition selects runtime, config source, document store, media store, auth service, and clock from a single bootstrap layer
