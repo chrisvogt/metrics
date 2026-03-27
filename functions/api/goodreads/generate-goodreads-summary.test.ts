@@ -16,8 +16,10 @@ vi.mock('@google/generative-ai', () => ({
 vi.mock('firebase-functions', () => ({
   logger: {
     debug: vi.fn(),
-    error: vi.fn()
-  }
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
 }))
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
@@ -105,7 +107,9 @@ describe('generateGoodreadsSummary', () => {
     // Verify Google AI was initialized correctly
     expect(GoogleGenerativeAI).toHaveBeenCalledWith('test-api-key')
     expect(mockGetGenerativeModel).toHaveBeenCalledWith({ model: 'gemini-2.0-flash' })
-    expect(mockGenerateContent).toHaveBeenCalledWith(expect.stringContaining('please analyze the following Goodreads reading data'))
+    expect(mockGenerateContent).toHaveBeenCalledWith(
+      expect.stringContaining('chrisvogt.me'),
+    )
   })
 
   it('should handle missing collections gracefully', async () => {
@@ -138,8 +142,10 @@ describe('generateGoodreadsSummary', () => {
     expect(result).toBe('<p>Chris\'s reading activity data is currently unavailable.</p>')
     
     // Verify prompt includes empty arrays for missing data
-    expect(mockGenerateContent).toHaveBeenCalledWith(expect.stringContaining('"recentlyReadBooks": []'))
-    expect(mockGenerateContent).toHaveBeenCalledWith(expect.stringContaining('"allBooks": []'))
+    expect(mockGenerateContent).toHaveBeenCalledWith(
+      expect.stringContaining('"recentlyReadBooksForWidget": []'),
+    )
+    expect(mockGenerateContent).toHaveBeenCalledWith(expect.stringContaining('"completeReadShelf": []'))
   })
 
   it('should handle missing profile gracefully', async () => {
@@ -333,8 +339,126 @@ describe('generateGoodreadsSummary', () => {
     expect(promptCall).toContain('"pageCount":688')
     
     // Verify prompt contains instructions
-    expect(promptCall).toContain('please analyze the following Goodreads reading data')
-    expect(promptCall).toContain('return a natural-sounding summary')
-    expect(promptCall).toContain('Refer to the reader as "Chris"')
+    expect(promptCall).toContain('chrisvogt.me')
+    expect(promptCall).toContain('Exactly two')
+    expect(promptCall).toContain('Third person')
+  })
+
+  it('returns trimmed text when the model response has no paragraph tags', async () => {
+    process.env.GEMINI_API_KEY = 'test-api-key'
+
+    mockGenerateContent.mockResolvedValue({
+      response: {
+        text: () => '{"response": "  Plain fallback copy.  ", "debug": {}}',
+      },
+    })
+
+    const result = await generateGoodreadsSummary({
+      collections: { recentlyReadBooks: [] },
+      profile: { displayName: 'Chris Vogt' },
+    })
+
+    expect(result).toBe('Plain fallback copy.')
+  })
+
+  it('keeps only the first two <p> elements when the model returns extra paragraphs', async () => {
+    process.env.GEMINI_API_KEY = 'test-api-key'
+
+    mockGenerateContent.mockResolvedValue({
+      response: {
+        text: () =>
+          `\`\`\`json
+{
+  "response": "<p>First graph.</p><p>Second graph.</p><p>Third graph.</p>",
+  "debug": {}
+}
+\`\`\``,
+      },
+    })
+
+    const result = await generateGoodreadsSummary({
+      collections: { recentlyReadBooks: [] },
+      profile: { displayName: 'Chris Vogt' },
+    })
+
+    expect(result).toBe('<p>First graph.</p><p>Second graph.</p>')
+  })
+
+  it('maps sparse widget books into completeReadShelf and omits categories when absent', async () => {
+    process.env.GEMINI_API_KEY = 'test-api-key'
+
+    mockGenerateContent.mockResolvedValue({
+      response: {
+        text: () => '{"response":"<p>x</p><p>y</p>","debug":{}}',
+      },
+    })
+
+    const sparseBook: import('../../types/goodreads.js').GoodreadsRecentlyReadBook = {
+      id: 'vol1',
+      title: 'Minimal Vol',
+      cdnMediaURL: 'https://cdn.example/x',
+      mediaDestinationPath: 'books/vol1.jpg',
+      smallThumbnail: '',
+      thumbnail: '',
+      categories: [],
+    }
+    // Exercise `??` / `||` fallbacks by omitting optional fields at runtime
+    delete (sparseBook as { authors?: string[] }).authors
+    delete (sparseBook as { isbn?: string | null }).isbn
+    delete (sparseBook as { rating?: string | null }).rating
+    delete (sparseBook as { categories?: string[] }).categories
+
+    await generateGoodreadsSummary(
+      {
+        collections: {
+          recentlyReadBooks: [sparseBook],
+        },
+        profile: { username: 'chrisvogt', readCount: 0 },
+      },
+      { fullReadShelf: [] },
+    )
+
+    const promptCall = mockGenerateContent.mock.calls[0][0] as string
+    expect(promptCall).toContain('Goodreads Profile: chrisvogt')
+    expect(promptCall).toContain('"authors":[]')
+    expect(promptCall).toContain('"isbn":null')
+    expect(promptCall).toContain('"rating":null')
+    expect(promptCall).toContain('"categories":[]')
+    expect(promptCall).toContain('"completeReadShelf":')
+    expect(promptCall).toMatch(/"title":"Minimal Vol".*"authors":\[\]/)
+  })
+
+  it('should put full read shelf in completeReadShelf when provided', async () => {
+    process.env.GEMINI_API_KEY = 'test-api-key'
+
+    const mockGoodreadsData = {
+      collections: { recentlyReadBooks: [] },
+      profile: { displayName: 'Chris Vogt' },
+    }
+
+    const fullReadShelf = [
+      {
+        title: 'Deep Work',
+        authors: ['Cal Newport'],
+        isbn: '9781455586691',
+        rating: '5',
+        finishedOrAddedDate: '2024-01-15',
+      },
+    ]
+
+    mockGenerateContent.mockResolvedValue({
+      response: {
+        text: () =>
+          '{"response": "<p>Shelf summary.</p>", "debug": {}}',
+      },
+    })
+
+    await generateGoodreadsSummary(mockGoodreadsData, { fullReadShelf })
+
+    const promptCall = mockGenerateContent.mock.calls[0][0] as string
+    expect(promptCall).toContain('"completeReadShelf"')
+    expect(promptCall).toContain('Deep Work')
+    expect(promptCall).toContain('Cal Newport')
+    expect(promptCall).toContain('9781455586691')
   })
 }) 

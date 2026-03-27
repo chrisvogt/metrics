@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-03-26
+
+### Added
+
+- **Goodreads AI reading context** – Paginated fetch of the full “read” shelf from Goodreads XML only (`fetch-full-read-shelf-for-ai`), passed to Gemini for summaries without enriching extra titles via Google Books or cover downloads. Widget `recentlyReadBooks` and display pipeline are unchanged.
+- **Config** – `GOODREADS_AI_READ_SHELF_PER_PAGE` (200) and `GOODREADS_AI_READ_SHELF_MAX_PAGES` (10) in `goodreads-config.ts`.
+
+### Changed
+
+- **Goodreads Gemini prompt** – Homepage-oriented copy for chrisvogt.me: exactly **two** third-person `<p>` blocks; uses `completeReadShelf` plus `recentlyReadBooksForWidget` in the prompt. `ensureTwoParagraphSummary` keeps the first two paragraphs if the model returns more.
+- **Sync resilience** – If full-shelf pagination throws, the job logs a warning and the summary still runs using widget books only.
+
+### Developer experience
+
+- **Tests** – Coverage for shelf parsing edge cases, summary fallbacks, and `sync-goodreads-data` branches (mixed CDN vs fetch, non-`Error` rejections, staggered fetches).
+
 ## [0.23.0] - 2026-03-21
 
 ### BREAKING
@@ -496,6 +512,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _This changelog was started with v0.8.0._
 
+[0.24.0]: https://github.com/chrisvogt/metrics/compare/v0.23.0...v0.24.0
+[0.23.0]: https://github.com/chrisvogt/metrics/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/chrisvogt/metrics/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/chrisvogt/metrics/compare/v0.20.2...v0.21.0
 [0.20.0]: https://github.com/chrisvogt/metrics/compare/v0.19.0...v0.20.0
