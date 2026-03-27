@@ -2,17 +2,11 @@ import { useState } from 'react'
 import type { SectionId } from '../layout/Layout'
 import { useAuth } from '../auth/AuthContext'
 import { ApiClient } from '../auth/apiClient'
+import { getAppBaseUrl } from '../lib/baseUrl'
 import styles from './ApiTestingSection.module.css'
 
 const WIDGET_PROVIDERS = ['discogs', 'flickr', 'github', 'goodreads', 'instagram', 'spotify', 'steam'] as const
 const SYNC_PROVIDERS = ['spotify', 'steam', 'goodreads', 'instagram', 'discogs', 'flickr'] as const
-
-function useBaseUrl(): string {
-  if (typeof window === 'undefined') return ''
-  const h = window.location.hostname
-  const isDev = h === 'localhost' || h === '127.0.0.1' || h === 'metrics.dev-chrisvogt.me'
-  return isDev ? '' : 'https://metrics.chrisvogt.me'
-}
 
 export interface ApiTestingSectionProps {
   activeSection: SectionId
@@ -46,7 +40,7 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
     session: false,
     sync: false,
   })
-  const baseUrl = useBaseUrl()
+  const baseUrl = getAppBaseUrl()
   const apiClient = new ApiClient(baseUrl)
 
   const showApi = activeSection === 'api'
