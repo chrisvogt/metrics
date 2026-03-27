@@ -6,7 +6,7 @@ import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 function buildReq(): {
   req: Request
   cookies: Record<string, string>
-} {
+  } {
   const cookies: Record<string, string> = {}
   const req = {
     cookies,
