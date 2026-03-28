@@ -1,15 +1,31 @@
 import type { Metadata } from 'next'
+import { DM_Sans, JetBrains_Mono } from 'next/font/google'
 import { Providers } from './providers'
 import './globals.css'
 
+const sans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+})
+
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
-  title: 'Metrics API – Chris Vogt',
+  title: {
+    default: 'Chronogrove',
+    template: '%s | Chronogrove',
+  },
   description:
-    'Personal Metrics API admin for chrisvogt.me. Not a general login service.',
+    'Chronogrove is a self-hosted personal data core — public feeds, health monitoring, and authenticated sync for Gatsby, WordPress, Astro, and any theme built on top.',
   openGraph: {
-    title: 'Metrics API – Chris Vogt',
+    title: 'Chronogrove',
     description:
-      'Personal Metrics API admin for chrisvogt.me. Not a general login service.',
+      'A self-hosted personal data core that feeds public JSON, monitors provider health, and syncs data for any front-end framework.',
     type: 'website',
   },
 }
@@ -17,7 +33,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className={`${sans.variable} ${mono.variable}`}>
         <Providers>{children}</Providers>
       </body>
     </html>

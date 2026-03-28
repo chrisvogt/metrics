@@ -1,0 +1,317 @@
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.85; }
+}
+
+/* ─── Page wrapper ──────────────────────────────────────── */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ─── Hero ──────────────────────────────────────────────── */
+
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem 2rem 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(135deg, rgba(10, 14, 35, 0.97), rgba(6, 8, 22, 0.99)),
+    radial-gradient(circle at 72% 35%, rgba(78, 143, 203, 0.09), transparent 55%);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+  animation: slideUp 0.4s ease both;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(78, 143, 203, 0.03), transparent 35%);
+  pointer-events: none;
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  position: relative;
+  z-index: 1;
+}
+
+.label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2.1rem, 4.5vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  background: linear-gradient(130deg, var(--text) 25%, var(--accent-strong) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-family: var(--font-mono);
+}
+
+.quickLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.quickLink {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.42rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  font-size: 0.83rem;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.quickLink:hover {
+  background: var(--accent-soft);
+  border-color: rgba(232, 188, 56, 0.30);
+  color: var(--accent-strong);
+}
+
+/* ─── 3-D orb ───────────────────────────────────────────── */
+
+.orbWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.orb {
+  filter:
+    drop-shadow(0 0 18px rgba(78, 143, 203, 0.22))
+    drop-shadow(0 0 44px rgba(232, 188, 56, 0.12));
+}
+
+/* ─── Provider grid ─────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* ─── Provider card ─────────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(10, 14, 32, 0.93), rgba(6, 8, 20, 0.97));
+  box-shadow: var(--shadow-md);
+  animation: slideUp 0.5s ease both;
+  animation-delay: calc(var(--delay, 0) * 1ms);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--card-accent, var(--accent)) 28%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--card-accent, var(--accent)) 12%, transparent),
+    var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.cardLoading {
+  animation: slideUp 0.5s ease both, pulse 1.8s ease-in-out 0.5s infinite;
+}
+
+/* ─── Card header ───────────────────────────────────────── */
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.providerName {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotPending {
+  background: var(--text-soft);
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+.dotOk {
+  background: var(--success);
+  box-shadow: 0 0 7px rgba(78, 143, 203, 0.65);
+}
+
+.dotBad {
+  background: var(--error);
+  box-shadow: 0 0 7px rgba(251, 113, 133, 0.65);
+}
+
+/* ─── Metrics ───────────────────────────────────────────── */
+
+.metricList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.metricValue {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--card-accent, var(--accent));
+  line-height: 1.1;
+}
+
+.metricLabel {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.noData {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ─── Skeleton ──────────────────────────────────────────── */
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.skeletonLine {
+  height: 1rem;
+  width: 100%;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ─── Card footer ───────────────────────────────────────── */
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+}
+
+.latency {
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  color: var(--text-soft);
+}
+
+.synced {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+}
+
+/* ─── Responsive ────────────────────────────────────────── */
+
+@media (max-width: 780px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+  }
+
+  .orbWrap {
+    max-height: 200px;
+    overflow: hidden;
+  }
+
+  .orb {
+    max-width: 200px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 340px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

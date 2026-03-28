@@ -37,7 +37,7 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
   const [widgetResult, setWidgetResult] = useState<FetchResult | null>(null)
   const [sessionResult, setSessionResult] = useState<FetchResult | null>(null)
   const [syncResult, setSyncResult] = useState<FetchResult | null>(null)
-  /** Single line swapped on each SSE progress event (AI-style “thinking”, not a log). */
+  /** Single live status line for the active SSE sync stream. */
   const [syncThinkingLine, setSyncThinkingLine] = useState<string | null>(null)
   const [loading, setLoading] = useState<LoadingState>({
     widgets: false,
@@ -227,15 +227,16 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
       {showApi && (
         <>
           <div className={styles.block}>
-            <h2 className={styles.sectionTitle}>API</h2>
+            <h2 className={styles.sectionTitle}>Try API</h2>
             <p className={styles.sectionSubtitle}>
-              Auth and widget endpoints. Get a token and session for protected calls; widget data is public.
+              Test the authenticated and public route surface from one place. Widget feeds are public; session and sync
+              flows require sign-in.
             </p>
           </div>
           <div className={styles.block}>
             <h3 className={styles.blockTitle}>Auth token</h3>
             <p className={styles.blockText}>
-              Get a fresh ID token to call session and sync endpoints.
+              Refresh the current Firebase ID token before calling protected routes.
             </p>
             <div className={styles.row}>
               <button
@@ -308,16 +309,16 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
           <div className={styles.block}>
             <h2 className={styles.sectionTitle}>Sync</h2>
             <p className={styles.sectionSubtitle}>
-              Trigger a sync for a provider. Your ID token loads automatically when you’re signed in; use the API page
-              to force-refresh it or create a session cookie.
+              Trigger a provider sync from the console. Your ID token loads automatically after sign-in, and the API
+              page can refresh it or create a session cookie when needed.
             </p>
           </div>
           <div className={styles.block}>
             <h3 className={styles.blockTitle}>Sync provider</h3>
             <p className={styles.blockText}>
-              Runs the queue-backed sync via{' '}
+              Run the queue-backed sync via{' '}
               <code className={styles.inlineCode}>GET /api/widgets/sync/&#123;provider&#125;/stream</code>{' '}
-              (server-sent events with live steps, then the same final payload as the JSON endpoint).
+              so you can watch live steps and inspect the same final payload returned by the JSON endpoint.
             </p>
             <div className={styles.endpoint}>
               <span className={styles.methodGet}>GET</span>
@@ -347,7 +348,7 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
                 <div className={styles.thinkingShell} role="status" aria-live="polite">
                   <div className={styles.thinkingHeader}>
                     <span className={styles.thinkingPulse} aria-hidden />
-                    <span className={styles.thinkingTitle}>Thinking</span>
+                    <span className={styles.thinkingTitle}>Sync progress</span>
                     <span className={styles.thinkingDots} aria-hidden>
                       <span />
                       <span />

@@ -1,17 +1,42 @@
 :root {
-  --bg: #0f0f12;
-  --surface: #18181c;
-  --surface-hover: #1f1f24;
-  --border: #2a2a30;
-  --text: #f4f4f5;
-  --text-muted: #a1a1aa;
-  --accent: #8b5cf6;
-  --accent-hover: #a78bfa;
-  --success: #22c55e;
-  --error: #ef4444;
-  --radius: 12px;
-  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  color-scheme: dark;
+
+  /* Backgrounds — Starry Night's deep indigo night sky */
+  --bg: #060816;
+  --bg-elevated: #0a0e1f;
+  --surface: rgba(12, 18, 42, 0.88);
+  --surface-strong: #0f1530;
+  --surface-hover: rgba(20, 32, 65, 0.96);
+  --surface-soft: rgba(61, 122, 181, 0.05);
+
+  /* Borders — twilight blue edge */
+  --border: rgba(61, 122, 181, 0.18);
+  --border-strong: rgba(78, 143, 203, 0.32);
+
+  /* Text — moonlit cool white */
+  --text: #dde6f5;
+  --text-muted: #7a9abf;
+  --text-soft: #4a6a8a;
+
+  /* Accent — Van Gogh's golden stars */
+  --accent: #e8bc38;
+  --accent-hover: #f5d050;
+  --accent-soft: rgba(232, 188, 56, 0.16);
+  --accent-strong: #f5e060;
+
+  /* State — cerulean sky swirls for alive/ok, muted red for error */
+  --success: #4e8fcb;
+  --error: #c06060;
+
+  /* Elevation */
+  --shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.60);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.35);
+
+  /* Geometry */
+  --radius-sm: 10px;
+  --radius: 18px;
+  --radius-lg: 28px;
+  --max-width: 1180px;
 }
 
 * {
@@ -22,36 +47,58 @@ html,
 body {
   max-width: 100vw;
   min-height: 100vh;
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--bg);
+  background:
+    radial-gradient(ellipse at 18% 0%, rgba(42, 82, 168, 0.22), transparent 32%),
+    radial-gradient(ellipse at 85% 90%, rgba(30, 55, 130, 0.16), transparent 28%),
+    linear-gradient(180deg, #090c1e 0%, var(--bg) 42%, #030510 100%);
   color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 a {
   color: var(--accent);
   text-decoration: none;
+  transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
 }
 
 a:hover {
   color: var(--accent-hover);
 }
 
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent-hover);
+  outline-offset: 2px;
+}
+
 code {
   font-family: var(--font-mono);
   font-size: 0.9em;
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.06);
   padding: 0.2em 0.4em;
   border-radius: 6px;
 }
 
-button {
+button,
+input,
+select,
+textarea {
   font-family: inherit;
+}
+
+button {
   cursor: pointer;
 }
 
@@ -60,18 +107,38 @@ button:disabled {
   cursor: not-allowed;
 }
 
+::selection {
+  background: rgba(232, 188, 56, 0.35);
+  color: #fff;
+}
+
 .spinner {
   display: inline-block;
   width: 24px;
   height: 24px;
   border: 3px solid var(--border);
   border-radius: 50%;
-  border-top-color: var(--accent);
+  border-top-color: var(--success);
   animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

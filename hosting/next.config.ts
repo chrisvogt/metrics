@@ -29,7 +29,28 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   env: {
     NEXT_PUBLIC_GIT_SHA: getGitShortSha(),
+    /** Public site hostname for this tenant (overview title, etc.). Override per deployment. */
+    NEXT_PUBLIC_TENANT_DISPLAY_HOST:
+      process.env.NEXT_PUBLIC_TENANT_DISPLAY_HOST ?? 'www.chrisvogt.me',
   },
+  /**
+   * This rewrite exists only to make `next dev` feel like production.
+   *
+   * In local Next.js development, requests to `/api/*` would otherwise hit the
+   * Next dev server and 404 because the API actually lives in Firebase
+   * Functions. So we proxy those requests directly to the local Functions
+   * emulator.
+   *
+   * This is intentionally dev-only:
+   * - `output: 'export'` means Next does not ship its own runtime rewrites in
+   *   the static export.
+   * - Firebase Hosting handles `/api/**` in emulator/prod via `firebase.json`,
+   *   where those requests are rewritten to the `app` Cloud Function.
+   *
+   * So the split is:
+   * - local `next dev` -> this rewrite
+   * - Firebase Hosting emulator / deployed production -> `firebase.json` rewrite
+   */
   async rewrites() {
     if (process.env.NODE_ENV !== 'development') {
       return []

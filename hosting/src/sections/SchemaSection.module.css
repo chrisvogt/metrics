@@ -1,5 +1,10 @@
 .hero {
   margin-bottom: 2rem;
+  padding: 1.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(18, 20, 32, 0.88), rgba(10, 11, 18, 0.92));
+  box-shadow: var(--shadow-lg);
 }
 
 .title {
@@ -45,9 +50,10 @@
 
 .tableWrap {
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   overflow: auto;
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(17, 19, 31, 0.92), rgba(9, 10, 17, 0.94));
+  box-shadow: var(--shadow-md);
 }
 
 .table {
@@ -70,7 +76,7 @@
   letter-spacing: 0.08em;
   color: var(--text-muted);
   font-weight: 600;
-  background: color-mix(in srgb, var(--surface) 70%, var(--bg));
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .table tbody tr:last-child td {
@@ -140,6 +146,10 @@
   font-weight: 500;
   list-style: none;
   user-select: none;
+}
+
+.responseSummary:hover {
+  color: var(--text);
 }
 
 .responseSummary::-webkit-details-marker {
