@@ -262,6 +262,31 @@ export function createExpressApp({
     })
   )
   expressApp.use(cookieParser())
+
+  const corsAllowList: RegExp[] = [
+    /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
+    /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
+    /^https?:\/\/([a-z0-9-]+--)?chrisvogt\.netlify\.app$/,
+    /https?:\/\/([a-z0-9]+[.])*chronogrove[.]com$/,
+    /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
+  ]
+
+  if (!isProductionEnvironment()) {
+    corsAllowList.push(/localhost:?(\d+)?$/)
+  }
+
+  const corsOptions = {
+    origin: corsAllowList,
+    credentials: true,
+  }
+
+  /**
+   * Run before CSRF so OPTIONS preflight for `/api` is answered here (cors ends the response).
+   * Per-route `cors()` on `app.get()` only does not run for OPTIONS, so cross-origin fetches with
+   * `Authorization` (e.g. sync SSE to `*.cloudfunctions.net`) would otherwise fail CORS.
+   */
+  expressApp.use('/api', cors(corsOptions))
+
   expressApp.use(
     lusca.csrf({
       angular: true,
@@ -282,23 +307,6 @@ export function createExpressApp({
     })
   )
 
-  const corsAllowList: RegExp[] = [
-    /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
-    /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
-    /^https?:\/\/([a-z0-9-]+--)?chrisvogt\.netlify\.app$/,
-    /https?:\/\/([a-z0-9]+[.])*chronogrove[.]com$/,
-    /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
-  ]
-
-  if (!isProductionEnvironment()) {
-    corsAllowList.push(/localhost:?(\d+)?$/)
-  }
-
-  const corsOptions = {
-    origin: corsAllowList,
-    credentials: true,
-  }
-
   const runSyncHandler = async (
     provider: SyncProviderId
   ): Promise<ManualSyncResult> => runSyncForProvider({
@@ -309,7 +317,6 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/media/{*mediaPath}',
-    cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 100),
     async (req, res) => {
       const mediaStore = resolveMediaStore()
@@ -352,7 +359,6 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/widgets/sync/:provider/stream',
-    cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 10),
     async (req, res) => {
       const providerParam = req.params.provider
@@ -399,7 +405,6 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/widgets/sync/:provider',
-    cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 10),
     async (req, res) => {
       const providerParam = req.params.provider
@@ -421,7 +426,7 @@ export function createExpressApp({
     }
   )
 
-  expressApp.get('/api/widgets/:provider', cors(corsOptions), async (req, res) => {
+  expressApp.get('/api/widgets/:provider', async (req, res) => {
     const provider = req.params.provider
 
     if (!provider || !isWidgetId(provider)) {
@@ -457,7 +462,6 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/user/profile',
-    cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 50),
     authenticateUser,
     async (req, res) => {
@@ -475,7 +479,6 @@ export function createExpressApp({
 
   expressApp.delete(
     '/api/user/account',
-    cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 5),
     authenticateUser,
     async (req, res) => {
@@ -501,7 +504,6 @@ export function createExpressApp({
 
   expressApp.post(
     '/api/auth/session',
-    cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 20),
     async (req, res) => {
       try {
@@ -563,7 +565,6 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/client-auth-config',
-    cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 20),
     async (_req, res) => {
       await sendClientAuthConfig(res)
@@ -572,14 +573,13 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/firebase-config',
-    cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 20),
     async (_req, res) => {
       await sendClientAuthConfig(res)
     }
   )
 
-  expressApp.get('/api/csrf-token', cors(corsOptions), (req, res) => {
+  expressApp.get('/api/csrf-token', (req, res) => {
     const csrfToken = typeof req.csrfToken === 'function' ? req.csrfToken() : res.locals._csrf
 
     res.json({
@@ -590,7 +590,6 @@ export function createExpressApp({
 
   expressApp.post(
     '/api/auth/logout',
-    cors(corsOptions),
     createRateLimiter(15 * 60 * 1000, 30),
     authenticateUser,
     async (req, res) => {

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.1] - 2026-03-28
+
+### Fixed
+
+- **CORS** – Apply `cors` once for all `/api` routes **before** CSRF so **OPTIONS** preflight succeeds. Cross-origin `fetch` to `*.cloudfunctions.net` with `Authorization` (manual sync SSE from Firebase Hosting) only runs `cors()` on `app.get()`, so preflight previously missed CORS and the browser blocked the stream.
+
+### Developer experience
+
+- **Tests** – Supertest `OPTIONS` preflight for `GET /api/widgets/sync/:provider/stream`.
+
 ## [0.25.0] - 2026-03-27
 
 ### Added
