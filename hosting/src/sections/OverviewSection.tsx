@@ -4,6 +4,11 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { getAppBaseUrl } from '../lib/baseUrl'
+import {
+  extractLastSynced,
+  extractOverviewMetrics,
+  type MetricItem,
+} from '../lib/overviewMetrics'
 import { getTenantDisplayHost } from '../lib/tenantDisplay'
 import styles from './OverviewSection.module.css'
 import type { GroveProvider } from '../components/GroveScene'
@@ -33,57 +38,12 @@ const QUICK_LINKS = [
   { href: '/auth/', label: 'Sign in' },
 ]
 
-interface MetricItem {
-  displayName: string
-  value: number | string
-}
-
 interface ProviderState {
   loading: boolean
   ok: boolean | null
   ms: number | null
   metrics: MetricItem[]
   lastSynced: string | null
-}
-
-function extractMetrics(json: unknown): MetricItem[] {
-  if (!json || typeof json !== 'object') return []
-  const root = json as Record<string, unknown>
-  const payload = root.payload
-  if (!payload || typeof payload !== 'object') return []
-  const metrics = (payload as Record<string, unknown>).metrics
-  if (!Array.isArray(metrics)) return []
-  return metrics
-    .filter(
-      (m): m is { displayName: string; value: number | string } =>
-        m != null &&
-        typeof m === 'object' &&
-        'displayName' in m &&
-        'value' in m &&
-        typeof (m as Record<string, unknown>).displayName === 'string'
-    )
-    .slice(0, 2)
-}
-
-function extractLastSynced(json: unknown): string | null {
-  if (!json || typeof json !== 'object') return null
-  const root = json as Record<string, unknown>
-  const payload = root.payload
-  if (!payload || typeof payload !== 'object') return null
-  const meta = (payload as Record<string, unknown>).meta
-  if (!meta || typeof meta !== 'object') return null
-  const synced = (meta as Record<string, unknown>).synced
-  if (synced == null) return null
-  if (typeof synced === 'string') {
-    const d = new Date(synced)
-    return Number.isNaN(d.getTime()) ? null : d.toISOString()
-  }
-  if (typeof synced === 'object' && synced !== null && '_seconds' in synced) {
-    const sec = Number((synced as { _seconds?: unknown })._seconds)
-    if (!Number.isFinite(sec)) return null
-    return new Date(sec * 1000).toISOString()
-  }
-  return null
 }
 
 function formatRelative(iso: string | null): string {
@@ -130,7 +90,7 @@ export function OverviewSection() {
             const ct = res.headers.get('content-type') ?? ''
             if (ct.includes('application/json')) {
               const data = await res.json().catch(() => null)
-              metrics = extractMetrics(data)
+              metrics = extractOverviewMetrics(data)
               lastSynced = extractLastSynced(data)
             }
           }
