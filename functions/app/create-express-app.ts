@@ -77,6 +77,22 @@ type CompressionMiddleware = ((
 }
 const compression = compressionImport as unknown as CompressionMiddleware
 
+/**
+ * Skip gzip/brotli on manual sync SSE so chunks flush immediately.
+ * @public — unit-tested; keep in sync with `compression({ filter })` below.
+ */
+export function metricsCompressionFilter(
+  req: express.Request,
+  res: express.Response,
+  defaultFilter: (req: express.Request, res: express.Response) => boolean,
+): boolean {
+  const pathStr = req.path ?? req.url ?? ''
+  if (pathStr.includes('/api/widgets/sync/') && pathStr.endsWith('/stream')) {
+    return false
+  }
+  return defaultFilter(req, res)
+}
+
 /** Public widget reads: skip CSRF so lusca does not set cookies (would prevent CDN caching). */
 const CSRF_EXCLUDED_PATHS_WIDGET_READS = widgetIds.map((id) => ({
   path: `/api/widgets/${id}`,
@@ -242,13 +258,7 @@ export function createExpressApp({
 
   expressApp.use(
     compression({
-      filter: (req, res) => {
-        const pathStr = req.path ?? req.url ?? ''
-        if (pathStr.includes('/api/widgets/sync/') && pathStr.endsWith('/stream')) {
-          return false
-        }
-        return compression.filter(req, res)
-      },
+      filter: (req, res) => metricsCompressionFilter(req, res, compression.filter),
     })
   )
   expressApp.use(cookieParser())

@@ -1,5 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const pMapDefault = vi.hoisted(() =>
+  vi.fn(async (items: unknown[], mapper: (item: unknown) => Promise<unknown>) => {
+    const out: unknown[] = []
+    for (const item of items) {
+      out.push(await mapper(item))
+    }
+    return out
+  }),
+)
+
+vi.mock('p-map', () => ({
+  default: pMapDefault,
+}))
+
 import syncDiscogsData from './sync-discogs-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import { configureLogger } from '../services/logger.js'
@@ -43,6 +57,13 @@ describe('syncDiscogsData', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     configureLogger(logger)
+    pMapDefault.mockImplementation(async (items: unknown[], mapper: (item: unknown) => Promise<unknown>) => {
+      const out: unknown[] = []
+      for (const item of items) {
+        out.push(await mapper(item))
+      }
+      return out
+    })
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
@@ -168,6 +189,91 @@ describe('syncDiscogsData', () => {
 
     expect(result.result).toBe('SUCCESS')
     expect(result.totalUploadedCount).toBe(0)
+  })
+
+  it('invokes onProgress across discogs phases', async () => {
+    const onProgress = vi.fn()
+    vi.mocked(fetchDiscogsReleases).mockResolvedValue({
+      pagination: { items: 1, page: 1, pages: 1, per_page: 1, urls: {} },
+      releases: [
+        {
+          id: 1,
+          basic_information: {
+            thumb: 'https://example.com/thumb.jpg',
+            cover_image: 'https://example.com/cover.jpg',
+          },
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncDiscogsData(documentStore, { onProgress })
+
+    expect(onProgress.mock.calls.map((c) => c[0].phase)).toEqual([
+      'discogs.collection',
+      'discogs.save_raw',
+      'discogs.save_widget',
+      'discogs.artwork',
+      'discogs.artwork',
+    ])
+  })
+
+  it('recovers with zero uploads when artwork pMap throws', async () => {
+    vi.mocked(fetchDiscogsReleases).mockResolvedValue({
+      pagination: { items: 1, page: 1, pages: 1, per_page: 1, urls: {} },
+      releases: [
+        {
+          id: 77,
+          basic_information: {
+            thumb: 'https://example.com/thumb.jpg',
+            cover_image: null,
+          },
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+    pMapDefault.mockRejectedValueOnce(new Error('p-map failed'))
+
+    const result = await syncDiscogsData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(result.totalUploadedCount).toBe(0)
+  })
+
+  it('returns FAILURE when the Discogs API rejects with a non-Error value', async () => {
+    vi.mocked(fetchDiscogsReleases).mockRejectedValue('rate limited')
+
+    const result = await syncDiscogsData(documentStore)
+
+    expect(result).toEqual({
+      result: 'FAILURE',
+      error: 'rate limited',
+    })
+  })
+
+  it('uses fallback album titles when basic_information.title is empty', async () => {
+    const onProgress = vi.fn()
+    vi.mocked(fetchDiscogsReleases).mockResolvedValue({
+      pagination: { items: 1, page: 1, pages: 1, per_page: 1, urls: {} },
+      releases: [
+        {
+          id: 88,
+          basic_information: {
+            title: '',
+            thumb: 'https://example.com/t.jpg',
+            cover_image: 'https://example.com/c.jpg',
+          },
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncDiscogsData(documentStore, { onProgress })
+
+    const artworkMessages = onProgress.mock.calls
+      .filter((c) => c[0].phase === 'discogs.artwork')
+      .map((c) => c[0].message as string)
+    expect(artworkMessages.some((m) => m.includes('Release 88'))).toBe(true)
   })
 
   it('should continue writing Discogs data to canonical collections', async () => {

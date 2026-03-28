@@ -4,7 +4,8 @@ import fetchReleaseDetails from './fetch-release-details.js'
 import filterDiscogsResource from '../../transformers/filter-discogs-resource.js'
 import type { SyncProgressReporter } from '../../types/sync-pipeline.js'
 
-const discogsReleaseLabel = (release: Record<string, unknown>): string => {
+/** @internal exported for tests */
+export const discogsReleaseLabel = (release: Record<string, unknown>): string => {
   const bi = release.basic_information as Record<string, unknown> | undefined
   const raw = bi?.title
   const title = typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : `Release ${release.id}`
