@@ -7,6 +7,16 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-03-28
+
+### Fixed
+
+- **Manual sync SSE** — The sync test `fetch` now targets the Cloud Functions HTTPS origin (`NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN`, default in `next.config.ts`) via `getManualSyncStreamUrl()`, so Firebase Hosting rewrites no longer buffer the entire `text/event-stream` response. Granular progress lines appear during the job.
+
+### Added
+
+- **Tests** — Vitest for the hosting package; `src/lib/baseUrl.test.ts` with 100% coverage of `src/lib/baseUrl.ts` (thresholds enforced in `vitest.config.ts`).
+
 ## [0.6.0] - 2026-03-28
 
 ### Added
