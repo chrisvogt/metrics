@@ -15,6 +15,7 @@ Package-specific changes:
 
 ### Changed
 
+- **Functions 0.25.2** — Goodreads AI summary: prompt allows two or three `<p>` blocks; stored HTML is no longer truncated to two paragraphs (homepage handles “Read more”). See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Hosting 0.6.2** — Overview home cards show Discogs and Goodreads metrics (record-shaped `metrics` and Goodreads fallbacks). See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Functions 0.25.1** — Global `/api` CORS (before CSRF) so OPTIONS preflight works for cross-origin sync SSE to Cloud Functions. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Hosting 0.6.1** — Manual sync SSE requests use the Cloud Functions URL so streams are not buffered by Firebase Hosting; Vitest coverage for `baseUrl` helpers. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).

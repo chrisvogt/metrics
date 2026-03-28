@@ -340,7 +340,7 @@ describe('generateGoodreadsSummary', () => {
     
     // Verify prompt contains instructions
     expect(promptCall).toContain('chrisvogt.me')
-    expect(promptCall).toContain('Exactly two')
+    expect(promptCall).toContain('Two or three')
     expect(promptCall).toContain('Third person')
   })
 
@@ -361,7 +361,7 @@ describe('generateGoodreadsSummary', () => {
     expect(result).toBe('Plain fallback copy.')
   })
 
-  it('keeps only the first two <p> elements when the model returns extra paragraphs', async () => {
+  it('keeps all <p> elements when the model returns two or three paragraphs', async () => {
     process.env.GEMINI_API_KEY = 'test-api-key'
 
     mockGenerateContent.mockResolvedValue({
@@ -381,7 +381,9 @@ describe('generateGoodreadsSummary', () => {
       profile: { displayName: 'Chris Vogt' },
     })
 
-    expect(result).toBe('<p>First graph.</p><p>Second graph.</p>')
+    expect(result).toBe(
+      '<p>First graph.</p><p>Second graph.</p><p>Third graph.</p>',
+    )
   })
 
   it('maps sparse widget books into completeReadShelf and omits categories when absent', async () => {
