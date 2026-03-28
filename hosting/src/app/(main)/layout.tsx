@@ -7,6 +7,7 @@ import { Layout, type SectionId } from '@/layout/Layout'
 
 function pathnameToSection(pathname: string): SectionId {
   const base = pathname.replace(/\/$/, '') || '/'
+  if (base === '/') return 'overview'
   if (base === '/auth') return 'auth'
   if (base === '/status') return 'status'
   if (base === '/endpoints') return 'api'
@@ -15,6 +16,7 @@ function pathnameToSection(pathname: string): SectionId {
 }
 
 const sectionToPath: Record<SectionId, string> = {
+  overview: '/',
   schema: '/schema/',
   status: '/status/',
   api: '/endpoints/',

@@ -155,10 +155,10 @@ export function StatusSection() {
       <div className={styles.hero}>
         <h1 className={styles.title}>Status</h1>
         <p className={styles.lead}>
-          Lightweight <code className={styles.inlineCode}>GET</code> checks for public widget routes (reads from
-          storage where applicable). Last synced comes from{' '}
-          <code className={styles.inlineCode}>meta.synced</code> in the widget payload when present; GitHub is fetched
-          live and has no stored sync timestamp.
+          Lightweight <code className={styles.inlineCode}>GET</code> checks for the public data routes exposed by this
+          deployment. When a payload includes <code className={styles.inlineCode}>meta.synced</code>, the table shows it
+          so you can tell the difference between a healthy route and recently refreshed content. GitHub is fetched live
+          and does not carry a stored sync timestamp.
           {user ? (
             <>
               {' '}
@@ -183,7 +183,7 @@ export function StatusSection() {
           <thead>
             <tr>
               <th>Route</th>
-              <th>HTTP</th>
+              <th>Status</th>
               <th>Latency</th>
               <th>Last synced (payload)</th>
             </tr>

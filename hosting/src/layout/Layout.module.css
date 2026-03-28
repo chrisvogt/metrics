@@ -5,7 +5,7 @@
 
 .sidebar {
   width: 260px;
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(6, 8, 22, 0.97), rgba(8, 12, 28, 0.95));
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -13,6 +13,7 @@
   height: 100vh;
   z-index: 100;
   transition: transform 0.2s ease;
+  backdrop-filter: blur(16px);
 }
 
 @media (max-width: 768px) {
@@ -29,16 +30,27 @@
   border-bottom: 1px solid var(--border);
 }
 
+.logoLink {
+  display: inline-flex;
+}
+
 .logo {
   display: block;
   font-weight: 800;
   font-size: 1.05rem;
   letter-spacing: 0.06em;
   line-height: 1.2;
-  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  background: linear-gradient(135deg, #7db8e8, #f0c030);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.logoTag {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
 }
 
 .logoSub {
@@ -54,10 +66,22 @@
 .nav {
   flex: 1;
   padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .navSection {
   margin-bottom: 1.5rem;
+}
+
+.navHeading {
+  margin: 0 0 0.6rem;
+  padding: 0 1rem;
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .navItem {
@@ -65,29 +89,54 @@
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.75rem 1rem;
-  background: none;
-  border: none;
-  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
   color: var(--text-muted);
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
   text-align: left;
 }
 
 .navItem:hover {
-  background: var(--surface-hover);
+  background: var(--surface-soft);
+  border-color: var(--border);
   color: var(--text);
+  transform: translateX(1px);
 }
 
 .navItemActive {
-  background: rgba(139, 92, 246, 0.15);
-  color: var(--accent);
+  background: linear-gradient(180deg, rgba(78, 143, 203, 0.14), rgba(78, 143, 203, 0.07));
+  color: var(--accent-strong);
+  border-color: rgba(78, 143, 203, 0.24);
+  box-shadow: inset 3px 0 0 var(--success);
 }
 
 .navIcon {
-  font-size: 1.1rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.navIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.navLink {
+  display: block;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.navLink:hover {
+  color: var(--text);
+  background: var(--surface-soft);
 }
 
 .main {
@@ -105,10 +154,10 @@
 }
 
 .header {
-  padding: 0.65rem 1.25rem;
+  padding: 0.8rem 1.25rem;
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, rgba(6, 8, 22, 0.96) 95%, transparent);
+  backdrop-filter: blur(16px);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -122,6 +171,27 @@
   display: flex;
   align-items: center;
   min-width: 2.5rem;
+}
+
+.headerCenter {
+  flex: 1;
+  min-width: 0;
+}
+
+.sectionLabel,
+.sectionKicker {
+  margin: 0;
+}
+
+.sectionLabel {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sectionKicker {
+  color: var(--text-muted);
+  font-size: 0.82rem;
 }
 
 .headerRight {
@@ -151,30 +221,30 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgba(139, 92, 246, 0.25);
-  color: var(--accent-hover);
+  background: rgba(78, 143, 203, 0.14);
+  color: var(--success);
   font-size: 0.85rem;
   font-weight: 700;
-  border: 1px solid rgba(139, 92, 246, 0.35);
+  border: 1px solid rgba(78, 143, 203, 0.28);
 }
 
 .signInBtn,
 .signOutBtn {
   font-size: 0.875rem;
   font-weight: 600;
-  padding: 0.45rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface-hover);
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text);
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .signInBtn:hover,
 .signOutBtn:hover {
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.45);
-  color: var(--accent-hover);
+  background: rgba(232, 188, 56, 0.10);
+  border-color: rgba(232, 188, 56, 0.28);
+  color: var(--accent-strong);
 }
 
 .signOutBtn {
@@ -184,16 +254,17 @@
 .menuToggle {
   display: none;
   background: none;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text);
-  font-size: 1.5rem;
-  padding: 0.5rem;
+  font-size: 1.1rem;
+  padding: 0.55rem 0.7rem;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 10px;
 }
 
 .menuToggle:hover {
-  background: var(--surface-hover);
+  background: var(--surface-soft);
+  border-color: var(--border);
 }
 
 @media (max-width: 768px) {
@@ -203,7 +274,7 @@
 }
 
 .content {
-  padding: 1.5rem;
+  padding: 1.6rem;
   flex: 1;
 }
 
@@ -225,5 +296,11 @@
   .overlay[aria-hidden="false"] {
     pointer-events: auto;
     opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .headerCenter {
+    display: none;
   }
 }

@@ -1,0 +1,113 @@
+.page {
+  padding: 2rem 1.25rem 4rem;
+}
+
+.content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2.4rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(18, 20, 32, 0.84), rgba(9, 10, 16, 0.94)),
+    radial-gradient(circle at top left, rgba(124, 140, 255, 0.12), transparent 30%);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.045), transparent 30%);
+  pointer-events: none;
+}
+
+.eyebrow {
+  display: inline-flex;
+  padding: 0.4rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+
+.title {
+  margin: 1rem 0 0.75rem;
+  font-size: clamp(2.5rem, 8vw, 4.8rem);
+  letter-spacing: -0.05em;
+  line-height: 0.92;
+  max-width: 11ch;
+  position: relative;
+  z-index: 1;
+}
+
+.lead {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  max-width: 36rem;
+  position: relative;
+  z-index: 1;
+}
+
+.section {
+  margin-top: 2rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--border);
+}
+
+.section h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.15rem;
+}
+
+.section p,
+.section li {
+  color: var(--text-muted);
+}
+
+.section ul {
+  margin: 0.75rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.linkButton:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-inline: 0.85rem;
+  }
+
+  .content {
+    padding: 1.3rem;
+  }
+}

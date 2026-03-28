@@ -69,19 +69,23 @@ export function AuthSection() {
   return (
     <section className={styles.section}>
       <a href="https://www.chrisvogt.me" className={styles.siteLink} rel="noopener noreferrer">
-        ← Part of chrisvogt.me
+        ← Visit chrisvogt.me
       </a>
       <div className={styles.card}>
         <h2 className={styles.heading}>Sign in</h2>
-        <p className={styles.adminNote}>Personal admin for metrics.chrisvogt.me / chrisvogt.me only.</p>
-        <p className={styles.subheading}>Sign in to access the API testing interface.</p>
+        <p className={styles.adminNote}>Protected console for this Chronogrove deployment.</p>
+        <p className={styles.subheading}>Sign in to access session helpers, endpoint testing, and manual sync tools.</p>
 
-        <div className={styles.tabs}>
+        <div className={styles.tabs} role="tablist" aria-label="Sign-in methods">
           {TABS.map((t) => (
             <button
               key={t.id}
               type="button"
               className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`}
+              role="tab"
+              aria-selected={tab === t.id}
+              aria-controls={`auth-panel-${t.id}`}
+              id={`auth-tab-${t.id}`}
               onClick={() => {
                 setTab(t.id)
                 setError(null)
@@ -99,7 +103,7 @@ export function AuthSection() {
         )}
 
         {tab === 'email' && (
-          <>
+          <div role="tabpanel" id="auth-panel-email" aria-labelledby="auth-tab-email">
             <form onSubmit={handleEmailSubmit} className={styles.form}>
               <label className={styles.label}>
                 Email
@@ -139,11 +143,11 @@ export function AuthSection() {
               <GoogleIcon />
               Continue with Google
             </button>
-          </>
+          </div>
         )}
 
         {tab === 'phone' && (
-          <>
+          <div role="tabpanel" id="auth-panel-phone" aria-labelledby="auth-tab-phone">
             <div id="phone-recaptcha" />
             <form onSubmit={handlePhoneSubmit} className={styles.form}>
               <label className={styles.label}>
@@ -186,11 +190,16 @@ export function AuthSection() {
               <GoogleIcon />
               Continue with Google
             </button>
-          </>
+          </div>
         )}
 
         {tab === 'google' && (
-          <div className={styles.googleOnly}>
+          <div
+            className={styles.googleOnly}
+            role="tabpanel"
+            id="auth-panel-google"
+            aria-labelledby="auth-tab-google"
+          >
             <p className={styles.googleText}>Sign in with your Google account.</p>
             <button
               type="button"

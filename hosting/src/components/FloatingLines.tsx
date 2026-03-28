@@ -307,6 +307,7 @@ export default function FloatingLines({
   useEffect(() => {
     if (!containerRef.current) return
 
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const scene = new Scene()
 
     const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1)
@@ -321,7 +322,7 @@ export default function FloatingLines({
     const uniforms = {
       iTime: { value: 0 },
       iResolution: { value: new Vector3(1, 1, 1) },
-      animationSpeed: { value: animationSpeed },
+      animationSpeed: { value: prefersReducedMotion ? 0 : animationSpeed },
 
       enableTop: { value: enabledWaves.includes('top') },
       enableMiddle: { value: enabledWaves.includes('middle') },
@@ -354,12 +355,12 @@ export default function FloatingLines({
       },
 
       iMouse: { value: new Vector2(-1000, -1000) },
-      interactive: { value: interactive },
+      interactive: { value: prefersReducedMotion ? false : interactive },
       bendRadius: { value: bendRadius },
       bendStrength: { value: bendStrength },
       bendInfluence: { value: 0 },
 
-      parallax: { value: parallax },
+      parallax: { value: prefersReducedMotion ? false : parallax },
       parallaxStrength: { value: parallaxStrength },
       parallaxOffset: { value: new Vector2(0, 0) },
 
@@ -434,7 +435,7 @@ export default function FloatingLines({
       targetInfluenceRef.current = 0.0
     }
 
-    if (interactive) {
+    if (interactive && !prefersReducedMotion) {
       renderer.domElement.addEventListener('pointermove', handlePointerMove)
       renderer.domElement.addEventListener('pointerleave', handlePointerLeave)
     }
@@ -461,7 +462,11 @@ export default function FloatingLines({
       renderer.render(scene, camera)
       raf = requestAnimationFrame(renderLoop)
     }
-    raf = requestAnimationFrame(renderLoop)
+    if (prefersReducedMotion) {
+      renderer.render(scene, camera)
+    } else {
+      raf = requestAnimationFrame(renderLoop)
+    }
 
     return () => {
       cancelAnimationFrame(raf)
@@ -469,7 +474,7 @@ export default function FloatingLines({
         ro.disconnect()
       }
 
-      if (interactive) {
+      if (interactive && !prefersReducedMotion) {
         renderer.domElement.removeEventListener('pointermove', handlePointerMove)
         renderer.domElement.removeEventListener('pointerleave', handlePointerLeave)
       }

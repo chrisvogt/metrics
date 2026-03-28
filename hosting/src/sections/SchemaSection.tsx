@@ -74,23 +74,26 @@ export function SchemaSection() {
         <p className={styles.lead}>
           {user ? (
             <>
-              Public widget reads, sync triggers, session helpers, and authenticated account routes exposed by
-              the Cloud Functions app. All paths are rooted at <code className={styles.inlineCode}>/api</code>.
+              Explore the full surface of this deployment: public JSON feeds, authenticated sync controls, session
+              helpers, and account routes. Every endpoint below is rooted at{' '}
+              <code className={styles.inlineCode}>/api</code>.
             </>
           ) : (
             <>
-              Public widget reads for the metrics site. All paths are rooted at{' '}
+              Explore the public JSON routes that power the metrics experience and can be reused by other frontends. All
+              paths are rooted at{' '}
               <code className={styles.inlineCode}>/api</code>.{' '}
-              <span className={styles.leadMuted}>Sign in to see sync, auth, and account routes.</span>
+              <span className={styles.leadMuted}>Sign in to reveal sync, auth, and account routes.</span>
             </>
           )}
         </p>
       </div>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Widget content</h2>
+        <h2 className={styles.sectionTitle}>Public feeds</h2>
         <p className={styles.sectionText}>
-          Cached JSON for the personal metrics site. Responses are wrapped as{' '}
+          Cached JSON responses intended for websites, embeds, and any client that wants a clean read-only data shape.
+          Successful responses are wrapped as{' '}
           <code className={styles.inlineCode}>{`{ ok: true, payload }`}</code> on success.
         </p>
         <div className={styles.tableWrap}>
@@ -131,11 +134,11 @@ export function SchemaSection() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Sync (manual trigger)</h2>
         <p className={styles.sectionText}>
-          Enqueues provider sync work. Intended for operator use; avoid polling these from the Status page.{' '}
-          <code className={styles.inlineCode}>GET …/sync/&#123;provider&#125;</code> returns JSON only;{' '}
-          <code className={styles.inlineCode}>GET …/sync/&#123;provider&#125;/stream</code> sends the same job with
-          Server-Sent Events for live progress, then a final <code className={styles.inlineCode}>done</code> frame whose{' '}
-          <code className={styles.inlineCode}>result</code> matches the non-stream response.
+          Run a provider sync from the operator console when you need a fresh pull on demand.{' '}
+          <code className={styles.inlineCode}>GET …/sync/&#123;provider&#125;</code> returns JSON, while{' '}
+          <code className={styles.inlineCode}>GET …/sync/&#123;provider&#125;/stream</code> streams live progress over
+          Server-Sent Events and ends with a <code className={styles.inlineCode}>done</code> frame whose{' '}
+          <code className={styles.inlineCode}>result</code> matches the JSON response.
         </p>
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -191,6 +194,10 @@ export function SchemaSection() {
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Auth &amp; session</h2>
+        <p className={styles.sectionText}>
+          These routes support the current Firebase-based sign-in flow and turn ID tokens into admin-friendly session
+          behavior for the console.
+        </p>
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
@@ -278,6 +285,9 @@ export function SchemaSection() {
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>User (authenticated)</h2>
+        <p className={styles.sectionText}>
+          Account routes that are only relevant after sign-in, including profile inspection and account deletion.
+        </p>
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
