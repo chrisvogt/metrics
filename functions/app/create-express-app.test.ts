@@ -508,6 +508,19 @@ describe('createExpressApp auth and session branches', () => {
     expect(response.text).toBe('Unrecognized or unsupported provider.')
   })
 
+  it('answers CORS preflight OPTIONS for sync stream (Authorization triggers preflight cross-origin)', async () => {
+    const app = await buildApp()
+
+    const response = await request(app)
+      .options('/api/widgets/sync/spotify/stream')
+      .set('Origin', 'https://metrics.chrisvogt.me')
+      .set('Access-Control-Request-Method', 'GET')
+      .set('Access-Control-Request-Headers', 'authorization')
+
+    expect(response.status).toBe(204)
+    expect(response.headers['access-control-allow-origin']).toBe('https://metrics.chrisvogt.me')
+    expect(response.headers['access-control-allow-credentials']).toBe('true')
+  })
 
   it('treats array sync provider params as unsupported', async () => {
     const app = await buildApp()

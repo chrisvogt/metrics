@@ -15,6 +15,7 @@ Package-specific changes:
 
 ### Changed
 
+- **Functions 0.25.1** — Global `/api` CORS (before CSRF) so OPTIONS preflight works for cross-origin sync SSE to Cloud Functions. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Hosting 0.6.1** — Manual sync SSE requests use the Cloud Functions URL so streams are not buffered by Firebase Hosting; Vitest coverage for `baseUrl` helpers. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Hosting** – Admin UI migrated from Vite to **Next.js 15** (App Router, static export to `hosting/out`); docs and changelogs updated. Firebase Hosting no longer uses an SPA catch-all rewrite (unknown URLs → `404.html`). See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Hosting 0.5.0** – Schema documents manual sync **SSE** (`/stream`); JsonCodeBlock examples; Sync page streams progress. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
