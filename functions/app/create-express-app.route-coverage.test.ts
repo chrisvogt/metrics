@@ -347,4 +347,166 @@ describe('createExpressApp route coverage', () => {
     expect(written).toContain('"type":"done"')
     expect(response.end).toHaveBeenCalled()
   })
+
+  it('returns 400 for manual sync stream when provider param is missing', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+
+    const streamHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider/stream')
+    const response = {
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    }
+
+    await streamHandler({ params: {} }, response)
+
+    expect(logger.info).toHaveBeenCalledWith(
+      'Attempted to sync stream for an unrecognized provider: undefined',
+    )
+    expect(response.status).toHaveBeenCalledWith(400)
+    expect(response.send).toHaveBeenCalledWith('Unrecognized or unsupported provider.')
+  })
+
+  it('returns 400 for manual sync stream with an unsupported provider', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+
+    const streamHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider/stream')
+    const response = {
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    }
+
+    await streamHandler({ params: { provider: 'github' } }, response)
+
+    expect(logger.info).toHaveBeenCalledWith(
+      'Attempted to sync stream for an unrecognized provider: github',
+    )
+    expect(response.status).toHaveBeenCalledWith(400)
+    expect(response.send).toHaveBeenCalledWith('Unrecognized or unsupported provider.')
+  })
+
+  it('emits SSE error when manual sync stream runner throws an Error', async () => {
+    const { runSyncForProvider } = await import('../services/sync-manual.js')
+    vi.mocked(runSyncForProvider).mockRejectedValueOnce(new Error('sync boom'))
+
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+
+    const streamHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider/stream')
+    const response = {
+      setHeader: vi.fn(),
+      write: vi.fn(),
+      end: vi.fn(),
+    }
+
+    await streamHandler({ params: { provider: 'spotify' } }, response)
+
+    expect(logger.error).toHaveBeenCalledWith('Error syncing spotify data (SSE).', expect.any(Error))
+    const written = vi.mocked(response.write).mock.calls.map((c) => c[0] as string).join('')
+    expect(written).toContain('"type":"error"')
+    expect(written).toContain('sync boom')
+    expect(response.end).toHaveBeenCalled()
+  })
+
+  it('emits SSE error when manual sync stream runner throws a non-Error value', async () => {
+    const { runSyncForProvider } = await import('../services/sync-manual.js')
+    vi.mocked(runSyncForProvider).mockRejectedValueOnce('plain failure')
+
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+
+    const streamHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider/stream')
+    const response = {
+      setHeader: vi.fn(),
+      write: vi.fn(),
+      end: vi.fn(),
+    }
+
+    await streamHandler({ params: { provider: 'spotify' } }, response)
+
+    const written = vi.mocked(response.write).mock.calls.map((c) => c[0] as string).join('')
+    expect(written).toContain('"type":"error"')
+    expect(written).toContain('plain failure')
+    expect(response.end).toHaveBeenCalled()
+  })
+
+  it('swallows write errors on SSE progress events when the client disconnects', async () => {
+    const { runSyncForProvider } = await import('../services/sync-manual.js')
+    let writeCount = 0
+    vi.mocked(runSyncForProvider).mockImplementationOnce(
+      async ({ onProgress }: { onProgress?: (e: { phase: string; message: string }) => void }) => {
+        onProgress?.({ phase: 'unit.test', message: 'first' })
+        onProgress?.({ phase: 'unit.test', message: 'second' })
+        return {
+          afterJob: { jobId: 'j1', status: 'completed' },
+          beforeJob: { jobId: 'j1', status: 'queued' },
+          enqueue: { jobId: 'j1', status: 'enqueued' },
+          worker: { jobId: 'j1', result: 'SUCCESS' },
+        }
+      },
+    )
+
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+
+    const streamHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider/stream')
+    const response = {
+      setHeader: vi.fn(),
+      write: vi.fn(() => {
+        writeCount += 1
+        if (writeCount === 1) {
+          throw new Error('ECONNRESET')
+        }
+      }),
+      end: vi.fn(),
+    }
+
+    await streamHandler({ params: { provider: 'spotify' } }, response)
+
+    expect(writeCount).toBeGreaterThanOrEqual(2)
+    const written = vi.mocked(response.write).mock.calls.map((c) => c[0] as string).join('')
+    expect(written).toContain('"type":"done"')
+    expect(response.end).toHaveBeenCalled()
+  })
 })
