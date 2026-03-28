@@ -7,6 +7,16 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-03-28
+
+### Fixed
+
+- **Overview (`/`)** — Provider cards read **`extractOverviewMetrics`** from `src/lib/overviewMetrics.ts`. **Discogs** stores `metrics` as a `Record` (e.g. “LPs Owned”), not a `WidgetMetricValue[]`, so the overview showed “Live — no stored metrics” despite a 200. **Goodreads** never emits `metrics`; counts now come from **`profile.readCount`** and **`collections.recentlyReadBooks.length`** when needed.
+
+### Added
+
+- **Tests** — `src/lib/overviewMetrics.test.ts`; Vitest coverage includes `overviewMetrics.ts` with `perFile` thresholds alongside `baseUrl.ts`.
+
 ## [0.6.1] - 2026-03-28
 
 ### Fixed
