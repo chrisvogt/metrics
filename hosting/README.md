@@ -69,4 +69,4 @@ Firebase Hosting serves files from `hosting/out` and rewrites **`/api/**`** to t
 | `/status/` | Health checks |
 | `/auth/` | Sign-in UI |
 | `/endpoints/` | Authenticated API testing (not `/api/…` — that prefix is reserved for the Cloud Function) |
-| `/sync/` | Sync testing |
+| `/sync/` | Sync testing (manual sync via JSON or **SSE** `/api/widgets/sync/:provider/stream`) |

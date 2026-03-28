@@ -6,6 +6,7 @@
 import { getDefaultWidgetUserId } from '../config/backend-paths.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
+import type { SyncProgressReporter } from '../types/sync-pipeline.js'
 import type { SyncProviderId } from '../types/widget-content.js'
 import { processSyncJob, type SyncWorkerResult } from './sync-worker.js'
 
@@ -21,11 +22,13 @@ export const runSyncForProvider = async ({
   provider,
   syncJobQueue,
   userId = getDefaultWidgetUserId(),
+  onProgress,
 }: {
   documentStore: DocumentStore
   provider: SyncProviderId
   syncJobQueue: SyncJobQueue
   userId?: string
+  onProgress?: SyncProgressReporter
 }): Promise<ManualSyncResult> => {
   const enqueue = await syncJobQueue.enqueue({
     mode: 'sync',
@@ -41,6 +44,7 @@ export const runSyncForProvider = async ({
       documentStore,
       job: claimedJob,
       syncJobQueue,
+      onProgress,
     })
     : { jobId: enqueue.jobId, result: 'NOOP' as const }
 

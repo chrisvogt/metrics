@@ -1,5 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const pMapDefault = vi.hoisted(() =>
+  vi.fn(async (items: unknown[], mapper: (item: unknown) => Promise<unknown>) => {
+    const out: unknown[] = []
+    for (const item of items) {
+      out.push(await mapper(item))
+    }
+    return out
+  }),
+)
+
+vi.mock('p-map', () => ({
+  default: pMapDefault,
+}))
+
 import syncInstagramData from './sync-instagram-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import { configureLogger } from '../services/logger.js'
@@ -39,6 +53,13 @@ describe('syncInstagramData', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     configureLogger(logger)
+    pMapDefault.mockImplementation(async (items: unknown[], mapper: (item: unknown) => Promise<unknown>) => {
+      const out: unknown[] = []
+      for (const item of items) {
+        out.push(await mapper(item))
+      }
+      return out
+    })
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
@@ -200,6 +221,76 @@ describe('syncInstagramData', () => {
       'users/chrisvogt/instagram/widget-content',
       expect.any(Object)
     )
+  })
+
+  it('processes carousel children that only expose media_url', async () => {
+    vi.mocked(fetchInstagramData).mockResolvedValue({
+      media: {
+        data: [
+          {
+            id: 'carousel1',
+            media_type: 'CAROUSEL_ALBUM',
+            media_url: 'https://example.com/parent.jpg',
+            children: {
+              data: [{ id: 'c1', media_url: 'https://example.com/child_only.jpg' }],
+            },
+          },
+        ],
+      },
+      followers_count: 1,
+      media_count: 1,
+      username: 'u',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    const result = await syncInstagramData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(result.totalUploadedCount).toBe(2)
+  })
+
+  it('recovers with zero uploads when instagram media pMap throws', async () => {
+    vi.mocked(fetchInstagramData).mockResolvedValue({
+      media: {
+        data: [{ id: 'm1', media_type: 'IMAGE', media_url: 'https://example.com/i.jpg' }],
+      },
+      username: 'u',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+    pMapDefault.mockRejectedValueOnce(new Error('instagram pmap'))
+
+    const result = await syncInstagramData(documentStore)
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'Something went wrong downloading media files',
+      expect.any(Error),
+    )
+    expect(result.result).toBe('SUCCESS')
+    expect(result.totalUploadedCount).toBe(0)
+  })
+
+  it('invokes onProgress when provided', async () => {
+    const onProgress = vi.fn()
+    vi.mocked(fetchInstagramData).mockResolvedValue({
+      media: { data: [] },
+      username: 'u',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncInstagramData(documentStore, { onProgress })
+
+    expect(onProgress.mock.calls.map((c) => c[0].phase)).toEqual([
+      'instagram.api',
+      'instagram.persist',
+    ])
+  })
+
+  it('returns FAILURE with string error when fetch rejects non-Error', async () => {
+    vi.mocked(fetchInstagramData).mockRejectedValue('offline')
+
+    const result = await syncInstagramData(documentStore)
+
+    expect(result).toEqual({ result: 'FAILURE', error: 'offline' })
   })
 
   it('should fail clearly when the Instagram fetcher rejects', async () => {

@@ -125,6 +125,67 @@ describe('syncSpotifyData', () => {
     )
   })
 
+  it('should not re-download playlist covers already in storage', async () => {
+    vi.mocked(getSpotifyAccessToken).mockResolvedValue({ accessToken: 'spotify-token' })
+    vi.mocked(getSpotifyUserProfile).mockResolvedValue({
+      display_name: 'Test User',
+      external_urls: { spotify: 'https://open.spotify.com/user/test' },
+      followers: { total: 100 },
+      id: 'user123',
+      images: [{ url: 'https://example.com/avatar.jpg' }],
+    })
+    vi.mocked(getSpotifyTopTracks).mockResolvedValue([])
+    vi.mocked(getSpotifyPlaylists).mockResolvedValue({
+      total: 1,
+      items: [
+        {
+          id: 'playlist1',
+          name: 'Playlist 1',
+          images: [{ url: 'https://mosaic.scdn.co/300/hash123', height: 300, width: 300 }],
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue(['chrisvogt/spotify/playlists/hash123.jpg'])
+
+    const result = await syncSpotifyData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(result.totalUploadedMediaCount).toBe(0)
+  })
+
+  it('should skip playlists without a 300px mosaic image when building download list', async () => {
+    vi.mocked(getSpotifyAccessToken).mockResolvedValue({ accessToken: 'spotify-token' })
+    vi.mocked(getSpotifyUserProfile).mockResolvedValue({
+      display_name: 'Test User',
+      external_urls: { spotify: 'https://open.spotify.com/user/test' },
+      followers: { total: 100 },
+      id: 'user123',
+      images: [{ url: 'https://example.com/avatar.jpg' }],
+    })
+    vi.mocked(getSpotifyTopTracks).mockResolvedValue([])
+    vi.mocked(getSpotifyPlaylists).mockResolvedValue({
+      total: 2,
+      items: [
+        {
+          id: 'playlist1',
+          name: 'Has cover',
+          images: [{ url: 'https://mosaic.scdn.co/300/hash123', height: 300, width: 300 }],
+        },
+        {
+          id: 'playlist2',
+          name: 'Only thumb',
+          images: [{ url: 'https://i.scdn.co/image/small', height: 60, width: 60 }],
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    const result = await syncSpotifyData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(result.totalUploadedMediaCount).toBe(1)
+  })
+
   it('should fail when no access token is available', async () => {
     vi.mocked(getSpotifyAccessToken).mockResolvedValue({ accessToken: '' })
 
@@ -196,6 +257,87 @@ describe('syncSpotifyData', () => {
       result: 'FAILURE',
       error: new Error('Playlists failed'),
     })
+  })
+
+  it('should fail when fetching user profile fails', async () => {
+    vi.mocked(getSpotifyAccessToken).mockResolvedValue({ accessToken: 'spotify-token' })
+    vi.mocked(getSpotifyUserProfile).mockRejectedValue(new Error('profile unavailable'))
+
+    const result = await syncSpotifyData(documentStore)
+
+    expect(logger.error).toHaveBeenCalledWith('Failed to fetch Spotify user profile.', expect.any(Error))
+    expect(result).toEqual({
+      result: 'FAILURE',
+      error: new Error('profile unavailable'),
+    })
+  })
+
+  it('should invoke onProgress for each major phase on success', async () => {
+    const onProgress = vi.fn()
+    vi.mocked(getSpotifyAccessToken).mockResolvedValue({ accessToken: 'spotify-token' })
+    vi.mocked(getSpotifyUserProfile).mockResolvedValue({
+      display_name: 'Test User',
+      external_urls: { spotify: 'https://open.spotify.com/user/test' },
+      followers: { total: 100 },
+      id: 'user123',
+      images: [{ url: 'https://example.com/avatar.jpg' }],
+    })
+    vi.mocked(getSpotifyTopTracks).mockResolvedValue([{ id: 'track1', name: 'Track 1' }])
+    vi.mocked(getSpotifyPlaylists).mockResolvedValue({
+      total: 1,
+      items: [
+        {
+          id: 'playlist1',
+          name: 'Playlist 1',
+          images: [{ url: 'https://mosaic.scdn.co/300/hash123', height: 300, width: 300 }],
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncSpotifyData(documentStore, { onProgress })
+
+    expect(onProgress.mock.calls.map((c) => c[0].phase)).toEqual([
+      'spotify.token',
+      'spotify.profile',
+      'spotify.top_tracks',
+      'spotify.playlists',
+      'spotify.covers',
+      'spotify.persist',
+    ])
+  })
+
+  it('should log and still finish when playlist cover download fails', async () => {
+    vi.mocked(getSpotifyAccessToken).mockResolvedValue({ accessToken: 'spotify-token' })
+    vi.mocked(getSpotifyUserProfile).mockResolvedValue({
+      display_name: 'Test User',
+      external_urls: { spotify: 'https://open.spotify.com/user/test' },
+      followers: { total: 100 },
+      id: 'user123',
+      images: [{ url: 'https://example.com/avatar.jpg' }],
+    })
+    vi.mocked(getSpotifyTopTracks).mockResolvedValue([])
+    vi.mocked(getSpotifyPlaylists).mockResolvedValue({
+      total: 1,
+      items: [
+        {
+          id: 'playlist1',
+          name: 'Playlist 1',
+          images: [{ url: 'https://mosaic.scdn.co/300/hash123', height: 300, width: 300 }],
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+    const { storeRemoteMedia } = await import('../services/media/media-service.js')
+    vi.mocked(storeRemoteMedia).mockRejectedValueOnce(new Error('upload failed'))
+
+    const result = await syncSpotifyData(documentStore)
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'Something went wrong downloading Spotify playlist media files.',
+      expect.any(Error),
+    )
+    expect(result.result).toBe('SUCCESS')
   })
 
   it('should continue writing Spotify data to canonical collections', async () => {

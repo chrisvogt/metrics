@@ -168,6 +168,60 @@ describe('syncSteamData', () => {
     )
   })
 
+  it('invokes onProgress across steam phases when provided', async () => {
+    const onProgress = vi.fn()
+    vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
+    vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 0, games: [] })
+    vi.mocked(getPlayerSummary).mockResolvedValue({})
+    vi.mocked(generateSteamSummary).mockResolvedValue(null)
+
+    await syncSteamData(documentStore, { onProgress })
+
+    expect(onProgress.mock.calls.map((c) => c[0].phase)).toEqual(['steam.api', 'steam.ai', 'steam.persist'])
+  })
+
+  it('uses an empty icon URL when img_icon_url is missing', async () => {
+    vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
+    vi.mocked(getOwnedGames).mockResolvedValue({
+      game_count: 1,
+      games: [{ appid: 999, name: 'No Icon', playtime_forever: 200 }], // no img_icon_url
+    })
+    vi.mocked(getPlayerSummary).mockResolvedValue({})
+    vi.mocked(generateSteamSummary).mockResolvedValue(null)
+
+    const result = await syncSteamData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/steam/widget-content',
+      expect.objectContaining({
+        collections: expect.objectContaining({
+          ownedGames: [
+            expect.objectContaining({
+              id: 999,
+              images: expect.objectContaining({ icon: '' }),
+            }),
+          ],
+        }),
+      }),
+    )
+  })
+
+  it('surfaces non-Error failures when persisting Steam data', async () => {
+    vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
+    vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 0, games: [] })
+    vi.mocked(getPlayerSummary).mockResolvedValue({})
+    vi.mocked(generateSteamSummary).mockResolvedValue(null)
+    vi.mocked(documentStore.setDocument).mockRejectedValue('disk full')
+
+    const result = await syncSteamData(documentStore)
+
+    expect(result).toEqual({
+      result: 'FAILURE',
+      error: 'disk full',
+    })
+  })
+
   it('should continue writing Steam data to canonical collections', async () => {
     vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
     vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 0, games: [] })

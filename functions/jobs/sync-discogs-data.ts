@@ -19,6 +19,9 @@ import {
   DISCOGS_USERNAME
 } from '../config/constants.js'
 
+const truncateLabel = (s: string, max = 64): string =>
+  s.length > max ? `${s.slice(0, max - 1)}…` : s
+
 /*
 
 Sync Discogs Data
@@ -79,11 +82,15 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, release) => {
 
 const syncDiscogsData = async (
   documentStore: DocumentStore,
-  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  { userId = getDefaultWidgetUserId(), onProgress }: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
   try {
     const discogsCollectionPath = toProviderCollectionPath('discogs', userId)
+    onProgress?.({
+      phase: 'discogs.collection',
+      message: 'Fetching your Discogs collection.',
+    })
     const discogsResponse = await fetchDiscogsReleases()
 
     const { releases, pagination } = discogsResponse
@@ -94,11 +101,12 @@ const syncDiscogsData = async (
     const estimatedTimeSeconds = Math.ceil(releases.length / 2) // With concurrency=2
     logger.info(`Estimated completion time: ~${estimatedTimeSeconds} seconds (with 1s delays)`)
 
-    // Fetch detailed data for all releases in parallel
+    // Per-release progress is reported from fetchReleasesBatch
     const enhancedReleases = await fetchReleasesBatch(releases, {
       concurrency: 2, // Small concurrency to balance speed vs rate limits
+      delayMs: 1000, // 1 second delay between requests to respect rate limits
+      onProgress,
       stopOnError: false,
-      delayMs: 1000 // 1 second delay between requests to respect rate limits
     })
 
     const storedMediaFileNames = await listStoredMedia()
@@ -127,6 +135,10 @@ const syncDiscogsData = async (
       sizeReduction: documentSizeBytes > 1048576 ? 'Filtered resource data to reduce size' : 'No filtering needed',
     })
 
+    onProgress?.({
+      phase: 'discogs.save_raw',
+      message: 'Saving raw Discogs collection snapshot to storage.',
+    })
     // Save the raw Discogs response data (with enhanced releases)
     await documentStore.setDocument(`${discogsCollectionPath}/last-response`, documentToSave)
 
@@ -147,8 +159,24 @@ const syncDiscogsData = async (
       }
     }
 
+    onProgress?.({
+      phase: 'discogs.save_widget',
+      message: 'Saving Discogs widget document.',
+    })
     // Save the widget content
     await documentStore.setDocument(`${discogsCollectionPath}/widget-content`, updatedWidgetContent)
+
+    const titleByReleaseId = new Map<string, string>()
+    for (const raw of enhancedReleases as Record<string, unknown>[]) {
+      const rid = raw.id != null ? String(raw.id) : ''
+      if (!rid) continue
+      const bi = raw.basic_information as Record<string, unknown> | undefined
+      const t = bi?.title
+      titleByReleaseId.set(
+        rid,
+        typeof t === 'string' && t.trim().length > 0 ? t.trim() : `Release ${rid}`,
+      )
+    }
 
     const mediaToDownloadTyped = mediaToDownload as { destinationPath: string; id: string; mediaURL: string }[]
     if (!mediaToDownloadTyped.length) {
@@ -162,10 +190,25 @@ const syncDiscogsData = async (
 
     let result: { fileName?: string }[]
     try {
-      result = await pMap(mediaToDownloadTyped, storeRemoteMedia, {
-        concurrency: 10,
-        stopOnError: false,
-      })
+      result = await pMap(
+        mediaToDownloadTyped,
+        async (item) => {
+          const releaseKey = String(item.id).replace(/_thumb$|_cover$/, '')
+          const album = truncateLabel(titleByReleaseId.get(releaseKey) ?? `release ${releaseKey}`)
+          const isThumb = String(item.id).endsWith('_thumb')
+          onProgress?.({
+            phase: 'discogs.artwork',
+            message: isThumb
+              ? `Downloading vinyl thumbnail for “${album}”.`
+              : `Downloading vinyl cover image for “${album}”.`,
+          })
+          return storeRemoteMedia(item)
+        },
+        {
+          concurrency: 10,
+          stopOnError: false,
+        }
+      )
     } catch (error) {
       logger.error('Something went wrong downloading media files', error)
       result = []

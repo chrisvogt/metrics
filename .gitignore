@@ -48,6 +48,10 @@ build/Release
 # Dependency directories
 node_modules/
 
+# npm lockfiles under workspace packages (root uses pnpm-lock.yaml only)
+hosting/package-lock.json
+functions/package-lock.json
+
 # Turborepo (local task cache)
 .turbo
 

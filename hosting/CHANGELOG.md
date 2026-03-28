@@ -17,6 +17,18 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Vite** – `vite.config.ts`, SPA entry (`main.tsx` / `App.tsx`), and unused `react-router-dom` wrapper.
 - **Hosting SPA catch-all** – Dropped `firebase.json` rewrite `**` → `/index.html` so unknown paths use Firebase’s **`404.html`** from `hosting/out` instead of always loading the home shell.
 
+## [0.5.0] - 2026-03-27
+
+### Added
+
+- **Schema** – Row and sample payload for manual sync **SSE** `GET /api/widgets/sync/{provider}/stream` (`text/event-stream`: `progress` / `done` / `error`).
+- **JsonCodeBlock** – Lowlight-based JSON examples on the schema page (reuses shared example objects).
+- **Sync** – Consumes the SSE stream during manual sync for live status (same session as the JSON route).
+
+### Changed
+
+- **Schema** – Sync section intro contrasts queue-backed JSON `GET …/sync/{provider}` vs streaming `…/stream`.
+
 ## [0.4.0] - 2026-03-26
 
 ### Added
