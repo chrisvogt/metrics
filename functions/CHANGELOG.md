@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.2] - 2026-03-28
+
+### Changed
+
+- **Goodreads AI summary** – Gemini prompt asks for **two or three** `<p>` paragraphs (replacing “exactly two”). `normalizeParagraphSummary` keeps **all** returned `<p>` blocks; the homepage UI collapses extra paragraphs behind “Read more,” so the backend no longer truncates a third paragraph.
+
+### Developer experience
+
+- **Tests** – `generate-goodreads-summary` asserts full multi-paragraph HTML and updated prompt copy.
+
 ## [0.25.1] - 2026-03-28
 
 ### Fixed
@@ -540,6 +550,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _This changelog was started with v0.8.0._
 
+[0.25.2]: https://github.com/chrisvogt/metrics/compare/v0.25.1...v0.25.2
+[0.25.1]: https://github.com/chrisvogt/metrics/compare/v0.25.0...v0.25.1
 [0.25.0]: https://github.com/chrisvogt/metrics/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/chrisvogt/metrics/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/chrisvogt/metrics/compare/v0.22.0...v0.23.0

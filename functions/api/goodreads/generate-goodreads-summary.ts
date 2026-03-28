@@ -17,26 +17,22 @@ type GeminiGoodreadsSummaryJson = {
   debug?: Record<string, unknown>
 }
 
-/** UI on chrisvogt.me expects exactly two <p> blocks side by side with the book list */
+/** Extract top-level <p> blocks; the homepage UI collapses extra paragraphs behind “Read more”. */
 const extractParagraphTags = (html: string): string[] => {
   const re = /<p\b[^>]*>[\s\S]*?<\/p>/gi
   return html.match(re) ?? []
 }
 
-const ensureTwoParagraphSummary = (html: string): string => {
+const normalizeParagraphSummary = (html: string): string => {
   const paras = extractParagraphTags(html)
   if (paras.length === 0) {
     return html.trim()
   }
   if (paras.length === 1) {
-    logger.warn('Goodreads AI summary contained only one <p>; homepage layout expects two.')
+    logger.warn('Goodreads AI summary contained only one <p>.')
     return paras[0]
   }
-  if (paras.length > 2) {
-    logger.info(`Goodreads AI summary had ${paras.length} <p> tags; using the first two for the widget.`)
-    return paras[0] + paras[1]
-  }
-  return paras[0] + paras[1]
+  return paras.join('')
 }
 
 /**
@@ -76,7 +72,7 @@ You are writing a short, reader-facing “AI reading summary” for Chris Vogt�
 
 Return **valid JSON only** (no markdown fences, no commentary) using this shape:
 {
-  "response": "<string: exactly two HTML paragraphs, see rules below>",
+  "response": "<string: two or three HTML paragraphs, see rules below>",
   "debug": {
     "recentlyReadBooks": [...],
     "readingPatterns": [...]
@@ -84,7 +80,7 @@ Return **valid JSON only** (no markdown fences, no commentary) using this shape:
 }
 
 Rules for the "response" string (strict — the UI is built for this):
-- **Exactly two** <p>...</p> elements, back-to-back, with nothing before, between, or after them (no wrapper <div>, no line breaks outside the tags).
+- **Two or three** <p>...</p> elements, back-to-back, with nothing before, between, or after them (no wrapper <div>, no line breaks outside the tags).
 - **Third person** only, referring to him as **Chris** (e.g. “Chris tends to…”, “He often…”). Never “I”, “you”, or “the reader”.
 - Tone: calm, specific, a little editorial — like a sharp one-column blurb in a magazine, not marketing fluff. Avoid generic openers (“Chris loves books”, “As an avid reader”).
 - **Do not** repeat or enumerate the book list; at most **one** quick nod to a title or theme if it sharpens a point. Ratings are visible elsewhere — mention them only if unusual or telling.
@@ -115,7 +111,7 @@ Goodreads Profile: ${profile?.name || profile?.username || 'Chris Vogt'}
       throw new Error('Gemini response was not valid JSON (no markdown block or raw JSON)')
     }
     const { response: sanitizedResponse = '' } = parsed
-    return ensureTwoParagraphSummary(sanitizedResponse)
+    return normalizeParagraphSummary(sanitizedResponse)
   } catch (error) {
     logger.error('Error generating Goodreads summary with Gemini:', error)
     throw new Error(`Failed to generate AI summary: ${error.message}`, { cause: error })
