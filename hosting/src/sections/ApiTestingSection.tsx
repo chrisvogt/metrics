@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import type { SectionId } from '../layout/Layout'
 import { useAuth } from '../auth/AuthContext'
 import { ApiClient } from '../auth/apiClient'
-import { getAppBaseUrl } from '../lib/baseUrl'
+import { getAppBaseUrl, getSyncStreamBaseUrl } from '../lib/baseUrl'
 import styles from './ApiTestingSection.module.css'
 
 const WIDGET_PROVIDERS = ['discogs', 'flickr', 'github', 'goodreads', 'instagram', 'spotify', 'steam'] as const
@@ -166,7 +166,9 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
     }
 
     try {
-      const res = await fetch(`${baseUrl}/api/widgets/sync/${syncProvider}/stream`, {
+      const streamBase = getSyncStreamBaseUrl()
+      const streamUrl = `${streamBase}/api/widgets/sync/${syncProvider}/stream`
+      const res = await fetch(streamUrl, {
         headers: { Authorization: `Bearer ${idToken}` },
         credentials: 'include',
         cache: 'no-store',

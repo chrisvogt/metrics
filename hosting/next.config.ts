@@ -32,6 +32,13 @@ const nextConfig: NextConfig = {
     /** Public site hostname for this tenant (overview title, etc.). Override per deployment. */
     NEXT_PUBLIC_TENANT_DISPLAY_HOST:
       process.env.NEXT_PUBLIC_TENANT_DISPLAY_HOST ?? 'www.chrisvogt.me',
+    /**
+     * Base URL for the deployed `app` HTTPS function (no trailing slash).
+     * SSE/manual sync streams must call this origin so responses are not buffered by Firebase Hosting rewrites.
+     */
+    NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN:
+      process.env.NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN ??
+      'https://us-central1-personal-stats-chrisvogt.cloudfunctions.net/app',
   },
   /**
    * This rewrite exists only to make `next dev` feel like production.
