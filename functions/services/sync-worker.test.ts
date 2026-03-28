@@ -317,6 +317,32 @@ describe('runNextSyncJob', () => {
     })
   })
 
+  it('passes onProgress into provider jobs when processSyncJob receives it', async () => {
+    const onProgress = vi.fn()
+    vi.mocked(syncFlickrData).mockResolvedValue({ result: 'SUCCESS' })
+
+    await processSyncJob({
+      documentStore,
+      job: {
+        runCount: 1,
+        enqueuedAt: '2026-03-21T02:00:00.000Z',
+        jobId: 'sync-chrisvogt-flickr',
+        mode: 'sync',
+        provider: 'flickr',
+        status: 'processing',
+        updatedAt: '2026-03-21T02:00:00.000Z',
+        userId: 'chrisvogt',
+      },
+      syncJobQueue,
+      onProgress,
+    })
+
+    expect(syncFlickrData).toHaveBeenCalledWith(documentStore, {
+      userId: 'chrisvogt',
+      onProgress,
+    })
+  })
+
   it('fails with a helpful error when the provider is not implemented', async () => {
     await expect(processSyncJob({
       documentStore,

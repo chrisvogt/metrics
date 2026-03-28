@@ -532,6 +532,81 @@ describe('syncGoodreadsData', () => {
       expect(result.data.collections.updates[1].cdnMediaURL).toBeDefined()
     })
 
+    it('invokes onProgress for Goodreads SSE phases when Google Books and covers run', async () => {
+      const onProgress = vi.fn()
+      const mockUserData = {
+        profile: { displayName: 'Test User' },
+        updates: [
+          {
+            id: 'u1',
+            type: 'userstatus',
+            book: { isbn13: '9781111111111', title: 'Cached' },
+          },
+          {
+            id: 'u2',
+            type: 'userstatus',
+            book: { isbn13: '9782222222222', title: 'Need Fetch' },
+          },
+        ],
+        jsonResponse: { user: 'data' },
+      }
+
+      const mockRecentlyReadData = {
+        books: [
+          {
+            id: 'b1',
+            isbn: '9781111111111',
+            title: 'Cached',
+            cdnMediaURL: 'https://cdn.example.com/cached.jpg',
+            mediaDestinationPath: 'books/cached.jpg',
+          },
+        ],
+        rawReviewsResponse: { reviews: 'data' },
+      }
+
+      const mockGoogleBookResult = {
+        book: {
+          id: 'gb2',
+          volumeInfo: {
+            title: 'Need Fetch',
+            imageLinks: { thumbnail: 'http://books.google.com/t2.jpg' },
+          },
+        },
+        rating: null,
+      }
+
+      fetchUser.mockResolvedValue(mockUserData)
+      fetchRecentlyReadBooks.mockResolvedValue(mockRecentlyReadData)
+      mockFetchBookFromGoogle.mockResolvedValue(mockGoogleBookResult)
+      mockListStoredMedia.mockResolvedValue([])
+      fetchFullReadShelfForAi.mockResolvedValue([{ title: 'Shelf A' }])
+      generateGoodreadsSummary.mockResolvedValue('<p>x</p><p>y</p>')
+
+      mockPMap.mockImplementation(async (items, mapper) => {
+        const results = []
+        for (let i = 0; i < items.length; i++) {
+          results.push(await mapper(items[i], i))
+        }
+        return results
+      })
+
+      const resultPromise = syncGoodreadsData(documentStore, { onProgress })
+      await vi.runAllTimersAsync()
+      const result = await resultPromise
+
+      expect(result.result).toBe('SUCCESS')
+      expect(onProgress.mock.calls.map((c) => c[0].phase)).toEqual(
+        expect.arrayContaining([
+          'goodreads.books',
+          'goodreads.full_shelf',
+          'goodreads.google_books',
+          'goodreads.covers',
+          'goodreads.ai',
+          'goodreads.persist',
+        ]),
+      )
+    })
+
     it('should match userstatus updates with existing books by ISBN10 when ISBN13 not available', async () => {
       const mockUserData = {
         profile: { displayName: 'Test User' },

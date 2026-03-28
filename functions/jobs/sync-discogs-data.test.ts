@@ -44,6 +44,7 @@ vi.mock('../transformers/to-discogs-destination-path.js', () => ({
 }))
 
 import fetchDiscogsReleases from '../api/discogs/fetch-releases.js'
+import fetchReleasesBatch from '../api/discogs/fetch-releases-batch.js'
 import { listStoredMedia, storeRemoteMedia } from '../services/media/media-service.js'
 
 describe('syncDiscogsData', () => {
@@ -249,6 +250,80 @@ describe('syncDiscogsData', () => {
       result: 'FAILURE',
       error: 'rate limited',
     })
+  })
+
+  it('skips title map entries when an enhanced release row has no id', async () => {
+    vi.mocked(fetchReleasesBatch).mockImplementationOnce(async (releases: unknown) => [
+      ...(releases as object[]),
+      { basic_information: { title: 'No id row' } },
+    ])
+    vi.mocked(fetchDiscogsReleases).mockResolvedValue({
+      pagination: { items: 1, page: 1, pages: 1, per_page: 1, urls: {} },
+      releases: [
+        {
+          id: 1,
+          basic_information: {
+            thumb: 'https://example.com/thumb.jpg',
+            cover_image: null,
+          },
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    const result = await syncDiscogsData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+  })
+
+  it('uses cover-image wording for cover-only artwork downloads', async () => {
+    const onProgress = vi.fn()
+    vi.mocked(fetchDiscogsReleases).mockResolvedValue({
+      pagination: { items: 1, page: 1, pages: 1, per_page: 1, urls: {} },
+      releases: [
+        {
+          id: 400,
+          basic_information: {
+            title: 'Cover only',
+            thumb: null,
+            cover_image: 'https://example.com/cover.jpg',
+          },
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncDiscogsData(documentStore, { onProgress })
+
+    const artworkMsg = onProgress.mock.calls.find((c) => c[0].phase === 'discogs.artwork')?.[0]
+      .message as string
+    expect(artworkMsg).toContain('cover image')
+  })
+
+  it('truncates very long album titles in artwork progress messages', async () => {
+    const onProgress = vi.fn()
+    const longTitle = 'Z'.repeat(90)
+    vi.mocked(fetchDiscogsReleases).mockResolvedValue({
+      pagination: { items: 1, page: 1, pages: 1, per_page: 1, urls: {} },
+      releases: [
+        {
+          id: 301,
+          basic_information: {
+            title: longTitle,
+            thumb: 'https://example.com/thumb.jpg',
+            cover_image: null,
+          },
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncDiscogsData(documentStore, { onProgress })
+
+    const artworkMsg = onProgress.mock.calls.find((c) => c[0].phase === 'discogs.artwork')?.[0]
+      .message as string
+    expect(artworkMsg).toContain('…')
+    expect(artworkMsg.length).toBeLessThan(longTitle.length + 50)
   })
 
   it('uses fallback album titles when basic_information.title is empty', async () => {

@@ -348,6 +348,32 @@ describe('createExpressApp route coverage', () => {
     expect(response.end).toHaveBeenCalled()
   })
 
+  it('returns 400 for manual sync stream when provider param is not a string', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+
+    const streamHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider/stream')
+    const response = {
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    }
+
+    await streamHandler({ params: { provider: ['spotify'] as unknown as string } }, response)
+
+    expect(logger.info).toHaveBeenCalledWith(
+      'Attempted to sync stream for an unrecognized provider: undefined',
+    )
+    expect(response.status).toHaveBeenCalledWith(400)
+  })
+
   it('returns 400 for manual sync stream when provider param is missing', async () => {
     const { createExpressApp } = await import('./create-express-app.js')
     const app = createExpressApp({
