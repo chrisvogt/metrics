@@ -7,6 +7,12 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-03-28
+
+### Fixed
+
+- **Firebase Hosting** — `firebase.json` sets `Cache-Control` so HTML and other documents revalidate (`public, max-age=0, must-revalidate`) while `/_next/static/**` remains long-lived (`immutable`), reducing post-deploy `ChunkLoadError` and odd client-side navigation when the CDN or browser kept an older shell.
+
 ## [0.6.2] - 2026-03-28
 
 ### Fixed
