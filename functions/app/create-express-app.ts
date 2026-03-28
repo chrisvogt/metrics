@@ -565,7 +565,7 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/client-auth-config',
-    createRateLimiter(15 * 60 * 1000, 20),
+    createRateLimiter(15 * 60 * 1000, 100),
     async (_req, res) => {
       await sendClientAuthConfig(res)
     }
@@ -573,7 +573,7 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/firebase-config',
-    createRateLimiter(15 * 60 * 1000, 20),
+    createRateLimiter(15 * 60 * 1000, 100),
     async (_req, res) => {
       await sendClientAuthConfig(res)
     }
