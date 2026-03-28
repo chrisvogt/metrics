@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { SectionId } from '../layout/Layout'
 import { useAuth } from '../auth/AuthContext'
 import { ApiClient } from '../auth/apiClient'
@@ -37,6 +37,8 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
   const [widgetResult, setWidgetResult] = useState<FetchResult | null>(null)
   const [sessionResult, setSessionResult] = useState<FetchResult | null>(null)
   const [syncResult, setSyncResult] = useState<FetchResult | null>(null)
+  /** Single line swapped on each SSE progress event (AI-style “thinking”, not a log). */
+  const [syncThinkingLine, setSyncThinkingLine] = useState<string | null>(null)
   const [loading, setLoading] = useState<LoadingState>({
     widgets: false,
     session: false,
@@ -44,6 +46,23 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
   })
   const baseUrl = getAppBaseUrl()
   const apiClient = new ApiClient(baseUrl)
+
+  useEffect(() => {
+    if (!user) {
+      setIdToken(null)
+      return
+    }
+    let cancelled = false
+    user
+      .getIdToken()
+      .then((token) => {
+        if (!cancelled) setIdToken(token)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   const showApi = activeSection === 'api'
   const showSync = activeSection === 'sync'
@@ -110,20 +129,87 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
     if (!idToken) return
     setLoading((l) => ({ ...l, sync: true }))
     setSyncResult(null)
+    setSyncThinkingLine('Starting sync…')
     const start = Date.now()
+
+    const applySseLine = (raw: string) => {
+      const line = raw.replace(/\r$/, '')
+      if (!line.startsWith('data: ')) return
+      let payload: {
+        type?: string
+        message?: string
+        result?: unknown
+      }
+      try {
+        payload = JSON.parse(line.slice(6)) as typeof payload
+      } catch {
+        return
+      }
+      if (payload.type === 'progress' && typeof payload.message === 'string') {
+        setSyncThinkingLine(payload.message)
+      }
+      if (payload.type === 'done') {
+        setSyncResult({
+          ok: true,
+          status: 200,
+          time: Date.now() - start,
+          data: payload.result,
+        })
+      }
+      if (payload.type === 'error') {
+        setSyncResult({
+          ok: false,
+          time: Date.now() - start,
+          error: typeof payload.message === 'string' ? payload.message : 'Sync stream error',
+        })
+      }
+    }
+
     try {
-      const res = await fetch(`${baseUrl}/api/widgets/sync/${syncProvider}`, {
+      const res = await fetch(`${baseUrl}/api/widgets/sync/${syncProvider}/stream`, {
         headers: { Authorization: `Bearer ${idToken}` },
         credentials: 'include',
         cache: 'no-store',
       })
-      const data = await res.json().catch(() => ({}))
-      setSyncResult({
-        ok: res.ok,
-        status: res.status,
-        time: Date.now() - start,
-        data,
-      })
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '')
+        setSyncResult({
+          ok: false,
+          status: res.status,
+          time: Date.now() - start,
+          error: errText || `HTTP ${res.status}`,
+        })
+        setSyncThinkingLine(null)
+        return
+      }
+
+      if (!res.body) {
+        setSyncResult({
+          ok: false,
+          time: Date.now() - start,
+          error: 'No response body (streaming not supported?)',
+        })
+        setSyncThinkingLine(null)
+        return
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const parts = buffer.split('\n')
+        buffer = parts.pop() ?? ''
+        for (const part of parts) {
+          applySseLine(part)
+        }
+      }
+      if (buffer.trim()) {
+        applySseLine(buffer)
+      }
     } catch (err) {
       setSyncResult({
         ok: false,
@@ -131,6 +217,7 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
         time: Date.now() - start,
       })
     } finally {
+      setSyncThinkingLine(null)
       setLoading((l) => ({ ...l, sync: false }))
     }
   }
@@ -221,17 +308,20 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
           <div className={styles.block}>
             <h2 className={styles.sectionTitle}>Sync</h2>
             <p className={styles.sectionSubtitle}>
-              Trigger a sync for a provider. Use the API page to get a token and create a session first.
+              Trigger a sync for a provider. Your ID token loads automatically when you’re signed in; use the API page
+              to force-refresh it or create a session cookie.
             </p>
           </div>
           <div className={styles.block}>
             <h3 className={styles.blockTitle}>Sync provider</h3>
             <p className={styles.blockText}>
-              Runs the queue-backed sync flow for a provider and returns the enqueue plus worker state.
+              Runs the queue-backed sync via{' '}
+              <code className={styles.inlineCode}>GET /api/widgets/sync/&#123;provider&#125;/stream</code>{' '}
+              (server-sent events with live steps, then the same final payload as the JSON endpoint).
             </p>
             <div className={styles.endpoint}>
               <span className={styles.methodGet}>GET</span>
-              <code className={styles.path}>/api/widgets/sync/&#123;provider&#125;</code>
+              <code className={styles.path}>/api/widgets/sync/&#123;provider&#125;/stream</code>
               <div className={styles.controls}>
                 <select
                   value={syncProvider}
@@ -253,6 +343,22 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
                   {loading.sync ? 'Testing…' : 'Test'}
                 </button>
               </div>
+              {loading.sync && syncThinkingLine !== null ? (
+                <div className={styles.thinkingShell} role="status" aria-live="polite">
+                  <div className={styles.thinkingHeader}>
+                    <span className={styles.thinkingPulse} aria-hidden />
+                    <span className={styles.thinkingTitle}>Thinking</span>
+                    <span className={styles.thinkingDots} aria-hidden>
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  </div>
+                  <p key={syncThinkingLine} className={styles.thinkingLine}>
+                    {syncThinkingLine}
+                  </p>
+                </div>
+              ) : null}
               {syncResult && <ResultBox result={syncResult} />}
             </div>
           </div>

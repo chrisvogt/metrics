@@ -55,12 +55,19 @@ const transformSteamGame = (game) => {
  */
 const syncSteamData = async (
   documentStore: DocumentStore,
-  { userId: targetUserId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  {
+    userId: targetUserId = getDefaultWidgetUserId(),
+    onProgress,
+  }: SyncJobExecutionOptions = {}
 ): Promise<SyncJobResult<Record<string, unknown>>> => {
   const logger = getLogger()
   const { apiKey, userId } = getSteamConfig()
   const steamCollectionPath = toProviderCollectionPath('steam', targetUserId)
 
+  onProgress?.({
+    phase: 'steam.api',
+    message: 'Loading your Steam profile, library, and recently played games.',
+  })
   const [recentlyPlayedGames, ownedGames, playerSummary] = await Promise.all([
     getRecentlyPlayedGames(apiKey, userId),
     getOwnedGames(apiKey, userId),
@@ -132,6 +139,10 @@ const syncSteamData = async (
   // Generate AI summary using Gemini
   let aiSummary: unknown = null
   try {
+    onProgress?.({
+      phase: 'steam.ai',
+      message: 'Generating Steam play-summary (AI).',
+    })
     aiSummary = await generateSteamSummary(widgetContent)
     widgetContent.aiSummary = aiSummary
   } catch (error) {
@@ -152,6 +163,10 @@ const syncSteamData = async (
   }
 
   try {
+    onProgress?.({
+      phase: 'steam.persist',
+      message: 'Saving Steam library, recents, and widget data to storage.',
+    })
     await Promise.all([
       saveOwnedGames(),
       savePlayerSummary(),

@@ -38,7 +38,7 @@ import type {
   GoodreadsReviewBook,
 } from '../types/goodreads.js'
 import type { GoodreadsWidgetDocument } from '../types/widget-content.js'
-import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
+import type { SyncJobExecutionOptions, SyncProgressReporter } from '../types/sync-pipeline.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
@@ -94,6 +94,7 @@ type GoodreadsUpdateWithMedia = GoodreadsUpdate & {
 const processUpdatesWithMedia = async (
   updates: GoodreadsUpdate[] | null | undefined = [],
   books: GoodreadsRecentlyReadBook[] = [],
+  onProgress?: SyncProgressReporter,
 ): Promise<GoodreadsUpdateWithMedia[] | null | undefined> => {
   const logger = getLogger()
   if (!updates || updates.length === 0) {
@@ -149,6 +150,10 @@ const processUpdatesWithMedia = async (
   // Fetch books for updates that don't have matching books
   // Deduplicate by ISBN or title to avoid fetching the same book multiple times
   if (updatesNeedingBooks.length > 0) {
+    onProgress?.({
+      phase: 'goodreads.google_books',
+      message: 'Fetching book data from Google Books.',
+    })
     // Create a map of unique books to fetch (keyed by ISBN or title)
     const uniqueBooksToFetch = new Map<
       string,
@@ -348,6 +353,10 @@ const processUpdatesWithMedia = async (
       }))
 
     if (mediaToDownload.length > 0) {
+      onProgress?.({
+        phase: 'goodreads.covers',
+        message: 'Fetching book cover images.',
+      })
       try {
         await pMap(mediaToDownload, storeRemoteMedia, {
           concurrency: 10,
@@ -471,9 +480,15 @@ type FetchAllGoodreadsPromisesSuccess = {
 
 type FetchAllGoodreadsPromisesResult = FetchAllGoodreadsPromisesSuccess | { error: string }
 
-const fetchAllGoodreadsPromises = async (): Promise<FetchAllGoodreadsPromisesResult> => {
+const fetchAllGoodreadsPromises = async (
+  onProgress?: SyncProgressReporter,
+): Promise<FetchAllGoodreadsPromisesResult> => {
   const logger = getLogger()
   try {
+    onProgress?.({
+      phase: 'goodreads.books',
+      message: 'Fetching books from Goodreads.',
+    })
     const [user, recentlyRead] = await Promise.all([
       fetchUser(),
       fetchRecentlyReadBooks(),
@@ -481,6 +496,10 @@ const fetchAllGoodreadsPromises = async (): Promise<FetchAllGoodreadsPromisesRes
 
     let fullReadShelf: GoodreadsAiReadShelfEntry[] = []
     try {
+      onProgress?.({
+        phase: 'goodreads.full_shelf',
+        message: 'Scanning your full read shelf for the AI summary.',
+      })
       fullReadShelf = await fetchFullReadShelfForAi()
     } catch (error: unknown) {
       logger.warn(
@@ -492,7 +511,7 @@ const fetchAllGoodreadsPromises = async (): Promise<FetchAllGoodreadsPromisesRes
     const processedUpdates =
       user.updates == null
         ? null
-        : await processUpdatesWithMedia(user.updates, recentlyRead.books ?? [])
+        : await processUpdatesWithMedia(user.updates, recentlyRead.books ?? [], onProgress)
 
     return {
       collections: {
@@ -518,11 +537,11 @@ const fetchAllGoodreadsPromises = async (): Promise<FetchAllGoodreadsPromisesRes
  */
 const syncGoodreadsData = async (
   documentStore: DocumentStore,
-  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  { userId = getDefaultWidgetUserId(), onProgress }: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
   const goodreadsCollectionPath = toProviderCollectionPath('goodreads', userId)
-  const result = await fetchAllGoodreadsPromises()
+  const result = await fetchAllGoodreadsPromises(onProgress)
 
   if ('error' in result) {
     logger.error('Failed to fetch Goodreads data.', result.error)
@@ -543,6 +562,10 @@ const syncGoodreadsData = async (
   // Generate AI summary using Gemini
   let aiSummary: string | undefined
   try {
+    onProgress?.({
+      phase: 'goodreads.ai',
+      message: 'Generating Goodreads AI summary.',
+    })
     aiSummary = await generateGoodreadsSummary(widgetContent, {
       fullReadShelf: result.fullReadShelf,
     })
@@ -581,6 +604,10 @@ const syncGoodreadsData = async (
   }
 
   try {
+    onProgress?.({
+      phase: 'goodreads.persist',
+      message: 'Saving Goodreads profile, books, and summaries to storage.',
+    })
     await Promise.all([
       saveUserResponse(),
       saveBookReviews(),

@@ -1,4 +1,4 @@
-import compression from 'compression'
+import compressionImport from 'compression'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
@@ -68,6 +68,14 @@ const buildFailureResponse = (err: unknown = {}): { ok: false; error: string } =
 
 const ALLOWED_EMAIL_DOMAINS = ['@chrisvogt.me', '@chronogrove.com']
 const CSRF_SECRET_COOKIE = '_csrfSecret'
+
+/** `compression` supports options + `.filter` at runtime; default typings are incomplete. */
+type CompressionMiddleware = ((
+  options?: { filter?: (req: express.Request, res: express.Response) => boolean }
+) => express.RequestHandler) & {
+  filter: (req: express.Request, res: express.Response) => boolean
+}
+const compression = compressionImport as unknown as CompressionMiddleware
 
 /** Public widget reads: skip CSRF so lusca does not set cookies (would prevent CDN caching). */
 const CSRF_EXCLUDED_PATHS_WIDGET_READS = widgetIds.map((id) => ({
@@ -232,7 +240,17 @@ export function createExpressApp({
     }
   }
 
-  expressApp.use(compression())
+  expressApp.use(
+    compression({
+      filter: (req, res) => {
+        const pathStr = req.path ?? req.url ?? ''
+        if (pathStr.includes('/api/widgets/sync/') && pathStr.endsWith('/stream')) {
+          return false
+        }
+        return compression.filter(req, res)
+      },
+    })
+  )
   expressApp.use(cookieParser())
   expressApp.use(
     lusca.csrf({
@@ -319,6 +337,53 @@ export function createExpressApp({
           res.sendStatus(sendFileError.code === 'ENOENT' ? 404 : 500)
         }
       })
+    }
+  )
+
+  expressApp.get(
+    '/api/widgets/sync/:provider/stream',
+    cors(corsOptions),
+    createRateLimiter(15 * 60 * 1000, 10),
+    async (req, res) => {
+      const providerParam = req.params.provider
+      const provider = typeof providerParam === 'string' ? providerParam : undefined
+
+      if (!provider || !isSyncProviderId(provider)) {
+        logger.info(`Attempted to sync stream for an unrecognized provider: ${provider}`)
+        res.status(400).send('Unrecognized or unsupported provider.')
+        return
+      }
+
+      res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
+      res.setHeader('Cache-Control', 'no-cache, no-transform')
+      res.setHeader('Connection', 'keep-alive')
+      res.setHeader('X-Accel-Buffering', 'no')
+
+      const writeEvent = (payload: unknown) => {
+        try {
+          res.write(`data: ${JSON.stringify(payload)}\n\n`)
+        } catch {
+          // Client disconnected
+        }
+      }
+
+      try {
+        const result = await runSyncForProvider({
+          documentStore,
+          provider,
+          syncJobQueue,
+          onProgress: (event) => writeEvent({ type: 'progress', ...event }),
+        })
+        writeEvent({ type: 'done', result })
+      } catch (err) {
+        logger.error(`Error syncing ${provider} data (SSE).`, err)
+        writeEvent({
+          type: 'error',
+          message: err instanceof Error ? err.message : String(err),
+        })
+      } finally {
+        res.end()
+      }
     }
   )
 

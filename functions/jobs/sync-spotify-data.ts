@@ -73,10 +73,14 @@ const syncSpotifyTopTracks = async (
   options: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
-  const { userId = getDefaultWidgetUserId() } = options
+  const { userId = getDefaultWidgetUserId(), onProgress } = options
   const spotifyCollectionPath = toProviderCollectionPath('spotify', userId)
   const { clientId, clientSecret, redirectUri: redirectURI, refreshToken } = getSpotifyConfig()
 
+  onProgress?.({
+    phase: 'spotify.token',
+    message: 'Refreshing Spotify access token.',
+  })
   const { accessToken } = await getSpotifyAccessToken({
     clientId,
     clientSecret,
@@ -93,6 +97,10 @@ const syncSpotifyTopTracks = async (
 
   let userProfile
   try {
+    onProgress?.({
+      phase: 'spotify.profile',
+      message: 'Fetching your Spotify profile.',
+    })
     userProfile = await getSpotifyUserProfile(accessToken)
   } catch (error) {
     logger.error('Failed to fetch Spotify user profile.', error)
@@ -104,6 +112,10 @@ const syncSpotifyTopTracks = async (
 
   let topTracks
   try {
+    onProgress?.({
+      phase: 'spotify.top_tracks',
+      message: 'Fetching your top tracks.',
+    })
     topTracks = await getSpotifyTopTracks(accessToken)
   } catch (error) {
     logger.error('Failed to fetch Spotify top tracks.', error)
@@ -117,6 +129,10 @@ const syncSpotifyTopTracks = async (
   let playlistsCount
   let playlistsResponse
   try {
+    onProgress?.({
+      phase: 'spotify.playlists',
+      message: 'Fetching your playlists.',
+    })
     playlistsResponse = await getSpotifyPlaylists(accessToken)
     playlists = transformPlaylists(playlistsResponse.items, options)
     playlistsCount = playlistsResponse.total
@@ -135,6 +151,12 @@ const syncSpotifyTopTracks = async (
 
   let uploadResult
   try {
+    if (mediaToDownload.length > 0) {
+      onProgress?.({
+        phase: 'spotify.covers',
+        message: 'Caching playlist cover images.',
+      })
+    }
     uploadResult = await pMap(mediaToDownload, storeRemoteMedia, {
       concurrency: 10,
       stopOnError: false,
@@ -220,6 +242,10 @@ const syncSpotifyTopTracks = async (
     await documentStore.setDocument(`${spotifyCollectionPath}/widget-content`, widgetContent)
 
   try {
+    onProgress?.({
+      phase: 'spotify.persist',
+      message: 'Saving Spotify playlists, tracks, and profile to storage.',
+    })
     await Promise.all([
       savePlaylists(),
       saveTopTracksResponse(),

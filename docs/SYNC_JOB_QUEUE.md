@@ -12,7 +12,8 @@ The diagram below matches how the pieces fit together in this repo: planners and
 flowchart TB
   subgraph Entry["Entry points"]
     Planner["runSyncPlanner\n(scheduled: daily 02:00 US-Central)"]
-    Manual["GET /api/widgets/sync/:provider\n(manual sync, authenticated)"]
+    ManualJson["GET /api/widgets/sync/:provider\n(JSON manual sync)"]
+    ManualSse["GET /api/widgets/sync/:provider/stream\n(SSE progress + done/error)"]
     WorkerSched["runSyncWorker\n(scheduled: every 15 minutes)"]
   end
 
@@ -29,7 +30,8 @@ flowchart TB
   FS[("Firestore\nsync_jobs")]
 
   Planner --> PlanSvc
-  Manual --> ManualSvc
+  ManualJson --> ManualSvc
+  ManualSse --> ManualSvc
   WorkerSched --> WorkerSvc
 
   PlanSvc -->|"enqueue (per provider)"| FS
@@ -46,7 +48,8 @@ flowchart TB
 |------|-----------|-------------|
 | **Planner** (`functions/index.ts` → `runSyncPlanner`) | `planSyncJobs` | Enqueues one job per entry in `syncableWidgetIds` for the default widget user (`functions/services/sync-planner.js`). |
 | **Worker** (`runSyncWorker`) | `runNextSyncJob` | Picks **one** queued job via `claimNextJob()`, runs it, then updates status. |
-| **Manual HTTP** | `runSyncForProvider` | Enqueues (or skips if already queued/processing), then **claims that job id immediately** and runs `processSyncJob` inline so the response can include before/after queue state (`functions/services/sync-manual.js`). |
+| **Manual HTTP (JSON)** | `runSyncForProvider` | Enqueues (or skips if already queued/processing), then **claims that job id immediately** and runs `processSyncJob` inline so the response can include before/after queue state (`functions/services/sync-manual.js`). |
+| **Manual HTTP (SSE)** | Same `runSyncForProvider` with `onProgress` | Same queue semantics; **`GET /api/widgets/sync/:provider/stream`** responds with **`text/event-stream`** (`progress` events, terminal `done` or `error`). See `functions/app/create-express-app.ts`. |
 
 Planner and worker schedules are registered in `functions/index.ts` (worker uses `every 15 minutes`; planner uses the platform default, currently **daily at 02:00** in `us-central1`, see `functions/runtime/firebase-functions-runtime.ts`).
 
@@ -105,6 +108,6 @@ Failures and thrown errors get a summary with **`durationMs`** and **`result: 'F
 | Types | `functions/types/sync-pipeline.ts` |
 | Firestore adapter | `functions/adapters/sync/firestore-sync-job-queue.ts` |
 | Planner / manual / worker | `functions/services/sync-planner.ts`, `sync-manual.ts`, `sync-worker.ts` |
-| HTTP route | `functions/app/create-express-app.ts` (`/api/widgets/sync/:provider`) |
+| HTTP routes | `functions/app/create-express-app.ts` (`/api/widgets/sync/:provider`, `/api/widgets/sync/:provider/stream`) |
 | Firebase exports | `functions/index.ts` (`runSyncPlanner`, `runSyncWorker`) |
 | Bootstrap wiring | `functions/bootstrap/create-backend-bootstrap.ts` |

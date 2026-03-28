@@ -10,8 +10,18 @@ export interface QueuedSyncJobDescriptor {
   userId: string
 }
 
+/** Streamed to the browser during manual sync (SSE); ignored by scheduled worker. */
+export interface SyncProgressEvent {
+  /** Stable id for theming or i18n (e.g. goodreads.google_books). */
+  phase: string
+  message: string
+}
+
+export type SyncProgressReporter = (event: SyncProgressEvent) => void
+
 export interface SyncJobExecutionOptions {
   userId?: string
+  onProgress?: SyncProgressReporter
 }
 
 export type QueuedSyncJobStatus = 'queued' | 'processing' | 'completed' | 'failed'

@@ -169,3 +169,111 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.inlineCode {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+/* Chatbot-style “thinking” strip: one line at a time, no history (like Cursor / many AI UIs). */
+.thinkingShell {
+  margin-top: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--accent) 15%);
+  background: color-mix(in srgb, var(--surface) 88%, var(--accent) 8%);
+  border-left: 3px solid var(--accent);
+  box-shadow: 0 1px 18px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.thinkingHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.5rem;
+}
+
+.thinkingTitle {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-muted) 70%, var(--accent) 30%);
+}
+
+.thinkingPulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 65%, transparent);
+  animation: thinkingPulse 1.15s ease-in-out infinite;
+}
+
+@keyframes thinkingPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.thinkingDots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 2px;
+  align-items: center;
+}
+
+.thinkingDots span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  opacity: 0.35;
+  animation: thinkingDot 1.05s ease-in-out infinite;
+}
+
+.thinkingDots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.thinkingDots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes thinkingDot {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.thinkingLine {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+  animation: thinkingLineIn 0.32s ease;
+}
+
+@keyframes thinkingLineIn {
+  from {
+    opacity: 0.25;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

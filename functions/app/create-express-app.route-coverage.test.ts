@@ -294,4 +294,57 @@ describe('createExpressApp route coverage', () => {
     csrfAware(passthroughErr, {}, resPass, nextPass)
     expect(nextPass).toHaveBeenCalledWith(passthroughErr)
   })
+
+  it('streams manual sync progress as SSE and forwards onProgress', async () => {
+    const { runSyncForProvider } = await import('../services/sync-manual.js')
+    vi.mocked(runSyncForProvider).mockImplementationOnce(
+      async ({ onProgress }: { onProgress?: (e: { phase: string; message: string }) => void }) => {
+        onProgress?.({ phase: 'unit.test', message: 'Progress step' })
+        return {
+          afterJob: { jobId: 'j1', status: 'completed' },
+          beforeJob: { jobId: 'j1', status: 'queued' },
+          enqueue: { jobId: 'j1', status: 'enqueued' },
+          worker: { jobId: 'j1', result: 'SUCCESS' },
+        }
+      }
+    )
+
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+
+    const streamHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider/stream')
+    const response = {
+      setHeader: vi.fn(),
+      write: vi.fn(),
+      end: vi.fn(),
+    }
+
+    await streamHandler({ params: { provider: 'spotify' } }, response)
+
+    expect(runSyncForProvider).toHaveBeenCalledWith(
+      expect.objectContaining({
+        documentStore,
+        provider: 'spotify',
+        syncJobQueue,
+        onProgress: expect.any(Function),
+      }),
+    )
+    expect(response.setHeader).toHaveBeenCalledWith(
+      'Content-Type',
+      'text/event-stream; charset=utf-8',
+    )
+    expect(response.write).toHaveBeenCalled()
+    const written = vi.mocked(response.write).mock.calls.map((c) => c[0] as string).join('')
+    expect(written).toContain('Progress step')
+    expect(written).toContain('"type":"done"')
+    expect(response.end).toHaveBeenCalled()
+  })
 })

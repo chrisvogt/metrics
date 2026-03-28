@@ -81,11 +81,15 @@ const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
 
 const syncInstagramData = async (
   documentStore: DocumentStore,
-  { userId = getDefaultWidgetUserId() }: SyncJobExecutionOptions = {}
+  { userId = getDefaultWidgetUserId(), onProgress }: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
   try {
     const instagramCollectionPath = toProviderCollectionPath('instagram', userId)
+    onProgress?.({
+      phase: 'instagram.api',
+      message: 'Fetching Instagram media.',
+    })
     const instagramResponse = (await fetchInstagramData()) as {
       media?: { data?: unknown[] }
       followers_count?: number
@@ -104,6 +108,10 @@ const syncInstagramData = async (
       [] as { destinationPath: string; id: string; mediaURL: string }[]
     )
 
+    onProgress?.({
+      phase: 'instagram.persist',
+      message: 'Reticulating splines.',
+    })
     // Save the raw Instagram response data
     await documentStore.setDocument(`${instagramCollectionPath}/last-response`, {
       ...instagramResponse,
@@ -142,6 +150,10 @@ const syncInstagramData = async (
 
     let result: { fileName?: string }[]
     try {
+      onProgress?.({
+        phase: 'instagram.media',
+        message: 'Downloading Instagram images.',
+      })
       result = await pMap(
         mediaToDownload as MediaItem[],
         storeRemoteMedia,

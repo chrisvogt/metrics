@@ -2,6 +2,14 @@ import { logger } from 'firebase-functions'
 import pMap from 'p-map'
 import fetchReleaseDetails from './fetch-release-details.js'
 import filterDiscogsResource from '../../transformers/filter-discogs-resource.js'
+import type { SyncProgressReporter } from '../../types/sync-pipeline.js'
+
+const discogsReleaseLabel = (release: Record<string, unknown>): string => {
+  const bi = release.basic_information as Record<string, unknown> | undefined
+  const raw = bi?.title
+  const title = typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : `Release ${release.id}`
+  return title.length > 72 ? `${title.slice(0, 69)}…` : title
+}
 
 /**
  * Fetches detailed release resource data for all releases in a batch
@@ -12,8 +20,16 @@ import filterDiscogsResource from '../../transformers/filter-discogs-resource.js
  * @param {number} options.delayMs - Delay between requests in milliseconds (default: 100)
  * @returns {Promise<Array>} Array of enhanced releases with resource data
  */
-const fetchReleasesBatch = async (releases: unknown[], options: { concurrency?: number; stopOnError?: boolean; delayMs?: number } = {}) => {
-  const { concurrency = 5, stopOnError = false, delayMs = 100 } = options
+const fetchReleasesBatch = async (
+  releases: unknown[],
+  options: {
+    concurrency?: number
+    delayMs?: number
+    onProgress?: SyncProgressReporter
+    stopOnError?: boolean
+  } = {},
+) => {
+  const { concurrency = 5, stopOnError = false, delayMs = 100, onProgress } = options
 
   logger.info(`Starting batch fetch for ${releases.length} releases with concurrency ${concurrency}`)
 
@@ -51,6 +67,11 @@ const fetchReleasesBatch = async (releases: unknown[], options: { concurrency?: 
     return releases
   }
 
+  onProgress?.({
+    phase: 'discogs.batch',
+    message: `Fetching full Discogs data for ${validFetchTasks.length} records (rate-limited; may take a few minutes).`,
+  })
+
   // Process releases in parallel with controlled concurrency and delay
   const results = await pMap(
     validFetchTasks,
@@ -60,6 +81,13 @@ const fetchReleasesBatch = async (releases: unknown[], options: { concurrency?: 
         if (index > 0 && delayMs > 0) {
           await new Promise(resolve => setTimeout(resolve, delayMs))
         }
+
+        const rel = release as Record<string, unknown>
+        const label = discogsReleaseLabel(rel)
+        onProgress?.({
+          phase: 'discogs.release',
+          message: `Fetching record from Discogs: ${label}`,
+        })
 
         const resourceData = await fetchReleaseDetails(resourceUrl as string, releaseId as string)
         

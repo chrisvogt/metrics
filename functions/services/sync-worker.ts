@@ -11,7 +11,11 @@ import syncSteamData from '../jobs/sync-steam-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
 import { getLogger } from './logger.js'
-import type { QueuedSyncJob, SyncJobSummary } from '../types/sync-pipeline.js'
+import type {
+  QueuedSyncJob,
+  SyncJobSummary,
+  SyncProgressReporter,
+} from '../types/sync-pipeline.js'
 import type { SyncProviderId } from '../types/widget-content.js'
 
 interface SyncExecutionResult {
@@ -56,35 +60,30 @@ const buildSummary = (
   }
 }
 
+const jobExecOpts = (job: QueuedSyncJob, onProgress?: SyncProgressReporter) =>
+  onProgress
+    ? { userId: job.userId, onProgress }
+    : { userId: job.userId }
+
 const runSyncJob = async (
   job: QueuedSyncJob,
-  documentStore: DocumentStore
+  documentStore: DocumentStore,
+  onProgress?: SyncProgressReporter
 ): Promise<SyncExecutionResult> => {
+  const opts = jobExecOpts(job, onProgress)
   switch (job.provider) {
   case 'discogs':
-    return syncDiscogsData(documentStore, {
-      userId: job.userId,
-    }) as Promise<SyncExecutionResult>
+    return syncDiscogsData(documentStore, opts) as Promise<SyncExecutionResult>
   case 'flickr':
-    return syncFlickrData(documentStore, {
-      userId: job.userId,
-    }) as Promise<SyncExecutionResult>
+    return syncFlickrData(documentStore, opts) as Promise<SyncExecutionResult>
   case 'goodreads':
-    return syncGoodreadsData(documentStore, {
-      userId: job.userId,
-    }) as Promise<SyncExecutionResult>
+    return syncGoodreadsData(documentStore, opts) as Promise<SyncExecutionResult>
   case 'instagram':
-    return syncInstagramData(documentStore, {
-      userId: job.userId,
-    }) as Promise<SyncExecutionResult>
+    return syncInstagramData(documentStore, opts) as Promise<SyncExecutionResult>
   case 'spotify':
-    return syncSpotifyData(documentStore, {
-      userId: job.userId,
-    }) as Promise<SyncExecutionResult>
+    return syncSpotifyData(documentStore, opts) as Promise<SyncExecutionResult>
   case 'steam':
-    return syncSteamData(documentStore, {
-      userId: job.userId,
-    }) as Promise<SyncExecutionResult>
+    return syncSteamData(documentStore, opts) as Promise<SyncExecutionResult>
   default:
     return {
       error: `Sync is not implemented for provider: ${job.provider}`,
@@ -102,15 +101,17 @@ export const processSyncJob = async ({
   documentStore,
   job,
   syncJobQueue,
+  onProgress,
 }: {
   documentStore: DocumentStore
   job: QueuedSyncJob
   syncJobQueue: SyncJobQueue
+  onProgress?: SyncProgressReporter
 }): Promise<SyncWorkerResult> => {
   const logger = getLogger()
   const startedAt = Date.now()
   try {
-    const result = await runSyncJob(job, documentStore)
+    const result = await runSyncJob(job, documentStore, onProgress)
     const durationMs = Date.now() - startedAt
     const summary = buildSummary(result, durationMs, job.provider)
 

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-03-27
+
+### Added
+
+- **Manual sync SSE** – Authenticated `GET /api/widgets/sync/:provider/stream` returns **`text/event-stream`** (`progress`, then `done` or `error`) using the same enqueue → claim → inline `processSyncJob` path as the JSON route.
+- **Progress hooks** – `SyncProgressReporter` / optional `onProgress` on `SyncJobExecutionOptions`; sync jobs for Spotify, Steam, Goodreads, Instagram, Discogs, and Flickr emit step updates for the stream.
+
+### Changed
+
+- **Compression** – `compression` middleware skips widget sync paths ending in **`/stream`** so SSE is not buffered.
+- **Discogs** – `fetch-releases-batch` accepts `onProgress` and reports batch-level progress for richer SSE updates.
+
+### Developer experience
+
+- **Tests** – Route coverage for SSE manual sync (`create-express-app.route-coverage.test.ts`).
+
 ## [0.24.0] - 2026-03-26
 
 ### Added
@@ -514,6 +530,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _This changelog was started with v0.8.0._
 
+[0.25.0]: https://github.com/chrisvogt/metrics/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/chrisvogt/metrics/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/chrisvogt/metrics/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/chrisvogt/metrics/compare/v0.21.0...v0.22.0

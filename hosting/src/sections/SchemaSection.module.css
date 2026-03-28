@@ -114,3 +114,58 @@
   color: var(--error);
   background: rgba(239, 68, 68, 0.12);
 }
+
+.responseCell {
+  min-width: 12rem;
+  max-width: 22rem;
+}
+
+.responsePreview {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  word-break: break-all;
+  margin-bottom: 0.35rem;
+}
+
+.responseDetails {
+  font-size: 0.82rem;
+}
+
+.responseSummary {
+  cursor: pointer;
+  color: color-mix(in srgb, var(--text) 75%, var(--text-muted));
+  font-weight: 500;
+  list-style: none;
+  user-select: none;
+}
+
+.responseSummary::-webkit-details-marker {
+  display: none;
+}
+
+.responseSummary::before {
+  content: '';
+  display: inline-block;
+  width: 0.35rem;
+  height: 0.35rem;
+  margin-right: 0.4rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg) translateY(-0.05rem);
+  opacity: 0.65;
+  transition: transform 0.15s ease;
+}
+
+.responseDetails[open] .responseSummary::before {
+  transform: rotate(45deg) translateY(-0.05rem);
+}
+
+.responseHint {
+  margin: 0.45rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}

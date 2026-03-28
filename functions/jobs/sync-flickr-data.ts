@@ -18,11 +18,21 @@ const syncFlickrData = async (
   options: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
+  const { onProgress } = options
+   
   const { userId: flickrUsername } = getFlickrConfig()
 
   try {
+    onProgress?.({
+      phase: 'flickr.photos',
+      message: 'Fetching recent photos from Flickr.',
+    })
     const photosResponse = await fetchPhotos()
 
+    onProgress?.({
+      phase: 'flickr.persist',
+      message: 'Reticulating splines.',
+    })
     await documentStore.setDocument(toFlickrLastResponsePath(options), {
       response: photosResponse,
       fetchedAt: toStoredDateTime(),

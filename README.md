@@ -66,7 +66,9 @@ flowchart TB
   admin[metrics.chrisvogt.me] --> auth[Firebase Auth]
   admin --> sess[POST /api/auth/session]
   admin --> sync[GET /api/widgets/sync/:provider]
+  admin --> stream[GET …/sync/:provider/stream SSE]
   sync --> fn[runSyncForProvider]
+  stream --> fn
   fn --> q[(sync_jobs)]
   fn --> job[processSyncJob]
   job --> out[Platform APIs + widget writes]
@@ -78,7 +80,7 @@ flowchart TB
 |------|-------------|
 | **Widget reads** | The website calls `GET /api/widgets/:provider` (public, cached). The handler reads the provider's `widget-content` document from Firestore and returns it. |
 | **Scheduled sync** | Cloud Scheduler fires `runSyncPlanner` daily at 02:00, which enqueues one job per provider into the `sync_jobs` Firestore collection. `runSyncWorker` runs every 15 minutes, claims the next queued job, calls the provider's external API, writes fresh data to Firestore, and marks the job completed or failed. |
-| **Manual sync** | An authenticated admin triggers `GET /api/widgets/sync/:provider`. The handler enqueues a job, claims it inline, runs the provider sync immediately, and returns before/after queue snapshots. |
+| **Manual sync** | An authenticated admin triggers `GET /api/widgets/sync/:provider` (JSON: queue before/after + worker payload) or `GET /api/widgets/sync/:provider/stream` (**SSE**: `progress` events, then `done` or `error`). Both use the same enqueue → claim → inline `processSyncJob` path. |
 | **Auth** | The admin dashboard authenticates via Firebase Auth (Google, email, or phone) and creates an HTTP-only session cookie through `POST /api/auth/session`. Sync endpoints require a valid session or JWT. |
 
 ## Documentation
