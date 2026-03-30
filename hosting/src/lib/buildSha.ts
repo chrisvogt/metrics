@@ -7,7 +7,7 @@ const BUILD_SHA_ENV_KEYS = [
 ] as const
 
 const normalizeSha = (raw: string): string => {
-  const sanitized = raw.replace(/^v/, '').trim()
+  const sanitized = raw.trim().replace(/^v/i, '')
   return sanitized.length >= 7 ? sanitized.slice(0, 7) : sanitized
 }
 
