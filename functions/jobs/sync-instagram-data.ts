@@ -60,13 +60,14 @@ const getMediaReducer = (storedMediaFileNames: string[] = []) =>
     const { id, media_type: mediaType, media_url: mediaURL, thumbnail_url: thumbnailURL, children } = mediaItem
     const resolvedUrl = thumbnailURL || mediaURL
     const destinationPath = resolvedUrl ? toIGDestinationPath(resolvedUrl, id) : ''
-    const isAlreadyDownloaded =
-    resolvedUrl ? storedMediaFileNames.includes(destinationPath) : true
+    const isAlreadyDownloaded = resolvedUrl
+      ? storedMediaFileNames.includes(destinationPath)
+      : true
     const isValidMediaType =
-    mediaType != null && validMediaTypes.includes(mediaType)
+      mediaType != null && validMediaTypes.includes(mediaType)
 
     if (isValidMediaType && !isAlreadyDownloaded && resolvedUrl) {
-    // Push the main media item
+      // Push the main media item
       acc.push({
         destinationPath,
         id,
