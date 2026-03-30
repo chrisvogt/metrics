@@ -1,7 +1,8 @@
 import { logger } from 'firebase-functions'
 import { getDiscogsConfig } from '../../config/backend-config.js'
+import type { DiscogsCollectionReleaseItem, DiscogsCollectionResponse } from '../../types/discogs.js'
 
-const fetchDiscogsReleases = async () => {
+const fetchDiscogsReleases = async (): Promise<DiscogsCollectionResponse> => {
   const { apiKey, username } = getDiscogsConfig()
 
   if (!apiKey || !username) {
@@ -9,7 +10,7 @@ const fetchDiscogsReleases = async () => {
   }
 
   try {
-    let allReleases = []
+    let allReleases: DiscogsCollectionReleaseItem[] = []
     let page = 1
     let hasMore = true
 
@@ -28,7 +29,10 @@ const fetchDiscogsReleases = async () => {
         throw new Error(`Discogs API error: ${response.status} ${response.statusText}`)
       }
 
-      const data = (await response.json()) as { releases: unknown[]; pagination: { page: number; pages: number } }
+      const data = (await response.json()) as {
+        releases: DiscogsCollectionReleaseItem[]
+        pagination: { page: number; pages: number }
+      }
       
       allReleases = allReleases.concat(data.releases)
       

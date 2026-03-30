@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import type { DiscogsEnhancedRelease } from '../types/discogs.js'
 import transformDiscogsRelease from './transform-discogs-release.js'
 
 vi.mock('../services/media/media-service.js', () => ({
@@ -184,6 +185,20 @@ describe('transformDiscogsRelease', () => {
     expect(result.notes).toBeUndefined()
     expect(result.id).toBe(123)
     expect(result.basicInformation.title).toBe('Test Album')
+  })
+
+  it('throws when basic_information is missing', () => {
+    const rawRelease: DiscogsEnhancedRelease = {
+      id: 999,
+      instance_id: 1,
+      date_added: '2025-01-01T00:00:00-00:00',
+      rating: 0,
+      folder_id: 1,
+    }
+
+    expect(() => transformDiscogsRelease(rawRelease)).toThrow(
+      'Discogs release 999 missing basic_information',
+    )
   })
 
   it('should handle releases without images', () => {

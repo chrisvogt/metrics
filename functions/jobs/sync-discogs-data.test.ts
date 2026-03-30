@@ -276,6 +276,66 @@ describe('syncDiscogsData', () => {
     expect(result.result).toBe('SUCCESS')
   })
 
+  it('marks snapshots that exceed the Firestore size limit in logs', async () => {
+    const spy = vi.spyOn(Buffer, 'byteLength').mockReturnValue(2_000_000)
+    vi.mocked(fetchDiscogsReleases).mockResolvedValue({
+      pagination: { items: 1, page: 1, pages: 1, per_page: 1, urls: {} },
+      releases: [
+        {
+          id: 1,
+          basic_information: {
+            thumb: 'https://example.com/thumb.jpg',
+            cover_image: null,
+          },
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncDiscogsData(documentStore)
+
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining('Document size before saving'),
+      expect.objectContaining({
+        exceedsLimit: true,
+        sizeReduction: 'Filtered resource data to reduce size',
+      }),
+    )
+    spy.mockRestore()
+  })
+
+  it('uses release id fallback when the title map has no entry for a media key', async () => {
+    const origGet = Map.prototype.get
+    const spy = vi.spyOn(Map.prototype, 'get').mockImplementation(function (this: Map<string, string>, key: string) {
+      if (key === '555') {
+        return undefined
+      }
+      return origGet.call(this, key)
+    })
+    const onProgress = vi.fn()
+    vi.mocked(fetchDiscogsReleases).mockResolvedValue({
+      pagination: { items: 1, page: 1, pages: 1, per_page: 1, urls: {} },
+      releases: [
+        {
+          id: 555,
+          basic_information: {
+            title: 'Real title',
+            thumb: 'https://example.com/thumb.jpg',
+            cover_image: null,
+          },
+        },
+      ],
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncDiscogsData(documentStore, { onProgress })
+
+    const artworkMsg = onProgress.mock.calls.find((c) => c[0].phase === 'discogs.artwork')?.[0]
+      .message as string
+    expect(artworkMsg).toContain('release 555')
+    spy.mockRestore()
+  })
+
   it('uses cover-image wording for cover-only artwork downloads', async () => {
     const onProgress = vi.fn()
     vi.mocked(fetchDiscogsReleases).mockResolvedValue({

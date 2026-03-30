@@ -55,6 +55,41 @@ describe('GcsMediaStore', () => {
     expect(mockBucket).toHaveBeenCalledWith('test-bucket')
   })
 
+  it('defaults content-type when the response omits it', async () => {
+    const response = { headers: {}, pipe: vi.fn() }
+    const writeStream = {
+      on: vi.fn((event, callback) => {
+        if (event === 'finish') {
+          setTimeout(callback, 0)
+        }
+        return writeStream
+      }),
+    }
+
+    mockCreateWriteStream.mockReturnValue(writeStream)
+    mockHttpsGet.mockImplementation((_url, callback) => {
+      callback(response)
+      return { on: vi.fn() }
+    })
+
+    await expect(
+      adapter.fetchAndStore({
+        destinationPath: 'media/no-ct.jpg',
+        id: 'media-no-ct',
+        mediaURL: 'https://example.com/no-ct.jpg',
+      }),
+    ).resolves.toEqual({
+      id: 'media-no-ct',
+      fileName: 'media/no-ct.jpg',
+    })
+
+    expect(mockCreateWriteStream).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { contentType: 'application/octet-stream' },
+      }),
+    )
+  })
+
   it('uploads downloaded media to the bucket', async () => {
     const response = { headers: { 'content-type': 'image/jpeg' }, pipe: vi.fn() }
     const writeStream = {

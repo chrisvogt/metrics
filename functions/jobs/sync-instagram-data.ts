@@ -12,6 +12,13 @@ import toIGDestinationPath from '../transformers/to-ig-destination-path.js'
 import transformInstagramMedia from '../transformers/transform-instagram-media.js'
 import { toStoredDateTime } from '../utils/time.js'
 import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
+import type {
+  InstagramApiResponse,
+  InstagramGraphChild,
+  InstagramGraphMediaItem,
+  InstagramMediaDownloadItem,
+} from '../types/instagram.js'
+import type { InstagramWidgetDocument } from '../types/widget-content.js'
 import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
 /*
@@ -48,36 +55,47 @@ Valid media URL path beginnings:
 const validMediaTypes = ['CAROUSEL_ALBUM', 'IMAGE', 'VIDEO']
 
 // Reducer to handle media filtering and transformation
-const getMediaReducer = (storedMediaFileNames = []) => (acc, mediaItem) => {
-  const { id, media_type: mediaType, media_url: mediaURL, thumbnail_url: thumbnailURL, children } = mediaItem
-  const destinationPath = toIGDestinationPath(thumbnailURL || mediaURL, id) // Prefer thumbnailURL if available
-  const isAlreadyDownloaded = storedMediaFileNames.includes(destinationPath)
-  const isValidMediaType = validMediaTypes.includes(mediaType)
+const getMediaReducer = (storedMediaFileNames: string[] = []) =>
+  (acc: InstagramMediaDownloadItem[], mediaItem: InstagramGraphMediaItem) => {
+    const { id, media_type: mediaType, media_url: mediaURL, thumbnail_url: thumbnailURL, children } = mediaItem
+    const resolvedUrl = thumbnailURL || mediaURL
+    const destinationPath = resolvedUrl ? toIGDestinationPath(resolvedUrl, id) : ''
+    const isAlreadyDownloaded = resolvedUrl
+      ? storedMediaFileNames.includes(destinationPath)
+      : true
+    const isValidMediaType =
+      mediaType != null && validMediaTypes.includes(mediaType)
 
-  if (isValidMediaType && !isAlreadyDownloaded) {
-    // Push the main media item
-    acc.push({
-      destinationPath,
-      id,
-      mediaURL: thumbnailURL || mediaURL // Save thumbnailURL if available
-    })
+    if (isValidMediaType && !isAlreadyDownloaded && resolvedUrl) {
+      // Push the main media item
+      acc.push({
+        destinationPath,
+        id,
+        mediaURL: resolvedUrl,
+      })
+    }
+
+    // If the media item has children, process them recursively
+    if (mediaType === 'CAROUSEL_ALBUM' && children?.data) {
+      const childMedia = children.data.map((child: InstagramGraphChild) => {
+        const childUrl = child.thumbnail_url || child.media_url
+        if (!childUrl) {
+          return null
+        }
+        return {
+          destinationPath: toIGDestinationPath(childUrl, child.id),
+          id: child.id,
+          mediaURL: childUrl,
+        }
+      }).filter((row): row is InstagramMediaDownloadItem => row != null)
+      // Filter children for already downloaded media
+      childMedia
+        .filter(({ destinationPath }) => !storedMediaFileNames.includes(destinationPath))
+        .forEach(validChild => acc.push(validChild))
+    }
+
+    return acc
   }
-
-  // If the media item has children, process them recursively
-  if (mediaType === 'CAROUSEL_ALBUM' && children?.data) {
-    const childMedia = children.data.map(child => ({
-      id: child.id,
-      mediaURL: child.thumbnail_url || child.media_url, // Prefer thumbnailURL for child items
-      destinationPath: toIGDestinationPath(child.thumbnail_url || child.media_url, child.id)
-    }))
-    // Filter children for already downloaded media
-    childMedia
-      .filter(({ destinationPath }) => !storedMediaFileNames.includes(destinationPath))
-      .forEach(validChild => acc.push(validChild))
-  }
-
-  return acc
-}
 
 const syncInstagramData = async (
   documentStore: DocumentStore,
@@ -90,23 +108,14 @@ const syncInstagramData = async (
       phase: 'instagram.api',
       message: 'Fetching Instagram media.',
     })
-    const instagramResponse = (await fetchInstagramData()) as {
-      media?: { data?: unknown[] }
-      followers_count?: number
-      follows_count?: number
-      media_count?: number
-      username?: string
-    }
+    const instagramResponse: InstagramApiResponse = await fetchInstagramData()
 
-    const rawMedia = instagramResponse.media?.data ?? []
+    const rawMedia: InstagramGraphMediaItem[] = instagramResponse.media?.data ?? []
 
-    const storedMediaFileNames = (await listStoredMedia()) as string[]
+    const storedMediaFileNames = await listStoredMedia()
 
     const mediaReducer = getMediaReducer(storedMediaFileNames)
-    const mediaToDownload = rawMedia.reduce(
-      mediaReducer as (acc: { destinationPath: string; id: string; mediaURL: string }[], item: unknown) => { destinationPath: string; id: string; mediaURL: string }[],
-      [] as { destinationPath: string; id: string; mediaURL: string }[]
-    )
+    const mediaToDownload = rawMedia.reduce(mediaReducer, [] as InstagramMediaDownloadItem[])
 
     onProgress?.({
       phase: 'instagram.persist',
@@ -118,11 +127,11 @@ const syncInstagramData = async (
       fetchedAt: toStoredDateTime(),
     })
 
-    const filteredMedia = rawMedia.filter((item: { media_type?: string }) =>
-      validMediaTypes.includes(item.media_type!)
+    const filteredMedia = rawMedia.filter((item) =>
+      item.media_type != null && validMediaTypes.includes(item.media_type),
     )
 
-    const updatedWidgetContent = {
+    const updatedWidgetContent: InstagramWidgetDocument = {
       media: filteredMedia.map(transformInstagramMedia),
       meta: {
         synced: toStoredDateTime(),
@@ -138,8 +147,7 @@ const syncInstagramData = async (
     // Save the widget content
     await documentStore.setDocument(`${instagramCollectionPath}/widget-content`, updatedWidgetContent)
 
-    type MediaItem = { destinationPath: string; id: string; mediaURL: string }
-    if ((mediaToDownload as MediaItem[]).length === 0) {
+    if (mediaToDownload.length === 0) {
       return {
         data: updatedWidgetContent,
         ok: true,
@@ -155,7 +163,7 @@ const syncInstagramData = async (
         message: 'Downloading Instagram images.',
       })
       result = await pMap(
-        mediaToDownload as MediaItem[],
+        mediaToDownload,
         storeRemoteMedia,
         {
           concurrency: 10,
@@ -180,11 +188,11 @@ const syncInstagramData = async (
       uploadedFiles: result.map(({ fileName }) => fileName),
       data: updatedWidgetContent,
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Failed to sync Instagram data.', error)
     return {
       result: 'FAILURE',
-      error: error.message || error,
+      error: error instanceof Error ? error.message : error,
     }
   }
 }

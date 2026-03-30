@@ -143,4 +143,42 @@ describe('fetchPhotos', () => {
     await expect(fetchPhotos()).rejects.toThrow('Network error')
     expect(mockLogger.error).toHaveBeenCalledWith('Error fetching Flickr photos:', error)
   })
+
+  it('maps photos with nullish optional fields using defaults', async () => {
+    mockGot.mockResolvedValue({
+      body: {
+        photos: {
+          photo: [
+            {
+              id: null,
+              title: null,
+              description: undefined,
+              datetaken: null,
+              ownername: null,
+              url_q: null,
+              url_m: null,
+              url_l: null,
+            },
+          ],
+          total: 1,
+          page: 1,
+          pages: 1,
+        },
+      },
+    })
+
+    const result = await fetchPhotos()
+
+    expect(result.photos[0]).toEqual({
+      id: undefined,
+      title: undefined,
+      description: '',
+      dateTaken: undefined,
+      ownerName: undefined,
+      thumbnailUrl: undefined,
+      mediumUrl: undefined,
+      largeUrl: undefined,
+      link: 'https://www.flickr.com/photos/test-flickr-user-id/null',
+    })
+  })
 }) 

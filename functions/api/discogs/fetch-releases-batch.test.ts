@@ -273,6 +273,40 @@ describe('fetchReleasesBatch', () => {
     expect(onProgress.mock.calls.map((c) => c[0].phase)).toEqual(['discogs.batch', 'discogs.release'])
   })
 
+  it('calls fetchReleaseDetails with empty id string when both release id fields are missing', async () => {
+    const fetchReleasesBatch = (await import('./fetch-releases-batch.js')).default
+    const fetchReleaseDetails = (await import('./fetch-release-details.js')).default
+    const filterDiscogsResource = (await import('../../transformers/filter-discogs-resource.js')).default
+    const pMap = (await import('p-map')).default
+
+    const mockReleases = [
+      {
+        basic_information: {
+          resource_url: 'https://api.discogs.com/releases/anon',
+          title: 'No id fields',
+        },
+      },
+    ] as import('../../types/discogs.js').DiscogsCollectionReleaseItem[]
+
+    fetchReleaseDetails.mockResolvedValueOnce({ ok: true })
+    filterDiscogsResource.mockReturnValueOnce({ filtered: true })
+
+    pMap.mockImplementation(async (items, mapper) => {
+      const results = []
+      for (const item of items) {
+        results.push(await mapper(item))
+      }
+      return results
+    })
+
+    await fetchReleasesBatch(mockReleases)
+
+    expect(fetchReleaseDetails).toHaveBeenCalledWith(
+      'https://api.discogs.com/releases/anon',
+      '',
+    )
+  })
+
   it('uses basic_information.id when top-level id is absent', async () => {
     const fetchReleasesBatch = (await import('./fetch-releases-batch.js')).default
     const fetchReleaseDetails = (await import('./fetch-release-details.js')).default

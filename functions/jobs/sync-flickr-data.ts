@@ -4,6 +4,7 @@ import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/back
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
 import fetchPhotos from '../api/flickr/fetch-photos.js'
+import type { FlickrWidgetDocument } from '../types/widget-content.js'
 import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
 export const toFlickrLastResponsePath = ({
@@ -41,7 +42,7 @@ const syncFlickrData = async (
     const photos = Array.isArray(photosResponse?.photos) ? photosResponse.photos : []
     const photoCount = typeof photosResponse?.total === 'number' ? photosResponse.total : 0
 
-    const widgetContent = {
+    const widgetContent: FlickrWidgetDocument = {
       collections: {
         photos,
       },
