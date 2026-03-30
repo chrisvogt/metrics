@@ -2,13 +2,19 @@ import { logger } from 'firebase-functions'
 import pMap from 'p-map'
 import fetchReleaseDetails from './fetch-release-details.js'
 import filterDiscogsResource from '../../transformers/filter-discogs-resource.js'
+import type {
+  DiscogsBasicInformation,
+  DiscogsCollectionReleaseItem,
+  DiscogsEnhancedRelease,
+} from '../../types/discogs.js'
 import type { SyncProgressReporter } from '../../types/sync-pipeline.js'
 
 /** @internal exported for tests */
-export const discogsReleaseLabel = (release: Record<string, unknown>): string => {
-  const bi = release.basic_information as Record<string, unknown> | undefined
+export const discogsReleaseLabel = (release: DiscogsCollectionReleaseItem): string => {
+  const bi: DiscogsBasicInformation | undefined = release.basic_information
   const raw = bi?.title
-  const title = typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : `Release ${release.id}`
+  const title =
+    typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : `Release ${release.id}`
   return title.length > 72 ? `${title.slice(0, 69)}…` : title
 }
 
@@ -22,39 +28,40 @@ export const discogsReleaseLabel = (release: Record<string, unknown>): string =>
  * @returns {Promise<Array>} Array of enhanced releases with resource data
  */
 const fetchReleasesBatch = async (
-  releases: unknown[],
+  releases: DiscogsCollectionReleaseItem[],
   options: {
     concurrency?: number
     delayMs?: number
     onProgress?: SyncProgressReporter
     stopOnError?: boolean
   } = {},
-) => {
+): Promise<DiscogsEnhancedRelease[]> => {
   const { concurrency = 5, stopOnError = false, delayMs = 100, onProgress } = options
 
   logger.info(`Starting batch fetch for ${releases.length} releases with concurrency ${concurrency}`)
 
   // Create array of fetch tasks - only use resource_url
-  const fetchTasks = (releases as Record<string, unknown>[]).map((release, index) => ({
+  const fetchTasks = releases.map((release, index) => ({
     release,
     index,
-    resourceUrl: (release.basic_information as Record<string, unknown>)?.resource_url,
-    releaseId: release.id || (release.basic_information as Record<string, unknown>)?.id,
+    resourceUrl: release.basic_information?.resource_url,
+    releaseId: release.id ?? release.basic_information?.id,
   }))
 
   // Log releases without resource_url for monitoring
   const releasesWithoutResourceUrl = fetchTasks.filter(task => !task.resourceUrl)
   if (releasesWithoutResourceUrl.length > 0) {
-    const r = (x: typeof fetchTasks[0]) => x.release as Record<string, unknown>
-    const bi = (x: Record<string, unknown>) => x.basic_information as Record<string, unknown> | undefined
     logger.warn(`Found ${releasesWithoutResourceUrl.length} releases without resource_url`, {
       releaseIds: releasesWithoutResourceUrl.map(task => task.releaseId),
-      releases: releasesWithoutResourceUrl.map(task => ({
-        id: task.releaseId,
-        title: bi(r(task))?.title,
-        masterId: bi(r(task))?.master_id,
-        masterUrl: bi(r(task))?.master_url,
-      })),
+      releases: releasesWithoutResourceUrl.map(task => {
+        const bi = task.release.basic_information
+        return {
+          id: task.releaseId,
+          title: bi?.title,
+          masterId: bi?.master_id,
+          masterUrl: bi?.master_url,
+        }
+      }),
     })
   }
 
@@ -83,14 +90,16 @@ const fetchReleasesBatch = async (
           await new Promise(resolve => setTimeout(resolve, delayMs))
         }
 
-        const rel = release as Record<string, unknown>
-        const label = discogsReleaseLabel(rel)
+        const label = discogsReleaseLabel(release)
         onProgress?.({
           phase: 'discogs.release',
           message: `Fetching record from Discogs: ${label}`,
         })
 
-        const resourceData = await fetchReleaseDetails(resourceUrl as string, releaseId as string)
+        const resourceData = await fetchReleaseDetails(
+          resourceUrl as string,
+          String(releaseId ?? ''),
+        )
         
         if (resourceData) {
           logger.debug(`Successfully fetched resource data for release ${releaseId}`)
@@ -98,9 +107,9 @@ const fetchReleasesBatch = async (
           const filteredResourceData = filterDiscogsResource(resourceData)
           
           return {
-            ...(release as object),
+            ...release,
             resource: filteredResourceData,
-          }
+          } as DiscogsEnhancedRelease
         } else {
           logger.warn(`Failed to fetch resource data for release ${releaseId}`)
           return release
@@ -117,12 +126,12 @@ const fetchReleasesBatch = async (
   )
 
   // Merge results back with original releases array
-  const enhancedReleases = (releases as Record<string, unknown>[]).map((originalRelease) => {
-    const enhancedRelease = results.find((r: Record<string, unknown>) => r.id === originalRelease.id)
-    return enhancedRelease || originalRelease
+  const enhancedReleases = releases.map((originalRelease) => {
+    const enhancedRelease = results.find((r) => r.id === originalRelease.id)
+    return (enhancedRelease ?? originalRelease) as DiscogsEnhancedRelease
   })
 
-  const successCount = results.filter((r: Record<string, unknown>) => r.resource).length
+  const successCount = results.filter((r) => 'resource' in r && r.resource).length
   logger.info(`Batch fetch completed: ${successCount}/${validFetchTasks.length} releases enhanced with resource data`)
 
   return enhancedReleases

@@ -1,4 +1,11 @@
 import type { DocumentStore } from '../ports/document-store.js'
+import type {
+  SteamApiGame,
+  SteamOwnedGamesResponse,
+  SteamSummaryInput,
+} from '../types/steam.js'
+import { isSteamPlayerSummary } from '../types/steam.js'
+import type { SteamWidgetDocument } from '../types/widget-content.js'
 import type { SyncJobResult } from '../types/sync-job.js'
 import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 import { getLogger } from '../services/logger.js'
@@ -12,7 +19,7 @@ import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
 import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
 import { getSteamConfig } from '../config/backend-config.js'
 
-const transformSteamGame = (game) => {
+const transformSteamGame = (game: SteamApiGame) => {
   const {
     appid: id,
     img_icon_url: iconHash,
@@ -59,7 +66,7 @@ const syncSteamData = async (
     userId: targetUserId = getDefaultWidgetUserId(),
     onProgress,
   }: SyncJobExecutionOptions = {}
-): Promise<SyncJobResult<Record<string, unknown>>> => {
+): Promise<SyncJobResult<SteamWidgetDocument>> => {
   const logger = getLogger()
   const { apiKey, userId } = getSteamConfig()
   const steamCollectionPath = toProviderCollectionPath('steam', targetUserId)
@@ -98,22 +105,24 @@ const syncSteamData = async (
     }
   )
 
-  const ownedGamesObj = ownedGames as { game_count?: number; games?: unknown[] }
-  const playerSummaryObj = playerSummary as { avatarfull?: string; profileurl?: string; personaname?: string }
+  const ownedGamesObj: SteamOwnedGamesResponse = ownedGames
   const { game_count: ownedGameCount = 0 } = ownedGamesObj
-  const {
-    avatarfull: avatarURL,
-    profileurl: profileURL,
-    personaname: displayName,
-  } = playerSummaryObj
+  let avatarURL: string | undefined
+  let profileURL: string | undefined
+  let displayName: string | undefined
+  if (isSteamPlayerSummary(playerSummary)) {
+    avatarURL = playerSummary.avatarfull
+    profileURL = playerSummary.profileurl
+    displayName = playerSummary.personaname
+  }
 
-  const widgetContent: Record<string, unknown> = {
+  const widgetContent: SteamWidgetDocument = {
     collections: {
       ownedGames: (ownedGamesObj.games ?? [])
-        .map((game: unknown) => transformSteamGame(game))
-        .filter((game: { playTimeForever?: number }) => (game.playTimeForever ?? 0) >= 100)
-        .sort((a: { playTimeForever?: number }, b: { playTimeForever?: number }) => (b.playTimeForever ?? 0) - (a.playTimeForever ?? 0)),
-      recentlyPlayedGames: (recentlyPlayedGames as unknown[]).map((game: unknown) => transformSteamGame(game)),
+        .map((game) => transformSteamGame(game))
+        .filter((game) => (game.playTimeForever ?? 0) >= 100)
+        .sort((a, b) => (b.playTimeForever ?? 0) - (a.playTimeForever ?? 0)),
+      recentlyPlayedGames: recentlyPlayedGames.map((game) => transformSteamGame(game)),
     },
     meta: {
       synced: toStoredDateTime(),
@@ -137,13 +146,18 @@ const syncSteamData = async (
   }
 
   // Generate AI summary using Gemini
-  let aiSummary: unknown = null
+  let aiSummary: string | null = null
   try {
     onProgress?.({
       phase: 'steam.ai',
       message: 'Generating Steam play-summary (AI).',
     })
-    aiSummary = await generateSteamSummary(widgetContent)
+    const summaryInput: SteamSummaryInput = {
+      collections: widgetContent.collections!,
+      metrics: widgetContent.metrics ?? [],
+      profile: widgetContent.profile ?? {},
+    }
+    aiSummary = await generateSteamSummary(summaryInput)
     widgetContent.aiSummary = aiSummary
   } catch (error) {
     logger.error('Failed to generate AI summary:', error)
@@ -178,11 +192,11 @@ const syncSteamData = async (
       data: widgetContent,
       result: 'SUCCESS',
     }
-  } catch (err) {
+  } catch (err: unknown) {
     logger.error('Failed to save Steam data to database.', err)
     return {
       result: 'FAILURE',
-      error: err.message || err,
+      error: err instanceof Error ? err.message : err,
     }
   }
 }

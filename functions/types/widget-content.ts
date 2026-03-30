@@ -3,6 +3,10 @@ import type {
   GoodreadsRecentlyReadBook,
   GoodreadsWidgetCollections,
 } from './goodreads.js'
+import type { DiscogsTransformedRelease } from './discogs.js'
+import type { FlickrPhoto } from './flickr.js'
+import type { InstagramTransformedMedia } from './instagram.js'
+import type { SteamWidgetCollections, SteamWidgetProfile } from './steam.js'
 
 export const widgetIds = [
   'discogs',
@@ -46,7 +50,9 @@ export interface WidgetMetricValue {
 }
 
 export interface DiscogsWidgetDocument {
-  collections?: unknown
+  collections?: {
+    releases?: DiscogsTransformedRelease[]
+  }
   meta?: WidgetMeta
   metrics?: Record<string, number>
   profile?: {
@@ -61,7 +67,7 @@ export interface DiscogsWidgetContent
 
 export interface FlickrWidgetDocument {
   collections?: {
-    photos?: unknown[]
+    photos?: FlickrPhoto[]
   }
   meta?: WidgetMeta
   metrics?: WidgetMetricValue[]
@@ -92,7 +98,7 @@ export interface GoodreadsWidgetContent
 }
 
 export interface InstagramWidgetDocument {
-  media?: unknown[]
+  media?: InstagramTransformedMedia[]
   meta?: WidgetMeta
   profile?: {
     biography?: string
@@ -105,7 +111,7 @@ export interface InstagramWidgetDocument {
 
 export interface InstagramWidgetContent {
   collections: {
-    media?: unknown[]
+    media?: InstagramTransformedMedia[]
   }
   meta: WidgetMeta<Date>
   metrics: WidgetMetricValue[]
@@ -133,14 +139,15 @@ export interface SpotifyWidgetContent
 }
 
 export interface SteamWidgetDocument {
-  aiSummary?: unknown
-  collections?: unknown
+  aiSummary?: string | null
+  collections?: SteamWidgetCollections
   meta?: WidgetMeta
   metrics?: WidgetMetricValue[]
-  profile?: unknown
+  profile?: SteamWidgetProfile
 }
 
-export interface SteamWidgetContent extends Omit<SteamWidgetDocument, 'meta'> {
+export interface SteamWidgetContent extends Omit<SteamWidgetDocument, 'collections' | 'meta'> {
+  collections?: SteamWidgetCollections
   meta: WidgetMeta<Date>
 }
 

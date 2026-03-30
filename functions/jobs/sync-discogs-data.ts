@@ -13,6 +13,11 @@ import toDiscogsDestinationPath from '../transformers/to-discogs-destination-pat
 import transformDiscogsRelease from '../transformers/transform-discogs-release.js'
 import { toStoredDateTime } from '../utils/time.js'
 import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
+import type {
+  DiscogsEnhancedRelease,
+  DiscogsMediaDownloadTask,
+} from '../types/discogs.js'
+import type { DiscogsWidgetDocument } from '../types/widget-content.js'
 import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
 
 import { 
@@ -45,40 +50,42 @@ collection into GCP Storage and Firebase.
 */
 
 // Reducer to handle media filtering and transformation
-const getMediaReducer = (storedMediaFileNames = []) => (acc, release) => {
-  const { id, basic_information: basicInfo } = release
-  const { thumb, cover_image: coverImage } = basicInfo
+const getMediaReducer = (storedMediaFileNames: string[] = []) =>
+  (acc: DiscogsMediaDownloadTask[], release: DiscogsEnhancedRelease) => {
+    const { id, basic_information: basicInfo } = release
+    const thumb = basicInfo?.thumb
+    const coverImage = basicInfo?.cover_image
 
-  // Process thumb image
-  if (thumb) {
-    const thumbDestinationPath = toDiscogsDestinationPath(thumb, id, 'thumb')
-    const isThumbAlreadyDownloaded = storedMediaFileNames.includes(thumbDestinationPath)
+    // Process thumb image
+    if (thumb) {
+      const thumbDestinationPath = toDiscogsDestinationPath(thumb, id, 'thumb')
+      const isThumbAlreadyDownloaded = storedMediaFileNames.includes(thumbDestinationPath)
     
-    if (!isThumbAlreadyDownloaded) {
-      acc.push({
-        destinationPath: thumbDestinationPath,
-        id: `${id}_thumb`,
-        mediaURL: thumb
-      })
+      if (!isThumbAlreadyDownloaded) {
+        acc.push({
+          destinationPath: thumbDestinationPath,
+          id: `${id}_thumb`,
+          mediaURL: thumb
+        })
+      }
     }
-  }
 
-  // Process cover image
-  if (coverImage) {
-    const coverDestinationPath = toDiscogsDestinationPath(coverImage, id, 'cover')
-    const isCoverAlreadyDownloaded = storedMediaFileNames.includes(coverDestinationPath)
+    // Process cover image
+    if (coverImage) {
+      const coverDestinationPath = toDiscogsDestinationPath(coverImage, id, 'cover')
+      const isCoverAlreadyDownloaded = storedMediaFileNames.includes(coverDestinationPath)
     
-    if (!isCoverAlreadyDownloaded) {
-      acc.push({
-        destinationPath: coverDestinationPath,
-        id: `${id}_cover`,
-        mediaURL: coverImage
-      })
+      if (!isCoverAlreadyDownloaded) {
+        acc.push({
+          destinationPath: coverDestinationPath,
+          id: `${id}_cover`,
+          mediaURL: coverImage
+        })
+      }
     }
-  }
 
-  return acc
-}
+    return acc
+  }
 
 const syncDiscogsData = async (
   documentStore: DocumentStore,
@@ -125,11 +132,10 @@ const syncDiscogsData = async (
     const documentSizeKB = Math.round(documentSizeBytes / 1024)
     const documentSizeMB = Math.round(documentSizeBytes / (1024 * 1024) * 100) / 100
     
-    const enhancedReleasesTyped = enhancedReleases as Record<string, unknown>[]
     logger.info(`Document size before saving: ${documentSizeBytes} bytes (${documentSizeKB} KB, ${documentSizeMB} MB)`, {
-      totalReleases: enhancedReleasesTyped.length,
-      releasesWithResource: enhancedReleasesTyped.filter(r => r.resource).length,
-      releasesWithoutResource: enhancedReleasesTyped.filter(r => !r.resource).length,
+      totalReleases: enhancedReleases.length,
+      releasesWithResource: enhancedReleases.filter(r => r.resource).length,
+      releasesWithoutResource: enhancedReleases.filter(r => !r.resource).length,
       firestoreLimit: 1048576, // 1MB in bytes
       exceedsLimit: documentSizeBytes > 1048576,
       sizeReduction: documentSizeBytes > 1048576 ? 'Filtered resource data to reduce size' : 'No filtering needed',
@@ -144,7 +150,7 @@ const syncDiscogsData = async (
 
     const transformedReleases = enhancedReleases.map(transformDiscogsRelease)
 
-    const updatedWidgetContent = {
+    const updatedWidgetContent: DiscogsWidgetDocument = {
       collections: {
         releases: transformedReleases
       },
@@ -167,18 +173,17 @@ const syncDiscogsData = async (
     await documentStore.setDocument(`${discogsCollectionPath}/widget-content`, updatedWidgetContent)
 
     const titleByReleaseId = new Map<string, string>()
-    for (const raw of enhancedReleases as Record<string, unknown>[]) {
+    for (const raw of enhancedReleases) {
       const rid = raw.id != null ? String(raw.id) : ''
       if (!rid) continue
-      const bi = raw.basic_information as Record<string, unknown> | undefined
-      const t = bi?.title
+      const t = raw.basic_information?.title
       titleByReleaseId.set(
         rid,
         typeof t === 'string' && t.trim().length > 0 ? t.trim() : `Release ${rid}`,
       )
     }
 
-    const mediaToDownloadTyped = mediaToDownload as { destinationPath: string; id: string; mediaURL: string }[]
+    const mediaToDownloadTyped: DiscogsMediaDownloadTask[] = mediaToDownload
     if (!mediaToDownloadTyped.length) {
       return {
         data: updatedWidgetContent,
@@ -227,11 +232,11 @@ const syncDiscogsData = async (
       uploadedFiles: result.map(({ fileName }) => fileName),
       data: updatedWidgetContent,
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Failed to sync Discogs data.', error)
     return {
       result: 'FAILURE',
-      error: error.message || error,
+      error: error instanceof Error ? error.message : error,
     }
   }
 }

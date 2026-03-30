@@ -1,6 +1,7 @@
 import got from 'got'
 
 import { getInstagramAccessToken, getInstagramUserId } from '../../config/backend-config.js'
+import type { InstagramApiResponse, InstagramMediaListResponse } from '../../types/instagram.js'
 
 const INSTAGRAM_API_VERSION = 'v25.0'
 const INSTAGRAM_BASE_URL = 'https://graph.instagram.com'
@@ -12,7 +13,7 @@ const profileFields =
 const mediaFields =
   'alt_text,caption,children{alt_text,id,media_url,thumbnail_url},comments_count,id,ig_id,like_count,media_type,media_url,permalink,thumbnail_url,timestamp,username'
 
-const fetchInstagramMedia = async () => {
+const fetchInstagramMedia = async (): Promise<InstagramApiResponse> => {
   const accessToken = getInstagramAccessToken()
   const instagramUserId = getInstagramUserId()
 
@@ -45,8 +46,8 @@ const fetchInstagramMedia = async () => {
   ])
 
   return {
-    ...(profileBody as Record<string, unknown>),
-    media: mediaBody,
+    ...(profileBody as InstagramApiResponse),
+    media: mediaBody as InstagramMediaListResponse,
   }
 }
 

@@ -1,9 +1,14 @@
 import got from 'got'
 
+import type { SteamApiGame } from '../../types/steam.js'
+
 const ENDPOINT =
   'https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/'
 
-const getRecentlyPLayedGames = async (apiKey: string, userId: string) => {
+const getRecentlyPLayedGames = async (
+  apiKey: string,
+  userId: string,
+): Promise<SteamApiGame[]> => {
   const { body } = await got(ENDPOINT, {
     responseType: 'json',
     searchParams: {
@@ -14,7 +19,7 @@ const getRecentlyPLayedGames = async (apiKey: string, userId: string) => {
   if (body == null || typeof body !== 'object') {
     throw new Error('Invalid response')
   }
-  const response = (body as { response?: { games?: unknown[] } })?.response
+  const response = (body as { response?: { games?: SteamApiGame[] } })?.response
   return response?.games ?? []
 }
 

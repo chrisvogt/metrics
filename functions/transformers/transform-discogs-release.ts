@@ -1,7 +1,8 @@
 import { toPublicMediaUrl } from '../services/media/media-service.js'
+import type { DiscogsEnhancedRelease, DiscogsTransformedRelease } from '../types/discogs.js'
 import toDiscogsDestinationPath from './to-discogs-destination-path.js'
 
-const transformDiscogsRelease = rawRelease => {
+const transformDiscogsRelease = (rawRelease: DiscogsEnhancedRelease): DiscogsTransformedRelease => {
   const {
     id,
     instance_id: instanceId,
@@ -12,6 +13,10 @@ const transformDiscogsRelease = rawRelease => {
     notes,
     resource // Raw resource data from batch fetching
   } = rawRelease
+
+  if (!basicInfo) {
+    throw new Error(`Discogs release ${String(id)} missing basic_information`)
+  }
 
   const {
     id: basicId,
