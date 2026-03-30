@@ -312,6 +312,21 @@ describe('syncSteamData', () => {
     })
   })
 
+  it('surfaces Error failures when persisting Steam data', async () => {
+    vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
+    vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 0, games: [] })
+    vi.mocked(getPlayerSummary).mockResolvedValue({})
+    vi.mocked(generateSteamSummary).mockResolvedValue(null)
+    vi.mocked(documentStore.setDocument).mockRejectedValue(new Error('persist failed'))
+
+    const result = await syncSteamData(documentStore)
+
+    expect(result).toEqual({
+      result: 'FAILURE',
+      error: 'persist failed',
+    })
+  })
+
   it('should continue writing Steam data to canonical collections', async () => {
     vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
     vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 0, games: [] })

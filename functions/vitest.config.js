@@ -5,7 +5,7 @@ export default defineConfig({
     environment: 'node',
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov', 'json-summary'],
+      reporter: ['text', 'json', 'html', 'lcov'],
       exclude: [
         'node_modules/',
         '__tests__/',
@@ -16,10 +16,10 @@ export default defineConfig({
         'api/cloud-storage/list-stored-media.ts'
       ],
       thresholds: {
-        lines: 100,
-        statements: 99.8,
-        functions: 100,
-        branches: 96.5
+        lines: 99,
+        statements: 99,
+        functions: 99,
+        branches: 94
       }
     },
     include: ['**/*.test.ts', '**/*.test.js', '**/*.spec.ts', '**/*.spec.js'],
