@@ -5,7 +5,7 @@
  * BOOKS_TO_DISPLAY: Number of books to store and display in the widget.
  */
 export const GOODREADS_BOOKS_TO_FETCH = 30
-export const GOODREADS_BOOKS_TO_DISPLAY = 24
+export const GOODREADS_BOOKS_TO_DISPLAY = 30
 
 /**
  * Page size when paginating the entire "read" shelf for the AI summary only.
