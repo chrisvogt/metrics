@@ -70,6 +70,10 @@ const sectionCopy: Record<SectionId, { label: string; kicker: string }> = {
   sync: { label: 'Sync', kicker: 'Manual provider runs with live progress and final payloads' },
   auth: { label: 'Sign in', kicker: 'Access the protected console for this deployment' },
 }
+const buildSha = process.env.NEXT_PUBLIC_GIT_SHA
+const buildCommitUrl = buildSha
+  ? `https://github.com/chrisvogt/metrics/commit/${buildSha}`
+  : null
 
 function userInitial(user: User): string {
   const fromName = user.displayName?.trim().charAt(0)
@@ -98,9 +102,21 @@ export function Layout({ children, user, activeSection, onSectionChange }: Layou
             <span className={styles.logo}>CHRONOGROVE</span>
           </Link>
           <span className={styles.logoTag}>Core data service</span>
-          <span className={styles.logoSub} title="Git commit when this UI was built">
-            {process.env.NEXT_PUBLIC_GIT_SHA ?? 'unknown'}
-          </span>
+          {buildCommitUrl ? (
+            <a
+              href={buildCommitUrl}
+              className={styles.logoSub}
+              title="Open the GitHub commit for this UI build"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Commit {buildSha}
+            </a>
+          ) : (
+            <span className={styles.logoSub} title="Git commit when this UI was built">
+              Commit unknown
+            </span>
+          )}
         </div>
         <nav className={styles.nav}>
           <div className={styles.navSection}>

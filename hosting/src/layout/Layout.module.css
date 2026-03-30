@@ -63,6 +63,16 @@
   letter-spacing: 0.02em;
 }
 
+a.logoSub {
+  text-decoration: none;
+}
+
+a.logoSub:hover {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .nav {
   flex: 1;
   padding: 1rem 0.75rem;
