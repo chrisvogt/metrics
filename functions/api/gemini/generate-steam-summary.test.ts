@@ -177,4 +177,39 @@ describe('generateSteamSummary', () => {
     }
     expect(logger.error).toHaveBeenCalled()
   })
+
+  it('returns empty string when response JSON field is not a string', async () => {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai')
+    const mockGenerateContent = vi.fn().mockResolvedValueOnce({
+      response: {
+        text: () =>
+          '```json\n{"response": {"html": "<p>nested</p>"}, "debug": {}}\n```',
+      },
+    })
+    GoogleGenerativeAI.mockImplementationOnce(function () {
+      return {
+        getGenerativeModel: vi.fn().mockReturnValue({
+          generateContent: mockGenerateContent,
+        }),
+      }
+    })
+
+    await expect(generateSteamSummary(mockSteamData)).resolves.toBe('')
+  })
+
+  it('wraps non-Error rejections when calling Gemini', async () => {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai')
+    const mockGenerateContent = vi.fn().mockRejectedValueOnce('rate limited')
+    GoogleGenerativeAI.mockImplementationOnce(function () {
+      return {
+        getGenerativeModel: vi.fn().mockReturnValue({
+          generateContent: mockGenerateContent,
+        }),
+      }
+    })
+
+    await expect(generateSteamSummary(mockSteamData)).rejects.toMatchObject({
+      message: 'Failed to generate AI summary: rate limited',
+    })
+  })
 })

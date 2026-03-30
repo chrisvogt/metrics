@@ -123,6 +123,96 @@ describe('syncSteamData', () => {
     expect(documentStore.setDocument).toHaveBeenCalledTimes(4)
   })
 
+  it('treats an empty player summary array like a missing profile', async () => {
+    vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
+    vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 0 })
+    vi.mocked(getPlayerSummary).mockResolvedValue([])
+    vi.mocked(generateSteamSummary).mockResolvedValue('')
+
+    const result = await syncSteamData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/steam/widget-content',
+      expect.objectContaining({
+        profile: {
+          avatarURL: undefined,
+          displayName: undefined,
+          profileURL: undefined,
+        },
+      }),
+    )
+  })
+
+  it('uses an empty owned-games list when the API omits games', async () => {
+    vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
+    vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 2 })
+    vi.mocked(getPlayerSummary).mockResolvedValue({
+      avatarfull: 'a',
+      profileurl: 'https://steamcommunity.com/id/x',
+      personaname: 'X',
+    })
+    vi.mocked(generateSteamSummary).mockResolvedValue(null)
+
+    await syncSteamData(documentStore)
+
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/steam/widget-content',
+      expect.objectContaining({
+        collections: expect.objectContaining({
+          ownedGames: [],
+        }),
+      }),
+    )
+  })
+
+  it('filters out owned games below the minimum playtime threshold', async () => {
+    vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
+    vi.mocked(getOwnedGames).mockResolvedValue({
+      game_count: 1,
+      games: [{ appid: 1, name: 'Low', playtime_forever: 50, img_icon_url: 'i' }],
+    })
+    vi.mocked(getPlayerSummary).mockResolvedValue({})
+    vi.mocked(generateSteamSummary).mockResolvedValue(null)
+
+    const result = await syncSteamData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/steam/widget-content',
+      expect.objectContaining({
+        collections: expect.objectContaining({
+          ownedGames: [],
+        }),
+      }),
+    )
+  })
+
+  it('treats missing playtime as zero when filtering and sorting owned games', async () => {
+    vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
+    vi.mocked(getOwnedGames).mockResolvedValue({
+      game_count: 2,
+      games: [
+        { appid: 1, name: 'No hours', img_icon_url: 'a' },
+        { appid: 2, name: 'High', playtime_forever: 500, img_icon_url: 'b' },
+        { appid: 3, name: 'Also no hours', img_icon_url: 'c' },
+      ],
+    })
+    vi.mocked(getPlayerSummary).mockResolvedValue({})
+    vi.mocked(generateSteamSummary).mockResolvedValue(null)
+
+    await syncSteamData(documentStore)
+
+    expect(documentStore.setDocument).toHaveBeenCalledWith(
+      'users/chrisvogt/steam/widget-content',
+      expect.objectContaining({
+        collections: expect.objectContaining({
+          ownedGames: [expect.objectContaining({ id: 2 })],
+        }),
+      }),
+    )
+  })
+
   it('should fail when the document store rejects', async () => {
     vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
     vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 0, games: [] })

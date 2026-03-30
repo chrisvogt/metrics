@@ -72,6 +72,14 @@ describe('getOwnedGames', () => {
     expect(result).toEqual({})
   })
 
+  it('should treat top-level body without response field as empty owned-games payload', async () => {
+    got.mockResolvedValue({ body: {} })
+
+    const result = await getOwnedGames(mockApiKey, mockUserId)
+
+    expect(result).toEqual({})
+  })
+
   it('should handle response with no games', async () => {
     const noGamesResponse = {
       body: {

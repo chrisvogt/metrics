@@ -84,6 +84,32 @@ describe('getPlayerSummary', () => {
     expect(result).toEqual([])
   })
 
+  it('should default missing players array to empty', async () => {
+    got.mockResolvedValue({
+      body: {
+        response: {},
+      },
+    })
+
+    const result = await getPlayerSummary(mockApiKey, mockUserId)
+
+    expect(result).toEqual([])
+  })
+
+  it('should return empty tuple when the first player entry is nullish', async () => {
+    got.mockResolvedValue({
+      body: {
+        response: {
+          players: [null],
+        },
+      },
+    })
+
+    const result = await getPlayerSummary(mockApiKey, mockUserId)
+
+    expect(result).toEqual([])
+  })
+
   it('should handle response with no players', async () => {
     const noPlayersResponse = {
       body: {

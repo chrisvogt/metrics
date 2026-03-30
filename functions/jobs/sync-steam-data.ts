@@ -154,8 +154,8 @@ const syncSteamData = async (
     })
     const summaryInput: SteamSummaryInput = {
       collections: widgetContent.collections!,
-      metrics: widgetContent.metrics ?? [],
-      profile: widgetContent.profile ?? {},
+      metrics: widgetContent.metrics!,
+      profile: widgetContent.profile!,
     }
     aiSummary = await generateSteamSummary(summaryInput)
     widgetContent.aiSummary = aiSummary

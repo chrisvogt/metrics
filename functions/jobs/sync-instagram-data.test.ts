@@ -66,6 +66,74 @@ describe('syncInstagramData', () => {
     }
   })
 
+  it('uses an empty media list when the API omits the media envelope', async () => {
+    vi.mocked(fetchInstagramData).mockResolvedValue({
+      username: 'solo',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    const result = await syncInstagramData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(storeRemoteMedia).not.toHaveBeenCalled()
+  })
+
+  it('queues carousel children when the parent has no URLs but children do', async () => {
+    vi.mocked(fetchInstagramData).mockResolvedValue({
+      media: {
+        data: [
+          {
+            id: 'parent-no-url',
+            media_type: 'CAROUSEL_ALBUM',
+            children: {
+              data: [
+                {
+                  id: 'child1',
+                  media_url: 'https://example.com/only-child.jpg',
+                },
+              ],
+            },
+          },
+        ],
+      },
+      username: 'u',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncInstagramData(documentStore)
+
+    expect(storeRemoteMedia).toHaveBeenCalled()
+  })
+
+  it('skips carousel children that have neither thumbnail nor media URL', async () => {
+    vi.mocked(fetchInstagramData).mockResolvedValue({
+      media: {
+        data: [
+          {
+            id: 'parent1',
+            media_type: 'CAROUSEL_ALBUM',
+            media_url: 'https://example.com/parent.jpg',
+            children: {
+              data: [
+                {
+                  id: 'child-skip',
+                  media_url: undefined,
+                  thumbnail_url: undefined,
+                },
+              ],
+            },
+          },
+        ],
+      },
+      username: 'u',
+    })
+    vi.mocked(listStoredMedia).mockResolvedValue([])
+
+    await syncInstagramData(documentStore)
+
+    expect(storeRemoteMedia).toHaveBeenCalledTimes(1)
+  })
+
   it('should successfully sync Instagram data and save to the document store', async () => {
     vi.mocked(fetchInstagramData).mockResolvedValue({
       media: {
