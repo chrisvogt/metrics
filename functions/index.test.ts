@@ -1331,25 +1331,22 @@ describe('index.js', () => {
 
   describe('Firebase Admin Initialization', () => {
     it('should initialize Firebase Admin with correct settings', async () => {
-      // Clear mocks and reset modules to ensure clean state
       vi.clearAllMocks()
       vi.resetModules()
-      
-      // Import admin first to get the mocked functions
+
       await import('firebase-admin')
-      
-      // Import index.js which will trigger the initialization
-      await import('./index.js')
-      
+      const { expressApp } = await import('./index.js')
+
+      await request(expressApp).get('/api/csrf-token').expect(200)
+
       expect(initializeAppMock).toHaveBeenCalledWith({
         credential: { mock: 'cert' },
         databaseURL: 'mock-database-url',
-        projectId: 'personal-stats-chrisvogt'
+        projectId: 'personal-stats-chrisvogt',
       })
-      
-      // Check that firestore settings were called
+
       expect(firestoreSettingsMock).toHaveBeenCalledWith({
-        ignoreUndefinedProperties: true
+        ignoreUndefinedProperties: true,
       })
     })
 
@@ -1359,12 +1356,13 @@ describe('index.js', () => {
       vi.clearAllMocks()
       vi.resetModules()
       await import('firebase-admin')
-      await import('./index.js')
+      const { expressApp } = await import('./index.js')
+      await request(expressApp).get('/api/csrf-token').expect(200)
       expect(credentialMock.applicationDefault).toHaveBeenCalled()
       expect(initializeAppMock).toHaveBeenCalledWith({
         credential: { mock: 'applicationDefault' },
         databaseURL: 'mock-database-url',
-        projectId: 'personal-stats-chrisvogt'
+        projectId: 'personal-stats-chrisvogt',
       })
       process.env.NODE_ENV = prevEnv
     })
@@ -1374,12 +1372,13 @@ describe('index.js', () => {
       vi.clearAllMocks()
       vi.resetModules()
       await import('firebase-admin')
-      await import('./index.js')
+      const { expressApp } = await import('./index.js')
+      await request(expressApp).get('/api/csrf-token').expect(200)
       expect(credentialMock.applicationDefault).toHaveBeenCalled()
       expect(initializeAppMock).toHaveBeenCalledWith({
         credential: { mock: 'applicationDefault' },
         databaseURL: 'mock-database-url',
-        projectId: 'personal-stats-chrisvogt'
+        projectId: 'personal-stats-chrisvogt',
       })
       existsSyncMock.mockReturnValue(true)
     })
@@ -1391,9 +1390,6 @@ describe('index.js', () => {
 
       const expressAppSpy = vi.fn()
       const ensureRuntimeConfigApplied = vi.fn().mockResolvedValue(undefined)
-      const registerHttpFunction = vi.fn((handler) => handler)
-      const registerScheduledFunction = vi.fn((handler) => handler)
-      const registerUserCreationTrigger = vi.fn((handler) => handler)
 
       vi.doMock('./app/create-express-app.js', () => ({
         createExpressApp: vi.fn(() => expressAppSpy),
@@ -1412,12 +1408,6 @@ describe('index.js', () => {
             warn: vi.fn(),
           },
           resolveMediaStore: vi.fn(),
-          runtimePlatform: {
-            registerHttpFunction,
-            registerScheduledFunction,
-            registerUserCreationTrigger,
-          },
-          runtimeSecrets: [],
           syncJobQueue: {
             claimJob: vi.fn(),
             claimNextJob: vi.fn(),
@@ -1437,7 +1427,6 @@ describe('index.js', () => {
 
       expect(ensureRuntimeConfigApplied).toHaveBeenCalledTimes(1)
       expect(expressAppSpy).toHaveBeenCalledWith(req, res)
-      expect(registerHttpFunction).toHaveBeenCalledTimes(1)
     })
   })
 })

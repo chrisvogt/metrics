@@ -7,12 +7,12 @@
     },
     /**
      * `NEXT_PUBLIC_GIT_SHA` is baked into the static export in `hosting/next.config.ts`.
-     * Without this, Turbo can restore a cached `hosting/out` whenever only other packages
-     * (e.g. `functions/`) or repo-root files like `firebase.json` change — so Hosting
-     * deploys would ship an old UI while still showing an outdated commit in the sidebar.
+     * Local builds set it from `git rev-parse --short HEAD`; CI may provide `GITHUB_SHA`.
+     * Without both here, Turbo can restore a cached `hosting/out` across commits and ship
+     * an older UI bundle that still shows an outdated sidebar SHA.
      */
     "metrics-hosting#build": {
-      "env": ["GITHUB_SHA"]
+      "env": ["NEXT_PUBLIC_GIT_SHA", "GITHUB_SHA", "COMMIT_SHA", "VERCEL_GIT_COMMIT_SHA", "CF_PAGES_COMMIT_SHA"]
     },
     "dev": {
       "cache": false,

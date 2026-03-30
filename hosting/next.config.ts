@@ -4,21 +4,32 @@ import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const BUILD_SHA_ENV_KEYS = [
+  'NEXT_PUBLIC_GIT_SHA',
+  'VERCEL_GIT_COMMIT_SHA',
+  'CF_PAGES_COMMIT_SHA',
+  'GITHUB_SHA',
+  'COMMIT_SHA',
+] as const
+
+const normalizeSha = (raw: string): string => {
+  const sanitized = raw.trim().replace(/^v/i, '')
+  return sanitized.length >= 7 ? sanitized.slice(0, 7) : sanitized
+}
 
 /** 7-char SHA from CI env, or `git` at build time—reflects the UI bundle, not Functions. */
 function getGitShortSha(): string {
-  const raw =
-    process.env.NEXT_PUBLIC_GIT_SHA ??
-    process.env.VERCEL_GIT_COMMIT_SHA ??
-    process.env.CF_PAGES_COMMIT_SHA ??
-    process.env.GITHUB_SHA ??
-    process.env.COMMIT_SHA
-  if (raw) {
-    const s = raw.replace(/^v/, '').trim()
-    return s.length >= 7 ? s.slice(0, 7) : s
+  for (const key of BUILD_SHA_ENV_KEYS) {
+    const value = process.env[key]
+    if (value) {
+      return normalizeSha(value)
+    }
   }
+
   try {
-    return execSync('git rev-parse --short HEAD', { encoding: 'utf-8', cwd: __dirname }).trim()
+    return normalizeSha(
+      execSync('git rev-parse --short HEAD', { encoding: 'utf-8', cwd: __dirname }).trim()
+    )
   } catch {
     return 'unknown'
   }

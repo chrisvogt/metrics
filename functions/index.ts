@@ -1,37 +1,71 @@
 import { createExpressApp, getSessionAuthError } from './app/create-express-app.js'
-import { createBackendBootstrap } from './bootstrap/create-backend-bootstrap.js'
+import {
+  createBackendBootstrap,
+  type BackendBootstrap,
+} from './bootstrap/create-backend-bootstrap.js'
 import createUserJob from './jobs/create-user.js'
 import type { RuntimeUserCreationData } from './ports/runtime-platform.js'
+import {
+  registerFirebaseHttpFunction,
+  registerFirebaseScheduledFunction,
+  registerFirebaseUserCreationTrigger,
+} from './runtime/firebase-functions-runtime.js'
+import { getFirebaseRuntimeSecrets } from './runtime/firebase-runtime-config.js'
 import { planSyncJobs } from './services/sync-planner.js'
 import { runNextSyncJob } from './services/sync-worker.js'
 
 const SYNC_WORKER_SCHEDULE = 'every 15 minutes'
+const runtimeSecrets = getFirebaseRuntimeSecrets()
 
-const {
-  authService,
-  documentStore,
-  ensureRuntimeConfigApplied,
-  getClientAuthConfig,
-  logger,
-  resolveMediaStore,
-  runtimePlatform,
-  runtimeSecrets,
-  syncJobQueue,
-} = createBackendBootstrap()
+type ExpressApp = ReturnType<typeof createExpressApp>
+type ExpressRequest = Parameters<ExpressApp>[0]
+type ExpressResponse = Parameters<ExpressApp>[1]
 
-export const expressApp = createExpressApp({
-  authService,
-  documentStore,
-  ensureRuntimeConfigApplied,
-  getClientAuthConfig,
-  logger,
-  resolveMediaStore,
-  syncJobQueue,
-})
+let backendBootstrap: BackendBootstrap | undefined
+let expressAppInstance: ExpressApp | undefined
+
+const getBackendBootstrap = (): BackendBootstrap => {
+  if (!backendBootstrap) {
+    backendBootstrap = createBackendBootstrap()
+  }
+
+  return backendBootstrap
+}
+
+const getExpressApp = (): ExpressApp => {
+  if (!expressAppInstance) {
+    const {
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore,
+      syncJobQueue,
+    } = getBackendBootstrap()
+
+    expressAppInstance = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore,
+      syncJobQueue,
+    })
+  }
+
+  return expressAppInstance
+}
+
+export const expressApp = (req: ExpressRequest, res: ExpressResponse): void => {
+  getExpressApp()(req, res)
+}
 
 export { getSessionAuthError }
 
-export const runSyncPlanner = runtimePlatform.registerScheduledFunction(async () => {
+export const runSyncPlanner = registerFirebaseScheduledFunction(async () => {
+  const { ensureRuntimeConfigApplied, logger, syncJobQueue } = getBackendBootstrap()
   await ensureRuntimeConfigApplied()
   const plannerResult = await planSyncJobs(syncJobQueue)
   logger.info('Sync planner finished', {
@@ -43,7 +77,8 @@ export const runSyncPlanner = runtimePlatform.registerScheduledFunction(async ()
   })
 }, runtimeSecrets)
 
-export const runSyncWorker = runtimePlatform.registerScheduledFunction(async () => {
+export const runSyncWorker = registerFirebaseScheduledFunction(async () => {
+  const { documentStore, ensureRuntimeConfigApplied, syncJobQueue } = getBackendBootstrap()
   await ensureRuntimeConfigApplied()
   await runNextSyncJob({
     documentStore,
@@ -53,7 +88,8 @@ export const runSyncWorker = runtimePlatform.registerScheduledFunction(async () 
   schedule: SYNC_WORKER_SCHEDULE,
 })
 
-export const handleUserCreation = runtimePlatform.registerUserCreationTrigger(async (event) => {
+export const handleUserCreation = registerFirebaseUserCreationTrigger(async (event) => {
+  const { documentStore, ensureRuntimeConfigApplied, logger } = getBackendBootstrap()
   await ensureRuntimeConfigApplied()
   const rawUser: RuntimeUserCreationData | undefined = event.data
   const user = rawUser
@@ -74,7 +110,8 @@ export const handleUserCreation = runtimePlatform.registerUserCreationTrigger(as
   }
 }, runtimeSecrets)
 
-export const app = runtimePlatform.registerHttpFunction(async (req, res) => {
+export const app = registerFirebaseHttpFunction(async (req, res) => {
+  const { ensureRuntimeConfigApplied } = getBackendBootstrap()
   await ensureRuntimeConfigApplied()
   expressApp(req as Parameters<typeof expressApp>[0], res as Parameters<typeof expressApp>[1])
 }, runtimeSecrets)

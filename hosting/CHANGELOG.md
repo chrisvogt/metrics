@@ -7,6 +7,16 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-03-29
+
+### Fixed
+
+- **Build metadata SHA** — Local `pnpm run build`, `pnpm run dev`, `pnpm run dev:full:fresh`, and hosting deploys now pass the current short git SHA into the hosting build, and Turbo keys `metrics-hosting#build` on the SHA env vars used by `next.config.ts`. This prevents cached `hosting/out` bundles from reusing an older sidebar SHA across commits.
+
+### Added
+
+- **Tests** — `src/lib/buildSha.test.ts` covers the SHA env precedence, normalization, git fallback, and `unknown` fallback branches; coverage now includes `src/lib/buildSha.ts` alongside the existing per-file 100% checks.
+
 ## [0.6.3] - 2026-03-28
 
 ### Fixed
