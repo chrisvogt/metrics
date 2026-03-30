@@ -15,6 +15,7 @@ Package-specific changes:
 
 ### Changed
 
+- **Functions 0.25.4** — Goodreads widget requests **35** shelf rows (30 display + **5** buffer) so failed lookups are less likely to shrink the grid below 30 titles. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Functions 0.25.3** — Lazy backend bootstrap in the Firebase entrypoint so deploy-time export discovery no longer reads `STORAGE_FIRESTORE_DATABASE_URL.value()` early; tests updated for first-request initialization. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Functions 0.25.2** — Goodreads AI summary: prompt allows two or three `<p>` blocks; stored HTML is no longer truncated to two paragraphs (homepage handles “Read more”). See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Hosting 0.6.2** — Overview home cards show Discogs and Goodreads metrics (record-shaped `metrics` and Goodreads fallbacks). See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).

@@ -153,7 +153,7 @@ describe('fetchRecentlyReadBooks', () => {
 
     // Verify Goodreads API was called
     expect(mockGot).toHaveBeenCalledWith(
-      'https://www.goodreads.com/review/list/test-user-id.xml?key=test-api-key&v=2&shelf=read&sort=date_read&per_page=30'
+      'https://www.goodreads.com/review/list/test-user-id.xml?key=test-api-key&v=2&shelf=read&sort=date_read&per_page=35'
     )
 
     // Verify XML parsing was called
