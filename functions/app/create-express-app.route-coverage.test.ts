@@ -235,6 +235,7 @@ describe('createExpressApp route coverage', () => {
 
     await authenticateUser(
       {
+        path: '/api/user/profile',
         cookies: {},
         headers: { authorization: 'Bearer   ' },
       },
@@ -243,7 +244,7 @@ describe('createExpressApp route coverage', () => {
     )
 
     expect(logger.warn).toHaveBeenCalledWith('No valid authorization header found', {
-      authHeaderStart: 'Bearer   ',
+      path: '/api/user/profile',
       hasAuthHeader: true,
     })
     expect(response.status).toHaveBeenCalledWith(401)

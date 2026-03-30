@@ -276,11 +276,26 @@ describe('index.js', () => {
     })
 
     describe('GET /api/widgets/sync/:provider', () => {
+      beforeEach(async () => {
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: vi.fn().mockResolvedValue({
+            uid: 'sync-test-uid',
+            email: 'test@chrisvogt.me',
+            email_verified: true,
+          }),
+          verifySessionCookie: vi.fn().mockRejectedValue(new Error('no session')),
+        }))
+      })
+
+      const authBearer = { Authorization: 'Bearer sync-test-jwt' }
+
       it('should sync data for valid provider', async () => {
         const { runSyncForProvider } = await import('./services/sync-manual.js')
 
         const response = await request(app)
           .get('/api/widgets/sync/spotify')
+          .set(authBearer)
           .expect(200)
 
         expect(runSyncForProvider).toHaveBeenCalledWith(expect.objectContaining({
@@ -295,6 +310,7 @@ describe('index.js', () => {
 
         const response = await request(app)
           .get('/api/widgets/sync/flickr')
+          .set(authBearer)
           .expect(200)
 
         expect(response.body.worker.result).toBe('SUCCESS')
@@ -303,9 +319,17 @@ describe('index.js', () => {
         }))
       })
 
+      it('should return 401 when unauthenticated', async () => {
+        const response = await request(app).get('/api/widgets/sync/spotify').expect(401)
+
+        expect(response.body.ok).toBe(false)
+        expect(response.body.error).toBe('No valid authorization header found')
+      })
+
       it('should return 400 for invalid provider', async () => {
         const response = await request(app)
           .get('/api/widgets/sync/invalid-provider')
+          .set(authBearer)
           .expect(400)
 
         expect(response.text).toBe('Unrecognized or unsupported provider.')
@@ -317,10 +341,23 @@ describe('index.js', () => {
 
         const response = await request(app)
           .get('/api/widgets/sync/spotify')
+          .set(authBearer)
           .expect(500)
 
         expect(response.body).toHaveProperty('error')
         expect(response.body.error).toBeDefined()
+      })
+
+      afterEach(async () => {
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: vi.fn(),
+          verifySessionCookie: vi.fn(),
+          getUser: vi.fn(),
+          createSessionCookie: vi.fn(),
+          deleteUser: vi.fn(),
+          revokeRefreshTokens: vi.fn(),
+        }))
       })
     })
 
@@ -880,11 +917,8 @@ describe('index.js', () => {
       })
 
       it('should return 401 from outer catch when authenticateUser throws unexpectedly', async () => {
-        let callCount = 0
-        const logSpy = vi.spyOn(logger, 'info').mockImplementation((..._args: unknown[]) => {
-          callCount += 1
-          if (callCount === 2) throw new Error('Unexpected auth error')
-          return undefined as void
+        const logSpy = vi.spyOn(logger, 'info').mockImplementationOnce(() => {
+          throw new Error('Unexpected auth error')
         })
 
         const response = await request(app)

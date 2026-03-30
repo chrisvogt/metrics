@@ -323,6 +323,12 @@ describe('createExpressApp auth and session branches', () => {
       authDomain: 'metrics.firebaseapp.com',
       projectId: 'metrics-project',
     })
+    authService.verifyIdToken.mockResolvedValue({
+      uid: 'test-uid',
+      email: 'test@chrisvogt.me',
+      emailVerified: true,
+    })
+    authService.verifySessionCookie.mockRejectedValue(new Error('no session cookie'))
   })
 
   afterEach(() => {
@@ -417,7 +423,6 @@ describe('createExpressApp auth and session branches', () => {
   it('returns 401 when the auth middleware outer catch receives a non-Error failure', async () => {
     const app = await buildApp()
 
-    logger.info.mockImplementationOnce(() => undefined)
     logger.info.mockImplementationOnce(() => {
       throw { code: 'logger-failure' }
     })
@@ -487,6 +492,7 @@ describe('createExpressApp auth and session branches', () => {
 
     const response = await request(app)
       .get(`/api/widgets/sync/${provider}`)
+      .set('Authorization', 'Bearer valid-sync-token')
       .expect(200)
 
     expect(runSyncForProvider).toHaveBeenCalledWith({
@@ -498,11 +504,21 @@ describe('createExpressApp auth and session branches', () => {
     expect(response.body.worker.result).toBe('SUCCESS')
   })
 
+  it('returns 401 when manual sync JSON is called without credentials', async () => {
+    const app = await buildApp()
+
+    const response = await request(app).get('/api/widgets/sync/spotify').expect(401)
+
+    expect(response.body.ok).toBe(false)
+    expect(response.body.error).toBe('No valid authorization header found')
+  })
+
   it('returns 400 for unsupported sync providers', async () => {
     const app = await buildApp()
 
     const response = await request(app)
       .get('/api/widgets/sync/github')
+      .set('Authorization', 'Bearer valid-sync-token')
       .expect(400)
 
     expect(response.text).toBe('Unrecognized or unsupported provider.')

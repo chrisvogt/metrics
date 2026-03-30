@@ -138,19 +138,9 @@ export function createExpressApp({
     res: express.Response,
     next: express.NextFunction
   ): Promise<void> => {
-    logger.info('Authenticating user', {
-      headers: req.headers,
-      cookies: req.cookies,
-    })
     try {
       const sessionCookie = req.cookies?.session
       if (sessionCookie) {
-        logger.info('Session cookie found, attempting verification', {
-          cookieLength: sessionCookie.length,
-          cookieStart: sessionCookie.substring(0, 50),
-          cookieEnd: sessionCookie.substring(sessionCookie.length - 50),
-        })
-
         try {
           const decodedClaims = await authService.verifySessionCookie(sessionCookie)
 
@@ -193,8 +183,8 @@ export function createExpressApp({
       const token = extractBearerToken(authHeader)
       if (!token) {
         logger.warn('No valid authorization header found', {
-          hasAuthHeader: !!req.headers.authorization,
-          authHeaderStart: req.headers.authorization?.substring(0, 20),
+          path: req.path,
+          hasAuthHeader: Boolean(req.headers.authorization),
         })
         res.status(401).json({
           ok: false,
@@ -203,7 +193,7 @@ export function createExpressApp({
         return
       }
 
-      logger.info('JWT token found, attempting verification')
+      logger.info('auth: bearer token', { path: req.path })
 
       try {
         const decodedToken = await authService.verifyIdToken(token)
@@ -360,6 +350,7 @@ export function createExpressApp({
   expressApp.get(
     '/api/widgets/sync/:provider/stream',
     createRateLimiter(15 * 60 * 1000, 10),
+    authenticateUser,
     async (req, res) => {
       const providerParam = req.params.provider
       const provider = typeof providerParam === 'string' ? providerParam : undefined
@@ -406,6 +397,7 @@ export function createExpressApp({
   expressApp.get(
     '/api/widgets/sync/:provider',
     createRateLimiter(15 * 60 * 1000, 10),
+    authenticateUser,
     async (req, res) => {
       const providerParam = req.params.provider
       const provider = typeof providerParam === 'string' ? providerParam : undefined
