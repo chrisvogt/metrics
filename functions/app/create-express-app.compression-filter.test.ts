@@ -26,4 +26,12 @@ describe('metricsCompressionFilter', () => {
 
     expect(metricsCompressionFilter(req, {} as express.Response, defaultFilter)).toBe(false)
   })
+
+  it('uses the default filter when path and url are both missing (empty pathStr)', () => {
+    const req = {} as express.Request
+    const defaultFilter = vi.fn(() => true)
+
+    expect(metricsCompressionFilter(req, {} as express.Response, defaultFilter)).toBe(true)
+    expect(defaultFilter).toHaveBeenCalledOnce()
+  })
 })

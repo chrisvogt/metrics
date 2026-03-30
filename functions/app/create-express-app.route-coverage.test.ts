@@ -536,4 +536,84 @@ describe('createExpressApp route coverage', () => {
     expect(written).toContain('"type":"done"')
     expect(response.end).toHaveBeenCalled()
   })
+
+  it('GET /api/csrf-token uses res.locals._csrf when req.csrfToken is not a function', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+    const csrfHandler = findRouteHandler(app, 'get', '/api/csrf-token')
+    const res = {
+      json: vi.fn(),
+      locals: { _csrf: 'csrf-from-res-locals' },
+    }
+    await csrfHandler({} as never, res as never)
+    expect(res.json).toHaveBeenCalledWith({
+      ok: true,
+      csrfToken: 'csrf-from-res-locals',
+    })
+  })
+
+  it('GET /api/user/profile route handler no-ops when req.user is missing (defensive)', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+    const handler = findRouteHandler(app, 'get', '/api/user/profile')
+    const res = createResponse()
+    await handler({ user: undefined } as never, res as never)
+    expect(authService.getUser).not.toHaveBeenCalled()
+    expect(res.status).not.toHaveBeenCalled()
+    expect(res.send).not.toHaveBeenCalled()
+  })
+
+  it('DELETE /api/user/account route handler no-ops when req.user is missing (defensive)', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+    const handler = findRouteHandler(app, 'delete', '/api/user/account')
+    const res = createResponse()
+    await handler({ user: undefined } as never, res as never)
+    expect(authService.deleteUser).not.toHaveBeenCalled()
+    expect(res.status).not.toHaveBeenCalled()
+    expect(res.send).not.toHaveBeenCalled()
+  })
+
+  it('POST /api/auth/logout route handler no-ops when req.user is missing (defensive)', async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+    const handler = findRouteHandler(app, 'post', '/api/auth/logout')
+    const res = createResponse()
+    await handler({ user: undefined } as never, res as never)
+    expect(authService.revokeRefreshTokens).not.toHaveBeenCalled()
+    expect(res.status).not.toHaveBeenCalled()
+    expect(res.send).not.toHaveBeenCalled()
+  })
 })
