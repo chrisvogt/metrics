@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.3] - 2026-03-29
+
+### Fixed
+
+- **Firebase deploy warning** — Functions no longer call `STORAGE_FIRESTORE_DATABASE_URL.value()` while the deploy tooling is discovering exports. `index.ts` now lazily creates the backend bootstrap and Express app on first invocation, so Firebase Admin init and param reads happen at runtime instead of module-load time.
+
+### Developer experience
+
+- **Tests** — Updated `index.test.ts` to assert lazy Firebase Admin initialization on first request and kept the HTTP wrapper coverage aligned with the new bootstrap timing.
+
 ## [0.25.2] - 2026-03-28
 
 ### Changed
