@@ -15,6 +15,7 @@ Package-specific changes:
 
 ### Changed
 
+- **Functions 0.25.6** — Widget API caching now favors revalidation across all providers: browser responses revalidate (`max-age=0, must-revalidate`) while shared caches keep a short TTL (`s-maxage=300`, `stale-while-revalidate=60`) to reduce stale widget payloads after sync. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Functions 0.25.5** — Removed `requestretry` from Spotify profile/top-tracks requests, standardized on a shared `got` Spotify client (retry + JSON defaults), and added unit coverage for that shared client. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Functions 0.25.4** — Goodreads widget requests **35** shelf rows (30 display + **5** buffer) so failed lookups are less likely to shrink the grid below 30 titles. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Functions 0.25.3** — Lazy backend bootstrap in the Firebase entrypoint so deploy-time export discovery no longer reads `STORAGE_FIRESTORE_DATABASE_URL.value()` early; tests updated for first-request initialization. See [functions/CHANGELOG.md](functions/CHANGELOG.md).

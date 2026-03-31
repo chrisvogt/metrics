@@ -186,7 +186,9 @@ describe('index.js', () => {
           ok: true,
           payload: { mock: 'widget-content' }
         })
-        expect(response.headers['cache-control']).toBe('public, max-age=3600, s-maxage=7200')
+        expect(response.headers['cache-control']).toBe(
+          'public, max-age=0, s-maxage=300, must-revalidate, stale-while-revalidate=60'
+        )
         expect(response.headers['set-cookie']).toBeUndefined()
       })
 
