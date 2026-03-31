@@ -2,20 +2,20 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import getUserProfile from './get-user-profile.js'
 
 // Mock dependencies
-vi.mock('requestretry', () => ({
+vi.mock('./spotify-client.js', () => ({
   default: vi.fn()
 }))
 
 describe('getUserProfile', () => {
-  let mockRequest
+  let mockSpotifyClient
 
   beforeEach(async () => {
     // Clear all mocks
     vi.clearAllMocks()
 
     // Get mock function
-    const requestretry = await import('requestretry')
-    mockRequest = requestretry.default
+    const spotifyClient = await import('./spotify-client.js')
+    mockSpotifyClient = spotifyClient.default
   })
 
   afterEach(() => {
@@ -52,23 +52,14 @@ describe('getUserProfile', () => {
       href: 'https://api.spotify.com/v1/users/artinreality'
     }
 
-    mockRequest.mockResolvedValue(mockUserProfile)
+    mockSpotifyClient.mockResolvedValue({ body: mockUserProfile })
 
     const result = await getUserProfile(accessToken)
 
     // Verify request was called with correct parameters
-    expect(mockRequest).toHaveBeenCalledWith({
-      fullResponse: false,
+    expect(mockSpotifyClient).toHaveBeenCalledWith('me', {
       headers: { Authorization: 'Bearer test-access-token' },
-      json: true,
-      retryStrategy: expect.any(Function),
-      uri: 'https://api.spotify.com/v1/me'
     })
-
-    // Verify retry strategy function
-    const retryStrategy = mockRequest.mock.calls[0][0].retryStrategy
-    expect(retryStrategy(new Error('Network error'))).toBe(true)
-    expect(retryStrategy(null)).toBe(false)
 
     // Verify result
     expect(result).toEqual(mockUserProfile)
@@ -78,7 +69,7 @@ describe('getUserProfile', () => {
     const accessToken = 'invalid-access-token'
     const mockError = new Error('Unauthorized')
 
-    mockRequest.mockRejectedValue(mockError)
+    mockSpotifyClient.mockRejectedValue(mockError)
 
     await expect(getUserProfile(accessToken)).rejects.toThrow('Unauthorized')
   })
@@ -87,7 +78,7 @@ describe('getUserProfile', () => {
     const accessToken = 'test-access-token'
     const mockEmptyResponse = {}
 
-    mockRequest.mockResolvedValue(mockEmptyResponse)
+    mockSpotifyClient.mockResolvedValue({ body: mockEmptyResponse })
 
     const result = await getUserProfile(accessToken)
 
@@ -99,7 +90,7 @@ describe('getUserProfile', () => {
     const accessToken = 'test-access-token'
     const mockNullResponse = null
 
-    mockRequest.mockResolvedValue(mockNullResponse)
+    mockSpotifyClient.mockResolvedValue({ body: mockNullResponse })
 
     const result = await getUserProfile(accessToken)
 

@@ -2,20 +2,20 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import getTopTracks from './get-top-tracks.js'
 
 // Mock dependencies
-vi.mock('requestretry', () => ({
+vi.mock('./spotify-client.js', () => ({
   default: vi.fn()
 }))
 
 describe('getTopTracks', () => {
-  let mockRequest
+  let mockSpotifyClient
 
   beforeEach(async () => {
     // Clear all mocks
     vi.clearAllMocks()
 
     // Get mock function
-    const requestretry = await import('requestretry')
-    mockRequest = requestretry.default
+    const spotifyClient = await import('./spotify-client.js')
+    mockSpotifyClient = spotifyClient.default
   })
 
   afterEach(() => {
@@ -43,27 +43,18 @@ describe('getTopTracks', () => {
       ]
     }
 
-    mockRequest.mockResolvedValue(mockTopTracks)
+    mockSpotifyClient.mockResolvedValue({ body: mockTopTracks })
 
     const result = await getTopTracks(accessToken)
 
     // Verify request was called with correct parameters
-    expect(mockRequest).toHaveBeenCalledWith({
-      fullResponse: false,
+    expect(mockSpotifyClient).toHaveBeenCalledWith('me/top/tracks', {
       headers: { Authorization: 'Bearer test-access-token' },
-      json: true,
-      qs: {
+      searchParams: {
         time_range: 'short_term',
         limit: 12
-      },
-      retryStrategy: expect.any(Function),
-      uri: 'https://api.spotify.com/v1/me/top/tracks'
+      }
     })
-
-    // Verify retry strategy function
-    const retryStrategy = mockRequest.mock.calls[0][0].retryStrategy
-    expect(retryStrategy(new Error('Network error'))).toBe(true)
-    expect(retryStrategy(null)).toBe(false)
 
     // Verify result
     expect(result).toEqual(mockTopTracks.items)
@@ -75,7 +66,7 @@ describe('getTopTracks', () => {
       items: []
     }
 
-    mockRequest.mockResolvedValue(mockEmptyResponse)
+    mockSpotifyClient.mockResolvedValue({ body: mockEmptyResponse })
 
     await expect(getTopTracks(accessToken)).rejects.toThrow('No top tracks returned from Spotify.')
   })
@@ -86,7 +77,7 @@ describe('getTopTracks', () => {
       // Missing items property
     }
 
-    mockRequest.mockResolvedValue(mockResponseWithoutItems)
+    mockSpotifyClient.mockResolvedValue({ body: mockResponseWithoutItems })
 
     await expect(getTopTracks(accessToken)).rejects.toThrow('No top tracks returned from Spotify.')
   })
@@ -97,7 +88,7 @@ describe('getTopTracks', () => {
       items: null
     }
 
-    mockRequest.mockResolvedValue(mockResponseWithNullItems)
+    mockSpotifyClient.mockResolvedValue({ body: mockResponseWithNullItems })
 
     await expect(getTopTracks(accessToken)).rejects.toThrow('No top tracks returned from Spotify.')
   })
@@ -108,7 +99,7 @@ describe('getTopTracks', () => {
       items: undefined
     }
 
-    mockRequest.mockResolvedValue(mockResponseWithUndefinedItems)
+    mockSpotifyClient.mockResolvedValue({ body: mockResponseWithUndefinedItems })
 
     await expect(getTopTracks(accessToken)).rejects.toThrow('No top tracks returned from Spotify.')
   })
@@ -117,7 +108,7 @@ describe('getTopTracks', () => {
     const accessToken = 'invalid-access-token'
     const mockError = new Error('Unauthorized')
 
-    mockRequest.mockRejectedValue(mockError)
+    mockSpotifyClient.mockRejectedValue(mockError)
 
     await expect(getTopTracks(accessToken)).rejects.toThrow('Unauthorized')
   })
@@ -136,7 +127,7 @@ describe('getTopTracks', () => {
       ]
     }
 
-    mockRequest.mockResolvedValue(mockSingleTrack)
+    mockSpotifyClient.mockResolvedValue({ body: mockSingleTrack })
 
     const result = await getTopTracks(accessToken)
 

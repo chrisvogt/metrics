@@ -1,17 +1,20 @@
-import request from 'requestretry'
+import spotifyClient from './spotify-client.js'
+
+interface SpotifyTopTracksResponse {
+  items?: unknown[]
+}
 
 const getTopTracks = async accessToken => {
-  const { items } = await request({
-    fullResponse: false,
-    headers: { Authorization: `Bearer ${accessToken}` },
-    json: true,
-    qs: {
+  const { body } = await spotifyClient<SpotifyTopTracksResponse>('me/top/tracks', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    },
+    searchParams: {
       time_range: 'short_term',
       limit: 12
-    },
-    retryStrategy: err => !!err,
-    uri: 'https://api.spotify.com/v1/me/top/tracks'
+    }
   })
+  const { items } = body
 
   if (!items || items.length === 0) {
     throw new Error('No top tracks returned from Spotify.')
