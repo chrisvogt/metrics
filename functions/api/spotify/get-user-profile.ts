@@ -1,15 +1,13 @@
-import request from 'requestretry'
+import spotifyClient from './spotify-client.js'
 
 const getUserProfile = async accessToken => {
-  const response = await request({
-    fullResponse: false,
-    headers: { Authorization: `Bearer ${accessToken}` },
-    json: true,
-    retryStrategy: err => !!err,
-    uri: 'https://api.spotify.com/v1/me'
+  const { body } = await spotifyClient('me', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
   })
   
-  return response
+  return body
 }
 
 export default getUserProfile

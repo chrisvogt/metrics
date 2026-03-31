@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.5] - 2026-03-30
+
+### Changed
+
+- **Spotify HTTP client** — Replaced `requestretry` calls in Spotify profile/top-tracks reads with the existing `got` stack and centralized shared Spotify retry/JSON defaults in `api/spotify/spotify-client.ts`.
+
+### Developer experience
+
+- **Dependency cleanup** — Removed `requestretry` from runtime dependencies and its local module declaration.
+- **Tests** — Added `spotify-client.test.ts` for shared got client configuration and updated Spotify API unit tests to mock the centralized client.
+
 ## [0.25.4] - 2026-03-30
 
 ### Changed
@@ -570,6 +581,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _This changelog was started with v0.8.0._
 
+[0.25.5]: https://github.com/chrisvogt/metrics/compare/v0.25.4...v0.25.5
 [0.25.4]: https://github.com/chrisvogt/metrics/compare/v0.25.3...v0.25.4
 [0.25.3]: https://github.com/chrisvogt/metrics/compare/v0.25.2...v0.25.3
 [0.25.2]: https://github.com/chrisvogt/metrics/compare/v0.25.1...v0.25.2
