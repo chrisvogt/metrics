@@ -1,7 +1,11 @@
 import spotifyClient from './spotify-client.js'
 
+interface SpotifyTopTracksResponse {
+  items?: unknown[]
+}
+
 const getTopTracks = async accessToken => {
-  const { body } = await spotifyClient('me/top/tracks', {
+  const { body } = await spotifyClient<SpotifyTopTracksResponse>('me/top/tracks', {
     headers: {
       Authorization: `Bearer ${accessToken}`
     },
