@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.6] - 2026-03-31
+
+### Changed
+
+- **Widget API caching** — `GET /api/widgets/:provider` now uses revalidation-first caching (`max-age=0, must-revalidate`) with short shared-cache freshness (`s-maxage=300`, `stale-while-revalidate=60`) so synced widget data is refreshed quickly across providers without long-lived stale responses.
+
 ## [0.25.5] - 2026-03-30
 
 ### Changed

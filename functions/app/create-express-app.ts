@@ -437,7 +437,11 @@ export function createExpressApp({
       const widgetContent: WidgetContentUnion =
         await getWidgetContent(provider, userId, documentStore)
       const response = buildSuccessResponse(widgetContent)
-      res.set('Cache-Control', 'public, max-age=3600, s-maxage=7200')
+      // Always revalidate at the client, while allowing short shared-cache freshness.
+      res.set(
+        'Cache-Control',
+        'public, max-age=0, s-maxage=300, must-revalidate, stale-while-revalidate=60',
+      )
       res.status(200).send(response)
     } catch (err) {
       logger.error('Error loading widget content', {
