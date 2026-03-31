@@ -14,23 +14,53 @@
   </a>
 </p>
 
-This repository contains a portable metrics service I use to fetch and sync data for widgets on my personal website, [www.chrisvogt.me](https://www.chrisvogt.me). Firebase remains the current reference provider, but the backend is being refactored to stay open to self-hosted, containerized, and serverless runtime choices.
+Portable metrics backend and dashboard for widgets on [www.chrisvogt.me](https://www.chrisvogt.me). Firebase is the current reference provider, while core backend design stays open to non-Firebase runtimes over time.
 
-## Features
+## Quick start (first 5 minutes)
 
-- **Multi-Platform Data Sync**: Integrates with Spotify, Steam, Goodreads, Instagram, Discogs, and Flickr
-- **Firebase Authentication**: Secure user authentication with email/password, phone, and Google sign-in
-- **Session Management**: Secure session cookies with JWT token fallback
-- **Real-time Data**: Live data fetching and caching for widget content
-- **Local Development**: Full Firebase emulator support for development
+1. **Install prerequisites**
+   - Node.js (version in [.nvmrc](./.nvmrc), currently 24+)
+   - pnpm (for example: `corepack enable && corepack prepare pnpm@10.32.1 --activate`)
+   - Firebase CLI (`pnpm add -g firebase-tools` or `npm install -g firebase-tools`)
+   - `firebase login`
+2. **Clone and install**
+   ```bash
+   git clone git@github.com:chrisvogt/metrics.git
+   cd metrics
+   pnpm install
+   ```
+3. **Set local env vars**
+   ```bash
+   cp functions/.env.template functions/.env.local
+   # edit functions/.env.local (at least CLIENT_API_KEY, CLIENT_AUTH_DOMAIN, CLIENT_PROJECT_ID)
+   ```
+4. **Run local dev (recommended)**
+   ```bash
+   pnpm run dev:full
+   ```
+5. **Open**
+   - App: `http://localhost:5173`
+   - Emulator UI: `http://127.0.0.1:4000`
 
-## How It Works
+If `/api` calls fail in local dev, the Functions emulator is usually not reachable.
 
-This service backs the widgets on [www.chrisvogt.me](https://www.chrisvogt.me). The diagrams are intentionally small—each shows one slice. For queue semantics, schedules, and job fields, see [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md).
+## What this project does
 
-### 1. Public widget reads
+- Fetches and serves widget data for: Spotify, Steam, Goodreads, Instagram, Discogs, Flickr, and GitHub.
+- Supports scheduled sync jobs plus manual admin-triggered sync.
+- Uses Firebase Auth (Google, email/password, phone) with HTTP-only session cookies and JWT fallback.
+- Runs locally with Firebase emulators.
+- Serves a Next.js dashboard at `metrics.chrisvogt.me`.
 
-The site calls the metrics API; responses are cached at the edge. No auth required.
+> Note: `github` is a readable widget provider, but **not** part of the scheduled/manual sync queue.
+
+## Architecture at a glance
+
+This service backs widgets for [www.chrisvogt.me](https://www.chrisvogt.me). Each diagram is intentionally focused on one path. For queue semantics and job document fields, see [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md).
+
+### 1) Public widget reads
+
+Unauthenticated widget reads from Firestore-backed content.
 
 ```mermaid
 flowchart LR
@@ -38,14 +68,14 @@ flowchart LR
   fn --> fs[(Firestore<br/>users/.../widget-content)]
 ```
 
-### 2. Scheduled sync (queue + worker)
+### 2) Scheduled sync (planner + worker)
 
-The **planner** seeds one job per provider per day; the **worker** drains the queue on a short interval. Each run fetches from the right platform API and writes widget documents.
+Planner enqueues one job per syncable provider. Worker claims queued jobs and runs provider sync.
 
 ```mermaid
 flowchart TB
   subgraph sched[Cloud Scheduler]
-    p[runSyncPlanner · daily 02:00]
+    p[runSyncPlanner · default schedule]
     w[runSyncWorker · every 15 min]
   end
   p --> plan[planSyncJobs]
@@ -57,16 +87,16 @@ flowchart TB
   job --> docs[(Firestore · widget documents)]
 ```
 
-### 3. Admin dashboard
+### 3) Admin dashboard manual sync
 
-[metrics.chrisvogt.me](https://metrics.chrisvogt.me) uses Firebase Auth and session cookies. Manual sync hits the same backend and runs the job **inline** (enqueue → claim → sync) instead of waiting for the worker tick.
+[metrics.chrisvogt.me](https://metrics.chrisvogt.me) uses Firebase Auth + session cookie. Manual sync runs inline (enqueue -> claim -> process) instead of waiting for worker cadence.
 
 ```mermaid
 flowchart TB
   admin[metrics.chrisvogt.me] --> auth[Firebase Auth]
   admin --> sess[POST /api/auth/session]
   admin --> sync[GET /api/widgets/sync/:provider]
-  admin --> stream[GET …/sync/:provider/stream SSE]
+  admin --> stream[GET .../sync/:provider/stream SSE]
   sync --> fn[runSyncForProvider]
   stream --> fn
   fn --> q[(sync_jobs)]
@@ -74,253 +104,188 @@ flowchart TB
   job --> out[Platform APIs + widget writes]
 ```
 
-**Key flows:**
+### Key request flows
 
-| Path | Description |
+| Flow | Description |
 |------|-------------|
-| **Widget reads** | The website calls `GET /api/widgets/:provider` (public, cached). The handler reads the provider's `widget-content` document from Firestore and returns it. |
-| **Scheduled sync** | Cloud Scheduler fires `runSyncPlanner` daily at 02:00, which enqueues one job per provider into the `sync_jobs` Firestore collection. `runSyncWorker` runs every 15 minutes, claims the next queued job, calls the provider's external API, writes fresh data to Firestore, and marks the job completed or failed. |
-| **Manual sync** | An authenticated admin triggers `GET /api/widgets/sync/:provider` (JSON: queue before/after + worker payload) or `GET /api/widgets/sync/:provider/stream` (**SSE**: `progress` events, then `done` or `error`). Both use the same enqueue → claim → inline `processSyncJob` path. |
-| **Auth** | The admin dashboard authenticates via Firebase Auth (Google, email, or phone) and creates an HTTP-only session cookie through `POST /api/auth/session`. Sync endpoints require a valid session or JWT. |
+| **Widget reads** | `GET /api/widgets/:provider` (public, cached). Reads provider widget document from Firestore and returns it. |
+| **Scheduled sync** | `runSyncPlanner` enqueues queue jobs; `runSyncWorker` periodically claims and executes queued jobs. |
+| **Manual sync** | Authenticated `GET /api/widgets/sync/:provider` (JSON) or `GET /api/widgets/sync/:provider/stream` (SSE). Both use the same queue + inline processing path. |
+| **Auth** | Dashboard signs in with Firebase Auth and creates a session cookie through `POST /api/auth/session`. Protected routes accept session cookie or JWT. |
 
-## Documentation
+## Monorepo layout
 
-Design notes and architecture references live under [`docs/`](docs/). The table below links each file to its topic.
+This repository is a pnpm workspace with:
 
-| Document | What it covers |
-|----------|----------------|
-| [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md) | Firestore `sync_jobs` queue: planner, worker, manual sync, job states, optional **`summary.metrics`** from provider sync jobs, and related source files. |
-| [docs/SESSION_COOKIES.md](docs/SESSION_COOKIES.md) | Firebase session cookies (HTTP-only), `/api/auth/session`, JWT fallback, and security properties. |
-| [docs/MULTI_TENANT_ARCHITECTURE_PLAN.md](docs/MULTI_TENANT_ARCHITECTURE_PLAN.md) | Plan for evolving from single-tenant env-based config toward user-scoped storage and sync. |
+- `hosting/`: Next.js dashboard (static export)
+- `functions/`: Firebase Cloud Functions backend
 
-## How to install
+Turborepo runs workspace scripts from the root and caches work.
 
-### Prerequisites
+**Use repo root for commands** (do not run per-package installs).
 
-- **Node.js** (version in [.nvmrc](./.nvmrc), e.g. 24)
-- **pnpm** (e.g. `corepack enable && corepack prepare pnpm@10.32.1 --activate`, or see [pnpm.io](https://pnpm.io/installation))
-- **Firebase CLI** (`pnpm add -g firebase-tools` or `npm install -g firebase-tools`)
-- **Firebase project** and `firebase login`
-
-### Install steps
-
-1. **Clone and install all dependencies**
-   ```bash
-   git clone git@github.com:chrisvogt/metrics.git
-   cd metrics
-   pnpm install
-   ```
-   This installs dependencies for the root, `hosting/`, and `functions/` in one go (see [Monorepo](#monorepo) below).
-
-2. **Configure environment (local development)**  
-   In `functions/`, copy the env template and set values (see [Environment variables](#environment-variables) below):
-   ```bash
-   cp functions/.env.template functions/.env.local
-   # Edit functions/.env.local (CLIENT_API_KEY, CLIENT_AUTH_DOMAIN, CLIENT_PROJECT_ID, etc.)
-   ```
-
-### Environment variables
-
-For local development, copy the template and set your values:
-
-```bash
-# In the /functions directory
-cp .env.template .env.local
-# Edit .env.local with your actual values
-```
-
-**Important:** Never commit `functions/.env.local` to version control. It contains sensitive information like API keys.
-Also avoid using `functions/.env` for normal development, because Firebase deploys that file's values into Cloud Functions.
-
-#### Required Environment Variables
-
-The following variables are required for the authentication system to work:
-
-- `CLIENT_API_KEY` - Your Firebase API key
-- `CLIENT_AUTH_DOMAIN` - Your Firebase auth domain (e.g., `your-project.firebaseapp.com`)
-- `CLIENT_PROJECT_ID` - Your Firebase project ID
-
-#### Optional Environment Variables
-
-- `NODE_ENV` - Set to `development` for local development
-- `GEMINI_API_KEY` - For AI-powered summaries (if using Gemini integration)
-
-### Client Auth Configuration
-
-The current client auth config payload (still Firebase-shaped while auth migration is deferred) is served from the backend so it isn’t hardcoded in the client.
-
-#### Local (development)
-Set `CLIENT_API_KEY`, `CLIENT_AUTH_DOMAIN`, and `CLIENT_PROJECT_ID` in your `functions/.env.local` file.
-
-#### Option 2: Production (Secret Manager)
-Production config lives in **Google Cloud Secret Manager** as the secret **`FUNCTIONS_CONFIG_EXPORT`** (one JSON object with all keys). To create or update it: run `firebase functions:config:export`, or in [Secret Manager](https://console.cloud.google.com/security/secret-manager) add a new version of that secret with JSON matching the shape in `functions/config/exported-config.ts` (see `CONFIG_PATH_TO_ENV`; e.g. `auth.client_api_key`, `github.access_token`, `spotify.client_id`, etc.).
-
-For production deploys, leave disk-only storage settings such as `LOCAL_MEDIA_ROOT` and `MEDIA_STORE_BACKEND=disk` unset. The backend defaults production media storage to GCS, while the secret-backed storage values provide the Firestore database URL, bucket, and public media base URL.
-
-## Monorepo
-
-This repo is a **pnpm workspace** with two packages: `hosting` (React app) and `functions` (Firebase Cloud Functions). **[Turborepo](https://turbo.build/repo)** runs tasks across the workspace: it only runs a script in packages that define it, caches outputs, and avoids redundant work.
-
-**Use the root for all commands.** Do not run `npm` or `pnpm install` inside `hosting/` or `functions/`; use `pnpm install` at the repo root once.
-
-### Commands (from repo root)
+## Commands (repo root)
 
 | Command | What it does |
 |--------|----------------|
-| `pnpm install` | Install dependencies for root and all workspace packages (single lockfile: `pnpm-lock.yaml`). |
-| `pnpm run build` | Build the hosting app (Next.js static export → `hosting/out`). Only the hosting package has a `build` script. |
-| `pnpm run dev` | Start the hosting app’s Next.js dev server (`next dev`, port 5173). For API calls to work, also run the Functions + Auth emulators (see [Development](#development)). |
-| `pnpm run dev:full` | Start the Functions + Auth emulators and the Next dev server in one command (recommended for local dev). |
-| `pnpm run lint` | Lint the functions package (ESLint). |
-| `pnpm run test` | Run functions unit tests (Vitest), single run. |
-| `pnpm run test:coverage` | Run functions tests with coverage. |
-| `pnpm run deploy:all` | Build hosting, then deploy everything (hosting + functions + Firestore rules, etc.) to Firebase. |
-| `pnpm run deploy:hosting` | Build hosting, then deploy only Firebase Hosting. |
-| `pnpm run deploy:functions` | Deploy only Cloud Functions (no build). |
+| `pnpm install` | Install dependencies for root and both packages. |
+| `pnpm run dev` | Run Next.js dev server on `localhost:5173`. Expects Functions emulator to be running for `/api` calls. |
+| `pnpm run dev:full` | Run Firebase emulators + Next dev together (uses `firebase emulators:start` and `pnpm run dev`). |
+| `pnpm run build` | Run workspace builds via Turborepo (`hosting` export and `functions` TypeScript build). |
+| `pnpm run lint` | Run workspace lint tasks (currently functions ESLint). |
+| `pnpm run test` | Run workspace tests. |
+| `pnpm run test:coverage` | Run tests with coverage. |
+| `pnpm run deploy:all` | Guard env + build + deploy default Firebase targets. |
+| `pnpm run deploy:hosting` | Build and deploy only Firebase Hosting. |
+| `pnpm run deploy:functions` | Guard env + deploy only Functions (Firebase predeploy still builds functions). |
 
-**Note:** Use `pnpm run deploy:all` (with **run**). The bare `pnpm deploy` is pnpm’s own command and is not our Firebase deploy.
+> Use `pnpm run deploy:all` (with `run`). `pnpm deploy` is a pnpm command, not this project's deploy flow.
 
-## Development
+## Local development
 
-### Option A – Hosting app with hot reload (recommended)
+### Option A (recommended): hot reload dashboard + emulators
 
-**One command** (emulators + Next dev together):
+One terminal:
 
 ```bash
 pnpm run dev:full
 ```
 
-**Or** use two terminals:
+Or split terminals:
 
 ```bash
-# Terminal 1: start Functions + Auth emulators
+# Terminal 1
 firebase emulators:start --only functions,auth
 
-# Terminal 2: start the hosting app (from repo root)
+# Terminal 2
 pnpm run dev
 ```
 
-Open **http://localhost:5173**. Next.js dev (`next.config` rewrites) proxies `/api` to the Functions emulator. Sign-in and API testing work against the emulators. If you run only `pnpm run dev` without the emulators, `/api` requests may fail when the proxy cannot reach the emulator.
+Open `http://localhost:5173`.
 
-### Option B – Full Firebase emulators (Hosting + Functions + Auth)
-
-Build the hosting app once, then run all emulators so the site is served like production:
+### Option B: full Firebase-like local serving
 
 ```bash
-# From repo root: build the React app, then start emulators
 pnpm run build
 firebase emulators:start --only hosting,functions,auth
 ```
 
-Open the Hosting URL (e.g. **http://metrics.dev-chrisvogt.me:8084**). Same behavior as production: `/api/**` → Cloud Function; everything else is a static file from `hosting/out` (see [Firebase Hosting rewrites](#firebase-hosting-rewrites)).
+Open the hosting URL (for example `http://metrics.dev-chrisvogt.me:8084`).
 
 ### Emulator URLs
 
-| Service   | URL                    |
-|----------|------------------------|
-| Emulator UI | http://127.0.0.1:4000 |
-| Hosting  | http://127.0.0.1:8084 (or configured host) |
-| Functions| http://127.0.0.1:5001 |
-| Auth     | http://127.0.0.1:9099 |
-| Firestore| http://127.0.0.1:8080 |
+| Service | URL |
+|---------|-----|
+| Emulator UI | `http://127.0.0.1:4000` |
+| Hosting | `http://127.0.0.1:8084` (or configured host) |
+| Functions | `http://127.0.0.1:5001` |
+| Auth | `http://127.0.0.1:9099` |
+| Firestore | `http://127.0.0.1:8080` |
 
-### Authentication System
+## Environment variables
 
-The application includes a comprehensive authentication system with:
+For local development:
 
-- **Email/Password Login**: Traditional email and password authentication
-- **Phone Authentication**: SMS-based verification with Firebase Phone Auth
-- **Google Sign-In**: OAuth authentication with Google accounts
-- **Session Management**: Secure HTTP-only cookies with JWT fallback
-- **Multi-tenant Support**: Ready for future multi-user expansion
+```bash
+cp functions/.env.template functions/.env.local
+```
 
-### API Endpoints
+Set at minimum:
 
-The following endpoints are available:
+- `CLIENT_API_KEY`
+- `CLIENT_AUTH_DOMAIN`
+- `CLIENT_PROJECT_ID`
 
-| Widget | Description | Auth Required |
-|--------|-------------|---------------|
-| `/api/widgets/spotify` | GET Spotify widget content | No |
-| `/api/widgets/sync/spotify` | Trigger Spotify data sync | Yes |
-| `/api/widgets/steam` | GET Steam widget content | No |
-| `/api/widgets/sync/steam` | Trigger Steam data sync | Yes |
-| `/api/widgets/goodreads` | GET Goodreads widget content | No |
-| `/api/widgets/sync/goodreads` | Trigger Goodreads data sync | Yes |
-| `/api/widgets/instagram` | GET Instagram widget content | No |
-| `/api/widgets/sync/instagram` | Trigger Instagram data sync | Yes |
-| `/api/widgets/discogs` | GET Discogs widget content | No |
-| `/api/widgets/sync/discogs` | Trigger Discogs data sync | Yes |
-| `/api/widgets/flickr` | GET Flickr widget content | No |
-| `/api/widgets/sync/flickr` | Trigger Flickr data sync | Yes |
+Optional examples:
 
-### Authentication Endpoints
+- `NODE_ENV=development`
+- `GEMINI_API_KEY` (if AI summary features are enabled)
 
-- `/api/auth/session` - Create session cookies (POST)
-- `/api/client-auth-config` - Get client auth configuration (GET)
-- `/api/firebase-config` - Compatibility alias for the current Firebase-based client auth flow (GET)
+### Important env safety notes
 
-## Architecture
+- Never commit `functions/.env.local`.
+- Avoid `functions/.env` during normal development; Firebase can deploy values from that file into Functions.
 
-### Frontend (hosting)
-- **React + Next.js 15** (App Router) in `hosting/`: sign-in (Google, email, phone) and API testing dashboard; routes include `/schema/`, `/status/`, `/auth/`, `/endpoints/`, `/sync/`
-- **Firebase SDK**: Client-side auth for the current auth provider; config loaded at runtime from `/api/client-auth-config`
-- **Session**: Cookie-based sessions (created via `/api/auth/session`) with JWT fallback
-- **Build**: From repo root, `pnpm run build` → `hosting/out` (static export). Firebase Hosting serves that folder; see [Firebase Hosting rewrites](#firebase-hosting-rewrites).
+## API surface (high-level)
 
-See [hosting/README.md](hosting/README.md) for hosting-only scripts and local dev details.
+### Public widget reads
 
-### Firebase Hosting rewrites
+- `GET /api/widgets/:provider` where `provider` is one of:
+  - `discogs`, `flickr`, `github`, `goodreads`, `instagram`, `spotify`, `steam`
 
-Configured in `firebase.json` under `hosting`:
+### Protected sync endpoints
 
-1. **`/api/**` → Cloud Function `app`** — All backend API traffic.
-2. **No SPA catch-all** — Pre‑Next setups often used `**` → `/index.html` so a single-page bundle could own every URL. This app ships **static HTML per route** (`/schema/`, `/auth/`, …), so that rewrite is omitted. URLs that do not match a file or `/api/**` are **not found**; Firebase Hosting serves the exported **`404.html`** from `hosting/out` automatically (no extra rewrite).
+- `GET /api/widgets/sync/:provider` (JSON)
+- `GET /api/widgets/sync/:provider/stream` (SSE)
 
-### Backend (functions)
-- **Provider-neutral bootstrap**: Backend composition selects runtime, config source, document store, media store, auth service, and clock from a single bootstrap layer
-- **Firebase runtime/auth/document adapters**: Current reference provider implementations
-- **Firestore-compatible document layout**: Existing data remains readable while new timestamps are written in a portable format
-- **External APIs**: Integration with various platform APIs
+Syncable `provider` values are:
 
-#### TypeScript
-The `functions/` package is TypeScript. Source lives in `functions/*.ts` and role-based dirs: `config/`, `widgets/`, `utils/`, `helpers/` (plus `api/`, `jobs/`, `transformers/`, etc.). `pnpm run build` (from repo root or from `functions/`) compiles with `tsc` and outputs only to `functions/lib/`; `lib/` is gitignored. Firebase deploys from `lib/`. Run `pnpm run build` before `pnpm run deploy:functions` if you’ve changed function code. Tests (`pnpm run test`) and lint (`pnpm run lint`) run against the TypeScript source.
+- `discogs`, `flickr`, `goodreads`, `instagram`, `spotify`, `steam`
 
-### Security Features
-- **CORS Protection**: Configurable cross-origin resource sharing
-- **Rate Limiting**: Built-in request throttling
-- **Session Validation**: Secure session cookie validation
-- **Environment Isolation**: Separate configs for development/production
+### Auth/config endpoints
+
+- `POST /api/auth/session`
+- `POST /api/auth/logout`
+- `GET /api/client-auth-config`
+- `GET /api/firebase-config` (compat alias)
+
+## Hosting and backend notes
+
+### Hosting rewrites (`firebase.json`)
+
+1. `/api/**` rewrites to Cloud Function `app`.
+2. No SPA catch-all rewrite. Static exported routes are served directly; unmatched routes return exported `404.html`.
+
+### Backend details (`functions/`)
+
+- Provider-neutral bootstrap wires runtime/config/store/auth adapters.
+- Current implementation uses Firebase runtime/auth/document adapters.
+- Functions source is TypeScript; build output is `functions/lib/`.
 
 ## Testing
 
-Tests live in `functions/`. From repo root:
+From repo root:
 
 ```bash
-pnpm run test              # run once
-pnpm run test:coverage     # with coverage
+pnpm run test
+pnpm run test:coverage
 ```
 
-For watch mode, run from the functions package: `pnpm --filter metrics-functions run test:watch`.
+Functions watch mode:
+
+```bash
+pnpm --filter metrics-functions run test:watch
+```
 
 ## Deployment
 
-The hosting app must be **built** before deploy (the root `deploy:all` script does this automatically). All commands from repo root; see [Monorepo](#monorepo) for the full command list.
+From repo root:
 
 ```bash
-pnpm run build          # build hosting app only (output: hosting/out)
-pnpm run deploy:all     # build + deploy everything (hosting + functions + Firestore, etc.)
-pnpm run deploy:hosting # build + deploy hosting only
-pnpm run deploy:functions # deploy Cloud Functions only (no build)
+pnpm run build
+pnpm run deploy:all
+pnpm run deploy:hosting
+pnpm run deploy:functions
 ```
+
+## Additional docs
+
+Reference docs under [`docs/`](docs/):
+
+| Document | What it covers |
+|----------|----------------|
+| [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md) | `sync_jobs` queue behavior (planner, worker, manual sync, states, summary metrics). |
+| [docs/SESSION_COOKIES.md](docs/SESSION_COOKIES.md) | Session cookie model, `/api/auth/session`, JWT fallback, security properties. |
+| [docs/MULTI_TENANT_ARCHITECTURE_PLAN.md](docs/MULTI_TENANT_ARCHITECTURE_PLAN.md) | Migration plan from single-tenant env config toward user-scoped storage and sync. |
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Install and set up (see [How to install](#how-to-install) and [Environment variables](#environment-variables))
-4. Run tests: `pnpm run test` (from repo root)
-5. Ensure the hosting app builds: `pnpm run build` (from repo root)
-6. Commit your changes and open a Pull Request
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature/amazing-feature`).
+3. Install and configure local env.
+4. Run tests (`pnpm run test`).
+5. Ensure builds pass (`pnpm run build`).
+6. Open a pull request.
 
 ## Copyright & License
 
