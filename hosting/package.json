@@ -10,7 +10,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "firebase": "^12.10.0",
+    "firebase": "^12.11.0",
     "hast-util-to-jsx-runtime": "^2.3.6",
     "lowlight": "^3.3.0",
     "next": "^15.2.4",
