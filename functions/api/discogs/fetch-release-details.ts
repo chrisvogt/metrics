@@ -26,7 +26,7 @@ const fetchReleaseDetails = async (resourceUrl, releaseId, maxRetries = 3) => {
 
       const response = await fetch(urlWithAuth, {
         headers: {
-          'User-Agent': 'MetricsApp/1.0'
+          'User-Agent': 'ChronogroveWidget/1.0'
         }
       })
 

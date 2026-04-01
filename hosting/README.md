@@ -1,6 +1,6 @@
-# Metrics Hosting (Next.js app)
+# Chronogrove hosting (Next.js app)
 
-React dashboard for the Metrics API: sign-in (Google / email / phone) and API testing.
+Next.js operator console for the Chronogrove API: sign-in (Google / email / phone), schema, status, and sync testing.
 
 The repo is a **pnpm + Turborepo** monorepo. Run all commands from the **repo root** with `pnpm run …` (see root [README](../README.md#monorepo) for the full command list).
 

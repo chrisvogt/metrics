@@ -1,7 +1,7 @@
 {
-  "name": "metrics-functions",
+  "name": "chronogrove-functions",
   "version": "0.25.7",
-  "description": "Personal metrics API. A hobby project tracking my online metrics.",
+  "description": "Chronogrove backend — Cloud Functions API and sync workers for third-party widget data.",
   "type": "module",
   "main": "lib/index.js",
   "scripts": {

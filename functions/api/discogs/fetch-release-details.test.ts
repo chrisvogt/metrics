@@ -56,7 +56,7 @@ describe('fetchReleaseDetails', () => {
       'https://api.discogs.com/releases/28461454?token=test-api-key',
       {
         headers: {
-          'User-Agent': 'MetricsApp/1.0'
+          'User-Agent': 'ChronogroveWidget/1.0'
         }
       }
     )
@@ -82,7 +82,7 @@ describe('fetchReleaseDetails', () => {
       'https://api.discogs.com/releases/123?token=existing-token',
       {
         headers: {
-          'User-Agent': 'MetricsApp/1.0'
+          'User-Agent': 'ChronogroveWidget/1.0'
         }
       }
     )

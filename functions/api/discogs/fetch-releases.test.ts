@@ -77,7 +77,7 @@ describe('fetchDiscogsReleases', () => {
       'https://api.discogs.com/users/testuser/collection/folders/0/releases?token=test-api-key&page=1&per_page=50',
       {
         headers: {
-          'User-Agent': 'MetricsApp/1.0'
+          'User-Agent': 'ChronogroveWidget/1.0'
         }
       }
     )

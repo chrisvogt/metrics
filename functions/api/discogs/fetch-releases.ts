@@ -21,7 +21,7 @@ const fetchDiscogsReleases = async (): Promise<DiscogsCollectionResponse> => {
       
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'MetricsApp/1.0'
+          'User-Agent': 'ChronogroveWidget/1.0'
         }
       })
 

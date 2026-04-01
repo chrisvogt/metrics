@@ -1,4 +1,4 @@
-# Metrics API dashboard – do not index
+# Chronogrove operator console – do not index
 # This is an admin/dashboard site, not for search or AI training.
 
 User-agent: *

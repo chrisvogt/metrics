@@ -136,10 +136,10 @@ export const widgetResponseExamples = {
             {
               __typename: 'Repository',
               id: 'R_kgDExampleRepo',
-              name: 'metrics',
-              nameWithOwner: 'example/metrics',
-              description: 'Personal metrics site',
-              url: 'https://github.com/example/metrics',
+              name: 'chronogrove',
+              nameWithOwner: 'example/chronogrove',
+              description: 'Demo widget data API',
+              url: 'https://github.com/example/chronogrove',
               homepageUrl: 'https://chrisvogt.me',
               createdAt: '2024-01-10T00:00:00Z',
               updatedAt: '2025-03-20T00:00:00Z',
@@ -186,7 +186,7 @@ export const widgetResponseExamples = {
               id: 'PR_kwDOExample',
               number: 42,
               title: 'Add Spotify playlist mosaic caching',
-              url: 'https://github.com/example/metrics/pull/42',
+              url: 'https://github.com/example/chronogrove/pull/42',
               merged: true,
               closed: false,
               createdAt: '2025-03-10T10:00:00Z',
@@ -194,8 +194,8 @@ export const widgetResponseExamples = {
               lastEditedAt: '2025-03-12T14:00:00Z',
               repository: {
                 id: 'R_kgDExampleRepo',
-                name: 'metrics',
-                url: 'https://github.com/example/metrics',
+                name: 'chronogrove',
+                url: 'https://github.com/example/chronogrove',
               },
               labels: {
                 edges: [

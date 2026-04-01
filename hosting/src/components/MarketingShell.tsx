@@ -14,7 +14,7 @@ const secondaryLinks = [
 ]
 
 const DEFAULT_FOOTER =
-  'Chronogrove is a self-hosted JSON API and operator console for personal provider data. Repository and maintainer links are in this footer.'
+  'Chronogrove syncs third-party providers into a JSON API that powers widget experiences on www.chrisvogt.me and in the open-source Gatsby theme; more themes and Web components that call the same API are planned. Maintainer link below.'
 
 export function MarketingShell({
   children,
@@ -62,7 +62,7 @@ export function MarketingShell({
         <div className={styles.footerInner}>
           <p className={styles.footerCopy}>{footerCopy}</p>
           <div className={styles.footerLinks}>
-            <a href="https://github.com/chrisvogt/metrics" target="_blank" rel="noreferrer">
+            <a href="https://github.com/chrisvogt/chronogrove" target="_blank" rel="noreferrer">
               GitHub
             </a>
             <a href="https://www.chrisvogt.me" target="_blank" rel="noreferrer">

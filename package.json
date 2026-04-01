@@ -1,7 +1,7 @@
 {
-  "name": "metrics",
+  "name": "chronogrove",
   "private": true,
-  "description": "Personal metrics – Firebase Hosting + Cloud Functions",
+  "description": "Chronogrove — Firebase-hosted API and operator console for provider-backed widgets (Discogs, Steam, Instagram, etc.)",
   "packageManager": "pnpm@10.32.1",
   "scripts": {
     "build": "NEXT_PUBLIC_GIT_SHA=$(git rev-parse --short HEAD) turbo run build",

@@ -122,13 +122,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Goodreads sync optimization** – Previously fetched 100 books from Goodreads, then called Google Books API and downloaded thumbnails for all of them, but only stored 18. Now fetches 30 books (per_page), processes only those 30 (early slice before pMap), and stores 24 for display. Reduces Google Books API usage and rate limiting. See [#175](https://github.com/chrisvogt/metrics/issues/175).
+- **Goodreads sync optimization** – Previously fetched 100 books from Goodreads, then called Google Books API and downloaded thumbnails for all of them, but only stored 18. Now fetches 30 books (per_page), processes only those 30 (early slice before pMap), and stores 24 for display. Reduces Google Books API usage and rate limiting. See [#175](https://github.com/chrisvogt/chronogrove/issues/175).
 
 ## [0.22.18] - 2026-03-19
 
 ### Fixed
 
-- **GCS bucket config timing** – `GcsMediaStore` previously read `CLOUD_STORAGE_IMAGES_BUCKET` from constants at module load time, before `FUNCTIONS_CONFIG_EXPORT` was applied. In production, the bucket was always undefined, causing "Bucket name not specified or invalid" on sync jobs. Now reads from `getStorageConfig()` at runtime (after the secret is loaded). If the bucket is still missing, throws a clearer error pointing to the secret. See [#177](https://github.com/chrisvogt/metrics/issues/177).
+- **GCS bucket config timing** – `GcsMediaStore` previously read `CLOUD_STORAGE_IMAGES_BUCKET` from constants at module load time, before `FUNCTIONS_CONFIG_EXPORT` was applied. In production, the bucket was always undefined, causing "Bucket name not specified or invalid" on sync jobs. Now reads from `getStorageConfig()` at runtime (after the secret is loaded). If the bucket is still missing, throws a clearer error pointing to the secret. See [#177](https://github.com/chrisvogt/chronogrove/issues/177).
 
 ## [0.22.17] - 2026-03-19
 
@@ -593,30 +593,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _This changelog was started with v0.8.0._
 
-[0.25.5]: https://github.com/chrisvogt/metrics/compare/v0.25.4...v0.25.5
-[0.25.4]: https://github.com/chrisvogt/metrics/compare/v0.25.3...v0.25.4
-[0.25.3]: https://github.com/chrisvogt/metrics/compare/v0.25.2...v0.25.3
-[0.25.2]: https://github.com/chrisvogt/metrics/compare/v0.25.1...v0.25.2
-[0.25.1]: https://github.com/chrisvogt/metrics/compare/v0.25.0...v0.25.1
-[0.25.0]: https://github.com/chrisvogt/metrics/compare/v0.24.0...v0.25.0
-[0.24.0]: https://github.com/chrisvogt/metrics/compare/v0.23.0...v0.24.0
-[0.23.0]: https://github.com/chrisvogt/metrics/compare/v0.22.0...v0.23.0
-[0.22.0]: https://github.com/chrisvogt/metrics/compare/v0.21.0...v0.22.0
-[0.21.0]: https://github.com/chrisvogt/metrics/compare/v0.20.2...v0.21.0
-[0.20.0]: https://github.com/chrisvogt/metrics/compare/v0.19.0...v0.20.0
-[0.19.0]: https://github.com/chrisvogt/metrics/compare/v0.18.0...v0.19.0
-[0.18.0]: https://github.com/chrisvogt/metrics/compare/v0.17.0...v0.18.0
-[0.17.0]: https://github.com/chrisvogt/metrics/compare/v0.16.0...v0.17.0
-[0.16.0]: https://github.com/chrisvogt/metrics/compare/v0.15.0...v0.16.0
-[0.15.0]: https://github.com/chrisvogt/metrics/compare/v0.14.0...v0.15.0
-[0.14.0]: https://github.com/chrisvogt/metrics/compare/v0.13.0...v0.14.0
-[0.13.0]: https://github.com/chrisvogt/metrics/compare/v0.12.0...v0.13.0
-[0.12.0]: https://github.com/chrisvogt/metrics/compare/v0.11.5...v0.12.0
-[0.11.2]: https://github.com/chrisvogt/metrics/compare/v0.11.1...v0.11.2
-[0.11.1]: https://github.com/chrisvogt/metrics/compare/v0.11.0...v0.11.1
-[0.11.0]: https://github.com/chrisvogt/metrics/compare/v0.10.1...v0.11.0
-[0.10.1]: https://github.com/chrisvogt/metrics/compare/v0.10.0...v0.10.1
-[0.10.0]: https://github.com/chrisvogt/metrics/compare/v0.9.1...v0.10.0
-[0.9.1]: https://github.com/chrisvogt/metrics/compare/v0.9.0...v0.9.1
-[0.9.0]: https://github.com/chrisvogt/metrics/compare/v0.8.0...v0.9.0
-[0.8.0]: https://github.com/chrisvogt/metrics/releases/tag/v0.8.0
+[0.25.5]: https://github.com/chrisvogt/chronogrove/compare/v0.25.4...v0.25.5
+[0.25.4]: https://github.com/chrisvogt/chronogrove/compare/v0.25.3...v0.25.4
+[0.25.3]: https://github.com/chrisvogt/chronogrove/compare/v0.25.2...v0.25.3
+[0.25.2]: https://github.com/chrisvogt/chronogrove/compare/v0.25.1...v0.25.2
+[0.25.1]: https://github.com/chrisvogt/chronogrove/compare/v0.25.0...v0.25.1
+[0.25.0]: https://github.com/chrisvogt/chronogrove/compare/v0.24.0...v0.25.0
+[0.24.0]: https://github.com/chrisvogt/chronogrove/compare/v0.23.0...v0.24.0
+[0.23.0]: https://github.com/chrisvogt/chronogrove/compare/v0.22.0...v0.23.0
+[0.22.0]: https://github.com/chrisvogt/chronogrove/compare/v0.21.0...v0.22.0
+[0.21.0]: https://github.com/chrisvogt/chronogrove/compare/v0.20.2...v0.21.0
+[0.20.0]: https://github.com/chrisvogt/chronogrove/compare/v0.19.0...v0.20.0
+[0.19.0]: https://github.com/chrisvogt/chronogrove/compare/v0.18.0...v0.19.0
+[0.18.0]: https://github.com/chrisvogt/chronogrove/compare/v0.17.0...v0.18.0
+[0.17.0]: https://github.com/chrisvogt/chronogrove/compare/v0.16.0...v0.17.0
+[0.16.0]: https://github.com/chrisvogt/chronogrove/compare/v0.15.0...v0.16.0
+[0.15.0]: https://github.com/chrisvogt/chronogrove/compare/v0.14.0...v0.15.0
+[0.14.0]: https://github.com/chrisvogt/chronogrove/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/chrisvogt/chronogrove/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/chrisvogt/chronogrove/compare/v0.11.5...v0.12.0
+[0.11.2]: https://github.com/chrisvogt/chronogrove/compare/v0.11.1...v0.11.2
+[0.11.1]: https://github.com/chrisvogt/chronogrove/compare/v0.11.0...v0.11.1
+[0.11.0]: https://github.com/chrisvogt/chronogrove/compare/v0.10.1...v0.11.0
+[0.10.1]: https://github.com/chrisvogt/chronogrove/compare/v0.10.0...v0.10.1
+[0.10.0]: https://github.com/chrisvogt/chronogrove/compare/v0.9.1...v0.10.0
+[0.9.1]: https://github.com/chrisvogt/chronogrove/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/chrisvogt/chronogrove/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/chrisvogt/chronogrove/releases/tag/v0.8.0

@@ -39,15 +39,25 @@ export default function DocsPage() {
           <section className={styles.section}>
             <h2>Repository</h2>
             <p>
-              The root README covers install, emulators, and high-level layout. Topic docs in <code>docs/</code> cover
-              the sync queue, session cookies, and similar implementation details.
+              The root README covers install, emulators, and how this API feeds{' '}
+              <a href="https://www.chrisvogt.me">www.chrisvogt.me</a> and the{' '}
+              <a href="https://github.com/chrisvogt/gatsby-theme-chronogrove">Gatsby theme</a>. Topic docs in{' '}
+              <code>docs/</code> cover the sync queue, session cookies, and similar implementation details.
             </p>
             <div className={styles.links}>
-              <a href="https://github.com/chrisvogt/metrics" target="_blank" rel="noreferrer" className={styles.linkButton}>
+              <a href="https://github.com/chrisvogt/chronogrove" target="_blank" rel="noreferrer" className={styles.linkButton}>
                 Repository
               </a>
               <a
-                href="https://github.com/chrisvogt/metrics/blob/main/docs/SYNC_JOB_QUEUE.md"
+                href="https://github.com/chrisvogt/gatsby-theme-chronogrove"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkButton}
+              >
+                Gatsby theme
+              </a>
+              <a
+                href="https://github.com/chrisvogt/chronogrove/blob/main/docs/SYNC_JOB_QUEUE.md"
                 target="_blank"
                 rel="noreferrer"
                 className={styles.linkButton}
@@ -55,7 +65,7 @@ export default function DocsPage() {
                 Sync queue
               </a>
               <a
-                href="https://github.com/chrisvogt/metrics/blob/main/docs/SESSION_COOKIES.md"
+                href="https://github.com/chrisvogt/chronogrove/blob/main/docs/SESSION_COOKIES.md"
                 target="_blank"
                 rel="noreferrer"
                 className={styles.linkButton}
