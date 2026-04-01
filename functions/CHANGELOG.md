@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Repository
 
-- **Dependabot** — Weekly **`npm`** updates for repository root, `functions/`, and `hosting/` (see root `.github/dependabot.yml`).
+- **Dependabot** — Weekly **`npm`** updates at repository root for the **pnpm** workspace lockfile (see root `.github/dependabot.yml`).
 
 ## [0.25.7] - 2026-04-01
 
