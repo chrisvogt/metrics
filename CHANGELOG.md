@@ -13,8 +13,13 @@ Package-specific changes:
 
 ## [Unreleased]
 
+### license: relicense under GNU AGPL-3.0
+
+- **License** — The project is now distributed under the **[GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.html)** (AGPL-3.0). The previous license was MIT; see Git history for MIT-licensed commits if you rely on that grant. Full text: [`LICENSE`](LICENSE). Rationale, dependency notes, and scan commands: [`docs/LICENSE.md`](docs/LICENSE.md). Root and workspace `package.json` files declare `license: "AGPL-3.0"`.
+
 ### Changed
 
+- **Repository** — GitHub project renamed to [chrisvogt/chronogrove](https://github.com/chrisvogt/chronogrove) (formerly `metrics`). Workspace package names are now `chronogrove`, `chronogrove-hosting`, and `chronogrove-functions`; README and in-app links updated. If you use Codecov, reconnect the repo under the new name so badges keep working.
 - **Functions 0.25.6** — Widget API caching now favors revalidation across all providers: browser responses revalidate (`max-age=0, must-revalidate`) while shared caches keep a short TTL (`s-maxage=300`, `stale-while-revalidate=60`) to reduce stale widget payloads after sync. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Functions 0.25.5** — Removed `requestretry` from Spotify profile/top-tracks requests, standardized on a shared `got` Spotify client (retry + JSON defaults), and added unit coverage for that shared client. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Functions 0.25.4** — Goodreads widget requests **35** shelf rows (30 display + **5** buffer) so failed lookups are less likely to shrink the grid below 30 titles. See [functions/CHANGELOG.md](functions/CHANGELOG.md).

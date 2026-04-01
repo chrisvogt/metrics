@@ -1,6 +1,7 @@
 {
-  "name": "metrics-hosting",
+  "name": "chronogrove-hosting",
   "private": true,
+  "license": "AGPL-3.0",
   "version": "0.6.9",
   "scripts": {
     "dev": "next dev --port 5173",

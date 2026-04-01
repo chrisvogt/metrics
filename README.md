@@ -1,20 +1,24 @@
 <h1 align='center'>
-  Social Metrics API (<a href='https://metrics.chrisvogt.me' title='metrics.chrisvogt.me'>metrics.chrisvogt.me</a>)
+  Chronogrove (<a href='https://metrics.chrisvogt.me' title='Operator console'>metrics.chrisvogt.me</a>)
 </h1>
 
 <p align='center'>
-  <a href='https://github.com/chrisvogt/metrics/actions/workflows/ci.yml'>
-    <img src='https://github.com/chrisvogt/metrics/actions/workflows/ci.yml/badge.svg?branch=main' alt='Continuous Integration badge' />
+  <a href='https://github.com/chrisvogt/chronogrove/actions/workflows/ci.yml'>
+    <img src='https://github.com/chrisvogt/chronogrove/actions/workflows/ci.yml/badge.svg?branch=main' alt='Continuous Integration badge' />
   </a>
-  <a href='https://github.com/chrisvogt/metrics/actions/workflows/codeql.yml'>
-    <img src='https://github.com/chrisvogt/metrics/actions/workflows/codeql.yml/badge.svg?branch=main' alt='CodeQL badge' />
+  <a href='https://github.com/chrisvogt/chronogrove/actions/workflows/codeql.yml'>
+    <img src='https://github.com/chrisvogt/chronogrove/actions/workflows/codeql.yml/badge.svg?branch=main' alt='CodeQL badge' />
   </a>
-  <a href='https://codecov.io/gh/chrisvogt/metrics'>
-    <img src='https://codecov.io/gh/chrisvogt/metrics/branch/main/graph/badge.svg?token=Hr0GpQiCu0' alt='Code coverage report badge.' />
+  <a href='https://codecov.io/gh/chrisvogt/chronogrove'>
+    <img src='https://codecov.io/gh/chrisvogt/chronogrove/branch/main/graph/badge.svg?token=Hr0GpQiCu0' alt='Code coverage report badge.' />
   </a>
 </p>
 
-Portable metrics backend and dashboard for widgets on [www.chrisvogt.me](https://www.chrisvogt.me). Firebase is the current reference provider, while core backend design stays open to non-Firebase runtimes over time.
+**Chronogrove** is the engine behind provider-backed widgets on [www.chrisvogt.me](https://www.chrisvogt.me): it syncs third-party accounts (Discogs, Steam, Instagram, Spotify, Goodreads, Flickr, and more), stores normalized widget documents, and serves them over a stable JSON API. Firebase is the reference runtime (Hosting + Cloud Functions + Firestore); the design stays portable enough to consider other hosts later.
+
+Consumer experiences today include the open-source [**Gatsby theme Chronogrove**](https://github.com/chrisvogt/gatsby-theme-chronogrove). The goal is for the same API to power other site integrations (WordPress and similar) and, over time, shareable **Web Components** (and other HTML-native building blocks) that call the public routes directly.
+
+This repository holds the **backend and operator console** (schema browser, status checks, authenticated sync). The themed marketing site and MDX content live in the Gatsby theme and site repos above.
 
 ## Quick start (first 5 minutes)
 
@@ -25,8 +29,8 @@ Portable metrics backend and dashboard for widgets on [www.chrisvogt.me](https:/
    - `firebase login`
 2. **Clone and install**
    ```bash
-   git clone git@github.com:chrisvogt/metrics.git
-   cd metrics
+   git clone git@github.com:chrisvogt/chronogrove.git
+   cd chronogrove
    pnpm install
    ```
 3. **Set local env vars**
@@ -50,13 +54,13 @@ If `/api` calls fail in local dev, the Functions emulator is usually not reachab
 - Supports scheduled sync jobs plus manual admin-triggered sync.
 - Uses Firebase Auth (Google, email/password, phone) with HTTP-only session cookies and JWT fallback.
 - Runs locally with Firebase emulators.
-- Serves a Next.js dashboard at `metrics.chrisvogt.me`.
+- Serves the Next.js operator dashboard at [metrics.chrisvogt.me](https://metrics.chrisvogt.me).
 
 > Note: `github` is a readable widget provider, but **not** part of the scheduled/manual sync queue.
 
 ## Architecture at a glance
 
-This service backs widgets for [www.chrisvogt.me](https://www.chrisvogt.me). Each diagram is intentionally focused on one path. For queue semantics and job document fields, see [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md).
+This service backs widgets on [www.chrisvogt.me](https://www.chrisvogt.me) and any client using the same API contract (for example the [Gatsby theme](https://github.com/chrisvogt/gatsby-theme-chronogrove)). Each diagram is intentionally focused on one path. For queue semantics and job document fields, see [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md).
 
 ### 1) Public widget reads
 
@@ -64,7 +68,7 @@ Unauthenticated widget reads from Firestore-backed content.
 
 ```mermaid
 flowchart LR
-  site[www.chrisvogt.me] --> fn[Cloud Functions<br/>GET /api/widgets/:provider]
+  site[www.chrisvogt.me or theme] --> fn[Cloud Functions<br/>GET /api/widgets/:provider]
   fn --> fs[(Firestore<br/>users/.../widget-content)]
 ```
 
@@ -87,7 +91,7 @@ flowchart TB
   job --> docs[(Firestore · widget documents)]
 ```
 
-### 3) Admin dashboard manual sync
+### 3) Operator console manual sync
 
 [metrics.chrisvogt.me](https://metrics.chrisvogt.me) uses Firebase Auth + session cookie. Manual sync runs inline (enqueue -> claim -> process) instead of waiting for worker cadence.
 
@@ -254,7 +258,7 @@ pnpm run test:coverage
 Functions watch mode:
 
 ```bash
-pnpm --filter metrics-functions run test:watch
+pnpm --filter chronogrove-functions run test:watch
 ```
 
 ## Deployment
@@ -277,6 +281,7 @@ Reference docs under [`docs/`](docs/):
 | [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md) | `sync_jobs` queue behavior (planner, worker, manual sync, states, summary metrics). |
 | [docs/SESSION_COOKIES.md](docs/SESSION_COOKIES.md) | Session cookie model, `/api/auth/session`, JWT fallback, security properties. |
 | [docs/MULTI_TENANT_ARCHITECTURE_PLAN.md](docs/MULTI_TENANT_ARCHITECTURE_PLAN.md) | Migration plan from single-tenant env config toward user-scoped storage and sync. |
+| [docs/LICENSE.md](docs/LICENSE.md) | Project license (AGPL-3.0), prior MIT grant, and dependency-compatibility notes. |
 
 ## Contributing
 
@@ -287,6 +292,8 @@ Reference docs under [`docs/`](docs/):
 5. Ensure builds pass (`pnpm run build`).
 6. Open a pull request.
 
+By contributing, you agree your contributions are licensed under the **same terms** as this project ([GNU AGPL v3.0](LICENSE) or later), unless you explicitly state otherwise.
+
 ## Copyright & License
 
-Copyright © 2020-2025 [Chris Vogt](https://www.chrisvogt.me). Released under the [MIT License](LICENSE).
+Copyright © 2020-2026 [Chris Vogt](https://www.chrisvogt.me). Chronogrove is free software under the [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.html) — see [`LICENSE`](LICENSE) for the full text and [`docs/LICENSE.md`](docs/LICENSE.md) for licensing context and third-party dependency notes (not legal advice). Earlier revisions were released under the MIT License; use Git history if you need the prior grant.
