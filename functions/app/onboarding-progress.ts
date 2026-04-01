@@ -131,9 +131,16 @@ export function buildClientPayloadFromFirestore(params: {
 }): OnboardingProgressPayload {
   const base = defaultOnboardingProgress()
   const doc = params.userDoc
+  const rawOnboarding = doc?.onboarding
 
-  const userOnboarding = normalizeUserOnboarding(doc?.onboarding)
+  const userOnboarding = normalizeUserOnboarding(rawOnboarding)
   const legacy = normalizeLegacyOnboardingProgress(doc?.onboardingProgress)
+
+  const noOnboardingDoc =
+    doc == null ||
+    !Object.prototype.hasOwnProperty.call(doc, 'onboarding') ||
+    rawOnboarding === null ||
+    typeof rawOnboarding !== 'object'
 
   const username =
     (typeof doc?.username === 'string' && doc.username.length > 0
@@ -147,16 +154,23 @@ export function buildClientPayloadFromFirestore(params: {
       ? params.integrationProviderIds
       : legacy.connectedProviderIds ?? base.connectedProviderIds
 
-  const currentStep = userOnboarding.currentStep ?? legacy.currentStep ?? base.currentStep
-  const completedSteps =
-    userOnboarding.completedSteps.length > 0
+  const currentStep = noOnboardingDoc
+    ? (legacy.currentStep ?? userOnboarding.currentStep)
+    : userOnboarding.currentStep
+
+  const completedSteps = noOnboardingDoc
+    ? legacy.completedSteps ?? userOnboarding.completedSteps
+    : userOnboarding.completedSteps.length > 0
       ? userOnboarding.completedSteps
-      : legacy.completedSteps ?? base.completedSteps
+      : (legacy.completedSteps ?? base.completedSteps)
 
-  const customDomain =
-    userOnboarding.draftCustomDomain ?? legacy.customDomain ?? base.customDomain
+  const customDomain = noOnboardingDoc
+    ? legacy.customDomain ?? userOnboarding.draftCustomDomain ?? base.customDomain
+    : (userOnboarding.draftCustomDomain ?? legacy.customDomain ?? base.customDomain)
 
-  const updatedAt = userOnboarding.updatedAt ?? legacy.updatedAt ?? base.updatedAt
+  const updatedAt = noOnboardingDoc
+    ? legacy.updatedAt ?? userOnboarding.updatedAt
+    : userOnboarding.updatedAt
 
   return {
     currentStep,
