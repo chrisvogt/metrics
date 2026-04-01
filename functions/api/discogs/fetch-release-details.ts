@@ -1,5 +1,6 @@
 import { logger } from 'firebase-functions'
 import { getDiscogsConfig } from '../../config/backend-config.js'
+import { chronogroveHttpUserAgent } from '../../config/chronogrove-http-user-agent.js'
 
 /**
  * Fetches detailed release resource data from Discogs API with retry logic
@@ -26,7 +27,7 @@ const fetchReleaseDetails = async (resourceUrl, releaseId, maxRetries = 3) => {
 
       const response = await fetch(urlWithAuth, {
         headers: {
-          'User-Agent': 'ChronogroveWidget/1.0'
+          'User-Agent': chronogroveHttpUserAgent
         }
       })
 
