@@ -34,6 +34,7 @@ Package-specific changes:
 
 ### Fixed
 
+- **Hosting 0.6.5** — `putJson` refreshes the CSRF token before each `PUT` so production no longer hits spurious **“CSRF token mismatch”** when saving onboarding (or other) state. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Hosting 0.6.4** — Local builds and deploys now stamp the hosting bundle with the current git SHA and include that SHA in the Turbo cache key, preventing stale sidebar SHAs from reused `hosting/out` artifacts. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Hosting 0.6.3** — Firebase Hosting `Cache-Control` headers for the static export (revalidate HTML/shell, immutable `/_next/static` chunks) to avoid stale shells and post-deploy `ChunkLoadError`. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Widget API (functions)** – Public `GET /api/widgets/:provider` responses no longer emit CSRF cookies, so Firebase Hosting / CDN can cache them per `Cache-Control` again. See [functions/CHANGELOG.md](functions/CHANGELOG.md) **0.22.17**.

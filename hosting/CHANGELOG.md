@@ -7,6 +7,12 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-03-31
+
+### Fixed
+
+- **CSRF on mutating API calls** — `ApiClient.putJson` now always fetches a fresh token from `GET /api/csrf-token` before `PUT`, so the `X-XSRF-TOKEN` header matches the current `_csrfSecret` cookie. Reusing a stale `XSRF-TOKEN` from `document.cookie` alone caused intermittent **“CSRF token mismatch”** in production (especially after strict cookie behavior or a desynced pair), including when saving onboarding progress.
+
 ## [0.6.4] - 2026-03-29
 
 ### Fixed

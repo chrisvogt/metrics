@@ -36,9 +36,15 @@ export class ApiClient {
     return null
   }
 
-  async getCsrfToken(): Promise<string | null> {
-    const existingToken = this.getCookieValue('XSRF-TOKEN')
-    if (existingToken) return existingToken
+  /**
+   * @param forceRefresh — If true, always `GET /api/csrf-token` so the header token matches the
+   * current `_csrfSecret` cookie. Reusing a stale `XSRF-TOKEN` alone causes "CSRF token mismatch".
+   */
+  async getCsrfToken(forceRefresh = false): Promise<string | null> {
+    if (!forceRefresh) {
+      const existingToken = this.getCookieValue('XSRF-TOKEN')
+      if (existingToken) return existingToken
+    }
 
     const res = await fetch(`${this.baseUrl}/api/csrf-token`, {
       credentials: 'include',
@@ -93,7 +99,7 @@ export class ApiClient {
   }
 
   async putJson(path: string, body: unknown): Promise<Response> {
-    const csrfToken = await this.getCsrfToken()
+    const csrfToken = await this.getCsrfToken(true)
     return fetch(`${this.baseUrl}${path}`, {
       method: 'PUT',
       headers: {
