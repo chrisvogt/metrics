@@ -1,0 +1,180 @@
+.section {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+  min-height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card {
+  background: linear-gradient(180deg, rgba(10, 14, 32, 0.88), rgba(6, 8, 22, 0.92));
+  border: 1px solid rgba(78, 143, 203, 0.22);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem;
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px rgba(232, 188, 56, 0.06);
+  backdrop-filter: blur(18px) saturate(1.1);
+}
+
+.badge {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(232, 188, 56, 0.2);
+  border-radius: 999px;
+}
+
+.heading {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.subheading {
+  margin: 0 0 1.75rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.messageError {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(251, 113, 133, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.24);
+  border-radius: 12px;
+  color: #fecdd3;
+  font-size: 0.9rem;
+}
+
+.form {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.input {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.75rem 1rem;
+  background: rgba(4, 6, 10, 0.65);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 1rem;
+  transition: border-color 0.15s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(78, 143, 203, 0.22);
+}
+
+.inputError {
+  border-color: var(--error);
+}
+
+.inputError:focus {
+  border-color: var(--error);
+  box-shadow: 0 0 0 3px rgba(192, 96, 96, 0.22);
+}
+
+.fieldError {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--error);
+}
+
+.btnPrimary {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+  border: none;
+  border-radius: 999px;
+  color: #0a0c18;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.25rem 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.btnGoogle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btnGoogle:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(78, 143, 203, 0.35);
+}
+
+.switchText {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.switchLink {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.switchLink:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}

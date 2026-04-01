@@ -1,16 +1,18 @@
 import compressionImport from 'compression'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import dns from 'dns'
 import express from 'express'
 import lusca from 'lusca'
 import path from 'path'
 import { rateLimit } from 'express-rate-limit'
+import admin from 'firebase-admin'
 
 import type { AuthService } from '../ports/auth-service.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { MediaStore } from '../ports/media-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
-import { getWidgetUserIdForHostname } from '../config/backend-paths.js'
+import { getWidgetUserIdForHostname, getUsersCollectionPath } from '../config/backend-paths.js'
 import { isProductionEnvironment } from '../config/backend-config.js'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
@@ -94,10 +96,14 @@ export function metricsCompressionFilter(
 }
 
 /** Public widget reads: skip CSRF so lusca does not set cookies (would prevent CDN caching). */
-const CSRF_EXCLUDED_PATHS_WIDGET_READS = widgetIds.map((id) => ({
-  path: `/api/widgets/${id}`,
-  type: 'exact' as const,
-}))
+const CSRF_EXCLUDED_PATHS_WIDGET_READS = [
+  ...widgetIds.map((id) => ({
+    path: `/api/widgets/${id}`,
+    type: 'exact' as const,
+  })),
+  { path: '/api/onboarding/check-username', type: 'exact' as const },
+  { path: '/api/onboarding/check-domain', type: 'exact' as const },
+]
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader?.startsWith('Bearer ')) {
     return null
@@ -608,6 +614,67 @@ export function createExpressApp({
           ok: false,
           error: 'Logout failed',
         })
+      }
+    }
+  )
+
+  const ONBOARDING_USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/
+  const REQUIRED_A_RECORDS = ['151.101.65.195', '151.101.1.195']
+
+  expressApp.get(
+    '/api/onboarding/check-username',
+    createRateLimiter(15 * 60 * 1000, 60),
+    async (req, res) => {
+      const username = typeof req.query.username === 'string' ? req.query.username.toLowerCase() : ''
+
+      if (!username || !ONBOARDING_USERNAME_REGEX.test(username)) {
+        res.status(400).json({ ok: false, error: 'Invalid username format' })
+        return
+      }
+
+      try {
+        const usersCollection = getUsersCollectionPath()
+        const snapshot = await admin.firestore()
+          .collection(usersCollection)
+          .where('username', '==', username)
+          .limit(1)
+          .get()
+
+        res.json({ ok: true, available: snapshot.empty })
+      } catch (err) {
+        logger.error('Error checking username availability', { username, error: err })
+        res.status(500).json(buildFailureResponse(err))
+      }
+    }
+  )
+
+  /** Read-only DNS probe — GET avoids CSRF (same pattern as check-username). */
+  expressApp.get(
+    '/api/onboarding/check-domain',
+    createRateLimiter(15 * 60 * 1000, 60),
+    async (req, res) => {
+      const domain =
+        typeof req.query.domain === 'string' ? req.query.domain.toLowerCase().trim() : ''
+
+      if (!domain || domain.length > 253 || !/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/.test(domain)) {
+        res.status(400).json({ ok: false, error: 'Invalid domain format' })
+        return
+      }
+
+      try {
+        const resolve4 = dns.promises.resolve4
+        const records = await resolve4(domain).catch(() => [] as string[])
+        const hasAll = REQUIRED_A_RECORDS.every((ip) => records.includes(ip))
+
+        res.json({
+          ok: true,
+          verified: hasAll,
+          resolvedRecords: records,
+          requiredRecords: REQUIRED_A_RECORDS,
+        })
+      } catch (err) {
+        logger.error('Error checking domain DNS', { domain, error: err })
+        res.status(500).json(buildFailureResponse(err))
       }
     }
   )

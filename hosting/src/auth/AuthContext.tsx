@@ -6,6 +6,7 @@ import {
   signInWithPopup,
   signInWithEmailAndPassword,
   signInWithPhoneNumber,
+  createUserWithEmailAndPassword,
   RecaptchaVerifier,
   GoogleAuthProvider,
   signOut,
@@ -19,6 +20,7 @@ export interface AuthContextValue {
   loading: boolean
   error: string | null
   setError: (err: string | null) => void
+  signUpWithEmail: (email: string, password: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
   signInWithPhone: (phoneNumber: string) => Promise<ConfirmationResult>
@@ -93,6 +95,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  const signUpWithEmail = async (email: string, password: string) => {
+    if (!auth) return
+    setError(null)
+    try {
+      await createUserWithEmailAndPassword(auth, email, password)
+    } catch (e) {
+      const err = e as { code?: string; message?: string }
+      const msg =
+        err.code === 'auth/email-already-in-use'
+          ? 'An account with this email already exists.'
+          : err.code === 'auth/weak-password'
+            ? 'Password should be at least 6 characters.'
+            : err.code === 'auth/invalid-email'
+              ? 'Invalid email address.'
+              : err.message ?? 'Sign-up failed'
+      setError(msg)
+      throw e
+    }
+  }
+
   const signInWithEmail = async (email: string, password: string) => {
     if (!auth) return
     setError(null)
@@ -142,6 +164,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       loading,
       error,
       setError,
+      signUpWithEmail,
       signInWithGoogle,
       signInWithEmail,
       signInWithPhone,

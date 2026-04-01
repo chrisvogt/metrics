@@ -1,0 +1,573 @@
+.section {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+  min-height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card {
+  background: linear-gradient(180deg, rgba(10, 14, 32, 0.88), rgba(6, 8, 22, 0.92));
+  border: 1px solid rgba(78, 143, 203, 0.22);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem;
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px rgba(232, 188, 56, 0.06);
+  backdrop-filter: blur(18px) saturate(1.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Step indicator ─────────────────────────────────────────────────────── */
+
+.stepIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.stepRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stepDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.stepDot:hover {
+  border-color: var(--text-muted);
+}
+
+.stepDotActive {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(232, 188, 56, 0.1);
+}
+
+.stepDotDone {
+  border-color: var(--success);
+  background: rgba(78, 143, 203, 0.15);
+  color: var(--success);
+}
+
+.stepLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.stepLabelActive {
+  color: var(--text);
+}
+
+.stepConnector {
+  width: 32px;
+  height: 2px;
+  background: var(--border);
+  margin: 0 0.35rem;
+  flex-shrink: 0;
+}
+
+/* ── Shared step content ────────────────────────────────────────────────── */
+
+.stepContent {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.heading {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.subheading {
+  margin: 0 0 1.75rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.label {
+  display: block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+  border: none;
+  border-radius: 999px;
+  color: #0a0c18;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btnSecondary:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(78, 143, 203, 0.35);
+  color: var(--text);
+}
+
+.btnCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(10, 12, 24, 0.3);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.stepActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* ── Step 1: Username ───────────────────────────────────────────────────── */
+
+.usernameField {
+  margin-bottom: 1.5rem;
+}
+
+.usernameInputWrap {
+  display: flex;
+  align-items: center;
+  background: rgba(4, 6, 10, 0.65);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.usernameInputWrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(78, 143, 203, 0.22);
+}
+
+.usernamePrefix {
+  padding: 0.75rem 0 0.75rem 1rem;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.usernameInput {
+  flex: 1;
+  padding: 0.75rem 0;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-family: var(--font-mono);
+  outline: none;
+  min-width: 0;
+}
+
+.usernameInput::placeholder {
+  color: var(--text-soft);
+}
+
+.usernameIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  flex-shrink: 0;
+}
+
+.usernameIndicator .spinner {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.usernameHint {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-soft);
+  min-height: 1.4em;
+}
+
+.statusOk {
+  color: var(--success);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.statusBad {
+  color: var(--error);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.statusPending {
+  font-size: 1.1rem;
+}
+
+.hintOk {
+  color: var(--success);
+}
+
+.hintBad {
+  color: var(--error);
+}
+
+/* ── Step 2: Provider connections ───────────────────────────────────────── */
+
+.providerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.providerCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.25rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.providerCard:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+.providerConnected {
+  border-color: var(--provider-color, var(--success));
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 0 1px var(--provider-color, var(--success)),
+    inset 0 0 20px rgba(78, 143, 203, 0.05);
+}
+
+.providerIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.providerCard:hover .providerIcon,
+.providerConnected .providerIcon {
+  color: var(--provider-color, var(--text));
+}
+
+.providerLabel {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.providerStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+
+.providerConnected .providerStatus {
+  color: var(--provider-color, var(--success));
+}
+
+.connectedDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── Step 3: Custom domain ──────────────────────────────────────────────── */
+
+.domainInput {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.75rem 1rem;
+  background: rgba(4, 6, 10, 0.65);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 1rem;
+  font-family: var(--font-mono);
+  transition: border-color 0.15s;
+}
+
+.domainInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(78, 143, 203, 0.22);
+}
+
+.dnsInstructions {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.dnsTitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.dnsRecords {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dnsRecord {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(4, 6, 10, 0.5);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.dnsType {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.dnsHost {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dnsArrow {
+  color: var(--text-soft);
+  flex-shrink: 0;
+}
+
+.dnsValue {
+  color: var(--text);
+  background: transparent;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.btnVerify {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: rgba(78, 143, 203, 0.12);
+  border: 1px solid rgba(78, 143, 203, 0.25);
+  border-radius: 999px;
+  color: var(--success);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btnVerify:hover:not(:disabled) {
+  background: rgba(78, 143, 203, 0.18);
+  border-color: rgba(78, 143, 203, 0.35);
+}
+
+.btnVerify .spinner {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.dnsResult {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+
+.dnsResult strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+.dnsResultSub {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── Done overlay ───────────────────────────────────────────────────────── */
+
+.doneOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(10, 14, 32, 0.96), rgba(6, 8, 22, 0.98));
+  border-radius: var(--radius-lg);
+  z-index: 2;
+  animation: fadeIn 0.4s ease;
+}
+
+.doneContent {
+  text-align: center;
+  padding: 2rem;
+  max-width: 400px;
+}
+
+.doneEmoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.doneContent .heading {
+  font-size: 1.75rem;
+}
+
+.doneContent .btnPrimary {
+  display: inline-flex;
+  width: auto;
+  padding: 0.75rem 2rem;
+  text-decoration: none;
+  margin-top: 1rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .card {
+    padding: 1.5rem;
+  }
+
+  .stepIndicator {
+    gap: 0;
+  }
+
+  .stepLabel {
+    display: none;
+  }
+
+  .stepConnector {
+    width: 24px;
+  }
+
+  .providerGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dnsRecord {
+    font-size: 0.78rem;
+  }
+
+  .stepActions {
+    grid-template-columns: 1fr;
+  }
+}
