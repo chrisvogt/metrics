@@ -34,6 +34,7 @@ Package-specific changes:
 
 ### Fixed
 
+- **Hosting 0.6.8** — Onboarding loads/saves progress with a **Bearer Firebase ID token** so auth works when **`session` cookie verification fails** through Hosting; matches manual sync. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Hosting 0.6.7** — Do not mirror the ID token to **`localStorage`** after a successful session; rely on the HttpOnly **`session`** cookie and **`apiSessionReady`** instead. **`localStorage`** remains only when session creation fails (Bearer fallback). See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Hosting 0.6.6** — Auth + onboarding: wait for **`apiSessionReady`** after `createSession` before calling protected APIs. Fixes **`No valid authorization header found`** on `GET /api/onboarding/progress`. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Hosting 0.6.5** — `putJson` refreshes the CSRF token before each `PUT` so production no longer hits spurious **“CSRF token mismatch”** when saving onboarding (or other) state. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).

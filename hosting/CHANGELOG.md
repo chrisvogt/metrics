@@ -7,6 +7,12 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.8] - 2026-04-01
+
+### Fixed
+
+- **Onboarding progress API** — `GET`/`PUT` `/api/onboarding/progress` now sends **`Authorization: Bearer` + Firebase ID token** from `user.getIdToken()` (same pattern as manual sync SSE). The HttpOnly **`session` cookie** was present in the browser but **`verifySessionCookie` was failing** on the function; without `localStorage` fallback there was no Bearer, so the handler returned **`No valid authorization header found`**.
+
 ## [0.6.7] - 2026-04-01
 
 ### Security

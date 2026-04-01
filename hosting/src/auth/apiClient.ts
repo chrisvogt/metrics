@@ -1,3 +1,6 @@
+/** Optional Firebase ID token for `Authorization: Bearer` (same as manual sync SSE). Prefer this when the HttpOnly session cookie is present but server-side `verifySessionCookie` fails through Hosting. */
+export type ApiClientAuth = { idToken: string }
+
 export class ApiClient {
   private baseUrl: string
 
@@ -89,22 +92,28 @@ export class ApiClient {
     return token ? { Authorization: `Bearer ${token}` } : {}
   }
 
-  async getJson(path: string): Promise<Response> {
+  private bearerFrom(auth?: ApiClientAuth): string | null {
+    return auth?.idToken ?? this.getAuthToken()
+  }
+
+  async getJson(path: string, auth?: ApiClientAuth): Promise<Response> {
+    const bearer = this.bearerFrom(auth)
     return fetch(`${this.baseUrl}${path}`, {
       credentials: 'include',
       headers: {
-        ...this.getAuthorizationHeader(),
+        ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
       },
     })
   }
 
-  async putJson(path: string, body: unknown): Promise<Response> {
+  async putJson(path: string, body: unknown, auth?: ApiClientAuth): Promise<Response> {
     const csrfToken = await this.getCsrfToken(true)
+    const bearer = this.bearerFrom(auth)
     return fetch(`${this.baseUrl}${path}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        ...this.getAuthorizationHeader(),
+        ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
         ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
       },
       credentials: 'include',

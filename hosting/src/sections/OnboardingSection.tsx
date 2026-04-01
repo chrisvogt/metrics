@@ -116,7 +116,9 @@ export function OnboardingSection() {
       setSaving(true)
       setSaveError(null)
       try {
-        const res = await apiClient.putJson('/api/onboarding/progress', snapshot)
+        if (!user) return false
+        const idToken = await user.getIdToken()
+        const res = await apiClient.putJson('/api/onboarding/progress', snapshot, { idToken })
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({} as { error?: string }))
           throw new Error(errBody.error ?? `Save failed (${res.status})`)
@@ -129,7 +131,7 @@ export function OnboardingSection() {
         setSaving(false)
       }
     },
-    []
+    [user]
   )
 
   useEffect(() => {
@@ -148,7 +150,8 @@ export function OnboardingSection() {
     ;(async () => {
       setProgressLoading(true)
       try {
-        const res = await apiClient.getJson('/api/onboarding/progress')
+        const idToken = await user.getIdToken()
+        const res = await apiClient.getJson('/api/onboarding/progress', { idToken })
         if (!res.ok) throw new Error('Load failed')
         const data = await res.json() as {
           ok: boolean
