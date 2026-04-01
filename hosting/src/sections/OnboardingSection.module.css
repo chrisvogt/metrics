@@ -6,6 +6,8 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  /* Let the card grow with content; avoid clipping tall completion UI */
+  align-items: stretch;
 }
 
 .card {
@@ -18,7 +20,97 @@
     0 0 0 1px rgba(232, 188, 56, 0.06);
   backdrop-filter: blur(18px) saturate(1.1);
   position: relative;
+  /*
+   * Must stay visible: on a flex column parent, overflow:hidden makes this item’s
+   * automatic min-height 0, so the card can shrink and clip children (emoji, CTA).
+   */
+  overflow: visible;
+  flex-shrink: 0;
+  min-height: min-content;
+}
+
+.cardComplete {
+  padding: 2.5rem 1.75rem 2.75rem;
+}
+
+.progressLoading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+}
+
+.progressLoading p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.stepPosition {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.stepPositionText {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.stepPositionText strong {
+  color: var(--text);
+}
+
+.stepPositionSep {
+  margin: 0 0.35rem;
+  opacity: 0.45;
+}
+
+.savingBadge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  animation: pulseOpacity 1.2s ease-in-out infinite;
+}
+
+@keyframes pulseOpacity {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.progressBarTrack {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  margin-bottom: 1.25rem;
   overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--success), var(--accent));
+  transition: width 0.35s ease;
+}
+
+.saveError {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(251, 113, 133, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.24);
+  border-radius: 12px;
+  color: #fecdd3;
+  font-size: 0.9rem;
 }
 
 /* ── Step indicator ─────────────────────────────────────────────────────── */
@@ -270,6 +362,12 @@
   font-weight: 700;
 }
 
+.statusWarn {
+  color: var(--accent-strong);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
 .statusPending {
   font-size: 1.1rem;
 }
@@ -280,6 +378,10 @@
 
 .hintBad {
   color: var(--error);
+}
+
+.hintWarn {
+  color: var(--accent-strong);
 }
 
 /* ── Step 2: Provider connections ───────────────────────────────────────── */
@@ -502,42 +604,51 @@
   line-height: 1.4;
 }
 
-/* ── Done overlay ───────────────────────────────────────────────────────── */
+/* ── Completion (in-flow — avoids clipped absolute overlay) ─────────────── */
 
-.doneOverlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, rgba(10, 14, 32, 0.96), rgba(6, 8, 22, 0.98));
-  border-radius: var(--radius-lg);
-  z-index: 2;
-  animation: fadeIn 0.4s ease;
-}
-
-.doneContent {
+.donePanel {
   text-align: center;
-  padding: 2rem;
-  max-width: 400px;
+  max-width: 26rem;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  /* Room for emoji glyphs and focus rings outside the text box */
+  padding: 0.35rem 0.5rem 0.75rem;
+  animation: fadeIn 0.4s ease;
+  overflow: visible;
 }
 
 .doneEmoji {
   font-size: 3rem;
+  line-height: 1.15;
   display: block;
-  margin-bottom: 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0.15rem 0;
+  overflow: visible;
 }
 
-.doneContent .heading {
+.donePanel .heading {
   font-size: 1.75rem;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.03em;
 }
 
-.doneContent .btnPrimary {
+.donePanel .subheading {
+  margin: 0 0 1.25rem;
+  max-width: 24rem;
+  line-height: 1.55;
+}
+
+.donePanel .btnPrimary {
   display: inline-flex;
   width: auto;
+  min-width: 12rem;
   padding: 0.75rem 2rem;
   text-decoration: none;
-  margin-top: 1rem;
+  margin-top: 0.25rem;
 }
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
@@ -545,6 +656,14 @@
 @media (max-width: 600px) {
   .card {
     padding: 1.5rem;
+  }
+
+  .cardComplete {
+    padding: 2rem 1.25rem 2.25rem;
+  }
+
+  .donePanel .subheading {
+    font-size: 0.92rem;
   }
 
   .stepIndicator {
@@ -569,5 +688,16 @@
 
   .stepActions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .savingBadge {
+    animation: none;
+    opacity: 0.9;
+  }
+
+  .progressBarFill {
+    transition: none;
   }
 }

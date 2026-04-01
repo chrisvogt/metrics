@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { apiClient } from '../auth/apiClient'
 import { useAuth } from '../auth/AuthContext'
 import { getAppBaseUrl } from '../lib/baseUrl'
 import styles from './OnboardingSection.module.css'
@@ -12,6 +13,16 @@ const STEPS = [
 ] as const
 
 type StepId = (typeof STEPS)[number]['id']
+type FlowStepId = StepId | 'done'
+
+interface OnboardingProgressPayload {
+  currentStep: FlowStepId
+  completedSteps: StepId[]
+  username: string | null
+  connectedProviderIds: string[]
+  customDomain: string | null
+  updatedAt: string
+}
 
 const PROVIDERS = [
   { id: 'github', label: 'GitHub', icon: <GitHubIcon />, color: '#8b949e' },
@@ -23,25 +34,41 @@ const PROVIDERS = [
   { id: 'instagram', label: 'Instagram', icon: <InstagramIcon />, color: '#e4405f' },
 ] as const
 
-type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
+type UsernameStatus =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'taken'
+  | 'invalid'
+  | 'error'
 type DnsStatus = 'idle' | 'checking' | 'verified' | 'not-verified' | 'error'
 
 const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/
 
+function isStepId(v: string): v is StepId {
+  return STEPS.some((s) => s.id === v)
+}
+
+function isFlowStepId(v: string): v is FlowStepId {
+  return v === 'done' || isStepId(v)
+}
+
 export function OnboardingSection() {
   const { user } = useAuth()
-  const [currentStep, setCurrentStep] = useState<StepId>('username')
+  const [currentStep, setCurrentStep] = useState<FlowStepId>('username')
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set())
+  const [hydrated, setHydrated] = useState(false)
+  const [progressLoading, setProgressLoading] = useState(true)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const suppressDraftSaveRef = useRef(true)
 
-  // Step 1: Username
   const [username, setUsername] = useState('')
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
   const usernameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Step 2: Connections
   const [connectedProviders, setConnectedProviders] = useState<Set<string>>(new Set())
 
-  // Step 3: Domain
   const [domain, setDomain] = useState('')
   const [dnsStatus, setDnsStatus] = useState<DnsStatus>('idle')
   const dnsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -57,16 +84,102 @@ export function OnboardingSection() {
 
     setUsernameStatus('checking')
     try {
-      const res = await fetch(`${baseUrl}/api/onboarding/check-username?username=${encodeURIComponent(value)}`, {
-        credentials: 'include',
-      })
+      const res = await fetch(
+        `${baseUrl}/api/onboarding/check-username?username=${encodeURIComponent(value)}`,
+        { credentials: 'include' }
+      )
       if (!res.ok) throw new Error('Check failed')
       const data = await res.json() as { available?: boolean }
       setUsernameStatus(data.available ? 'available' : 'taken')
     } catch {
-      setUsernameStatus('available')
+      setUsernameStatus('error')
     }
   }, [baseUrl])
+
+  const buildSnapshot = useCallback(
+    (overrides?: Partial<Pick<OnboardingProgressPayload, 'currentStep' | 'completedSteps'>>) => {
+      const completedArr = overrides?.completedSteps ?? Array.from(completedSteps)
+      const step = overrides?.currentStep ?? currentStep
+      return {
+        currentStep: step,
+        completedSteps: completedArr,
+        username: username.length > 0 ? username.toLowerCase() : null,
+        connectedProviderIds: Array.from(connectedProviders),
+        customDomain: domain.length > 0 ? domain : null,
+      }
+    },
+    [completedSteps, connectedProviders, currentStep, domain, username]
+  )
+
+  const persistProgress = useCallback(
+    async (snapshot: ReturnType<typeof buildSnapshot>) => {
+      setSaving(true)
+      setSaveError(null)
+      try {
+        const res = await apiClient.putJson('/api/onboarding/progress', snapshot)
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({} as { error?: string }))
+          throw new Error(errBody.error ?? `Save failed (${res.status})`)
+        }
+        return true
+      } catch (e) {
+        setSaveError(e instanceof Error ? e.message : 'Could not save progress.')
+        return false
+      } finally {
+        setSaving(false)
+      }
+    },
+    []
+  )
+
+  useEffect(() => {
+    if (!user) {
+      setProgressLoading(false)
+      setHydrated(true)
+      return
+    }
+
+    let cancelled = false
+    ;(async () => {
+      setProgressLoading(true)
+      try {
+        const res = await apiClient.getJson('/api/onboarding/progress')
+        if (!res.ok) throw new Error('Load failed')
+        const data = await res.json() as {
+          ok: boolean
+          payload?: OnboardingProgressPayload
+        }
+        const p = data.payload
+        if (cancelled || !p) return
+        if (!isFlowStepId(p.currentStep)) {
+          setCurrentStep('username')
+        } else {
+          setCurrentStep(p.currentStep)
+        }
+        setCompletedSteps(new Set(p.completedSteps.filter(isStepId)))
+        const savedUsername = p.username ?? ''
+        setUsername(savedUsername)
+        setConnectedProviders(new Set(p.connectedProviderIds ?? []))
+        setDomain(p.customDomain ?? '')
+        setDnsStatus('idle')
+        if (savedUsername.length >= 3) {
+          queueMicrotask(() => void checkUsername(savedUsername))
+        }
+      } catch {
+        if (!cancelled) setSaveError('Could not load saved progress. You can still continue.')
+      } finally {
+        if (!cancelled) {
+          setProgressLoading(false)
+          setHydrated(true)
+          suppressDraftSaveRef.current = true
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user, checkUsername])
 
   const handleUsernameChange = (value: string) => {
     const sanitized = value.toLowerCase().replace(/[^a-z0-9_-]/g, '')
@@ -115,28 +228,61 @@ export function OnboardingSection() {
     }
   }, [])
 
-  const handleStepComplete = (step: StepId) => {
-    setCompletedSteps((prev) => new Set([...prev, step]))
-    const idx = STEPS.findIndex((s) => s.id === step)
-    const nextStep = STEPS[idx + 1]
-    if (nextStep) {
-      setCurrentStep(nextStep.id)
+  const handleStepComplete = async (step: StepId) => {
+    setSaveError(null)
+    const nextCompleted = new Set([...completedSteps, step])
+    let nextFlow: FlowStepId = 'done'
+    if (step !== 'domain') {
+      const idx = STEPS.findIndex((s) => s.id === step)
+      const next = STEPS[idx + 1]
+      if (next) nextFlow = next.id
     }
+    const snapshot = buildSnapshot({
+      currentStep: nextFlow,
+      completedSteps: Array.from(nextCompleted) as StepId[],
+    })
+    const ok = await persistProgress(snapshot)
+    if (!ok) return
+    setCompletedSteps(nextCompleted)
+    setCurrentStep(nextFlow)
   }
+
+  const navigateToStep = async (target: StepId) => {
+    if (target === currentStep) return
+    setSaveError(null)
+    const snapshot = buildSnapshot({ currentStep: target })
+    const ok = await persistProgress(snapshot)
+    if (!ok) return
+    setCurrentStep(target)
+  }
+
+  useEffect(() => {
+    if (!user || !hydrated) return
+    if (currentStep !== 'connections' && currentStep !== 'domain') return
+    if (suppressDraftSaveRef.current) {
+      suppressDraftSaveRef.current = false
+      return
+    }
+    const t = setTimeout(() => {
+      void persistProgress(buildSnapshot())
+    }, 650)
+    return () => clearTimeout(t)
+  }, [user, hydrated, currentStep, connectedProviders, domain, buildSnapshot, persistProgress])
 
   const handleConnectProvider = (providerId: string) => {
     setConnectedProviders((prev) => {
       const next = new Set(prev)
-      if (next.has(providerId)) {
-        next.delete(providerId)
-      } else {
-        next.add(providerId)
-      }
+      if (next.has(providerId)) next.delete(providerId)
+      else next.add(providerId)
       return next
     })
   }
 
-  const stepIndex = STEPS.findIndex((s) => s.id === currentStep)
+  const visualStepIndex =
+    currentStep === 'done' ? STEPS.length - 1 : STEPS.findIndex((s) => s.id === currentStep)
+  const safeVisualIndex = visualStepIndex >= 0 ? visualStepIndex : 0
+  const progressPercent = ((safeVisualIndex + 1) / STEPS.length) * 100
+  const stepMetaLabel = STEPS[safeVisualIndex]?.label ?? ''
 
   if (!user) {
     return (
@@ -149,44 +295,100 @@ export function OnboardingSection() {
     )
   }
 
+  if (progressLoading) {
+    return (
+      <section className={styles.section}>
+        <div className={styles.card}>
+          <div className={styles.progressLoading}>
+            <span className="spinner" aria-hidden />
+            <p>Loading your progress…</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className={styles.section}>
-      <div className={styles.card}>
-        <div className={styles.stepIndicator}>
-          {STEPS.map((step, i) => (
-            <div key={step.id} className={styles.stepRow}>
-              <button
-                type="button"
-                className={`${styles.stepDot} ${
-                  currentStep === step.id ? styles.stepDotActive : ''
-                } ${completedSteps.has(step.id) ? styles.stepDotDone : ''}`}
-                onClick={() => setCurrentStep(step.id)}
-                aria-current={currentStep === step.id ? 'step' : undefined}
-              >
-                {completedSteps.has(step.id) ? (
-                  <CheckIcon />
-                ) : (
-                  <span>{i + 1}</span>
-                )}
-              </button>
-              <span
-                className={`${styles.stepLabel} ${
-                  currentStep === step.id ? styles.stepLabelActive : ''
-                }`}
-              >
-                {step.label}
+      <div className={`${styles.card} ${currentStep === 'done' ? styles.cardComplete : ''}`}>
+        {currentStep === 'done' ? (
+          <div className={styles.donePanel}>
+            <span className={styles.doneEmoji} aria-hidden>
+              🎉
+            </span>
+            <h2 className={styles.heading}>You&rsquo;re all set!</h2>
+            <p className={styles.subheading}>
+              Your Chronogrove account is ready. Head to the dashboard to start exploring your
+              data.
+            </p>
+            <a href="/" className={styles.btnPrimary}>
+              Go to dashboard
+            </a>
+          </div>
+        ) : (
+          <>
+            <div className={styles.stepPosition} aria-live="polite">
+              <span className={styles.stepPositionText}>
+                <strong>Step {safeVisualIndex + 1}</strong> of {STEPS.length}
+                <span className={styles.stepPositionSep}>·</span>
+                {stepMetaLabel}
               </span>
-              {i < STEPS.length - 1 && <div className={styles.stepConnector} />}
+              {saving && <span className={styles.savingBadge}>Saving…</span>}
             </div>
-          ))}
-        </div>
 
-        {/* Step 1: Username */}
-        {currentStep === 'username' && (
-          <div className={styles.stepContent}>
+            <div
+              className={styles.progressBarTrack}
+              role="progressbar"
+              aria-valuemin={1}
+              aria-valuemax={STEPS.length}
+              aria-valuenow={safeVisualIndex + 1}
+              aria-label="Onboarding steps completed"
+            >
+              <div
+                className={styles.progressBarFill}
+                style={{
+                  width: `${progressPercent}%`,
+                }}
+              />
+            </div>
+
+            <div className={styles.stepIndicator}>
+              {STEPS.map((step, i) => (
+                <div key={step.id} className={styles.stepRow}>
+                  <button
+                    type="button"
+                    className={`${styles.stepDot} ${
+                      currentStep === step.id ? styles.stepDotActive : ''
+                    } ${completedSteps.has(step.id) ? styles.stepDotDone : ''}`}
+                    onClick={() => void navigateToStep(step.id)}
+                    aria-current={currentStep === step.id ? 'step' : undefined}
+                  >
+                    {completedSteps.has(step.id) ? <CheckIcon /> : <span>{i + 1}</span>}
+                  </button>
+                  <span
+                    className={`${styles.stepLabel} ${
+                      currentStep === step.id ? styles.stepLabelActive : ''
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                  {i < STEPS.length - 1 && <div className={styles.stepConnector} />}
+                </div>
+              ))}
+            </div>
+
+            {saveError && (
+              <div className={styles.saveError} role="alert">
+                {saveError}
+              </div>
+            )}
+
+            {currentStep === 'username' && (
+              <div className={styles.stepContent}>
             <h2 className={styles.heading}>Choose your username</h2>
             <p className={styles.subheading}>
-              This will be your unique profile URL. Pick something memorable — you can&rsquo;t change it later.
+              This will be your unique profile URL. Pick something memorable — you can&rsquo;t
+              change it later.
             </p>
 
             <div className={styles.usernameField}>
@@ -206,6 +408,7 @@ export function OnboardingSection() {
                   {usernameStatus === 'available' && <span className={styles.statusOk}>✓</span>}
                   {usernameStatus === 'taken' && <span className={styles.statusBad}>✕</span>}
                   {usernameStatus === 'invalid' && <span className={styles.statusBad}>✕</span>}
+                  {usernameStatus === 'error' && <span className={styles.statusWarn}>!</span>}
                 </span>
               </div>
               <div className={styles.usernameHint}>
@@ -228,27 +431,31 @@ export function OnboardingSection() {
                     Must start and end with a letter or number.
                   </span>
                 )}
+                {usernameStatus === 'error' && (
+                  <span className={styles.hintWarn}>
+                    Could not check availability. Check your connection and try again.
+                  </span>
+                )}
               </div>
             </div>
 
             <button
               type="button"
               className={styles.btnPrimary}
-              disabled={usernameStatus !== 'available'}
-              onClick={() => handleStepComplete('username')}
+              disabled={usernameStatus !== 'available' || saving}
+              onClick={() => void handleStepComplete('username')}
             >
               Continue
             </button>
-          </div>
-        )}
+            </div>
+            )}
 
-        {/* Step 2: Connections */}
-        {currentStep === 'connections' && (
+            {currentStep === 'connections' && (
           <div className={styles.stepContent}>
             <h2 className={styles.heading}>Connect your accounts</h2>
             <p className={styles.subheading}>
-              Link the services you want to sync data from. You can always add more later
-              from the dashboard.
+              Link the services you want to sync data from. You can always add more later from
+              the dashboard.
             </p>
 
             <div className={styles.providerGrid}>
@@ -283,14 +490,16 @@ export function OnboardingSection() {
               <button
                 type="button"
                 className={styles.btnSecondary}
-                onClick={() => handleStepComplete('connections')}
+                disabled={saving}
+                onClick={() => void handleStepComplete('connections')}
               >
                 Skip for now
               </button>
               <button
                 type="button"
                 className={styles.btnPrimary}
-                onClick={() => handleStepComplete('connections')}
+                disabled={saving}
+                onClick={() => void handleStepComplete('connections')}
               >
                 Continue
                 {connectedProviders.size > 0 && (
@@ -298,12 +507,11 @@ export function OnboardingSection() {
                 )}
               </button>
             </div>
-          </div>
-        )}
+            </div>
+            )}
 
-        {/* Step 3: Custom Domain */}
-        {currentStep === 'domain' && (
-          <div className={styles.stepContent}>
+            {currentStep === 'domain' && (
+              <div className={styles.stepContent}>
             <h2 className={styles.heading}>Custom domain</h2>
             <p className={styles.subheading}>
               Point your own domain to Chronogrove for a branded API endpoint. This step is
@@ -360,7 +568,9 @@ export function OnboardingSection() {
                     <span className={styles.statusOk}>✓</span>
                     <div>
                       <strong>DNS verified!</strong>
-                      <p className={styles.dnsResultSub}>Both A records are pointing to Chronogrove.</p>
+                      <p className={styles.dnsResultSub}>
+                        Both A records are pointing to Chronogrove.
+                      </p>
                     </div>
                   </div>
                 )}
@@ -383,7 +593,9 @@ export function OnboardingSection() {
                     <span className={styles.statusBad}>✕</span>
                     <div>
                       <strong>Verification failed</strong>
-                      <p className={styles.dnsResultSub}>Could not look up DNS records. Check the domain name and try again.</p>
+                      <p className={styles.dnsResultSub}>
+                        Could not look up DNS records. Check the domain name and try again.
+                      </p>
                     </div>
                   </div>
                 )}
@@ -394,42 +606,28 @@ export function OnboardingSection() {
               <button
                 type="button"
                 className={styles.btnSecondary}
-                onClick={() => handleStepComplete('domain')}
+                disabled={saving}
+                onClick={() => void handleStepComplete('domain')}
               >
                 Skip for now
               </button>
               <button
                 type="button"
                 className={styles.btnPrimary}
-                onClick={() => handleStepComplete('domain')}
+                disabled={saving}
+                onClick={() => void handleStepComplete('domain')}
               >
                 Finish setup
               </button>
             </div>
-          </div>
-        )}
-
-        {/* All steps complete */}
-        {completedSteps.size === STEPS.length && stepIndex === STEPS.length - 1 && (
-          <div className={styles.doneOverlay}>
-            <div className={styles.doneContent}>
-              <span className={styles.doneEmoji}>🎉</span>
-              <h2 className={styles.heading}>You&rsquo;re all set!</h2>
-              <p className={styles.subheading}>
-                Your Chronogrove account is ready. Head to the dashboard to start exploring your data.
-              </p>
-              <a href="/" className={styles.btnPrimary}>
-                Go to dashboard
-              </a>
-            </div>
-          </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
   )
 }
-
-/* ── Provider icons ─────────────────────────────────────────────────────── */
 
 function CheckIcon() {
   return (

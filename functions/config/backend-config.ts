@@ -134,4 +134,9 @@ const parseWidgetUserMap = (
 export const getBackendPathConfig = () => ({
   defaultWidgetUserId: process.env.DEFAULT_WIDGET_USER_ID ?? DEFAULT_WIDGET_USER_ID,
   widgetUserIdByHostname: parseWidgetUserMap(process.env.WIDGET_USER_ID_BY_HOSTNAME),
+  /**
+   * When true: future resolver may consult Firestore (`tenant_hosts`) after the env map.
+   * Default false so production behavior stays env-only until explicitly enabled.
+   */
+  firestoreTenantRoutingEnabled: process.env.ENABLE_FIRESTORE_TENANT_ROUTING === 'true',
 })

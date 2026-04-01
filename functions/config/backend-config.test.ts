@@ -33,6 +33,7 @@ describe('backend config', () => {
     delete process.env.STEAM_USER_ID
     delete process.env.DEFAULT_WIDGET_USER_ID
     delete process.env.WIDGET_USER_ID_BY_HOSTNAME
+    delete process.env.ENABLE_FIRESTORE_TENANT_ROUTING
   })
 
   it('detects production mode from NODE_ENV', async () => {
@@ -199,6 +200,7 @@ describe('backend config', () => {
         'api.custom.example': 'custom-user',
         'api.secondary.example': 'secondary-user',
       },
+      firestoreTenantRoutingEnabled: false,
     })
   })
 
@@ -210,7 +212,19 @@ describe('backend config', () => {
       widgetUserIdByHostname: {
         'api.chronogrove.com': 'chronogrove',
       },
+      firestoreTenantRoutingEnabled: false,
     })
+  })
+
+  it('enables Firestore tenant routing only when env is exactly true', async () => {
+    process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+    const { getBackendPathConfig } = await import('./backend-config.js')
+    expect(getBackendPathConfig().firestoreTenantRoutingEnabled).toBe(true)
+
+    vi.resetModules()
+    process.env.ENABLE_FIRESTORE_TENANT_ROUTING = '1'
+    const { getBackendPathConfig: getConfig2 } = await import('./backend-config.js')
+    expect(getConfig2().firestoreTenantRoutingEnabled).toBe(false)
   })
 
   it('parses hostname mapping config from comma-separated env values', async () => {

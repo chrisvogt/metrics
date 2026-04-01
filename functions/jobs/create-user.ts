@@ -23,17 +23,29 @@ const createUser = async (
   const logger = getLogger()
   const { uid, email, displayName } = userRecord
 
+  const now = toStoredDateTime()
   const userData = {
     uid,
     email,
     displayName: displayName || null,
+    username: null,
     tokens: {},
     subscription: {
       active: true,
     },
+    entitlements: {
+      cdn: false,
+      customDomain: false,
+    },
+    onboarding: {
+      currentStep: 'username',
+      completedSteps: [],
+      draftCustomDomain: null,
+      updatedAt: now,
+    },
     widgets: {},
-    createdAt: toStoredDateTime(),
-    updatedAt: toStoredDateTime(),
+    createdAt: now,
+    updatedAt: now,
   }
 
   try {

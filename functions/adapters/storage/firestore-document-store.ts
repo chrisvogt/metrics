@@ -39,6 +39,26 @@ export class FirestoreDocumentStore implements DocumentStore {
 
     await admin.firestore().collection(collectionPath).doc(documentId).delete()
   }
+
+  async legacyUsernameClaimed(
+    usersCollection: string,
+    usernameNormalized: string
+  ): Promise<boolean> {
+    const snap = await admin
+      .firestore()
+      .collection(usersCollection)
+      .where('username', '==', usernameNormalized)
+      .limit(1)
+      .get()
+    return !snap.empty
+  }
+
+  async recursiveDeleteDocument(path: string): Promise<void> {
+    const { collectionPath, documentId } = toCollectionAndDocument(path)
+    const db = admin.firestore()
+    const ref = db.collection(collectionPath).doc(documentId)
+    await db.recursiveDelete(ref)
+  }
 }
 
 export { toCollectionAndDocument }

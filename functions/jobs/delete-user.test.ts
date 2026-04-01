@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import deleteUser from './delete-user.js'
 import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
+import { TENANT_USERNAMES_COLLECTION } from '../config/future-tenant-collections.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import { configureLogger } from '../services/logger.js'
 
@@ -17,9 +18,10 @@ describe('deleteUser', () => {
     vi.clearAllMocks()
     configureLogger(logger)
     documentStore = {
-      getDocument: vi.fn(),
+      getDocument: vi.fn().mockResolvedValue(null),
       setDocument: vi.fn(),
       deleteDocument: vi.fn().mockResolvedValue(undefined),
+      recursiveDeleteDocument: vi.fn().mockResolvedValue(undefined),
     }
   })
 
@@ -31,12 +33,29 @@ describe('deleteUser', () => {
     const result = await deleteUser({ uid: 'test-uid-123' }, documentStore)
 
     expect(result).toEqual({ result: 'SUCCESS' })
-    expect(documentStore.deleteDocument).toHaveBeenCalledWith(
+    expect(documentStore.getDocument).toHaveBeenCalledWith(
+      `${DATABASE_COLLECTION_USERS}/test-uid-123`
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalledWith(
       `${DATABASE_COLLECTION_USERS}/test-uid-123`
     )
     expect(logger.info).toHaveBeenCalledWith('User deleted successfully from database.', {
       uid: 'test-uid-123',
     })
+  })
+
+  it('should remove tenant username claim when profile has username', async () => {
+    vi.mocked(documentStore.getDocument!).mockResolvedValue({
+      username: 'CoolDev',
+    })
+
+    const result = await deleteUser({ uid: 'test-uid-456' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(documentStore.deleteDocument).toHaveBeenCalledWith(
+      `${TENANT_USERNAMES_COLLECTION}/cooldev`
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
   })
 
   it('should handle user records with additional properties', async () => {
@@ -50,13 +69,13 @@ describe('deleteUser', () => {
     )
 
     expect(result.result).toBe('SUCCESS')
-    expect(documentStore.deleteDocument).toHaveBeenCalledWith(
-      `${DATABASE_COLLECTION_USERS}/test-uid-456`
-    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
   })
 
   it('should handle DocumentStore errors gracefully', async () => {
-    vi.mocked(documentStore.deleteDocument!).mockRejectedValue(new Error('DocumentStore connection failed'))
+    vi.mocked(documentStore.recursiveDeleteDocument!).mockRejectedValueOnce(
+      new Error('DocumentStore connection failed')
+    )
 
     const result = await deleteUser({ uid: 'test-uid-error' }, documentStore)
 
@@ -86,7 +105,9 @@ describe('deleteUser', () => {
   })
 
   it('should handle errors with missing error.message', async () => {
-    vi.mocked(documentStore.deleteDocument!).mockRejectedValue({ customError: 'Something went wrong' })
+    vi.mocked(documentStore.recursiveDeleteDocument!).mockRejectedValueOnce({
+      customError: 'Something went wrong',
+    })
 
     const result = await deleteUser({ uid: 'test-uid-no-message' }, documentStore)
 
@@ -100,6 +121,7 @@ describe('deleteUser', () => {
     const result = await deleteUser({ uid: '' }, documentStore)
 
     expect(result.result).toBe('SUCCESS')
-    expect(documentStore.deleteDocument).toHaveBeenCalledWith(`${DATABASE_COLLECTION_USERS}/`)
+    expect(documentStore.getDocument).toHaveBeenCalledWith(`${DATABASE_COLLECTION_USERS}/`)
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
   })
 })
