@@ -20,15 +20,15 @@
   height: 100%;
 }
 
-/* Soften edges; keep sign-in card readable */
+/* Soften edges; keep sign-in card readable — tokens per theme */
 .vignette {
   position: absolute;
   inset: 0;
   background: radial-gradient(
     ellipse 85% 75% at 50% 45%,
     transparent 0%,
-    rgba(6, 8, 22, 0.25) 55%,
-    rgba(4, 6, 18, 0.55)100%
+    var(--vignette-mid) 55%,
+    var(--vignette-edge) 100%
   );
   pointer-events: none;
 }

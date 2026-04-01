@@ -30,6 +30,7 @@ import {
   ONBOARDING_USERNAME_PATTERN,
   parseOnboardingProgressBody,
 } from './onboarding-progress.js'
+import { toStoredDateTime } from '../utils/time.js'
 
 interface LoggerLike {
   error: (message: string, ...args: unknown[]) => void
@@ -48,6 +49,8 @@ interface CreateExpressAppOptions {
 }
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
+
+const USER_UI_THEMES = new Set(['dark-forest', 'starry-night'])
 
 const ONBOARDING_USERNAME_RATE_WINDOW_MS = 15 * 60 * 1000
 /** Username checks are enumerable; keep a stricter cap than generic read APIs. */
@@ -547,6 +550,68 @@ export function createExpressApp({
       } catch (err) {
         logger.error('Error fetching user profile:', err)
         res.status(500).send(buildFailureResponse(err))
+      }
+    }
+  )
+
+  expressApp.get(
+    '/api/user/settings',
+    createRateLimiter(15 * 60 * 1000, 80),
+    authenticateUser,
+    async (req, res) => {
+      if (!req.user) return
+      const uid = req.user.uid
+      const userPath = `${getUsersCollectionPath()}/${uid}`
+      try {
+        const doc = await documentStore.getDocument<Record<string, unknown>>(userPath)
+        const raw = doc?.settings
+        const settings =
+          raw && typeof raw === 'object' && !Array.isArray(raw)
+            ? (raw as Record<string, unknown>)
+            : {}
+        let theme: string = typeof settings.theme === 'string' ? settings.theme : 'dark-forest'
+        if (!USER_UI_THEMES.has(theme)) theme = 'dark-forest'
+        res.status(200).json(buildSuccessResponse({ theme }))
+      } catch (err) {
+        logger.error('Error loading user settings', { uid, error: err })
+        res.status(500).json(buildFailureResponse(err))
+      }
+    }
+  )
+
+  expressApp.patch(
+    '/api/user/settings',
+    createRateLimiter(15 * 60 * 1000, 40),
+    express.json({ limit: '8kb' }),
+    authenticateUser,
+    async (req, res) => {
+      if (!req.user) return
+      const uid = req.user.uid
+      const themeRaw = (req.body as { theme?: unknown })?.theme
+      if (typeof themeRaw !== 'string' || !USER_UI_THEMES.has(themeRaw)) {
+        res.status(400).json({ ok: false, error: 'Invalid theme' })
+        return
+      }
+      if (!documentStore.mergeDocument) {
+        res.status(500).json({ ok: false, error: 'Settings merge not available' })
+        return
+      }
+      const userPath = `${getUsersCollectionPath()}/${uid}`
+      try {
+        const doc = await documentStore.getDocument<Record<string, unknown>>(userPath)
+        const rawPrev = doc?.settings
+        const prev =
+          rawPrev && typeof rawPrev === 'object' && !Array.isArray(rawPrev)
+            ? { ...(rawPrev as Record<string, unknown>) }
+            : {}
+        await documentStore.mergeDocument(userPath, {
+          settings: { ...prev, theme: themeRaw },
+          updatedAt: toStoredDateTime(),
+        })
+        res.status(200).json(buildSuccessResponse({ theme: themeRaw }))
+      } catch (err) {
+        logger.error('Error saving user settings', { uid, error: err })
+        res.status(500).json(buildFailureResponse(err))
       }
     }
   )

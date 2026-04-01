@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useTheme } from 'next-themes'
 import dynamic from 'next/dynamic'
 import { getAppBaseUrl } from '../lib/baseUrl'
 import {
@@ -12,6 +13,7 @@ import {
 import { getTenantDisplayHost } from '../lib/tenantDisplay'
 import styles from './OverviewSection.module.css'
 import type { GroveProvider } from '../components/GroveScene'
+import { DEFAULT_THEME, isChronogroveTheme } from '@/theme/chronogroveTheme'
 
 const GroveScene = dynamic(() => import('../components/GroveScene'), { ssr: false })
 
@@ -70,6 +72,8 @@ const initialState = (): ProviderState => ({
 })
 
 export function OverviewSection() {
+  const { resolvedTheme } = useTheme()
+  const groveTheme = isChronogroveTheme(resolvedTheme) ? resolvedTheme : DEFAULT_THEME
   const baseUrl = getAppBaseUrl()
   const [states, setStates] = useState<Record<string, ProviderState>>({})
 
@@ -146,7 +150,7 @@ export function OverviewSection() {
           </nav>
         </div>
         <div className={styles.orbWrap} aria-hidden>
-          <GroveScene className={styles.orb} providers={groveProviders} />
+          <GroveScene className={styles.orb} providers={groveProviders} themeId={groveTheme} />
         </div>
       </div>
 

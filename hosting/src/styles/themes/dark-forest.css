@@ -1,0 +1,50 @@
+/* Dark Forest — default Chronogrove theme */
+html[data-theme='dark-forest'],
+html:not([data-theme]) {
+  color-scheme: dark;
+
+  --bg: #050806;
+  --bg-elevated: #0a0f0c;
+  --surface: rgba(12, 18, 15, 0.9);
+  --surface-strong: #101816;
+  --surface-hover: rgba(22, 32, 28, 0.96);
+  --surface-soft: rgba(123, 196, 168, 0.06);
+
+  --border: rgba(125, 160, 140, 0.14);
+  --border-strong: rgba(155, 190, 170, 0.22);
+
+  --text: #e6ede8;
+  --text-muted: #8fa398;
+  --text-soft: #5c6e66;
+
+  --accent: #7bc4a8;
+  --accent-hover: #9dd4bd;
+  --accent-soft: rgba(123, 196, 168, 0.16);
+  --accent-strong: #b8e8d4;
+
+  --success: #4ec9b0;
+  --error: #c97a72;
+  --insight: #c9a66b;
+
+  --shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.55);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.32);
+
+  --glyph-glow: rgba(123, 196, 168, 0.45);
+  --scene-bg: #050806;
+  --scene-fog: #030504;
+  --vignette-mid: rgba(5, 8, 6, 0.35);
+  --vignette-edge: rgba(2, 4, 3, 0.72);
+
+  --selection-bg: rgba(123, 196, 168, 0.35);
+
+  /* High-contrast text on primary / accent-filled buttons */
+  --on-accent-fg: #050806;
+}
+
+html[data-theme='dark-forest'] body,
+html:not([data-theme]) body {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(30, 55, 45, 0.12), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 90% 100%, rgba(20, 40, 32, 0.1), transparent 45%),
+    linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg) 48%, #020403 100%);
+}

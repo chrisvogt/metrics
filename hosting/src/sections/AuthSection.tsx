@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import type { ConfirmationResult } from 'firebase/auth'
+import { ThemeQuickToggle } from '@/components/ThemeQuickToggle'
 import { useAuth } from '../auth/AuthContext'
 import styles from './AuthSection.module.css'
 
@@ -212,6 +213,8 @@ export function AuthSection() {
             </button>
           </div>
         )}
+
+        <ThemeQuickToggle />
       </div>
     </section>
   )

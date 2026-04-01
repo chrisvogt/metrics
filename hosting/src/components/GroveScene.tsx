@@ -16,6 +16,9 @@ import {
   Vector3,
   Group,
 } from 'three'
+import type { ChronogroveThemeId } from '@/theme/chronogroveTheme'
+import { DEFAULT_THEME } from '@/theme/chronogroveTheme'
+import { scenePaletteThree } from '@/theme/scenePalette'
 
 // ── Public types ─────────────────────────────────────────────────────────────
 
@@ -66,29 +69,18 @@ interface GroveData {
   extraPos: Vector3[]   // remaining leaves → decorative
 }
 
-function buildGrove(rng: () => number): GroveData {
+function buildGrove(rng: () => number, themeId: ChronogroveThemeId): GroveData {
   const lp: number[] = []
   const lc: number[] = []
   const jp: number[] = []
   const leaves: Vector3[] = []
+  const pal = scenePaletteThree(themeId)
 
   function colorAt(d: number): [number, number, number] {
-    // Dark cypress at base → deep midnight → cerulean cobalt at canopy tips
-    // Inspired by the cypress and night-sky palette of Starry Night
-    const t = d / MAX_DEPTH
-    if (t < 0.30) {
-      const s = t / 0.30
-      // near-black cypress trunk → dark midnight blue
-      return [0.07 - 0.03 * s, 0.10 + 0.04 * s, 0.07 + 0.12 * s]
-    }
-    if (t < 0.70) {
-      const s = (t - 0.30) / 0.40
-      // dark midnight → deep cobalt
-      return [0.04 + 0.06 * s, 0.14 + 0.14 * s, 0.19 + 0.20 * s]
-    }
-    const s = (t - 0.70) / 0.30
-    // deep cobalt → cerulean (the swirling sky)
-    return [0.10 + 0.10 * s, 0.28 + 0.26 * s, 0.39 + 0.28 * s]
+    const t = Math.min(1, Math.max(0, d / MAX_DEPTH))
+    const [dr, dg, db] = pal.branchDeep
+    const [tr, tg, tb] = pal.branchTip
+    return [dr + (tr - dr) * t, dg + (tg - dg) * t, db + (tb - db) * t]
   }
 
   function grow(
@@ -162,14 +154,18 @@ function buildGrove(rng: () => number): GroveData {
 export default function GroveScene({
   className,
   providers = [],
+  themeId = DEFAULT_THEME,
 }: {
   className?: string
   providers?: GroveProvider[]
+  themeId?: ChronogroveThemeId
 }) {
   const mountRef = useRef<HTMLDivElement>(null)
   const mouseRef = useRef({ x: 0, y: 0 })
   const smoothRef = useRef({ x: 0, y: 0 })
   const providersRef = useRef(providers)
+  const themeRef = useRef(themeId)
+  themeRef.current = themeId
 
   // Keep ref in sync — does NOT re-run the scene setup effect
   useEffect(() => {
@@ -206,7 +202,9 @@ export default function GroveScene({
 
     // ── Build tree geometry ───────────────────────────
     const rng = makeRng(0xc4705e77)
-    const { linePos, lineCol, juncPos, leafPos, extraPos } = buildGrove(rng)
+    const { linePos, lineCol, juncPos, leafPos, extraPos } = buildGrove(rng, themeId)
+    const pal = scenePaletteThree(themeId)
+    const [jr, jg, jb] = pal.branchTip
 
     const grove = new Group()
     scene.add(grove)
@@ -224,7 +222,9 @@ export default function GroveScene({
       const n = juncPos.length / 3
       const jCols = new Float32Array(n * 3)
       for (let i = 0; i < n; i++) {
-        jCols[i * 3] = 0.08; jCols[i * 3 + 1] = 0.22; jCols[i * 3 + 2] = 0.42
+        jCols[i * 3] = jr * 0.42
+        jCols[i * 3 + 1] = jg * 0.42
+        jCols[i * 3 + 2] = jb * 0.42
       }
       const jGeo = new BufferGeometry()
       jGeo.setAttribute('position', new Float32BufferAttribute(juncPos, 3))
@@ -274,12 +274,15 @@ export default function GroveScene({
 
     // ── Decorative non-provider leaf nodes (dim cobalt) ──
     if (extraPos.length > 0) {
+      const [tr, tg, tb] = pal.branchTip
       const eArr = new Float32Array(extraPos.length * 3)
       const eCols = new Float32Array(extraPos.length * 3)
       for (let i = 0; i < extraPos.length; i++) {
         const p = extraPos[i]!
         eArr[i * 3] = p.x; eArr[i * 3 + 1] = p.y; eArr[i * 3 + 2] = p.z
-        eCols[i * 3] = 0.12; eCols[i * 3 + 1] = 0.30; eCols[i * 3 + 2] = 0.55
+        eCols[i * 3] = tr * 0.7
+        eCols[i * 3 + 1] = tg * 0.7
+        eCols[i * 3 + 2] = tb * 0.7
       }
       const eGeo = new BufferGeometry()
       eGeo.setAttribute('position', new Float32BufferAttribute(eArr, 3))
@@ -305,9 +308,13 @@ export default function GroveScene({
     const sporePosAttr = new Float32BufferAttribute(sporePosArr, 3)
     sporeGeo.setAttribute('position', sporePosAttr)
     grove.add(new Points(sporeGeo, new PointsMaterial({
-      map: glowTex, size: 0.052, color: 0xf0c030,  // golden stars
-      transparent: true, opacity: 0.40,
-      blending: AdditiveBlending, depthWrite: false,
+      map: glowTex,
+      size: 0.052,
+      color: pal.spore,
+      transparent: true,
+      opacity: 0.40,
+      blending: AdditiveBlending,
+      depthWrite: false,
     })))
 
     // ── Resize observer ───────────────────────────────
@@ -357,9 +364,9 @@ export default function GroveScene({
           cr = pulse * 0.42; cg = pulse * 0.55; cb = pulse * 0.78
 
         } else if (prov.alive) {
-          // Alive: Starry Night cerulean sky (#4e8fcb), 0.7 Hz slow breath
+          const [ar, ag, ab] = scenePaletteThree(themeRef.current).alive
           const pulse = 0.80 + 0.20 * Math.sin(elapsed * Math.PI * 2 * 0.7 + i * 0.85)
-          cr = 0.30 * pulse; cg = 0.56 * pulse; cb = 0.80 * pulse
+          cr = ar * pulse; cg = ag * pulse; cb = ab * pulse
 
         } else {
           // Dead: dark village-brown, 0.25 Hz slow flicker
@@ -407,7 +414,7 @@ export default function GroveScene({
       renderer.dispose()
       renderer.domElement.parentElement?.removeChild(renderer.domElement)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [themeId])
 
   return (
     <div

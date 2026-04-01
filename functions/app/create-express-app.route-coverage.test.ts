@@ -87,6 +87,7 @@ describe('createExpressApp route coverage', () => {
   const documentStore = {
     getDocument: vi.fn(),
     setDocument: vi.fn(),
+    mergeDocument: vi.fn(),
   }
   const syncJobQueue = {
     claimJob: vi.fn(),

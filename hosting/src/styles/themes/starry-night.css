@@ -1,0 +1,47 @@
+/* Starry Night — legacy indigo / gold palette */
+html[data-theme='starry-night'] {
+  color-scheme: dark;
+
+  --bg: #060816;
+  --bg-elevated: #0a0e1f;
+  --surface: rgba(12, 18, 42, 0.88);
+  --surface-strong: #0f1530;
+  --surface-hover: rgba(20, 32, 65, 0.96);
+  --surface-soft: rgba(61, 122, 181, 0.05);
+
+  --border: rgba(61, 122, 181, 0.18);
+  --border-strong: rgba(78, 143, 203, 0.32);
+
+  --text: #dde6f5;
+  --text-muted: #7a9abf;
+  --text-soft: #4a6a8a;
+
+  --accent: #e8bc38;
+  --accent-hover: #f5d050;
+  --accent-soft: rgba(232, 188, 56, 0.16);
+  --accent-strong: #f5e060;
+
+  --success: #4e8fcb;
+  --error: #c06060;
+  --insight: #e8bc38;
+
+  --shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.35);
+
+  --glyph-glow: rgba(232, 188, 56, 0.5);
+  --scene-bg: #060816;
+  --scene-fog: #050714;
+  --vignette-mid: rgba(6, 8, 22, 0.25);
+  --vignette-edge: rgba(4, 6, 18, 0.55);
+
+  --selection-bg: rgba(232, 188, 56, 0.35);
+
+  --on-accent-fg: #0a0c18;
+}
+
+html[data-theme='starry-night'] body {
+  background:
+    radial-gradient(ellipse at 18% 0%, rgba(42, 82, 168, 0.22), transparent 32%),
+    radial-gradient(ellipse at 85% 90%, rgba(30, 55, 130, 0.16), transparent 28%),
+    linear-gradient(180deg, #090c1e 0%, var(--bg) 42%, #030510 100%);
+}

@@ -56,6 +56,9 @@ describe('createUser', () => {
         updatedAt: expect.any(String),
       },
       widgets: {},
+      settings: {
+        theme: 'dark-forest',
+      },
       createdAt: expect.any(String),
       updatedAt: expect.any(String),
     })
@@ -82,6 +85,9 @@ describe('createUser', () => {
           updatedAt: expect.any(String),
         },
         widgets: {},
+        settings: {
+          theme: 'dark-forest',
+        },
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       }

@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
 import type { User } from 'firebase/auth'
-import { useAuth } from '../auth/AuthContext'
+
 import { getTenantDisplayHost } from '../lib/tenantDisplay'
+import { UserMenu } from '../components/UserMenu'
 import styles from './Layout.module.css'
 
 export type SectionId = 'overview' | 'schema' | 'status' | 'api' | 'sync' | 'auth'
@@ -75,16 +76,8 @@ const buildCommitUrl = buildSha
   ? `https://github.com/chrisvogt/chronogrove/commit/${buildSha}`
   : null
 
-function userInitial(user: User): string {
-  const fromName = user.displayName?.trim().charAt(0)
-  if (fromName) return fromName.toUpperCase()
-  const fromEmail = user.email?.trim().charAt(0)
-  return fromEmail ? fromEmail.toUpperCase() : '?'
-}
-
 export function Layout({ children, user, activeSection, onSectionChange }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { logout } = useAuth()
   const tenantHost = getTenantDisplayHost()
   const activeCopy =
     activeSection === 'overview'
@@ -161,7 +154,9 @@ export function Layout({ children, user, activeSection, onSectionChange }: Layou
               onClick={() => setSidebarOpen((o) => !o)}
               aria-label="Open navigation menu"
             >
-              ☰
+              <svg className={styles.menuIcon} viewBox="0 0 24 24" aria-hidden>
+                <path d="M5 7h14M5 12h14M5 17h10" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+              </svg>
             </button>
           </div>
           <div className={styles.headerCenter}>
@@ -170,23 +165,7 @@ export function Layout({ children, user, activeSection, onSectionChange }: Layou
           </div>
           <div className={styles.headerRight}>
             {user ? (
-              <div className={styles.authCluster}>
-                {user.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt=""
-                    className={styles.avatar}
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <span className={styles.avatarPlaceholder} aria-hidden>
-                    {userInitial(user)}
-                  </span>
-                )}
-                <button type="button" className={styles.signOutBtn} onClick={() => void logout()}>
-                  Sign out
-                </button>
-              </div>
+              <UserMenu user={user} />
             ) : (
               <button type="button" className={styles.signInBtn} onClick={() => onSectionChange('auth')}>
                 Sign in

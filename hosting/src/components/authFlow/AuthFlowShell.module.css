@@ -1,0 +1,83 @@
+/* Shared layout tokens for pages that sit over AuthScene (onboarding, settings, sign-in, sign-up). */
+
+.sectionWide {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+  min-height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Let the card grow with content; avoid clipping tall flows */
+  align-items: stretch;
+}
+
+.sectionNarrow {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+  min-height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.card {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-strong) 82%, transparent),
+    color-mix(in srgb, var(--bg) 90%, transparent)
+  );
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem;
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--accent-soft);
+  backdrop-filter: blur(18px) saturate(1.1);
+  position: relative;
+  overflow: visible;
+  flex-shrink: 0;
+  min-height: min-content;
+}
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+}
+
+.loadingState p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.pageTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.pageLede {
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}

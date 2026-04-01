@@ -3,7 +3,7 @@
   padding: 1.6rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, rgba(18, 20, 32, 0.88), rgba(10, 11, 18, 0.92));
+  background: var(--panel-hero-bg);
   box-shadow: var(--shadow-lg);
 }
 
@@ -43,7 +43,7 @@
 }
 
 .refresh:hover:not(:disabled) {
-  border-color: rgba(124, 140, 255, 0.3);
+  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
   color: var(--accent-strong);
 }
 
@@ -51,7 +51,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: auto;
-  background: linear-gradient(180deg, rgba(17, 19, 31, 0.92), rgba(9, 10, 17, 0.94));
+  background: var(--panel-deep-bg);
   box-shadow: var(--shadow-md);
 }
 

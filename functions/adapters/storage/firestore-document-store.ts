@@ -34,6 +34,12 @@ export class FirestoreDocumentStore implements DocumentStore {
     await admin.firestore().collection(collectionPath).doc(documentId).set(value)
   }
 
+  async mergeDocument(path: string, value: DocumentData): Promise<void> {
+    const { collectionPath, documentId } = toCollectionAndDocument(path)
+
+    await admin.firestore().collection(collectionPath).doc(documentId).set(value, { merge: true })
+  }
+
   async deleteDocument(path: string): Promise<void> {
     const { collectionPath, documentId } = toCollectionAndDocument(path)
 

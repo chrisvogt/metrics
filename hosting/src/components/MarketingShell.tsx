@@ -30,15 +30,37 @@ export function MarketingShell({
         <div className={styles.headerInner}>
           <Link href="/" className={styles.brand}>
             <span className={styles.brandMark} aria-hidden>
-              <svg width="14" height="18" viewBox="0 0 14 18" fill="none" aria-hidden>
-                <line x1="7" y1="18" x2="7" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                <polyline points="3,9 7,3 11,9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <polyline points="1,13 7,7 13,13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path
+                  d="M12 22V8.5"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M12 8.5 7 4.5M12 8.5 17 4.5"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 13.5 6.5 11M12 13.5 17.5 11"
+                  stroke="currentColor"
+                  strokeWidth="1.45"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.85"
+                />
+                <circle cx="12" cy="3" r="1.35" fill="currentColor" opacity="0.9" />
               </svg>
             </span>
-            <span>
-              <strong>Chronogrove</strong>
-              <span className={styles.brandMeta}> by Chris Vogt</span>
+            <span className={styles.brandText}>
+              <span className={styles.brandWordmark}>
+                <span className={styles.brandChrono}>Chrono</span>
+                <span className={styles.brandGrove}>grove</span>
+              </span>
+              <span className={styles.brandByline}>by Chris Vogt</span>
             </span>
           </Link>
           <nav className={styles.nav} aria-label="Primary">
