@@ -110,17 +110,29 @@ describe('FirestoreDocumentStore', () => {
     )
   })
 
-  it('legacyUsernameClaimed is true when a matching user exists', async () => {
-    mockWhereLimitGet.mockResolvedValue({ empty: false })
+  it('legacyUsernameOwnerUid returns the matching user document id', async () => {
+    mockWhereLimitGet.mockResolvedValue({ empty: false, docs: [{ id: 'uid-one' }] })
 
-    await expect(adapter.legacyUsernameClaimed('users', 'taken')).resolves.toBe(true)
+    await expect(adapter.legacyUsernameOwnerUid('users', 'taken')).resolves.toBe('uid-one')
 
     expect(mockCollection).toHaveBeenCalledWith('users')
     expect(mockWhereLimitGet).toHaveBeenCalled()
   })
 
+  it('legacyUsernameOwnerUid returns null when no user matches', async () => {
+    mockWhereLimitGet.mockResolvedValue({ empty: true, docs: [] })
+
+    await expect(adapter.legacyUsernameOwnerUid('users', 'free')).resolves.toBeNull()
+  })
+
+  it('legacyUsernameClaimed is true when a matching user exists', async () => {
+    mockWhereLimitGet.mockResolvedValue({ empty: false, docs: [{ id: 'x' }] })
+
+    await expect(adapter.legacyUsernameClaimed('users', 'taken')).resolves.toBe(true)
+  })
+
   it('legacyUsernameClaimed is false when no user matches', async () => {
-    mockWhereLimitGet.mockResolvedValue({ empty: true })
+    mockWhereLimitGet.mockResolvedValue({ empty: true, docs: [] })
 
     await expect(adapter.legacyUsernameClaimed('users', 'free')).resolves.toBe(false)
   })

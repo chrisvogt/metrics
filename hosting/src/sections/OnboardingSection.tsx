@@ -84,9 +84,17 @@ export function OnboardingSection() {
 
     setUsernameStatus('checking')
     try {
+      const headers: Record<string, string> = {}
+      if (user) {
+        try {
+          headers.Authorization = `Bearer ${await user.getIdToken()}`
+        } catch {
+          /* anonymous check — server may not recognize “same owner” without auth */
+        }
+      }
       const res = await fetch(
         `${baseUrl}/api/onboarding/check-username?username=${encodeURIComponent(value)}`,
-        { credentials: 'include' }
+        { credentials: 'include', headers }
       )
       if (!res.ok) throw new Error('Check failed')
       const data = await res.json() as { available?: boolean }
@@ -94,7 +102,7 @@ export function OnboardingSection() {
     } catch {
       setUsernameStatus('error')
     }
-  }, [baseUrl])
+  }, [baseUrl, user])
 
   const buildSnapshot = useCallback(
     (overrides?: Partial<Pick<OnboardingProgressPayload, 'currentStep' | 'completedSteps'>>) => {

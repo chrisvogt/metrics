@@ -7,6 +7,12 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.9] - 2026-04-01
+
+### Fixed
+
+- **Username availability on onboarding** — `check-username` requests now send **`Authorization: Bearer`** + Firebase ID token when signed in so the API can treat your **existing tenant claim** as available (same fix pattern as progress/sync). Prevents “taken by me” when the session cookie is not verified on that route. **Deploy with functions ≥ 0.25.7** so users who only have **`username` on `users/{uid}`** (no tenant claim yet) are also recognized as the owner.
+
 ## [0.6.8] - 2026-04-01
 
 ### Fixed
