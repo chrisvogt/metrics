@@ -11,7 +11,7 @@
      * Without both here, Turbo can restore a cached `hosting/out` across commits and ship
      * an older UI bundle that still shows an outdated sidebar SHA.
      */
-    "metrics-hosting#build": {
+    "chronogrove-hosting#build": {
       "env": ["NEXT_PUBLIC_GIT_SHA", "GITHUB_SHA", "COMMIT_SHA", "VERCEL_GIT_COMMIT_SHA", "CF_PAGES_COMMIT_SHA"]
     },
     "dev": {

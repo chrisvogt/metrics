@@ -21,11 +21,11 @@ export const metadata: Metadata = {
     template: '%s | Chronogrove',
   },
   description:
-    'Chronogrove is a self-hosted personal data core — public feeds, health monitoring, and authenticated sync for Gatsby, WordPress, Astro, and any theme built on top.',
+    'Backend and operator console for provider-backed widgets (Discogs, Steam, Instagram, …) on www.chrisvogt.me. Feeds the open-source Gatsby theme; WordPress themes and Web Components can use the same public JSON API.',
   openGraph: {
     title: 'Chronogrove',
     description:
-      'A self-hosted personal data core that feeds public JSON, monitors provider health, and syncs data for any front-end framework.',
+      'Sync third-party accounts into a stable widget API — powers www.chrisvogt.me and the Gatsby theme Chronogrove; broader themes and embeddable components planned.',
     type: 'website',
   },
 }

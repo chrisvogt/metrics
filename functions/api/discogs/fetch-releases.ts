@@ -1,5 +1,6 @@
 import { logger } from 'firebase-functions'
 import { getDiscogsConfig } from '../../config/backend-config.js'
+import { chronogroveHttpUserAgent } from '../../config/chronogrove-http-user-agent.js'
 import type { DiscogsCollectionReleaseItem, DiscogsCollectionResponse } from '../../types/discogs.js'
 
 const fetchDiscogsReleases = async (): Promise<DiscogsCollectionResponse> => {
@@ -21,7 +22,7 @@ const fetchDiscogsReleases = async (): Promise<DiscogsCollectionResponse> => {
       
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'MetricsApp/1.0'
+          'User-Agent': chronogroveHttpUserAgent
         }
       })
 

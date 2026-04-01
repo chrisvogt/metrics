@@ -55,7 +55,7 @@ export default function PrivacyPage() {
                 Schema
               </Link>
               <a
-                href="https://github.com/chrisvogt/metrics/blob/main/docs/SESSION_COOKIES.md"
+                href="https://github.com/chrisvogt/chronogrove/blob/main/docs/SESSION_COOKIES.md"
                 target="_blank"
                 rel="noreferrer"
                 className={styles.linkButton}

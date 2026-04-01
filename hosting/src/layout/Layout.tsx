@@ -72,7 +72,7 @@ const sectionCopy: Record<SectionId, { label: string; kicker: string }> = {
 }
 const buildSha = process.env.NEXT_PUBLIC_GIT_SHA
 const buildCommitUrl = buildSha
-  ? `https://github.com/chrisvogt/metrics/commit/${buildSha}`
+  ? `https://github.com/chrisvogt/chronogrove/commit/${buildSha}`
   : null
 
 function userInitial(user: User): string {
@@ -90,7 +90,7 @@ export function Layout({ children, user, activeSection, onSectionChange }: Layou
     activeSection === 'overview'
       ? {
           label: sectionCopy.overview.label,
-          kicker: `Live provider health, metrics, and sync · ${tenantHost || 'this deployment'}`,
+          kicker: `Live provider health, snapshot stats, and sync · ${tenantHost || 'this deployment'}`,
         }
       : sectionCopy[activeSection]
 

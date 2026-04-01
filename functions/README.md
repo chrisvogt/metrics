@@ -1,6 +1,6 @@
-# Metrics Functions (backend)
+# Chronogrove functions (backend)
 
-Provider-neutral backend for the Metrics API: an Express app that serves widget and auth endpoints, plus scheduled jobs that sync data from external APIs (Spotify, Steam, Goodreads, Instagram, Discogs, Flickr). Firebase remains the current runtime/auth/document reference provider.
+Provider-neutral backend for Chronogrove: an Express app that serves widget and auth endpoints, plus scheduled jobs that sync data from external APIs (Spotify, Steam, Goodreads, Instagram, Discogs, Flickr). Firebase remains the current runtime/auth/document reference provider.
 
 ## Directory layout
 
@@ -28,6 +28,6 @@ Entry point is **`index.js`**: it composes the backend through the bootstrap lay
 From the **repo root**:
 
 - **Tests (single run):** `pnpm run test`
-- **Tests (watch):** `pnpm --filter metrics-functions run test:watch`
+- **Tests (watch):** `pnpm --filter chronogrove-functions run test:watch`
 - **Tests (coverage):** `pnpm run test:coverage`
 - **Lint:** `pnpm run lint`

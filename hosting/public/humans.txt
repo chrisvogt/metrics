@@ -2,13 +2,13 @@
 Chris Vogt: https://www.chrisvogt.me
 
 /* SITE */
-Metrics API dashboard
-Last update: 2025
+Chronogrove operator console (metrics.chrisvogt.me)
+Last update: 2026
 Language: English
 Do not index: yes (admin/dashboard)
 
 /* REPOSITORY */
-https://github.com/chrisvogt/metrics
+https://github.com/chrisvogt/chronogrove
 
 /* LICENCE */
-MIT License – https://github.com/chrisvogt/metrics/blob/main/LICENSE
+MIT License – https://github.com/chrisvogt/chronogrove/blob/main/LICENSE

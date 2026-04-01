@@ -17,24 +17,35 @@ export default function AboutPage() {
           <span className={styles.eyebrow}>About</span>
           <h1 className={styles.title}>About Chronogrove</h1>
           <p className={styles.lead}>
-            Chronogrove is open source (see GitHub). This deployment&apos;s UI is the operator surface; the same API can
-            feed static sites or themes built in whatever stack you use.
+            Chronogrove is the backend and operator console behind third-party widgets on{' '}
+            <a href="https://www.chrisvogt.me">www.chrisvogt.me</a> — Discogs, Steam, Instagram, Spotify, and others. The
+            same HTTP API can power static sites, themes, or embeddable components that speak JSON.
           </p>
 
           <section className={styles.section}>
             <h2>What it does</h2>
             <p>
-              Connects configured providers (for example GitHub, Goodreads, Spotify, Instagram) on a schedule or via
-              manual sync, normalizes their data into JSON responses, and documents those routes in the schema
-              browser. The console adds coverage checks, sign-in, and sync controls for whoever runs the instance.
+              Connects configured providers on a schedule or via manual sync, normalizes their data into cacheable widget
+              responses, and documents those routes in the schema browser. The console adds coverage checks, sign-in, and
+              sync controls for whoever runs the instance.
+            </p>
+          </section>
+
+          <section className={styles.section}>
+            <h2>Frontend integrations</h2>
+            <p>
+              The reference consumer is the open-source{' '}
+              <a href="https://github.com/chrisvogt/gatsby-theme-chronogrove">Gatsby theme Chronogrove</a>, which renders
+              those experiences on the public site. Other site builders (for example WordPress) and HTML-native pieces
+              such as Web Components are natural next steps for consuming the same public routes.
             </p>
           </section>
 
           <section className={styles.section}>
             <h2>Maintainer</h2>
             <p>
-              Built and maintained by Chris Vogt as the backing service for a personal site and related themes; the code
-              is intended to be self-hosted per tenant.
+              Built and maintained by Chris Vogt. The code is intended to be self-hosted per tenant; this deployment is
+              the operator surface for one instance.
             </p>
           </section>
 
@@ -47,8 +58,16 @@ export default function AboutPage() {
               <Link href="/schema/" className={styles.linkButton}>
                 Schema
               </Link>
-              <a href="https://github.com/chrisvogt/metrics" target="_blank" rel="noreferrer" className={styles.linkButton}>
-                GitHub
+              <a href="https://github.com/chrisvogt/chronogrove" target="_blank" rel="noreferrer" className={styles.linkButton}>
+                GitHub (API &amp; console)
+              </a>
+              <a
+                href="https://github.com/chrisvogt/gatsby-theme-chronogrove"
+                target="_blank"
+                rel="noreferrer"
+                className={styles.linkButton}
+              >
+                Gatsby theme
               </a>
             </div>
           </section>

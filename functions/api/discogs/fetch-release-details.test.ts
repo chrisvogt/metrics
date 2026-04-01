@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+import { chronogroveHttpUserAgent } from '../../config/chronogrove-http-user-agent.js'
+
 // Mock firebase-functions logger
 vi.mock('firebase-functions', () => ({
   logger: {
@@ -56,7 +58,7 @@ describe('fetchReleaseDetails', () => {
       'https://api.discogs.com/releases/28461454?token=test-api-key',
       {
         headers: {
-          'User-Agent': 'MetricsApp/1.0'
+          'User-Agent': chronogroveHttpUserAgent
         }
       }
     )
@@ -82,7 +84,7 @@ describe('fetchReleaseDetails', () => {
       'https://api.discogs.com/releases/123?token=existing-token',
       {
         headers: {
-          'User-Agent': 'MetricsApp/1.0'
+          'User-Agent': chronogroveHttpUserAgent
         }
       }
     )

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+import { chronogroveHttpUserAgent } from '../../config/chronogrove-http-user-agent.js'
+
 // Mock fetch
 global.fetch = vi.fn()
 
@@ -77,7 +79,7 @@ describe('fetchDiscogsReleases', () => {
       'https://api.discogs.com/users/testuser/collection/folders/0/releases?token=test-api-key&page=1&per_page=50',
       {
         headers: {
-          'User-Agent': 'MetricsApp/1.0'
+          'User-Agent': chronogroveHttpUserAgent
         }
       }
     )
