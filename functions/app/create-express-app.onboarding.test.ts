@@ -604,7 +604,7 @@ describe('createExpressApp onboarding routes', () => {
       expect.objectContaining({
         ok: true,
         verified: false,
-        resolvedRecords: ['1.2.3.4'],
+        requiredRecords: ['151.101.65.195', '151.101.1.195'],
       })
     )
     spy.mockRestore()

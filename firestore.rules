@@ -2,28 +2,27 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    /** Slug → uid claims. Backend-only (Admin SDK bypasses these rules). */
+    /** Slug → uid claims. Admin SDK only (client SDK cannot read or write). */
     match /tenant_usernames/{slug} {
       allow read, write: if false;
     }
 
-    /** OAuth + sync state per user. Backend-only until you model client-safe fields. */
+    /** Verified hostname → uid for custom domains. Admin SDK only. */
+    match /tenant_hosts/{hostname} {
+      allow read, write: if false;
+    }
+
+    /** OAuth tokens and sync secrets per user. Admin SDK only; expose safe fields via HTTPS APIs only. */
     match /users/{userId}/integrations/{integrationId} {
       allow read, write: if false;
     }
 
+    /**
+     * All other paths (including public widget documents under users/{uid}/{provider}/**).
+     * Data is served through Cloud Functions / Express (Admin SDK), not the client Firestore SDK.
+     */
     match /{document=**} {
-      // Catch-all ORs with the rules above — exclude sensitive paths so reads stay denied.
-      allow read: if !sensitiveFirestorePath();
-
-      // Allow write only for service accounts in your project
-      allow write: if request.auth.token.email.matches('^.*@125524759311\\.iam\\.gserviceaccount\\.com$');
+      allow read, write: if false;
     }
   }
-}
-
-/** Paths that must never be world-readable via the catch-all below. */
-function sensitiveFirestorePath() {
-  return request.path.matches('.*/documents/tenant_usernames(/.*)?$')
-    || request.path.matches('.*/documents/users/[^/]+/integrations(/.*)?$');
 }
