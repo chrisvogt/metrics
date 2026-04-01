@@ -514,7 +514,6 @@ describe('createExpressApp onboarding routes', () => {
   })
 
   it('GET check-username returns 500 when legacy helper missing', async () => {
-    const { app } = await buildApp()
     const store = { getDocument: vi.fn().mockResolvedValue(null), setDocument: vi.fn() }
     const { createExpressApp } = await import('./create-express-app.js')
     const bareApp = createExpressApp({
@@ -604,7 +603,7 @@ describe('createExpressApp onboarding routes', () => {
       expect.objectContaining({
         ok: true,
         verified: false,
-        resolvedRecords: ['1.2.3.4'],
+        requiredRecords: ['151.101.65.195', '151.101.1.195'],
       })
     )
     spy.mockRestore()
@@ -619,7 +618,6 @@ describe('createExpressApp onboarding routes', () => {
       throw new Error('broken response')
     })
     const fallbackJson = vi.fn()
-    const status = vi.fn()
     /* First `json` is on `res` directly; error handler uses `status(500).json(...)` */
     const res = {
       json: errorJson,

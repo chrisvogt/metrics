@@ -1,0 +1,9 @@
+version: 2
+updates:
+  # Single entry: pnpm workspace uses one root lockfile (`pnpm-lock.yaml`).
+  # Multiple `directory` entries can leave the lockfile inconsistent (Dependabot + workspaces).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10

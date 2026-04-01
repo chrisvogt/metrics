@@ -1,6 +1,6 @@
 {
   "name": "chronogrove-functions",
-  "version": "0.25.7",
+  "version": "0.25.8",
   "description": "Chronogrove backend — Cloud Functions API and sync workers for third-party widget data.",
   "type": "module",
   "main": "lib/index.js",

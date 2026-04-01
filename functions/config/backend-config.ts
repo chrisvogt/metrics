@@ -24,6 +24,7 @@ export const markRuntimeConfigApplied = (): void => {
   process.env[FUNCTIONS_CONFIG_APPLIED_ENV] = '1'
 }
 
+/** Firebase web client config only (apiKey, authDomain, projectId). Never add secrets here. */
 export const getClientAuthConfig = () => ({
   apiKey: process.env.CLIENT_API_KEY,
   authDomain: process.env.CLIENT_AUTH_DOMAIN,

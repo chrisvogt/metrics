@@ -6,12 +6,11 @@
  *
  * Rollout (do not skip steps):
  * 1. Keep serving widgets via `getWidgetUserIdForHostname` (env map + default).
- * 2. Add Admin-only writers for `tenant_usernames` / `tenant_hosts` / `integrations`
- *    while rules still match today.
+ * 2. Add Admin-only writers for `tenant_usernames` / `tenant_hosts` / `integrations`.
  * 3. Set `ENABLE_FIRESTORE_TENANT_ROUTING=true` only after Firestore lookups are
  *    implemented and tested; until then the flag has no runtime effect.
- * 4. Tighten Firestore rules so secrets under `users/{uid}/integrations/**` are
- *    never client-readable before storing OAuth refresh tokens.
+ * 4. Firestore rules deny all client access; integrations stay server-only — expose only
+ *    non-secret fields via HTTPS APIs when OAuth goes live.
  *
  * Naming: top-level `tenant_*` avoids colliding with `users/{uid}/{provider}`.
  */

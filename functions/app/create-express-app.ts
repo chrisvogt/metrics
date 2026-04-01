@@ -49,15 +49,47 @@ interface CreateExpressAppOptions {
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
 
-function createRateLimiter(windowMs: number, max: number) {
-  return rateLimit({
+const ONBOARDING_USERNAME_RATE_WINDOW_MS = 15 * 60 * 1000
+/** Username checks are enumerable; keep a stricter cap than generic read APIs. */
+const ONBOARDING_USERNAME_RATE_LIMIT = 30
+const ONBOARDING_DOMAIN_RATE_WINDOW_MS = 15 * 60 * 1000
+/** DNS probes are costlier than username lookups; limit harder. */
+const ONBOARDING_DOMAIN_RATE_LIMIT = 20
+
+function createRateLimiter(
+  windowMs: number,
+  max: number,
+  opts?: { logger?: LoggerLike; logLabel?: string }
+) {
+  const baseConfig = {
     windowMs,
     limit: max,
     message: rateLimitMessage,
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: getRateLimitKey,
-  })
+  }
+
+  if (opts?.logger && opts.logLabel) {
+    const { logger: limitLogger, logLabel } = opts
+    return rateLimit({
+      ...baseConfig,
+      handler: (
+        request: express.Request,
+        response: express.Response,
+        _next: express.NextFunction,
+        optionsUsed: { statusCode: number }
+      ) => {
+        limitLogger.warn('rate_limit_exceeded', {
+          label: logLabel,
+          path: request.path,
+        })
+        response.status(optionsUsed.statusCode).json(rateLimitMessage)
+      },
+    })
+  }
+
+  return rateLimit(baseConfig)
 }
 
 const buildSuccessResponse = <TPayload>(
@@ -75,6 +107,7 @@ const buildFailureResponse = (err: unknown = {}): { ok: false; error: string } =
       : (err as { message?: string })?.message ?? String(err),
 })
 
+/** Production gate: revisit domain allowlist, MFA, and Firebase Auth policies before a public launch. */
 const ALLOWED_EMAIL_DOMAINS = ['@chrisvogt.me', '@chronogrove.com']
 const CSRF_SECRET_COOKIE = '_csrfSecret'
 
@@ -715,7 +748,10 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/onboarding/check-username',
-    createRateLimiter(15 * 60 * 1000, 60),
+    createRateLimiter(ONBOARDING_USERNAME_RATE_WINDOW_MS, ONBOARDING_USERNAME_RATE_LIMIT, {
+      logger,
+      logLabel: 'onboarding_check_username',
+    }),
     async (req, res) => {
       const username = typeof req.query.username === 'string' ? req.query.username.toLowerCase() : ''
 
@@ -763,7 +799,10 @@ export function createExpressApp({
         const legacyTaken = await documentStore.legacyUsernameClaimed(usersCollection, username)
         res.json({ ok: true, available: !legacyTaken })
       } catch (err) {
-        logger.error('Error checking username availability', { username, error: err })
+        logger.error('Error checking username availability', {
+          usernameLength: username.length,
+          error: err,
+        })
         res.status(500).json(buildFailureResponse(err))
       }
     }
@@ -772,7 +811,10 @@ export function createExpressApp({
   /** Read-only DNS probe — GET avoids CSRF (same pattern as check-username). */
   expressApp.get(
     '/api/onboarding/check-domain',
-    createRateLimiter(15 * 60 * 1000, 60),
+    createRateLimiter(ONBOARDING_DOMAIN_RATE_WINDOW_MS, ONBOARDING_DOMAIN_RATE_LIMIT, {
+      logger,
+      logLabel: 'onboarding_check_domain',
+    }),
     async (req, res) => {
       const domain =
         typeof req.query.domain === 'string' ? req.query.domain.toLowerCase().trim() : ''
@@ -790,11 +832,10 @@ export function createExpressApp({
         res.json({
           ok: true,
           verified: hasAll,
-          resolvedRecords: records,
           requiredRecords: REQUIRED_A_RECORDS,
         })
       } catch (err) {
-        logger.error('Error checking domain DNS', { domain, error: err })
+        logger.error('Error checking domain DNS', { domainLength: domain.length, error: err })
         res.status(500).json(buildFailureResponse(err))
       }
     }
