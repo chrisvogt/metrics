@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.9] - 2026-03-31
+
+### Changed
+
+- **Dependencies** — Non-major bumps only: **firebase** ^12.11.0, **express-rate-limit** ^8.3.2, **eslint** ^10.1.0, **typescript-eslint** ^8.58.0, **Vitest** / **@vitest/coverage-v8** ^4.1.2, **@types/node** ^24.12.0 (workspace **pnpm-lock.yaml**).
+
 ## [0.25.8] - 2026-04-02
 
 ### Security

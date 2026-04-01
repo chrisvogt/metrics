@@ -1,7 +1,7 @@
 {
   "name": "chronogrove-hosting",
   "private": true,
-  "version": "0.6.9",
+  "version": "0.6.10",
   "scripts": {
     "dev": "next dev --port 5173",
     "build": "next build",
@@ -10,21 +10,21 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "firebase": "^12.10.0",
+    "firebase": "^12.11.0",
     "hast-util-to-jsx-runtime": "^2.3.6",
     "lowlight": "^3.3.0",
-    "next": "^15.2.4",
+    "next": "^15.5.14",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "three": "^0.183.2"
   },
   "devDependencies": {
-    "@types/node": "^22.15.3",
+    "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.183.1",
-    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.2",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.2"
   }
 }
