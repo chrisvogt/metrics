@@ -78,6 +78,34 @@ export class ApiClient {
     }
   }
 
+  getAuthorizationHeader(): Record<string, string> {
+    const token = this.getAuthToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
+  async getJson(path: string): Promise<Response> {
+    return fetch(`${this.baseUrl}${path}`, {
+      credentials: 'include',
+      headers: {
+        ...this.getAuthorizationHeader(),
+      },
+    })
+  }
+
+  async putJson(path: string, body: unknown): Promise<Response> {
+    const csrfToken = await this.getCsrfToken()
+    return fetch(`${this.baseUrl}${path}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthorizationHeader(),
+        ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
+      },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    })
+  }
+
   async logout(): Promise<void> {
     try {
       const csrfToken = await this.getCsrfToken()

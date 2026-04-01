@@ -7,10 +7,14 @@ const {
   mockDoc,
   mockCollection,
   mockFirestore,
+  mockWhereLimitGet,
+  mockRecursiveDelete,
 } = vi.hoisted(() => {
   const mockGet = vi.fn()
   const mockSet = vi.fn()
   const mockDelete = vi.fn()
+  const mockWhereLimitGet = vi.fn()
+  const mockRecursiveDelete = vi.fn().mockResolvedValue(undefined)
   const mockDoc = vi.fn(() => ({
     get: mockGet,
     set: mockSet,
@@ -18,9 +22,15 @@ const {
   }))
   const mockCollection = vi.fn(() => ({
     doc: mockDoc,
+    where: vi.fn(() => ({
+      limit: vi.fn(() => ({
+        get: mockWhereLimitGet,
+      })),
+    })),
   }))
   const mockFirestore = vi.fn(() => ({
     collection: mockCollection,
+    recursiveDelete: mockRecursiveDelete,
   }))
 
   return {
@@ -30,6 +40,8 @@ const {
     mockDoc,
     mockCollection,
     mockFirestore,
+    mockWhereLimitGet,
+    mockRecursiveDelete,
   }
 })
 
@@ -96,5 +108,28 @@ describe('FirestoreDocumentStore', () => {
     expect(() => toCollectionAndDocument('users/chrisvogt/flickr')).toThrow(
       'Invalid document path: users/chrisvogt/flickr'
     )
+  })
+
+  it('legacyUsernameClaimed is true when a matching user exists', async () => {
+    mockWhereLimitGet.mockResolvedValue({ empty: false })
+
+    await expect(adapter.legacyUsernameClaimed('users', 'taken')).resolves.toBe(true)
+
+    expect(mockCollection).toHaveBeenCalledWith('users')
+    expect(mockWhereLimitGet).toHaveBeenCalled()
+  })
+
+  it('legacyUsernameClaimed is false when no user matches', async () => {
+    mockWhereLimitGet.mockResolvedValue({ empty: true })
+
+    await expect(adapter.legacyUsernameClaimed('users', 'free')).resolves.toBe(false)
+  })
+
+  it('recursiveDeleteDocument delegates to Firestore recursiveDelete', async () => {
+    await adapter.recursiveDeleteDocument('users/account-1')
+
+    expect(mockCollection).toHaveBeenCalledWith('users')
+    expect(mockDoc).toHaveBeenCalledWith('account-1')
+    expect(mockRecursiveDelete).toHaveBeenCalledTimes(1)
   })
 })

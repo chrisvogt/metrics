@@ -1,16 +1,16 @@
 import compressionImport from 'compression'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import dns from 'dns'
 import express from 'express'
 import lusca from 'lusca'
 import path from 'path'
 import { rateLimit } from 'express-rate-limit'
-
 import type { AuthService } from '../ports/auth-service.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { MediaStore } from '../ports/media-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
-import { getWidgetUserIdForHostname } from '../config/backend-paths.js'
+import { getWidgetUserIdForHostname, getUsersCollectionPath } from '../config/backend-paths.js'
 import { isProductionEnvironment } from '../config/backend-config.js'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
@@ -21,6 +21,15 @@ import { runSyncForProvider } from '../services/sync-manual.js'
 import type { ManualSyncResult } from '../services/sync-manual.js'
 import { getWidgetContent } from '../widgets/get-widget-content.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
+import { TENANT_USERNAMES_COLLECTION } from '../config/future-tenant-collections.js'
+import {
+  loadOnboardingStateForApi,
+  persistOnboardingWizardState,
+} from '../services/onboarding-wizard-persistence.js'
+import {
+  ONBOARDING_USERNAME_PATTERN,
+  parseOnboardingProgressBody,
+} from './onboarding-progress.js'
 
 interface LoggerLike {
   error: (message: string, ...args: unknown[]) => void
@@ -94,10 +103,14 @@ export function metricsCompressionFilter(
 }
 
 /** Public widget reads: skip CSRF so lusca does not set cookies (would prevent CDN caching). */
-const CSRF_EXCLUDED_PATHS_WIDGET_READS = widgetIds.map((id) => ({
-  path: `/api/widgets/${id}`,
-  type: 'exact' as const,
-}))
+const CSRF_EXCLUDED_PATHS_WIDGET_READS = [
+  ...widgetIds.map((id) => ({
+    path: `/api/widgets/${id}`,
+    type: 'exact' as const,
+  })),
+  { path: '/api/onboarding/check-username', type: 'exact' as const },
+  { path: '/api/onboarding/check-domain', type: 'exact' as const },
+]
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader?.startsWith('Bearer ')) {
     return null
@@ -132,6 +145,38 @@ export function createExpressApp({
   syncJobQueue,
 }: CreateExpressAppOptions): express.Express {
   const expressApp = express()
+
+  /**
+   * Same identity as authenticated API routes: session cookie first, then Bearer ID token.
+   * Used by public onboarding endpoints to recognize the signed-in user without requiring auth.
+   */
+  const resolveViewerUidForPublicOnboarding = async (
+    req: express.Request
+  ): Promise<string | null> => {
+    const sessionCookie = req.cookies?.session
+    if (sessionCookie) {
+      try {
+        const decoded = await authService.verifySessionCookie(sessionCookie)
+        if (decoded.uid && isAllowedEmail(decoded.email)) {
+          return decoded.uid
+        }
+      } catch {
+        /* treat as anonymous */
+      }
+    }
+    const token = extractBearerToken(req.headers.authorization)
+    if (token) {
+      try {
+        const decoded = await authService.verifyIdToken(token)
+        if (decoded.uid && isAllowedEmail(decoded.email)) {
+          return decoded.uid
+        }
+      } catch {
+        /* treat as anonymous */
+      }
+    }
+    return null
+  }
 
   const authenticateUser = async (
     req: express.Request,
@@ -498,6 +543,60 @@ export function createExpressApp({
     }
   )
 
+  expressApp.get(
+    '/api/onboarding/progress',
+    createRateLimiter(15 * 60 * 1000, 60),
+    authenticateUser,
+    async (req, res) => {
+      if (!req.user) return
+      const uid = req.user.uid
+      const userPath = `${getUsersCollectionPath()}/${uid}`
+      try {
+        const doc = await documentStore.getDocument<Record<string, unknown>>(userPath)
+        const progress = await loadOnboardingStateForApi({
+          usersCollection: getUsersCollectionPath(),
+          uid,
+          userDoc: doc,
+        })
+        res.status(200).json(buildSuccessResponse(progress))
+      } catch (err) {
+        logger.error('Error loading onboarding progress', { uid, error: err })
+        res.status(500).json(buildFailureResponse(err))
+      }
+    }
+  )
+
+  expressApp.put(
+    '/api/onboarding/progress',
+    createRateLimiter(15 * 60 * 1000, 40),
+    express.json(),
+    authenticateUser,
+    async (req, res) => {
+      if (!req.user) return
+      const uid = req.user.uid
+      const parsed = parseOnboardingProgressBody(req.body)
+      if (parsed.ok === false) {
+        res.status(400).json({ ok: false, error: parsed.error })
+        return
+      }
+      try {
+        await persistOnboardingWizardState({
+          usersCollection: getUsersCollectionPath(),
+          uid,
+          parsed: parsed.value,
+        })
+        res.status(200).json(buildSuccessResponse(parsed.value))
+      } catch (err) {
+        if (err instanceof Error && err.message === 'username_taken') {
+          res.status(409).json({ ok: false, error: 'Username is already taken' })
+          return
+        }
+        logger.error('Error saving onboarding progress', { uid, error: err })
+        res.status(500).json(buildFailureResponse(err))
+      }
+    }
+  )
+
   expressApp.post(
     '/api/auth/session',
     createRateLimiter(15 * 60 * 1000, 20),
@@ -608,6 +707,79 @@ export function createExpressApp({
           ok: false,
           error: 'Logout failed',
         })
+      }
+    }
+  )
+
+  const REQUIRED_A_RECORDS = ['151.101.65.195', '151.101.1.195']
+
+  expressApp.get(
+    '/api/onboarding/check-username',
+    createRateLimiter(15 * 60 * 1000, 60),
+    async (req, res) => {
+      const username = typeof req.query.username === 'string' ? req.query.username.toLowerCase() : ''
+
+      if (!username || !ONBOARDING_USERNAME_PATTERN.test(username)) {
+        res.status(400).json({ ok: false, error: 'Invalid username format' })
+        return
+      }
+
+      try {
+        const claimPath = `${TENANT_USERNAMES_COLLECTION}/${username}`
+        const claim = await documentStore.getDocument<{ uid?: unknown }>(claimPath)
+
+        if (claim && typeof claim.uid === 'string') {
+          const viewerUid = await resolveViewerUidForPublicOnboarding(req)
+          const ownedByCaller = viewerUid !== null && claim.uid === viewerUid
+          if (!ownedByCaller) {
+            res.json({ ok: true, available: false })
+            return
+          }
+          res.json({ ok: true, available: true })
+          return
+        }
+
+        if (!documentStore.legacyUsernameClaimed) {
+          res.status(500).json({ ok: false, error: 'Username check unavailable' })
+          return
+        }
+        const usersCollection = getUsersCollectionPath()
+        const legacyTaken = await documentStore.legacyUsernameClaimed(usersCollection, username)
+        res.json({ ok: true, available: !legacyTaken })
+      } catch (err) {
+        logger.error('Error checking username availability', { username, error: err })
+        res.status(500).json(buildFailureResponse(err))
+      }
+    }
+  )
+
+  /** Read-only DNS probe — GET avoids CSRF (same pattern as check-username). */
+  expressApp.get(
+    '/api/onboarding/check-domain',
+    createRateLimiter(15 * 60 * 1000, 60),
+    async (req, res) => {
+      const domain =
+        typeof req.query.domain === 'string' ? req.query.domain.toLowerCase().trim() : ''
+
+      if (!domain || domain.length > 253 || !/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/.test(domain)) {
+        res.status(400).json({ ok: false, error: 'Invalid domain format' })
+        return
+      }
+
+      try {
+        const resolve4 = dns.promises.resolve4
+        const records = await resolve4(domain).catch(() => [] as string[])
+        const hasAll = REQUIRED_A_RECORDS.every((ip) => records.includes(ip))
+
+        res.json({
+          ok: true,
+          verified: hasAll,
+          resolvedRecords: records,
+          requiredRecords: REQUIRED_A_RECORDS,
+        })
+      } catch (err) {
+        logger.error('Error checking domain DNS', { domain, error: err })
+        res.status(500).json(buildFailureResponse(err))
       }
     }
   )

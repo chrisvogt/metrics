@@ -1,0 +1,584 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import dns from 'dns'
+
+import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
+
+vi.mock('express-rate-limit', () => ({
+  rateLimit: vi.fn(() => (_req: unknown, _res: unknown, next: () => void) => next()),
+}))
+
+vi.mock('../jobs/delete-user.js', () => ({
+  default: vi.fn(() => Promise.resolve({ result: 'SUCCESS' })),
+}))
+
+vi.mock('../widgets/get-widget-content.js', () => ({
+  getWidgetContent: vi.fn(() => Promise.resolve({ ok: true })),
+  validWidgetIds: ['spotify'],
+}))
+
+vi.mock('../services/sync-manual.js', () => ({
+  runSyncForProvider: vi.fn(() =>
+    Promise.resolve({
+      afterJob: { jobId: 'j', status: 'completed' },
+      beforeJob: { jobId: 'j', status: 'queued' },
+      enqueue: { jobId: 'j', status: 'enqueued' },
+      worker: { jobId: 'j', result: 'SUCCESS' },
+    })
+  ),
+}))
+
+vi.mock('../services/onboarding-wizard-persistence.js', () => ({
+  loadOnboardingStateForApi: vi.fn(),
+  persistOnboardingWizardState: vi.fn(),
+}))
+
+const findRouteHandler = (
+  app: ReturnType<typeof import('express').default>,
+  method: 'get' | 'put',
+  routePath: string
+) => {
+  const layer = app.router.stack.find(
+    (entry: {
+      route?: { path?: string; methods?: Record<string, boolean>; stack?: Array<{ handle: Function }> }
+    }) => entry.route?.path === routePath && entry.route?.methods?.[method]
+  )
+  if (!layer?.route?.stack?.length) {
+    throw new Error(`Route not found: ${method.toUpperCase()} ${routePath}`)
+  }
+  return layer.route.stack[layer.route.stack.length - 1].handle
+}
+
+describe('createExpressApp onboarding routes', () => {
+  const logger = { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
+  const authService = {
+    createSessionCookie: vi.fn(),
+    deleteUser: vi.fn(),
+    getUser: vi.fn(),
+    revokeRefreshTokens: vi.fn(),
+    verifyIdToken: vi.fn(),
+    verifySessionCookie: vi.fn(),
+  }
+  const documentStore = {
+    getDocument: vi.fn(),
+    setDocument: vi.fn(),
+    legacyUsernameClaimed: vi.fn(),
+  }
+  const syncJobQueue = {
+    claimJob: vi.fn(),
+    claimNextJob: vi.fn(),
+    completeJob: vi.fn(),
+    enqueue: vi.fn(),
+    failJob: vi.fn(),
+    getJob: vi.fn(),
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const buildApp = async () => {
+    const { createExpressApp } = await import('./create-express-app.js')
+    const { loadOnboardingStateForApi, persistOnboardingWizardState } =
+      await import('../services/onboarding-wizard-persistence.js')
+    return {
+      app: createExpressApp({
+        authService,
+        documentStore,
+        ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
+        getClientAuthConfig: vi.fn(() => ({})),
+        logger,
+        resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-onboarding-tests'),
+        syncJobQueue,
+      }),
+      loadOnboardingStateForApi,
+      persistOnboardingWizardState,
+    }
+  }
+
+  it('GET /api/onboarding/progress does not send when req.user is missing', async () => {
+    const { app } = await buildApp()
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/progress')
+    const json = vi.fn()
+    await handler({ headers: {} }, { status: vi.fn().mockReturnValue({ json }), json })
+    expect(json).not.toHaveBeenCalled()
+  })
+
+  it('PUT /api/onboarding/progress does not send when req.user is missing', async () => {
+    const { app, persistOnboardingWizardState } = await buildApp()
+    const handler = findRouteHandler(app, 'put', '/api/onboarding/progress')
+    const json = vi.fn()
+    await handler({ headers: {}, body: {} }, { status: vi.fn().mockReturnValue({ json }), json })
+    expect(json).not.toHaveBeenCalled()
+    expect(persistOnboardingWizardState).not.toHaveBeenCalled()
+  })
+
+  it('GET /api/onboarding/progress returns payload from persistence', async () => {
+    const { app, loadOnboardingStateForApi } = await buildApp()
+    const payload = {
+      currentStep: 'username' as const,
+      completedSteps: [] as [],
+      username: null,
+      connectedProviderIds: [] as string[],
+      customDomain: null,
+      updatedAt: 't',
+    }
+    vi.mocked(loadOnboardingStateForApi).mockResolvedValue(payload)
+    documentStore.getDocument.mockResolvedValue({})
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/progress')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+    await handler(
+      { user: { uid: 'u1', email: 'a@chrisvogt.me', emailVerified: true } },
+      { status, json }
+    )
+
+    expect(loadOnboardingStateForApi).toHaveBeenCalledWith({
+      usersCollection: 'users',
+      uid: 'u1',
+      userDoc: {},
+    })
+    expect(status).toHaveBeenCalledWith(200)
+    expect(json).toHaveBeenCalledWith({ ok: true, payload })
+  })
+
+  it('GET /api/onboarding/progress returns 500 when load fails', async () => {
+    const { app, loadOnboardingStateForApi } = await buildApp()
+    vi.mocked(loadOnboardingStateForApi).mockRejectedValue(new Error('db'))
+    documentStore.getDocument.mockResolvedValue(null)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/progress')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+    await handler(
+      { user: { uid: 'u1', email: 'a@chrisvogt.me', emailVerified: true } },
+      { status, json }
+    )
+
+    expect(status).toHaveBeenCalledWith(500)
+  })
+
+  it('PUT /api/onboarding/progress persists and returns 200', async () => {
+    const { app, persistOnboardingWizardState } = await buildApp()
+    vi.mocked(persistOnboardingWizardState).mockResolvedValue(undefined)
+
+    const handler = findRouteHandler(app, 'put', '/api/onboarding/progress')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+    const body = {
+      currentStep: 'connections',
+      completedSteps: ['username'],
+      username: 'valid_slug',
+      connectedProviderIds: ['github'],
+      customDomain: null,
+    }
+    await handler(
+      { user: { uid: 'u1', email: 'a@chrisvogt.me', emailVerified: true }, body },
+      { status, json }
+    )
+
+    expect(persistOnboardingWizardState).toHaveBeenCalled()
+    expect(status).toHaveBeenCalledWith(200)
+    expect(json.mock.calls[0][0].ok).toBe(true)
+  })
+
+  it('PUT /api/onboarding/progress returns 400 for invalid body', async () => {
+    const { app, persistOnboardingWizardState } = await buildApp()
+    const handler = findRouteHandler(app, 'put', '/api/onboarding/progress')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+
+    await handler({ user: { uid: 'u1', email: 'a@chrisvogt.me', emailVerified: true }, body: {} }, { status, json })
+
+    expect(persistOnboardingWizardState).not.toHaveBeenCalled()
+    expect(status).toHaveBeenCalledWith(400)
+  })
+
+  it('PUT /api/onboarding/progress returns 409 on username_taken', async () => {
+    const { app, persistOnboardingWizardState } = await buildApp()
+    vi.mocked(persistOnboardingWizardState).mockRejectedValue(new Error('username_taken'))
+
+    const handler = findRouteHandler(app, 'put', '/api/onboarding/progress')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+
+    await handler(
+      {
+        user: { uid: 'u1', email: 'a@chrisvogt.me', emailVerified: true },
+        body: {
+          currentStep: 'username',
+          completedSteps: [],
+          username: 'taken',
+          connectedProviderIds: [],
+          customDomain: null,
+        },
+      },
+      { status, json }
+    )
+
+    expect(status).toHaveBeenCalledWith(409)
+    expect(json).toHaveBeenCalledWith({ ok: false, error: 'Username is already taken' })
+  })
+
+  it('PUT /api/onboarding/progress returns 500 on unexpected persistence error', async () => {
+    const { app, persistOnboardingWizardState } = await buildApp()
+    vi.mocked(persistOnboardingWizardState).mockRejectedValue(new Error('firestore down'))
+
+    const handler = findRouteHandler(app, 'put', '/api/onboarding/progress')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+
+    await handler(
+      {
+        user: { uid: 'u1', email: 'a@chrisvogt.me', emailVerified: true },
+        body: {
+          currentStep: 'username',
+          completedSteps: [],
+          username: null,
+          connectedProviderIds: [],
+          customDomain: null,
+        },
+      },
+      { status, json }
+    )
+
+    expect(status).toHaveBeenCalledWith(500)
+  })
+
+  it('GET check-username returns 400 when username query is not a string', async () => {
+    const { app } = await buildApp()
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+    await handler({ query: { username: ['a', 'b'] as unknown as string } }, { json, status })
+    expect(status).toHaveBeenCalledWith(400)
+  })
+
+  it('GET check-domain returns 400 when domain query is not a string', async () => {
+    const { app } = await buildApp()
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+    await handler({ query: { domain: 42 as unknown as string } }, { json, status })
+    expect(status).toHaveBeenCalledWith(400)
+  })
+
+  it('GET check-username returns 400 for invalid slug', async () => {
+    const { app } = await buildApp()
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+
+    await handler({ query: { username: '!nope' } }, { json, status })
+
+    expect(status).toHaveBeenCalledWith(400)
+  })
+
+  it('GET check-username ignores session when decoded email is missing', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue({ uid: 'owner' })
+    authService.verifySessionCookie.mockResolvedValue({ uid: 'me' } as never)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    await handler(
+      {
+        query: { username: 'valid_user' },
+        cookies: { session: 's' },
+        headers: {},
+      },
+      { json }
+    )
+
+    expect(json).toHaveBeenCalledWith({ ok: true, available: false })
+  })
+
+  it('GET check-username ignores invalid bearer when claim exists', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue({ uid: 'owner' })
+    authService.verifyIdToken.mockRejectedValue(new Error('bad jwt'))
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    await handler(
+      {
+        query: { username: 'valid_user' },
+        headers: { authorization: 'Bearer bad' },
+        cookies: {},
+      },
+      { json }
+    )
+
+    expect(json).toHaveBeenCalledWith({ ok: true, available: false })
+  })
+
+  it('GET check-username ignores bearer with disallowed email in production', async () => {
+    const prevEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const { app } = await buildApp()
+      documentStore.getDocument.mockResolvedValue({ uid: 'owner' })
+      authService.verifyIdToken.mockResolvedValue({
+        uid: 'x',
+        email: 'x@gmail.com',
+      } as never)
+
+      const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+      const json = vi.fn()
+      await handler(
+        {
+          query: { username: 'valid_user' },
+          headers: { authorization: 'Bearer tok' },
+          cookies: {},
+        },
+        { json }
+      )
+
+      expect(json).toHaveBeenCalledWith({ ok: true, available: false })
+    } finally {
+      process.env.NODE_ENV = prevEnv
+    }
+  })
+
+  it('GET check-username falls through to legacy when claim uid is not a string', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue({ uid: 999 } as never)
+    documentStore.legacyUsernameClaimed.mockResolvedValue(false)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    await handler({ query: { username: 'valid_user' } }, { json })
+
+    expect(documentStore.legacyUsernameClaimed).toHaveBeenCalled()
+    expect(json).toHaveBeenCalledWith({ ok: true, available: true })
+  })
+
+  it('GET check-username returns available when no claim and legacy free', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue(null)
+    documentStore.legacyUsernameClaimed.mockResolvedValue(false)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    await handler({ query: { username: 'valid_user' } }, { json })
+
+    expect(json).toHaveBeenCalledWith({ ok: true, available: true })
+  })
+
+  it('GET check-username returns taken when claim exists for another user', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue({ uid: 'other' })
+    authService.verifySessionCookie.mockRejectedValue(new Error('no cookie'))
+    authService.verifyIdToken.mockResolvedValue({ uid: 'viewer' } as never)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    await handler(
+      {
+        query: { username: 'valid_user' },
+        headers: { authorization: 'Bearer tok' },
+        cookies: {},
+      },
+      { json }
+    )
+
+    expect(json).toHaveBeenCalledWith({ ok: true, available: false })
+  })
+
+  it('GET check-username treats slug as available when viewer owns claim (session)', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue({ uid: 'me' })
+    authService.verifySessionCookie.mockResolvedValue({
+      uid: 'me',
+      email: 'me@chrisvogt.me',
+    } as never)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    await handler(
+      {
+        query: { username: 'valid_user' },
+        cookies: { session: 'sess' },
+        headers: {},
+      },
+      { json }
+    )
+
+    expect(json).toHaveBeenCalledWith({ ok: true, available: true })
+  })
+
+  it('GET check-username uses bearer when production session email is not allowlisted', async () => {
+    const prevEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const { app } = await buildApp()
+      documentStore.getDocument.mockResolvedValue({ uid: 'me' })
+      authService.verifySessionCookie.mockResolvedValue({
+        uid: 'me',
+        email: 'no@example.com',
+      } as never)
+      authService.verifyIdToken.mockResolvedValue({
+        uid: 'me',
+        email: 'ok@chrisvogt.me',
+      } as never)
+
+      const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+      const json = vi.fn()
+      await handler(
+        {
+          query: { username: 'valid_user' },
+          cookies: { session: 'sess' },
+          headers: { authorization: 'Bearer tok' },
+        },
+        { json }
+      )
+
+      expect(json).toHaveBeenCalledWith({ ok: true, available: true })
+    } finally {
+      process.env.NODE_ENV = prevEnv
+    }
+  })
+
+  it('GET check-username treats slug as available when viewer owns claim (bearer)', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue({ uid: 'me' })
+    authService.verifySessionCookie.mockRejectedValue(new Error('bad'))
+    authService.verifyIdToken.mockResolvedValue({
+      uid: 'me',
+      email: 'me@chrisvogt.me',
+    } as never)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    await handler(
+      {
+        query: { username: 'valid_user' },
+        headers: { authorization: 'Bearer idtok' },
+        cookies: {},
+      },
+      { json }
+    )
+
+    expect(json).toHaveBeenCalledWith({ ok: true, available: true })
+  })
+
+  it('GET check-username returns 500 when legacy helper missing', async () => {
+    const { app } = await buildApp()
+    const store = { getDocument: vi.fn().mockResolvedValue(null), setDocument: vi.fn() }
+    const { createExpressApp } = await import('./create-express-app.js')
+    const bareApp = createExpressApp({
+      authService,
+      documentStore: store,
+      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
+      getClientAuthConfig: vi.fn(() => ({})),
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-onb2'),
+      syncJobQueue,
+    })
+    const handler = findRouteHandler(bareApp, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+
+    await handler({ query: { username: 'valid_user' } }, { json, status })
+
+    expect(status).toHaveBeenCalledWith(500)
+  })
+
+  it('GET check-username returns 500 on document store error', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockRejectedValue(new Error('nope'))
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+
+    await handler({ query: { username: 'valid_user' } }, { json, status })
+
+    expect(status).toHaveBeenCalledWith(500)
+  })
+
+  it('GET check-domain returns 400 for invalid domain', async () => {
+    const { app } = await buildApp()
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+
+    await handler({ query: { domain: '-bad' } }, { json, status })
+
+    expect(status).toHaveBeenCalledWith(400)
+  })
+
+  it('GET check-domain returns 400 when hostname is too long', async () => {
+    const { app } = await buildApp()
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+    const domain = 'a'.repeat(254)
+
+    await handler({ query: { domain } }, { json, status })
+
+    expect(status).toHaveBeenCalledWith(400)
+  })
+
+  it('GET check-domain returns verified true when A records match', async () => {
+    const { app } = await buildApp()
+    const spy = vi.spyOn(dns.promises, 'resolve4').mockResolvedValue([
+      '151.101.65.195',
+      '151.101.1.195',
+    ])
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
+    const json = vi.fn()
+    await handler({ query: { domain: 'widgets.example.com' } }, { json })
+
+    expect(json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ok: true,
+        verified: true,
+        requiredRecords: ['151.101.65.195', '151.101.1.195'],
+      })
+    )
+    spy.mockRestore()
+  })
+
+  it('GET check-domain returns verified false when records mismatch', async () => {
+    const { app } = await buildApp()
+    const spy = vi.spyOn(dns.promises, 'resolve4').mockResolvedValue(['1.2.3.4'])
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
+    const json = vi.fn()
+    await handler({ query: { domain: 'widgets.example.com' } }, { json })
+
+    expect(json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ok: true,
+        verified: false,
+        resolvedRecords: ['1.2.3.4'],
+      })
+    )
+    spy.mockRestore()
+  })
+
+  it('GET check-domain returns 500 when the success res.json throws', async () => {
+    const { app } = await buildApp()
+    const spy = vi.spyOn(dns.promises, 'resolve4').mockResolvedValue([])
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
+    const errorJson = vi.fn().mockImplementationOnce(() => {
+      throw new Error('broken response')
+    })
+    const fallbackJson = vi.fn()
+    const status = vi.fn()
+    /* First `json` is on `res` directly; error handler uses `status(500).json(...)` */
+    const res = {
+      json: errorJson,
+      status: vi.fn().mockReturnValue({ json: fallbackJson }),
+    }
+
+    await handler({ query: { domain: 'ok.example.com' } }, res)
+
+    expect(res.status).toHaveBeenCalledWith(500)
+    expect(fallbackJson).toHaveBeenCalled()
+    spy.mockRestore()
+  })
+})

@@ -86,3 +86,4 @@ local-media/
 
 # Misc
 .DS_Store
+.cursor/

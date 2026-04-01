@@ -1,7 +1,7 @@
 import type { DocumentStore } from '../ports/document-store.js'
 import { getLogger } from '../services/logger.js'
-
 import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
+import { TENANT_USERNAMES_COLLECTION } from '../config/future-tenant-collections.js'
 
 interface UserRecord {
   uid: string
@@ -20,11 +20,38 @@ const deleteUser = async (
   const { uid } = userRecord
 
   try {
-    if (!documentStore.deleteDocument) {
+    if (!documentStore.deleteDocument || !documentStore.recursiveDeleteDocument) {
       throw new Error('Configured DocumentStore does not support deletes')
     }
 
-    await documentStore.deleteDocument(`${DATABASE_COLLECTION_USERS}/${uid}`)
+    const userDocPath = `${DATABASE_COLLECTION_USERS}/${uid}`
+    let profile: Record<string, unknown> | null = null
+    try {
+      profile = await documentStore.getDocument<Record<string, unknown>>(userDocPath)
+    } catch {
+      profile = null
+    }
+
+    const slug =
+      profile &&
+      typeof profile.username === 'string' &&
+      profile.username.length > 0
+        ? profile.username.toLowerCase()
+        : null
+
+    if (slug) {
+      try {
+        await documentStore.deleteDocument(`${TENANT_USERNAMES_COLLECTION}/${slug}`)
+      } catch (claimErr) {
+        logger.warn('Failed to delete tenant username claim during user delete', {
+          uid,
+          slug,
+          error: (claimErr as { message?: string })?.message,
+        })
+      }
+    }
+
+    await documentStore.recursiveDeleteDocument(userDocPath)
 
     logger.info('User deleted successfully from database.', { uid })
 

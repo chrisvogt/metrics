@@ -1,0 +1,9 @@
+# https://docs.codecov.com/docs/commit-status
+coverage:
+  status:
+    project:
+      default:
+        target: 93%
+    patch:
+      default:
+        target: 90%

@@ -40,9 +40,20 @@ describe('createUser', () => {
       uid: 'test-uid-123',
       email: 'test@example.com',
       displayName: 'Test User',
+      username: null,
       tokens: {},
       subscription: {
         active: true,
+      },
+      entitlements: {
+        cdn: false,
+        customDomain: false,
+      },
+      onboarding: {
+        currentStep: 'username',
+        completedSteps: [],
+        draftCustomDomain: null,
+        updatedAt: expect.any(String),
       },
       widgets: {},
       createdAt: expect.any(String),
@@ -55,9 +66,20 @@ describe('createUser', () => {
         uid: 'test-uid-123',
         email: 'test@example.com',
         displayName: 'Test User',
+        username: null,
         tokens: {},
         subscription: {
           active: true,
+        },
+        entitlements: {
+          cdn: false,
+          customDomain: false,
+        },
+        onboarding: {
+          currentStep: 'username',
+          completedSteps: [],
+          draftCustomDomain: null,
+          updatedAt: expect.any(String),
         },
         widgets: {},
         createdAt: expect.any(String),
