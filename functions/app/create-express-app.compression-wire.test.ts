@@ -5,7 +5,7 @@ import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.
 const { compressionFn, compressionDefaultFilter } = vi.hoisted(() => {
   const compressionDefaultFilter = vi.fn(() => true)
   const compressionFn = vi.fn(
-    (opts?: { filter?: (req: { path?: string; url?: string }, res: unknown) => boolean }) => {
+    (_opts?: { filter?: (req: { path?: string; url?: string }, res: unknown) => boolean }) => {
       return (_req: unknown, _res: unknown, next: () => void) => next()
     },
   )

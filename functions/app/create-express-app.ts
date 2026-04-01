@@ -61,31 +61,35 @@ function createRateLimiter(
   max: number,
   opts?: { logger?: LoggerLike; logLabel?: string }
 ) {
-  const config = {
+  const baseConfig = {
     windowMs,
     limit: max,
     message: rateLimitMessage,
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: getRateLimitKey,
-    ...(opts?.logger && opts.logLabel
-      ? {
-          handler: (
-            request: express.Request,
-            response: express.Response,
-            _next: express.NextFunction,
-            optionsUsed: { statusCode: number }
-          ) => {
-            opts.logger!.warn('rate_limit_exceeded', {
-              label: opts.logLabel,
-              path: request.path,
-            })
-            response.status(optionsUsed.statusCode).json(rateLimitMessage)
-          },
-        }
-      : {}),
   }
-  return rateLimit(config)
+
+  if (opts?.logger && opts.logLabel) {
+    const { logger: limitLogger, logLabel } = opts
+    return rateLimit({
+      ...baseConfig,
+      handler: (
+        request: express.Request,
+        response: express.Response,
+        _next: express.NextFunction,
+        optionsUsed: { statusCode: number }
+      ) => {
+        limitLogger.warn('rate_limit_exceeded', {
+          label: logLabel,
+          path: request.path,
+        })
+        response.status(optionsUsed.statusCode).json(rateLimitMessage)
+      },
+    })
+  }
+
+  return rateLimit(baseConfig)
 }
 
 const buildSuccessResponse = <TPayload>(
