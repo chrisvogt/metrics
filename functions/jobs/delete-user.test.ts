@@ -58,6 +58,36 @@ describe('deleteUser', () => {
     expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
   })
 
+  it('should continue when user profile fetch throws', async () => {
+    vi.mocked(documentStore.getDocument!).mockRejectedValueOnce(new Error('read failed'))
+
+    const result = await deleteUser({ uid: 'test-uid-profile-miss' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(documentStore.deleteDocument).not.toHaveBeenCalled()
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalledWith(
+      `${DATABASE_COLLECTION_USERS}/test-uid-profile-miss`
+    )
+  })
+
+  it('should log and continue when username claim delete fails', async () => {
+    vi.mocked(documentStore.getDocument!).mockResolvedValue({ username: 'claimy' })
+    vi.mocked(documentStore.deleteDocument!).mockRejectedValueOnce(new Error('claim gone'))
+
+    const result = await deleteUser({ uid: 'test-uid-claim-fail' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Failed to delete tenant username claim during user delete',
+      expect.objectContaining({
+        uid: 'test-uid-claim-fail',
+        slug: 'claimy',
+        error: 'claim gone',
+      })
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
+  })
+
   it('should handle user records with additional properties', async () => {
     const result = await deleteUser(
       {
