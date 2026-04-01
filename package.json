@@ -1,8 +1,7 @@
 {
-  "name": "chronogrove",
+  "name": "metrics",
   "private": true,
-  "license": "AGPL-3.0",
-  "description": "Chronogrove — Firebase-hosted API and operator console for provider-backed widgets (Discogs, Steam, Instagram, etc.)",
+  "description": "Personal metrics – Firebase Hosting + Cloud Functions",
   "packageManager": "pnpm@10.32.1",
   "scripts": {
     "build": "NEXT_PUBLIC_GIT_SHA=$(git rev-parse --short HEAD) turbo run build",
