@@ -1,9 +1,37 @@
 version: 2
+
+# Multi-ecosystem: one PR per group for version (and security) updates across ecosystems; see
+# https://docs.github.com/en/code-security/dependabot/working-with-dependabot/configuring-multi-ecosystem-updates
+# `groups` + applies-to: security-updates batches security fixes within each ecosystem (see
+# https://docs.github.com/en/code-security/dependabot/dependabot-security-updates/customizing-dependabot-security-prs).
+multi-ecosystem-groups:
+  all-dependencies:
+    schedule:
+      interval: weekly
+
 updates:
-  # Single entry: pnpm workspace uses one root lockfile (`pnpm-lock.yaml`).
+  # Single npm entry: pnpm workspace uses one root lockfile (`pnpm-lock.yaml`).
   # Multiple `directory` entries can leave the lockfile inconsistent (Dependabot + workspaces).
   - package-ecosystem: npm
     directory: /
-    schedule:
-      interval: weekly
+    patterns:
+      - "*"
+    multi-ecosystem-group: all-dependencies
     open-pull-requests-limit: 10
+    groups:
+      all-dependencies:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    patterns:
+      - "*"
+    multi-ecosystem-group: all-dependencies
+    open-pull-requests-limit: 10
+    groups:
+      all-dependencies:
+        applies-to: security-updates
+        patterns:
+          - "*"
