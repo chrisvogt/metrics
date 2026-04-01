@@ -54,7 +54,7 @@ function isFlowStepId(v: string): v is FlowStepId {
 }
 
 export function OnboardingSection() {
-  const { user } = useAuth()
+  const { user, apiSessionReady } = useAuth()
   const [currentStep, setCurrentStep] = useState<FlowStepId>('username')
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set())
   const [hydrated, setHydrated] = useState(false)
@@ -139,6 +139,11 @@ export function OnboardingSection() {
       return
     }
 
+    if (!apiSessionReady) {
+      setProgressLoading(true)
+      return
+    }
+
     let cancelled = false
     ;(async () => {
       setProgressLoading(true)
@@ -179,7 +184,7 @@ export function OnboardingSection() {
     return () => {
       cancelled = true
     }
-  }, [user, checkUsername])
+  }, [user, apiSessionReady, checkUsername])
 
   const handleUsernameChange = (value: string) => {
     const sanitized = value.toLowerCase().replace(/[^a-z0-9_-]/g, '')

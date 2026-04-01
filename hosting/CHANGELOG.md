@@ -7,6 +7,18 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.7] - 2026-04-01
+
+### Security
+
+- **Auth storage** — After a successful `createSession`, the Firebase ID token is no longer copied into `localStorage`. API auth relies on the **HttpOnly `session` cookie** plus **`apiSessionReady`** gating. `localStorage` is still used **only when session creation fails** (e.g. allowlist) so those clients can keep using Bearer fallback.
+
+## [0.6.6] - 2026-04-01
+
+### Fixed
+
+- **Onboarding / API auth race** — `onAuthStateChanged` called `setUser` before `createSession` finished, so `GET /api/onboarding/progress` sometimes ran with no `session` cookie yet and no `Authorization` bearer (HttpOnly session is not readable from JS, and the success path did not set `localStorage`). That produced **`No valid authorization header found`**. The provider now exposes **`apiSessionReady`**, and onboarding waits for it before loading progress.
+
 ## [0.6.5] - 2026-03-31
 
 ### Fixed
