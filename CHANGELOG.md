@@ -15,8 +15,9 @@ Package-specific changes:
 
 ### Changed
 
+- **Workspace** — **Hosting 0.6.10** and **Functions 0.25.9**: non-major dependency bumps only (Next.js stays on 15.x, TypeScript on 5.x, `@types/node` within existing major lines: ^22 hosting, ^24 functions). Root **Turbo** ^2.9.3; shared **Firebase** client **^12.11.0**; Vitest **4.1.2** stack; minor patch lines for ESLint, typescript-eslint, and `express-rate-limit`. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md) and [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Repository** — Weekly **Dependabot** **`npm`** updates at the workspace root (one entry for the shared **`pnpm-lock.yaml`**; covers `functions/` and `hosting/`).
-- **Firestore** — **Default-deny** security rules for the client SDK (`firestore.rules`); widget reads remain public via **`GET /api/widgets/*`** (Admin SDK). Deploy rules with **Functions 0.25.8**. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
+- **Firestore** — **Default-deny** security rules for the client SDK (`firestore.rules`); widget reads remain public via **`GET /api/widgets/*`** (Admin SDK). Deploy rules with **Functions 0.25.9**. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Repository** — GitHub project renamed to [chrisvogt/chronogrove](https://github.com/chrisvogt/chronogrove) (formerly `metrics`). Workspace package names are now `chronogrove`, `chronogrove-hosting`, and `chronogrove-functions`; README, operator UI links, and changelogs updated. If you use Codecov, reconnect the repo under the new name so badges keep working.
 - **Functions 0.25.6** — Widget API caching now favors revalidation across all providers: browser responses revalidate (`max-age=0, must-revalidate`) while shared caches keep a short TTL (`s-maxage=300`, `stale-while-revalidate=60`) to reduce stale widget payloads after sync. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Functions 0.25.5** — Removed `requestretry` from Spotify profile/top-tracks requests, standardized on a shared `got` Spotify client (retry + JSON defaults), and added unit coverage for that shared client. See [functions/CHANGELOG.md](functions/CHANGELOG.md).

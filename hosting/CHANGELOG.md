@@ -7,6 +7,12 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.10] - 2026-03-31
+
+### Changed
+
+- **Dependencies** — Non-major bumps only: **Next.js** ^15.5.14, **firebase** ^12.11.0, **Vitest** / **@vitest/coverage-v8** ^4.1.2, **@types/node** ^22.19.15 (aligned with workspace **pnpm-lock.yaml**).
+
 ## [0.6.9] - 2026-04-01
 
 ### Fixed
