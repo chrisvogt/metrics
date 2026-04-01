@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.8] - 2026-04-02
+
+### Security
+
+- **Firestore rules** — Default **deny all** client SDK reads and writes. Explicit backend-only matches for `tenant_usernames`, `tenant_hosts`, and `users/{uid}/integrations/{integrationId}`; public widget data is served only via the **`app`** Cloud Function (Admin SDK), not from the browser.
+- **Onboarding `GET /api/onboarding/check-username` and `check-domain`** — Stricter per-window rate limits; custom **429** handler logs `rate_limit_exceeded` with a label for monitoring. **`check-domain`** JSON no longer includes **`resolvedRecords`**. Error logs avoid raw **username** / **domain** values (length only).
+
+### Developer experience
+
+- **`getClientAuthConfig`** — JSDoc: only web-safe fields belong in the payload returned by **`/api/client-auth-config`** / **`/api/firebase-config`**.
+- **`ALLOWED_EMAIL_DOMAINS`** — Comment reminder to revisit allowlist, MFA, and Firebase Auth settings before a general-audience launch.
+- **`future-tenant-collections.ts`** — Rollout note aligned with default-deny rules and post-OAuth HTTPS APIs.
+
+### Repository
+
+- **Dependabot** — Weekly **`npm`** updates for repository root, `functions/`, and `hosting/` (see root `.github/dependabot.yml`).
+
 ## [0.25.7] - 2026-04-01
 
 ### Fixed
