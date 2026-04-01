@@ -54,7 +54,7 @@ function isFlowStepId(v: string): v is FlowStepId {
 }
 
 export function OnboardingSection() {
-  const { user } = useAuth()
+  const { user, apiSessionReady } = useAuth()
   const [currentStep, setCurrentStep] = useState<FlowStepId>('username')
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set())
   const [hydrated, setHydrated] = useState(false)
@@ -84,9 +84,17 @@ export function OnboardingSection() {
 
     setUsernameStatus('checking')
     try {
+      const headers: Record<string, string> = {}
+      if (user) {
+        try {
+          headers.Authorization = `Bearer ${await user.getIdToken()}`
+        } catch {
+          /* anonymous check — server may not recognize “same owner” without auth */
+        }
+      }
       const res = await fetch(
         `${baseUrl}/api/onboarding/check-username?username=${encodeURIComponent(value)}`,
-        { credentials: 'include' }
+        { credentials: 'include', headers }
       )
       if (!res.ok) throw new Error('Check failed')
       const data = await res.json() as { available?: boolean }
@@ -94,7 +102,7 @@ export function OnboardingSection() {
     } catch {
       setUsernameStatus('error')
     }
-  }, [baseUrl])
+  }, [baseUrl, user])
 
   const buildSnapshot = useCallback(
     (overrides?: Partial<Pick<OnboardingProgressPayload, 'currentStep' | 'completedSteps'>>) => {
@@ -116,7 +124,9 @@ export function OnboardingSection() {
       setSaving(true)
       setSaveError(null)
       try {
-        const res = await apiClient.putJson('/api/onboarding/progress', snapshot)
+        if (!user) return false
+        const idToken = await user.getIdToken()
+        const res = await apiClient.putJson('/api/onboarding/progress', snapshot, { idToken })
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({} as { error?: string }))
           throw new Error(errBody.error ?? `Save failed (${res.status})`)
@@ -129,7 +139,7 @@ export function OnboardingSection() {
         setSaving(false)
       }
     },
-    []
+    [user]
   )
 
   useEffect(() => {
@@ -139,11 +149,17 @@ export function OnboardingSection() {
       return
     }
 
+    if (!apiSessionReady) {
+      setProgressLoading(true)
+      return
+    }
+
     let cancelled = false
     ;(async () => {
       setProgressLoading(true)
       try {
-        const res = await apiClient.getJson('/api/onboarding/progress')
+        const idToken = await user.getIdToken()
+        const res = await apiClient.getJson('/api/onboarding/progress', { idToken })
         if (!res.ok) throw new Error('Load failed')
         const data = await res.json() as {
           ok: boolean
@@ -179,7 +195,7 @@ export function OnboardingSection() {
     return () => {
       cancelled = true
     }
-  }, [user, checkUsername])
+  }, [user, apiSessionReady, checkUsername])
 
   const handleUsernameChange = (value: string) => {
     const sanitized = value.toLowerCase().replace(/[^a-z0-9_-]/g, '')

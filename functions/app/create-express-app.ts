@@ -744,6 +744,22 @@ export function createExpressApp({
           return
         }
         const usersCollection = getUsersCollectionPath()
+
+        if (documentStore.legacyUsernameOwnerUid) {
+          const ownerUid = await documentStore.legacyUsernameOwnerUid(usersCollection, username)
+          if (!ownerUid) {
+            res.json({ ok: true, available: true })
+            return
+          }
+          const viewerUid = await resolveViewerUidForPublicOnboarding(req)
+          if (viewerUid !== null && ownerUid === viewerUid) {
+            res.json({ ok: true, available: true })
+            return
+          }
+          res.json({ ok: true, available: false })
+          return
+        }
+
         const legacyTaken = await documentStore.legacyUsernameClaimed(usersCollection, username)
         res.json({ ok: true, available: !legacyTaken })
       } catch (err) {

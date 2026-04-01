@@ -17,6 +17,8 @@ import { apiClient } from './apiClient'
 
 export interface AuthContextValue {
   user: User | null
+  /** False while the backend session cookie (and fallback ID token) is being established after Firebase sign-in. */
+  apiSessionReady: boolean
   loading: boolean
   error: string | null
   setError: (err: string | null) => void
@@ -36,6 +38,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
+  const [apiSessionReady, setApiSessionReady] = useState(false)
   const [loading, setLoading] = useState(true)
   const [auth, setAuth] = useState<Auth | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -47,22 +50,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (cancelled) return
         setAuth(a)
         const unsub = onAuthStateChanged(a, async (u) => {
+          if (cancelled) return
+          if (!u) {
+            apiClient.clearSession()
+            setUser(null)
+            setApiSessionReady(true)
+            return
+          }
+
           setUser(u)
-          if (u) {
+          setApiSessionReady(false)
+          try {
+            const token = await u.getIdToken()
+            await apiClient.createSession(token)
+          } catch {
             try {
               const token = await u.getIdToken()
-              await apiClient.createSession(token)
+              localStorage.setItem('authToken', token)
             } catch {
-              try {
-                const token = await u.getIdToken()
-                localStorage.setItem('authToken', token)
-              } catch {
-                // ignore
-              }
+              // ignore
             }
-          } else {
-            apiClient.clearSession()
           }
+          if (!cancelled) setApiSessionReady(true)
         })
         return () => unsub()
       })
@@ -161,6 +170,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
+      apiSessionReady,
       loading,
       error,
       setError,
@@ -171,7 +181,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout,
       auth,
     }),
-    [user, loading, error, auth]
+    [user, apiSessionReady, loading, error, auth]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

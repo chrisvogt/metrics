@@ -6,6 +6,8 @@ export interface DocumentStore {
   deleteDocument?(path: string): Promise<void>
   /** Legacy `users` documents that have `username` set but no `tenant_usernames` claim yet. */
   legacyUsernameClaimed?(usersCollection: string, usernameNormalized: string): Promise<boolean>
+  /** `users` collection document id (uid) for a user with this `username`, or `null` if none. */
+  legacyUsernameOwnerUid?(usersCollection: string, usernameNormalized: string): Promise<string | null>
   /** Deletes a document and all subcollections (e.g. `users/{uid}`). */
   recursiveDeleteDocument?(path: string): Promise<void>
 }

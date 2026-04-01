@@ -44,13 +44,22 @@ export class FirestoreDocumentStore implements DocumentStore {
     usersCollection: string,
     usernameNormalized: string
   ): Promise<boolean> {
+    const owner = await this.legacyUsernameOwnerUid(usersCollection, usernameNormalized)
+    return owner !== null
+  }
+
+  async legacyUsernameOwnerUid(
+    usersCollection: string,
+    usernameNormalized: string
+  ): Promise<string | null> {
     const snap = await admin
       .firestore()
       .collection(usersCollection)
       .where('username', '==', usernameNormalized)
       .limit(1)
       .get()
-    return !snap.empty
+    if (snap.empty) return null
+    return snap.docs[0]!.id
   }
 
   async recursiveDeleteDocument(path: string): Promise<void> {

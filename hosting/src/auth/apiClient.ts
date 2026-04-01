@@ -1,3 +1,6 @@
+/** Optional Firebase ID token for `Authorization: Bearer` (same as manual sync SSE). Prefer this when the HttpOnly session cookie is present but server-side `verifySessionCookie` fails through Hosting. */
+export type ApiClientAuth = { idToken: string }
+
 export class ApiClient {
   private baseUrl: string
 
@@ -36,9 +39,15 @@ export class ApiClient {
     return null
   }
 
-  async getCsrfToken(): Promise<string | null> {
-    const existingToken = this.getCookieValue('XSRF-TOKEN')
-    if (existingToken) return existingToken
+  /**
+   * @param forceRefresh — If true, always `GET /api/csrf-token` so the header token matches the
+   * current `_csrfSecret` cookie. Reusing a stale `XSRF-TOKEN` alone causes "CSRF token mismatch".
+   */
+  async getCsrfToken(forceRefresh = false): Promise<string | null> {
+    if (!forceRefresh) {
+      const existingToken = this.getCookieValue('XSRF-TOKEN')
+      if (existingToken) return existingToken
+    }
 
     const res = await fetch(`${this.baseUrl}/api/csrf-token`, {
       credentials: 'include',
@@ -83,22 +92,28 @@ export class ApiClient {
     return token ? { Authorization: `Bearer ${token}` } : {}
   }
 
-  async getJson(path: string): Promise<Response> {
+  private bearerFrom(auth?: ApiClientAuth): string | null {
+    return auth?.idToken ?? this.getAuthToken()
+  }
+
+  async getJson(path: string, auth?: ApiClientAuth): Promise<Response> {
+    const bearer = this.bearerFrom(auth)
     return fetch(`${this.baseUrl}${path}`, {
       credentials: 'include',
       headers: {
-        ...this.getAuthorizationHeader(),
+        ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
       },
     })
   }
 
-  async putJson(path: string, body: unknown): Promise<Response> {
-    const csrfToken = await this.getCsrfToken()
+  async putJson(path: string, body: unknown, auth?: ApiClientAuth): Promise<Response> {
+    const csrfToken = await this.getCsrfToken(true)
+    const bearer = this.bearerFrom(auth)
     return fetch(`${this.baseUrl}${path}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        ...this.getAuthorizationHeader(),
+        ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
         ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
       },
       credentials: 'include',

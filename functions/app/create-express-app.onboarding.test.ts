@@ -62,6 +62,7 @@ describe('createExpressApp onboarding routes', () => {
     getDocument: vi.fn(),
     setDocument: vi.fn(),
     legacyUsernameClaimed: vi.fn(),
+    legacyUsernameOwnerUid: vi.fn(),
   }
   const syncJobQueue = {
     claimJob: vi.fn(),
@@ -74,6 +75,8 @@ describe('createExpressApp onboarding routes', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    documentStore.legacyUsernameOwnerUid.mockResolvedValue(null)
+    documentStore.legacyUsernameClaimed.mockResolvedValue(false)
   })
 
   const buildApp = async () => {
@@ -343,26 +346,74 @@ describe('createExpressApp onboarding routes', () => {
   it('GET check-username falls through to legacy when claim uid is not a string', async () => {
     const { app } = await buildApp()
     documentStore.getDocument.mockResolvedValue({ uid: 999 } as never)
-    documentStore.legacyUsernameClaimed.mockResolvedValue(false)
+    documentStore.legacyUsernameOwnerUid.mockResolvedValue(null)
 
     const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
     const json = vi.fn()
     await handler({ query: { username: 'valid_user' } }, { json })
 
-    expect(documentStore.legacyUsernameClaimed).toHaveBeenCalled()
+    expect(documentStore.legacyUsernameOwnerUid).toHaveBeenCalled()
     expect(json).toHaveBeenCalledWith({ ok: true, available: true })
   })
 
   it('GET check-username returns available when no claim and legacy free', async () => {
     const { app } = await buildApp()
     documentStore.getDocument.mockResolvedValue(null)
-    documentStore.legacyUsernameClaimed.mockResolvedValue(false)
+    documentStore.legacyUsernameOwnerUid.mockResolvedValue(null)
 
     const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
     const json = vi.fn()
     await handler({ query: { username: 'valid_user' } }, { json })
 
     expect(json).toHaveBeenCalledWith({ ok: true, available: true })
+  })
+
+  it('GET check-username legacy username owned by viewer is available', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue(null)
+    documentStore.legacyUsernameOwnerUid.mockResolvedValue('me')
+    authService.verifySessionCookie.mockRejectedValue(new Error('no cookie'))
+    authService.verifyIdToken.mockResolvedValue({
+      uid: 'me',
+      email: 'me@chrisvogt.me',
+    } as never)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    await handler(
+      {
+        query: { username: 'valid_user' },
+        headers: { authorization: 'Bearer tok' },
+        cookies: {},
+      },
+      { json }
+    )
+
+    expect(json).toHaveBeenCalledWith({ ok: true, available: true })
+  })
+
+  it('GET check-username legacy username owned by another user is taken', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue(null)
+    documentStore.legacyUsernameOwnerUid.mockResolvedValue('owner')
+    authService.verifySessionCookie.mockRejectedValue(new Error('no cookie'))
+    authService.verifyIdToken.mockResolvedValue({
+      uid: 'viewer',
+      email: 'v@chrisvogt.me',
+    } as never)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    await handler(
+      {
+        query: { username: 'valid_user' },
+        headers: { authorization: 'Bearer tok' },
+        cookies: {},
+      },
+      { json }
+    )
+
+    expect(json).toHaveBeenCalledWith({ ok: true, available: false })
   })
 
   it('GET check-username returns taken when claim exists for another user', async () => {

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.7] - 2026-04-01
+
+### Fixed
+
+- **Onboarding `GET /api/onboarding/check-username`** — Legacy users with **`username` on their `users/{uid}` doc** but **no `tenant_usernames` claim** were blocked as “taken” when re-running onboarding. The handler now resolves **`legacyUsernameOwnerUid`** and returns **available** when the signed-in user owns that document (same as an owned tenant claim). `FirestoreDocumentStore.legacyUsernameClaimed` delegates to **`legacyUsernameOwnerUid`** to avoid duplicate queries.
+
 ## [0.25.6] - 2026-03-31
 
 ### Changed

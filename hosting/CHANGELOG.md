@@ -7,6 +7,36 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.9] - 2026-04-01
+
+### Fixed
+
+- **Username availability on onboarding** — `check-username` requests now send **`Authorization: Bearer`** + Firebase ID token when signed in so the API can treat your **existing tenant claim** as available (same fix pattern as progress/sync). Prevents “taken by me” when the session cookie is not verified on that route. **Deploy with functions ≥ 0.25.7** so users who only have **`username` on `users/{uid}`** (no tenant claim yet) are also recognized as the owner.
+
+## [0.6.8] - 2026-04-01
+
+### Fixed
+
+- **Onboarding progress API** — `GET`/`PUT` `/api/onboarding/progress` now sends **`Authorization: Bearer` + Firebase ID token** from `user.getIdToken()` (same pattern as manual sync SSE). The HttpOnly **`session` cookie** was present in the browser but **`verifySessionCookie` was failing** on the function; without `localStorage` fallback there was no Bearer, so the handler returned **`No valid authorization header found`**.
+
+## [0.6.7] - 2026-04-01
+
+### Security
+
+- **Auth storage** — After a successful `createSession`, the Firebase ID token is no longer copied into `localStorage`. API auth relies on the **HttpOnly `session` cookie** plus **`apiSessionReady`** gating. `localStorage` is still used **only when session creation fails** (e.g. allowlist) so those clients can keep using Bearer fallback.
+
+## [0.6.6] - 2026-04-01
+
+### Fixed
+
+- **Onboarding / API auth race** — `onAuthStateChanged` called `setUser` before `createSession` finished, so `GET /api/onboarding/progress` sometimes ran with no `session` cookie yet and no `Authorization` bearer (HttpOnly session is not readable from JS, and the success path did not set `localStorage`). That produced **`No valid authorization header found`**. The provider now exposes **`apiSessionReady`**, and onboarding waits for it before loading progress.
+
+## [0.6.5] - 2026-03-31
+
+### Fixed
+
+- **CSRF on mutating API calls** — `ApiClient.putJson` now always fetches a fresh token from `GET /api/csrf-token` before `PUT`, so the `X-XSRF-TOKEN` header matches the current `_csrfSecret` cookie. Reusing a stale `XSRF-TOKEN` from `document.cookie` alone caused intermittent **“CSRF token mismatch”** in production (especially after strict cookie behavior or a desynced pair), including when saving onboarding progress.
+
 ## [0.6.4] - 2026-03-29
 
 ### Fixed

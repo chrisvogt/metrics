@@ -34,6 +34,12 @@ Package-specific changes:
 
 ### Fixed
 
+- **Hosting 0.6.9** — Onboarding **check-username** sends a **Bearer ID token** so “your” slug is not reported taken when you already hold the claim or legacy profile username. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
+- **Functions 0.25.7** — **check-username** treats a legacy **`users` doc username** as **available** when **`legacyUsernameOwnerUid`** matches the viewer (pre-onboarding users). See [functions/CHANGELOG.md](functions/CHANGELOG.md).
+- **Hosting 0.6.8** — Onboarding loads/saves progress with a **Bearer Firebase ID token** so auth works when **`session` cookie verification fails** through Hosting; matches manual sync. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
+- **Hosting 0.6.7** — Do not mirror the ID token to **`localStorage`** after a successful session; rely on the HttpOnly **`session`** cookie and **`apiSessionReady`** instead. **`localStorage`** remains only when session creation fails (Bearer fallback). See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
+- **Hosting 0.6.6** — Auth + onboarding: wait for **`apiSessionReady`** after `createSession` before calling protected APIs. Fixes **`No valid authorization header found`** on `GET /api/onboarding/progress`. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
+- **Hosting 0.6.5** — `putJson` refreshes the CSRF token before each `PUT` so production no longer hits spurious **“CSRF token mismatch”** when saving onboarding (or other) state. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Hosting 0.6.4** — Local builds and deploys now stamp the hosting bundle with the current git SHA and include that SHA in the Turbo cache key, preventing stale sidebar SHAs from reused `hosting/out` artifacts. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Hosting 0.6.3** — Firebase Hosting `Cache-Control` headers for the static export (revalidate HTML/shell, immutable `/_next/static` chunks) to avoid stale shells and post-deploy `ChunkLoadError`. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md).
 - **Widget API (functions)** – Public `GET /api/widgets/:provider` responses no longer emit CSRF cookies, so Firebase Hosting / CDN can cache them per `Cache-Control` again. See [functions/CHANGELOG.md](functions/CHANGELOG.md) **0.22.17**.
