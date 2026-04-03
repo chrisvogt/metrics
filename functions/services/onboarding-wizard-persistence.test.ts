@@ -106,6 +106,34 @@ describe('onboarding-wizard-persistence', () => {
     expect(mockFirestoreInstance.collection).toHaveBeenCalledWith('users')
   })
 
+  it('loadOnboardingStateForApi maps empty or non-string integration status to unknown', async () => {
+    mockIntegrationGet.mockResolvedValueOnce({
+      docs: [
+        { id: 'flickr', data: () => ({ status: '' }) },
+        { id: 'x', data: () => ({ providerId: 'x' }) },
+        { id: 'y', data: () => ({ status: 404 }) },
+      ],
+    })
+    const payload = await loadOnboardingStateForApi({
+      usersCollection: 'users',
+      uid: 'u1',
+      userDoc: {
+        username: 'slug',
+        onboarding: {
+          currentStep: 'connections',
+          completedSteps: ['username'],
+          draftCustomDomain: null,
+          updatedAt: 't',
+        },
+      },
+    })
+    expect(payload.integrationStatuses).toEqual({
+      flickr: 'unknown',
+      x: 'unknown',
+      y: 'unknown',
+    })
+  })
+
   it('persistOnboardingWizardState treats missing user doc as empty profile', async () => {
     const txGet = vi
       .fn()

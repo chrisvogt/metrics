@@ -48,7 +48,7 @@ function allowedEmail(email: string | undefined, isProduction: boolean, allowLis
   return allowList.some((domain) => email.endsWith(domain))
 }
 
-function resolvePublicOrigin(req: express.Request): string {
+export function resolveFlickrOAuthPublicOrigin(req: express.Request): string {
   const explicit = process.env.PUBLIC_APP_ORIGIN?.trim()
   if (explicit) return explicit.replace(/\/$/, '')
   const host = (req.headers['x-forwarded-host'] as string) || req.get('host') || 'localhost'
@@ -58,11 +58,11 @@ function resolvePublicOrigin(req: express.Request): string {
   return `${proto}://${host}`
 }
 
-function resolveRedirectUrl(req: express.Request, target: string): string {
+export function resolveFlickrOAuthRedirectUrl(req: express.Request, target: string): string {
   if (target.startsWith('http://') || target.startsWith('https://')) {
     return target
   }
-  const base = resolvePublicOrigin(req)
+  const base = resolveFlickrOAuthPublicOrigin(req)
   const path = target.startsWith('/') ? target : `/${target}`
   return `${base}${path}`
 }
@@ -220,7 +220,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
         const path = validatedReturnTo
           ? withFlickrOAuthFlash(validatedReturnTo, 'error', reason)
           : withFlickrOAuthFlash('/onboarding', 'error', reason)
-        res.redirect(302, resolveRedirectUrl(req, path))
+        res.redirect(302, resolveFlickrOAuthRedirectUrl(req, path))
       }
 
       if (!oauthToken || !oauthVerifier) {
@@ -314,7 +314,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
           validatedReturnTo != null
             ? withFlickrOAuthFlash(validatedReturnTo, 'success')
             : cfg.appSuccessRedirect
-        res.redirect(302, resolveRedirectUrl(req, successPath))
+        res.redirect(302, resolveFlickrOAuthRedirectUrl(req, successPath))
       } catch (err) {
         logger.error('Flickr OAuth callback failed', { uid, error: err })
         failRedirect('token_exchange_failed')

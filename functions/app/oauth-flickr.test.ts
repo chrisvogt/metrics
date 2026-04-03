@@ -108,6 +108,13 @@ describe('registerFlickrOAuthRoutes', () => {
     expect(res.body).toEqual({ ok: false, error: 'Forbidden' })
   })
 
+  it('POST start returns 403 when user email is missing', async () => {
+    const app = await buildApp({ isProductionEnvironment: false })
+    authUser = { uid: 'user-1' }
+    const res = await request(app).post('/api/oauth/flickr/start').send({}).expect(403)
+    expect(res.body).toEqual({ ok: false, error: 'Forbidden' })
+  })
+
   it('POST start returns 503 when Flickr OAuth env is incomplete', async () => {
     delete process.env.FLICKR_OAUTH_CALLBACK_URL
     const app = await buildApp()
@@ -139,6 +146,27 @@ describe('registerFlickrOAuthRoutes', () => {
     expect(documentStore.deleteDocument).toHaveBeenCalledWith('oauth_flickr_pending/old-req')
     expect(documentStore.setDocument).toHaveBeenCalled()
     expect(buildFlickrAuthorizeUrl).toHaveBeenCalledWith('req-token', 'read')
+  })
+
+  it('POST start skips stale pending cleanup when field is not a string', async () => {
+    vi.mocked(documentStore.getDocument).mockResolvedValue({
+      status: 'pending_oauth',
+      oauthPendingRequestToken: 99 as unknown as string,
+    })
+    const app = await buildApp()
+    await request(app).post('/api/oauth/flickr/start').send({}).expect(200)
+    expect(documentStore.deleteDocument).not.toHaveBeenCalled()
+  })
+
+  it('POST start skips stale pending cleanup when store has no deleteDocument', async () => {
+    delete documentStore.deleteDocument
+    vi.mocked(documentStore.getDocument).mockResolvedValue({
+      status: 'pending_oauth',
+      oauthPendingRequestToken: 'old-req',
+    })
+    const app = await buildApp()
+    await request(app).post('/api/oauth/flickr/start').send({}).expect(200)
+    expect(flickrGetRequestToken).toHaveBeenCalled()
   })
 
   it('POST start returns authorize URL on success', async () => {
@@ -173,6 +201,15 @@ describe('registerFlickrOAuthRoutes', () => {
     expect(logger.warn).toHaveBeenCalled()
   })
 
+  it('GET callback treats empty oauth_token query array as missing', async () => {
+    const app = await buildApp()
+    const res = await request(app)
+      .get('/api/oauth/flickr/callback')
+      .query({ oauth_token: [], oauth_verifier: 'ver' })
+      .expect(302)
+    expect(res.headers.location).toContain('reason=missing_token')
+  })
+
   it('GET callback redirects when pending session is unknown', async () => {
     vi.mocked(documentStore.getDocument).mockResolvedValue(undefined)
     const app = await buildApp()
@@ -181,6 +218,34 @@ describe('registerFlickrOAuthRoutes', () => {
       .query({ oauth_token: 'tok', oauth_verifier: 'ver' })
       .expect(302)
     expect(res.headers.location).toContain('reason=session_expired')
+  })
+
+  it('GET callback treats missing pending createdAt as expired', async () => {
+    vi.mocked(documentStore.getDocument).mockResolvedValue({
+      uid: 'user-1',
+      oauthTokenSecret: 'sec',
+    })
+    const app = await buildApp()
+    const res = await request(app)
+      .get('/api/oauth/flickr/callback')
+      .query({ oauth_token: 'tok', oauth_verifier: 'ver' })
+      .expect(302)
+    expect(res.headers.location).toContain('session_expired')
+  })
+
+  it('GET callback coerces first oauth_token when Express provides an array', async () => {
+    vi.mocked(documentStore.getDocument).mockResolvedValue({
+      uid: 'user-1',
+      oauthTokenSecret: 'sec',
+      createdAt: new Date().toISOString(),
+    })
+    const app = await buildApp()
+    const res = await request(app)
+      .get('/api/oauth/flickr/callback')
+      .query({ oauth_token: ['tok', 'ignored'], oauth_verifier: 'ver' })
+      .expect(302)
+    expect(res.headers.location).toContain('status=success')
+    expect(documentStore.getDocument).toHaveBeenCalledWith('oauth_flickr_pending/tok')
   })
 
   it('GET callback expires stale pending rows and redirects', async () => {
@@ -262,6 +327,31 @@ describe('registerFlickrOAuthRoutes', () => {
     expect(logger.info).toHaveBeenCalledWith('Flickr OAuth completed', { uid: 'user-1', nsid: 'nsid-1' })
   })
 
+  it('GET callback stores null flickrUsername when Flickr omits username', async () => {
+    vi.mocked(documentStore.getDocument).mockResolvedValue({
+      uid: 'user-1',
+      oauthTokenSecret: 'sec',
+      createdAt: new Date().toISOString(),
+    })
+    vi.mocked(flickrGetAccessToken).mockResolvedValueOnce({
+      oauthToken: 'acc-token',
+      oauthTokenSecret: 'acc-secret',
+      userNsid: 'nsid-1',
+      username: '',
+      fullname: '',
+    })
+    const app = await buildApp()
+    await request(app).get('/api/oauth/flickr/callback').query({ oauth_token: 'tok', oauth_verifier: 'ver' }).expect(302)
+    const setCalls = vi.mocked(documentStore.setDocument).mock.calls
+    const integrationWrite = setCalls.find(
+      (c) =>
+        typeof c[0] === 'string' &&
+        c[0].includes('/integrations/flickr') &&
+        !(c[0] as string).includes('oauth_flickr_pending')
+    )
+    expect(integrationWrite?.[1]).toMatchObject({ flickrUsername: null })
+  })
+
   it('GET callback uses configured success redirect when returnTo is absent', async () => {
     process.env.FLICKR_OAUTH_SUCCESS_REDIRECT = '/welcome'
     vi.mocked(documentStore.getDocument).mockResolvedValue({
@@ -318,6 +408,42 @@ describe('registerFlickrOAuthRoutes', () => {
       .query({ oauth_token: 'tok', oauth_verifier: 'ver' })
       .expect(302)
     expect(res.headers.location.startsWith('https://public.example/')).toBe(true)
+  })
+
+  it('GET callback uses X-Forwarded-Host and X-Forwarded-Proto for redirect base', async () => {
+    delete process.env.PUBLIC_APP_ORIGIN
+    vi.mocked(documentStore.getDocument).mockResolvedValue({
+      uid: 'user-1',
+      oauthTokenSecret: 'sec',
+      createdAt: new Date().toISOString(),
+      returnTo: '/finished',
+    })
+    const app = await buildApp()
+    const res = await request(app)
+      .get('/api/oauth/flickr/callback')
+      .set('X-Forwarded-Host', 'edge.example')
+      .set('X-Forwarded-Proto', 'https, http')
+      .query({ oauth_token: 'tok', oauth_verifier: 'ver' })
+      .expect(302)
+    expect(res.headers.location.startsWith('https://edge.example/finished')).toBe(true)
+  })
+
+  it('GET callback prepends slash to FLICKR_OAUTH_SUCCESS_REDIRECT without leading slash', async () => {
+    delete process.env.PUBLIC_APP_ORIGIN
+    process.env.FLICKR_OAUTH_SUCCESS_REDIRECT = 'no-leading-slash'
+    vi.mocked(documentStore.getDocument).mockResolvedValue({
+      uid: 'user-1',
+      oauthTokenSecret: 'sec',
+      createdAt: new Date().toISOString(),
+    })
+    const app = await buildApp()
+    const res = await request(app)
+      .get('/api/oauth/flickr/callback')
+      .set('Host', 'api.internal')
+      .query({ oauth_token: 'tok', oauth_verifier: 'ver' })
+      .expect(302)
+    expect(res.headers.location).toMatch(/no-leading-slash/)
+    expect(res.headers.location).toContain('http://api.internal/')
   })
 
   it('GET callback allows absolute redirect targets from success redirect setting', async () => {

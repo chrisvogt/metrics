@@ -94,6 +94,11 @@ describe('flickr-oauth1a', () => {
     })
   })
 
+  it('parseFormStyleBody leaves values that decodeURIComponent rejects', () => {
+    expect(parseFormStyleBody('k=%')).toEqual({ k: '%' })
+    expect(parseFormStyleBody('%=1')).toEqual({ '%': '1' })
+  })
+
   it('access-token fullname normalization does not double-decode (literal % in display name)', () => {
     const parsed = parseFormStyleBody(
       'fullname=100%25+Done&oauth_token=t&oauth_token_secret=s&user_nsid=n&username=u'
@@ -124,6 +129,15 @@ describe('flickr-oauth1a', () => {
     ).toEqual([
       ['b', '1'],
       ['b', '1'],
+    ])
+    expect(
+      sortParamPairs([
+        ['k', 'z'],
+        ['k', 'a'],
+      ])
+    ).toEqual([
+      ['k', 'a'],
+      ['k', 'z'],
     ])
   })
 

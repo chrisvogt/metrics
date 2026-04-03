@@ -12,6 +12,8 @@ describe('oauth-return-path', () => {
     expect(validateReturnTo('/onboarding')).toBe('/onboarding')
     expect(validateReturnTo('/?providers=open')).toBe('/?providers=open')
     expect(validateReturnTo('/onboarding?step=connections')).toBe('/onboarding?step=connections')
+    expect(validateReturnTo('  /trimmed-path  ')).toBe('/trimmed-path')
+    expect(validateReturnTo('/path?x=1#pane')).toBe('/path?x=1#pane')
   })
 
   it('validateReturnTo rejects nullish and non-strings', () => {
@@ -54,5 +56,16 @@ describe('oauth-return-path', () => {
     const url = withFlickrOAuthFlash('/x', 'error', '')
     expect(url).not.toContain('reason=')
     expect(url).toContain('status=error')
+  })
+
+  it('withFlickrOAuthFlash omits reason when error status and reason omitted', () => {
+    const url = withFlickrOAuthFlash('/y', 'error')
+    expect(url).toBe('/y?oauth=flickr&status=error')
+    expect(url).not.toContain('reason=')
+  })
+
+  it('withFlickrOAuthFlash handles hash-only path and success ignores extra reason arg', () => {
+    expect(withFlickrOAuthFlash('/#section', 'success')).toBe('/?oauth=flickr&status=success#section')
+    expect(withFlickrOAuthFlash('/z', 'success', 'nope')).toBe('/z?oauth=flickr&status=success')
   })
 })

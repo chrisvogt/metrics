@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.26.0] - 2026-04-03
+
+### Added
+
+- **Flickr OAuth 1.0a** — `POST /api/oauth/flickr/start` (session + Bearer), `GET /api/oauth/flickr/callback` (Flickr redirect; rate-limited), `DELETE /api/oauth/flickr` to cancel or disconnect. Short-lived pending bridge docs under `oauth_flickr_pending/{requestToken}` (**Admin SDK** only; Firestore rules **deny** client SDK access). User tokens stored with **`encryptJsonEnvelope`** and **`INTEGRATION_TOKEN_MASTER_KEY`** (see `.env.template` and runtime config).
+- **`fetchPhotos({ oauth })`** — OAuth-signed `flickr.people.getPhotos` when a resolved per-user auth payload is passed; legacy **API key + `FLICKR_USER_ID`** path unchanged. Shared HTTP timeout (**`FLICKR_HTTP_TIMEOUT_MS`**); Flickr **`stat: fail`** surfaced as errors for both paths.
+- **Configuration** — **`FLICKR_API_SECRET`**, **`FLICKR_OAUTH_CALLBACK_URL`**, optional **`FLICKR_OAUTH_SUCCESS_REDIRECT`**, **`PUBLIC_APP_ORIGIN`**, and **`INTEGRATION_TOKEN_MASTER_KEY`** documented in **`.env.template`**.
+
+### Changed
+
+- **`PUT /api/onboarding/progress`** — Response **`payload`** is the same normalized progress as **`GET`** (**`loadOnboardingStateForApi`**) so clients immediately see fields such as **`integrationStatuses`** (for example **`pending_oauth`**) after save.
+- **Rate limiting** — Handlers apply **`rateLimit()` from `express-rate-limit`** at route registration (not a small wrapper) so **CodeQL `js/missing-rate-limiting`** recognizes guards. **`GET /api/widgets/:provider`** is rate-limited.
+- **CSRF** — **`/api/oauth/flickr/callback`** added to the CSRF exclude list so Flickr’s GET redirect succeeds without an XSRF header.
+
+### Security
+
+- **OAuth callback** — Callback query parsed only for **`oauth_token`** / **`oauth_verifier`** via **`readFlickrOAuthCallbackQuery`**; avoids logging OAuth material.
+- **Express 5** — **`GET /api/widgets/:provider`** normalizes **`req.params.provider`** from **`string | string[]`** before use.
+
 ## [0.25.9] - 2026-03-31
 
 ### Changed
