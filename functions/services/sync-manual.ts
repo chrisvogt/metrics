@@ -22,18 +22,21 @@ export const runSyncForProvider = async ({
   provider,
   syncJobQueue,
   userId = getDefaultWidgetUserId(),
+  integrationLookupUserId,
   onProgress,
 }: {
   documentStore: DocumentStore
   provider: SyncProviderId
   syncJobQueue: SyncJobQueue
   userId?: string
+  integrationLookupUserId?: string
   onProgress?: SyncProgressReporter
 }): Promise<ManualSyncResult> => {
   const enqueue = await syncJobQueue.enqueue({
     mode: 'sync',
     provider,
     userId,
+    ...(integrationLookupUserId ? { integrationLookupUserId } : {}),
   })
 
   const beforeJob = await syncJobQueue.getJob(enqueue.jobId)

@@ -364,11 +364,13 @@ export function createExpressApp({
   })
 
   const runSyncHandler = async (
-    provider: SyncProviderId
+    provider: SyncProviderId,
+    integrationLookupUserId?: string
   ): Promise<ManualSyncResult> => runSyncForProvider({
     documentStore,
     provider,
     syncJobQueue,
+    ...(integrationLookupUserId ? { integrationLookupUserId } : {}),
   })
 
   expressApp.get(
@@ -445,6 +447,7 @@ export function createExpressApp({
           documentStore,
           provider,
           syncJobQueue,
+          ...(req.user?.uid ? { integrationLookupUserId: req.user.uid } : {}),
           onProgress: (event) => writeEvent({ type: 'progress', ...event }),
         })
         writeEvent({ type: 'done', result })
@@ -475,7 +478,7 @@ export function createExpressApp({
       }
 
       try {
-        const result = await runSyncHandler(provider)
+        const result = await runSyncHandler(provider, req.user?.uid)
         res.status(200).send(result)
       } catch (err) {
         logger.error(`Error syncing ${provider} data.`, err)

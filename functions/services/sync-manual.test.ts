@@ -86,6 +86,33 @@ describe('runSyncForProvider', () => {
     expect(processSyncJob).toHaveBeenCalled()
   })
 
+  it('passes integrationLookupUserId through to enqueue when provided', async () => {
+    vi.mocked(syncJobQueue.enqueue).mockResolvedValueOnce({
+      jobId: 'sync-chrisvogt-flickr',
+      status: 'enqueued',
+    })
+    vi.mocked(syncJobQueue.claimJob).mockResolvedValueOnce(null)
+    vi.mocked(syncJobQueue.getJob).mockResolvedValue({
+      jobId: 'sync-chrisvogt-flickr',
+      status: 'queued',
+    })
+
+    await runSyncForProvider({
+      documentStore,
+      provider: 'flickr',
+      syncJobQueue,
+      userId: 'chrisvogt',
+      integrationLookupUserId: 'firebase-uid-1',
+    })
+
+    expect(syncJobQueue.enqueue).toHaveBeenCalledWith({
+      mode: 'sync',
+      provider: 'flickr',
+      userId: 'chrisvogt',
+      integrationLookupUserId: 'firebase-uid-1',
+    })
+  })
+
   it('returns NOOP worker status when the job cannot be claimed', async () => {
     vi.mocked(syncJobQueue.claimJob).mockResolvedValueOnce(null)
 
