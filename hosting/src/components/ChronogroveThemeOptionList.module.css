@@ -57,8 +57,8 @@
   margin-top: 0.35rem;
 }
 
-.swatchStrip[data-theme-preview='dark-forest'] {
-  background: linear-gradient(90deg, #050806, #162520, #7bc4a8);
+.swatchStrip[data-theme-preview='sonoran-dusk'] {
+  background: linear-gradient(90deg, #08061a, #381838, #e88838);
 }
 
 .swatchStrip[data-theme-preview='starry-night'] {

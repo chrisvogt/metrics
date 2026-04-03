@@ -1,4 +1,5 @@
 .dashboard {
+  position: relative;
   display: flex;
   min-height: 100vh;
 }
@@ -150,6 +151,8 @@ a.logoSub:hover {
 }
 
 .main {
+  position: relative;
+  z-index: 1;
   flex: 1;
   margin-left: 260px;
   min-height: 100vh;

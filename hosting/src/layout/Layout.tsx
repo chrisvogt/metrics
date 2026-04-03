@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
 import type { User } from 'firebase/auth'
 
+import { AuthScene } from '@/components/AuthScene'
 import { getTenantDisplayHost } from '../lib/tenantDisplay'
 import { UserMenu } from '../components/UserMenu'
 import styles from './Layout.module.css'
@@ -89,6 +90,7 @@ export function Layout({ children, user, activeSection, onSectionChange }: Layou
 
   return (
     <div className={styles.dashboard}>
+      {activeSection !== 'auth' ? <AuthScene /> : null}
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.sidebarHeader}>
           <Link href="/" className={styles.logoLink}>

@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import styles from './AuthScene.module.css'
 
 const StarryNightScene = dynamic(() => import('./StarryNightScene'), { ssr: false })
-const DarkForestScene = dynamic(() => import('./DarkForestScene'), { ssr: false })
+const SonoranDuskScene = dynamic(() => import('./SonoranDuskScene'), { ssr: false })
 
 export function AuthScene() {
   const { resolvedTheme } = useTheme()
@@ -14,8 +14,8 @@ export function AuthScene() {
 
   useEffect(() => setMounted(true), [])
 
-  const theme = mounted ? resolvedTheme : 'dark-forest'
-  const Scene = theme === 'starry-night' ? StarryNightScene : DarkForestScene
+  const theme = mounted ? resolvedTheme : 'sonoran-dusk'
+  const Scene = theme === 'starry-night' ? StarryNightScene : SonoranDuskScene
 
   return (
     <div className={styles.root} aria-hidden>

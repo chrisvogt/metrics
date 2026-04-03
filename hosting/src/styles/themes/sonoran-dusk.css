@@ -1,0 +1,54 @@
+/*
+ * Sonoran Dusk — matches `src/theme/sonoranDuskPalette.ts` / `SonoranDuskScene`.
+ * Warm sunset accent (#e88838) on violet–plum base; no mint UI green.
+ */
+html[data-theme='sonoran-dusk'],
+html:not([data-theme]) {
+  color-scheme: dark;
+
+  --bg: #0e0814;
+  --bg-elevated: #161022;
+  --surface: rgba(26, 20, 42, 0.9);
+  --surface-strong: #1c1428;
+  --surface-hover: rgba(42, 32, 58, 0.96);
+  --surface-soft: rgba(232, 136, 56, 0.09);
+
+  --border: rgba(176, 168, 208, 0.16);
+  --border-strong: rgba(232, 152, 100, 0.32);
+
+  --text: #eee8f0;
+  --text-muted: #9b90b0;
+  --text-soft: #6d6285;
+
+  --accent: #e88838;
+  --accent-hover: #f0a158;
+  --accent-soft: rgba(232, 136, 56, 0.18);
+  --accent-strong: #ffc078;
+
+  /* “OK” = cool afterglow sky, distinct from sunset accent */
+  --success: #6eb8c4;
+  --error: #c75a52;
+  --insight: #c9a870;
+
+  --shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.58);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.36);
+
+  --glyph-glow: rgba(232, 136, 56, 0.48);
+  --scene-bg: #08061a;
+  --scene-fog: #180c10;
+  --vignette-mid: rgba(12, 6, 22, 0.38);
+  --vignette-edge: rgba(8, 4, 14, 0.72);
+
+  --selection-bg: rgba(232, 136, 56, 0.38);
+
+  --on-accent-fg: #140818;
+}
+
+html[data-theme='sonoran-dusk'] body,
+html:not([data-theme]) body {
+  background:
+    radial-gradient(ellipse 110% 75% at 50% -22%, rgba(32, 28, 72, 0.38), transparent 52%),
+    radial-gradient(ellipse 85% 55% at 88% 105%, rgba(200, 88, 32, 0.09), transparent 48%),
+    radial-gradient(ellipse 70% 45% at 8% 95%, rgba(88, 36, 48, 0.07), transparent 42%),
+    linear-gradient(180deg, #140e20 0%, var(--bg) 45%, #06030c 100%);
+}

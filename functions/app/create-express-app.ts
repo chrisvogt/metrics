@@ -50,7 +50,8 @@ interface CreateExpressAppOptions {
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
 
-const USER_UI_THEMES = new Set(['dark-forest', 'starry-night'])
+const DEFAULT_USER_UI_THEME = 'sonoran-dusk'
+const USER_UI_THEMES = new Set(['sonoran-dusk', 'starry-night'])
 
 const ONBOARDING_USERNAME_RATE_WINDOW_MS = 15 * 60 * 1000
 /** Username checks are enumerable; keep a stricter cap than generic read APIs. */
@@ -569,8 +570,10 @@ export function createExpressApp({
           raw && typeof raw === 'object' && !Array.isArray(raw)
             ? (raw as Record<string, unknown>)
             : {}
-        let theme: string = typeof settings.theme === 'string' ? settings.theme : 'dark-forest'
-        if (!USER_UI_THEMES.has(theme)) theme = 'dark-forest'
+        let theme: string =
+          typeof settings.theme === 'string' ? settings.theme : DEFAULT_USER_UI_THEME
+        if (theme === 'dark-forest') theme = 'sonoran-dusk'
+        if (!USER_UI_THEMES.has(theme)) theme = DEFAULT_USER_UI_THEME
         res.status(200).json(buildSuccessResponse({ theme }))
       } catch (err) {
         logger.error('Error loading user settings', { uid, error: err })

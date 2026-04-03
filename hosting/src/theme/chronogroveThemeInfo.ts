@@ -5,10 +5,10 @@ export const CHRONOGROVE_THEME_INFO: Record<
   ChronogroveThemeId,
   { label: string; menuLabel: string; blurb: string }
 > = {
-  'dark-forest': {
-    label: 'Dark Forest',
-    menuLabel: 'Dark Forest',
-    blurb: 'Void grove, phosphor lines, and the cinematic login scene.',
+  'sonoran-dusk': {
+    label: 'Sonoran Dusk',
+    menuLabel: 'Sonoran Dusk',
+    blurb: 'Desert sunset silhouettes, warm sky, and the cinematic login scene.',
   },
   'starry-night': {
     label: 'Starry Night',

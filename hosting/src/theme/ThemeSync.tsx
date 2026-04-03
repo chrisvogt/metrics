@@ -1,17 +1,18 @@
 'use client'
 
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, type ReactNode } from 'react'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/auth/AuthContext'
 import { apiClient } from '@/auth/apiClient'
 import {
+  CHRONOGROVE_THEME_STORAGE_KEY,
   type ChronogroveThemeId,
-  DEFAULT_THEME,
   isChronogroveTheme,
+  normalizeChronogroveThemeId,
 } from '@/theme/chronogroveTheme'
 
 function normalizeTheme(value: unknown): ChronogroveThemeId {
-  return isChronogroveTheme(value) ? value : DEFAULT_THEME
+  return normalizeChronogroveThemeId(value)
 }
 
 /**
@@ -21,6 +22,19 @@ function normalizeTheme(value: unknown): ChronogroveThemeId {
 export function ThemeSync({ children }: { children: ReactNode }) {
   const { user, apiSessionReady } = useAuth()
   const { setTheme, resolvedTheme } = useTheme()
+
+  useLayoutEffect(() => {
+    try {
+      const raw = localStorage.getItem(CHRONOGROVE_THEME_STORAGE_KEY)
+      if (raw === 'dark-forest') {
+        const next = normalizeChronogroveThemeId(raw)
+        localStorage.setItem(CHRONOGROVE_THEME_STORAGE_KEY, next)
+        setTheme(next)
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [setTheme])
 
   useEffect(() => {
     if (!user || !apiSessionReady) return

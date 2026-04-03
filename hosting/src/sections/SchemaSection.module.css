@@ -43,9 +43,10 @@
 
 .sectionText {
   margin: 0 0 1rem;
-  color: var(--text-muted);
+  color: var(--text);
   font-size: 0.95rem;
   max-width: 48rem;
+  line-height: 1.65;
 }
 
 .tableWrap {

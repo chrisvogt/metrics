@@ -77,11 +77,11 @@ describe('FirestoreDocumentStore', () => {
   })
 
   it('merges documents with Firestore merge', async () => {
-    await adapter.mergeDocument('users/u1', { settings: { theme: 'dark-forest' } })
+    await adapter.mergeDocument('users/u1', { settings: { theme: 'sonoran-dusk' } })
 
     expect(mockCollection).toHaveBeenCalledWith('users')
     expect(mockDoc).toHaveBeenCalledWith('u1')
-    expect(mockSet).toHaveBeenCalledWith({ settings: { theme: 'dark-forest' } }, { merge: true })
+    expect(mockSet).toHaveBeenCalledWith({ settings: { theme: 'sonoran-dusk' } }, { merge: true })
   })
 
   it('reads documents when they exist', async () => {
