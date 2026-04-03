@@ -14,6 +14,7 @@ describe('onboarding progress', () => {
       completedSteps: [],
       username: null,
       connectedProviderIds: [],
+      integrationStatuses: {},
       customDomain: null,
     })
   })

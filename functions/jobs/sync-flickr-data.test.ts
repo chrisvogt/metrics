@@ -105,6 +105,8 @@ describe('syncFlickrData', () => {
     expect(logger.info).toHaveBeenCalledWith('Flickr data sync completed successfully', {
       totalPhotos: 2,
       photosFetched: 2,
+      userId: 'chrisvogt',
+      authMode: 'env',
     })
   })
 
@@ -121,6 +123,8 @@ describe('syncFlickrData', () => {
     expect(logger.info).toHaveBeenCalledWith('Flickr data sync completed successfully', {
       totalPhotos: 0,
       photosFetched: 0,
+      userId: 'chrisvogt',
+      authMode: 'env',
     })
   })
 
@@ -136,7 +140,7 @@ describe('syncFlickrData', () => {
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.profile.displayName).toBeUndefined()
-    expect(result.widgetContent.profile.profileURL).toBe('https://www.flickr.com/photos/undefined/')
+    expect(result.widgetContent.profile.profileURL).toBe('https://www.flickr.com/photos//')
   })
 
   it('should handle API errors gracefully', async () => {

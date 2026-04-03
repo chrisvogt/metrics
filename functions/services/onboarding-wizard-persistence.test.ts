@@ -66,7 +66,12 @@ import {
 describe('onboarding-wizard-persistence', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockIntegrationGet.mockResolvedValue({ docs: [{ id: 'spotify' }, { id: 'github' }] })
+    mockIntegrationGet.mockResolvedValue({
+      docs: [
+        { id: 'spotify', data: () => ({ status: 'connected', providerId: 'spotify' }) },
+        { id: 'github', data: () => ({ status: 'pending_oauth', providerId: 'github' }) },
+      ],
+    })
     mockBatchCommit.mockResolvedValue(undefined)
   })
 
@@ -93,6 +98,10 @@ describe('onboarding-wizard-persistence', () => {
     })
 
     expect(payload.connectedProviderIds).toEqual(['spotify', 'github'])
+    expect(payload.integrationStatuses).toEqual({
+      spotify: 'connected',
+      github: 'pending_oauth',
+    })
     expect(payload.username).toBe('x')
     expect(mockFirestoreInstance.collection).toHaveBeenCalledWith('users')
   })

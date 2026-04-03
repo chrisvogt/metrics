@@ -30,6 +30,7 @@ import {
   ONBOARDING_USERNAME_PATTERN,
   parseOnboardingProgressBody,
 } from './onboarding-progress.js'
+import { registerFlickrOAuthRoutes } from './oauth-flickr.js'
 import { toStoredDateTime } from '../utils/time.js'
 
 interface LoggerLike {
@@ -147,6 +148,8 @@ const CSRF_EXCLUDED_PATHS_WIDGET_READS = [
   })),
   { path: '/api/onboarding/check-username', type: 'exact' as const },
   { path: '/api/onboarding/check-domain', type: 'exact' as const },
+  /** Flickr redirects here without CSRF headers. */
+  { path: '/api/oauth/flickr/callback', type: 'exact' as const },
 ]
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader?.startsWith('Bearer ')) {
@@ -378,6 +381,16 @@ export function createExpressApp({
       },
     })
   )
+
+  registerFlickrOAuthRoutes({
+    expressApp,
+    authenticateUser,
+    documentStore,
+    logger,
+    isProductionEnvironment: isProductionEnvironment(),
+    allowedEmailDomains: ALLOWED_EMAIL_DOMAINS,
+    createRateLimiter,
+  })
 
   const runSyncHandler = async (
     provider: SyncProviderId
@@ -685,7 +698,14 @@ export function createExpressApp({
           uid,
           parsed: parsed.value,
         })
-        res.status(200).json(buildSuccessResponse(parsed.value))
+        const userPath = `${getUsersCollectionPath()}/${uid}`
+        const userDoc = await documentStore.getDocument<Record<string, unknown>>(userPath)
+        const progress = await loadOnboardingStateForApi({
+          usersCollection: getUsersCollectionPath(),
+          uid,
+          userDoc,
+        })
+        res.status(200).json(buildSuccessResponse(progress))
       } catch (err) {
         if (err instanceof Error && err.message === 'username_taken') {
           res.status(409).json({ ok: false, error: 'Username is already taken' })

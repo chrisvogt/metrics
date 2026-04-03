@@ -17,6 +17,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    /** Short-lived Flickr OAuth request-token lookup. Admin SDK only. */
+    match /oauth_flickr_pending/{requestToken} {
+      allow read, write: if false;
+    }
+
     /**
      * All other paths (including public widget documents under users/{uid}/{provider}/**).
      * Data is served through Cloud Functions / Express (Admin SDK), not the client Firestore SDK.

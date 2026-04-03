@@ -21,6 +21,7 @@ interface OnboardingProgressPayload {
   completedSteps: StepId[]
   username: string | null
   connectedProviderIds: string[]
+  integrationStatuses?: Record<string, string>
   customDomain: string | null
   updatedAt: string
 }
@@ -59,6 +60,8 @@ export function OnboardingSection() {
   const usernameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [connectedProviders, setConnectedProviders] = useState<Set<string>>(new Set())
+  const [integrationStatuses, setIntegrationStatuses] = useState<Record<string, string>>({})
+  const [oauthFlash, setOauthFlash] = useState<string | null>(null)
 
   const [domain, setDomain] = useState('')
   const [dnsStatus, setDnsStatus] = useState<DnsStatus>('idle')
@@ -122,6 +125,10 @@ export function OnboardingSection() {
           const errBody = await res.json().catch(() => ({} as { error?: string }))
           throw new Error(errBody.error ?? `Save failed (${res.status})`)
         }
+        const saved = await res.json().catch(() => ({} as { payload?: OnboardingProgressPayload }))
+        if (saved.payload?.integrationStatuses) {
+          setIntegrationStatuses(saved.payload.integrationStatuses)
+        }
         return true
       } catch (e) {
         setSaveError(e instanceof Error ? e.message : 'Could not save progress.')
@@ -167,6 +174,7 @@ export function OnboardingSection() {
         const savedUsername = p.username ?? ''
         setUsername(savedUsername)
         setConnectedProviders(new Set(p.connectedProviderIds ?? []))
+        setIntegrationStatuses(p.integrationStatuses ?? {})
         setDomain(p.customDomain ?? '')
         setDnsStatus('idle')
         if (savedUsername.length >= 3) {
@@ -187,6 +195,79 @@ export function OnboardingSection() {
       cancelled = true
     }
   }, [user, apiSessionReady, checkUsername])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !hydrated) return
+    const q = new URLSearchParams(window.location.search)
+    if (q.get('oauth') !== 'flickr') return
+    const status = q.get('status')
+    const reason = q.get('reason')
+    if (status === 'success') {
+      setOauthFlash('Flickr is now linked to your account.')
+    } else if (status === 'error') {
+      setOauthFlash(
+        reason
+          ? `Could not complete Flickr authorization (${reason.replace(/_/g, ' ')}).`
+          : 'Could not complete Flickr authorization.'
+      )
+    }
+    const path = window.location.pathname
+    window.history.replaceState(null, '', path)
+  }, [hydrated])
+
+  const reloadProgressFromServer = useCallback(async () => {
+    if (!user || !apiSessionReady) return
+    const idToken = await user.getIdToken()
+    const res = await apiClient.getJson('/api/onboarding/progress', { idToken })
+    if (!res.ok) return
+    const data = await res.json().catch(() => ({} as { payload?: OnboardingProgressPayload }))
+    const p = data.payload
+    if (!p) return
+    if (!isFlowStepId(p.currentStep)) setCurrentStep('username')
+    else setCurrentStep(p.currentStep)
+    setCompletedSteps(new Set(p.completedSteps.filter(isStepId)))
+    setUsername(p.username ?? '')
+    setConnectedProviders(new Set(p.connectedProviderIds ?? []))
+    setIntegrationStatuses(p.integrationStatuses ?? {})
+    setDomain(p.customDomain ?? '')
+  }, [user, apiSessionReady])
+
+  const cancelFlickrPending = async () => {
+    if (!user) return
+    setSaveError(null)
+    try {
+      const idToken = await user.getIdToken()
+      const res = await apiClient.deleteJson('/api/oauth/flickr', { idToken })
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({} as { error?: string }))
+        throw new Error(errBody.error ?? `Cancel failed (${res.status})`)
+      }
+      await reloadProgressFromServer()
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Could not cancel Flickr link.')
+    }
+  }
+
+  const handleOAuthProviderConnect = async (providerId: string) => {
+    if (providerId !== 'flickr' || !user) return
+    setSaveError(null)
+    setOauthFlash(null)
+    try {
+      const idToken = await user.getIdToken()
+      const res = await apiClient.postJson('/api/oauth/flickr/start', {}, { idToken })
+      const data = (await res.json()) as {
+        ok?: boolean
+        authorizeUrl?: string
+        error?: string
+      }
+      if (!res.ok || !data.ok || !data.authorizeUrl) {
+        throw new Error(data.error ?? `Could not start Flickr link (${res.status}).`)
+      }
+      window.location.assign(data.authorizeUrl)
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Flickr link failed.')
+    }
+  }
 
   const handleUsernameChange = (value: string) => {
     const sanitized = value.toLowerCase().replace(/[^a-z0-9_-]/g, '')
@@ -390,6 +471,12 @@ export function OnboardingSection() {
               </div>
             )}
 
+            {oauthFlash && (
+              <div className={styles.oauthFlash} role="status">
+                {oauthFlash}
+              </div>
+            )}
+
             {currentStep === 'username' && (
               <div className={styles.stepContent}>
             <h2 className={styles.heading}>Choose your username</h2>
@@ -467,8 +554,18 @@ export function OnboardingSection() {
 
             <ProviderConnectionGrid
               connectedIds={connectedProviders}
+              integrationStatuses={integrationStatuses}
               onToggle={handleConnectProvider}
+              onOAuthProviderConnect={handleOAuthProviderConnect}
             />
+
+            {integrationStatuses.flickr === 'pending_oauth' && (
+              <p className={styles.oauthCancelRow}>
+                <button type="button" className={styles.oauthCancelBtn} onClick={() => void cancelFlickrPending()}>
+                  Cancel Flickr link
+                </button>
+              </p>
+            )}
 
             <div className={styles.stepActions}>
               <button

@@ -56,6 +56,36 @@ export const getFlickrConfig = () => ({
   userId: process.env.FLICKR_USER_ID,
 })
 
+/** Flickr “API Key” is the OAuth 1.0a consumer key; “Secret” is the consumer secret. */
+export const getFlickrOAuthConfig = () => ({
+  consumerKey: process.env.FLICKR_API_KEY,
+  consumerSecret: process.env.FLICKR_API_SECRET ?? process.env.FLICKR_CONSUMER_SECRET,
+  callbackUrl:
+    process.env.FLICKR_OAUTH_CALLBACK_URL ??
+    process.env.FLICKR_OAUTH_REDIRECT_URI ??
+    '',
+  /** Browser redirect after successful token exchange (path or absolute URL). */
+  appSuccessRedirect:
+    process.env.FLICKR_OAUTH_SUCCESS_REDIRECT?.trim() || '/onboarding?oauth=flickr&status=success',
+})
+
+/**
+ * 32+ byte secret (base64). Used with HKDF to derive per-user AES-256 keys for integration tokens.
+ * Store in Google Secret Manager (or Cloud KMS-wrapped DEKs) in production.
+ */
+export const getIntegrationTokenMasterKeyBytes = (): Buffer => {
+  const b64 = process.env.INTEGRATION_TOKEN_MASTER_KEY
+  if (!b64) {
+    throw new Error('INTEGRATION_TOKEN_MASTER_KEY is not configured')
+  }
+  const buf = Buffer.from(b64.trim(), 'base64')
+  if (buf.length < 32) {
+    throw new Error('INTEGRATION_TOKEN_MASTER_KEY must decode to at least 32 bytes')
+  }
+  return buf
+}
+
+
 export const getGitHubConfig = () => ({
   accessToken: process.env.GITHUB_ACCESS_TOKEN,
   username: process.env.GITHUB_USERNAME,

@@ -13,6 +13,7 @@ interface OnboardingProgressPayload {
   completedSteps: string[]
   username: string | null
   connectedProviderIds: string[]
+  integrationStatuses?: Record<string, string>
   customDomain: string | null
 }
 
@@ -30,6 +31,7 @@ export function AddProvidersFlyout({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [connected, setConnected] = useState<Set<string>>(new Set())
+  const [integrationStatuses, setIntegrationStatuses] = useState<Record<string, string>>({})
   const [progressReady, setProgressReady] = useState(false)
   const baselineRef = useRef<OnboardingProgressPayload | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -47,11 +49,13 @@ export function AddProvidersFlyout({
       if (!p) throw new Error('No onboarding data returned.')
       baselineRef.current = p
       setConnected(new Set(p.connectedProviderIds ?? []))
+      setIntegrationStatuses(p.integrationStatuses ?? {})
       setProgressReady(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Load failed.')
       baselineRef.current = null
       setConnected(new Set())
+      setIntegrationStatuses({})
       setProgressReady(false)
     } finally {
       setLoading(false)
@@ -90,6 +94,42 @@ export function AddProvidersFlyout({
     })
   }
 
+  const cancelFlickrPending = async () => {
+    if (!user) return
+    setError(null)
+    try {
+      const idToken = await user.getIdToken()
+      const res = await apiClient.deleteJson('/api/oauth/flickr', { idToken })
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({} as { error?: string }))
+        throw new Error(errBody.error ?? `Cancel failed (${res.status})`)
+      }
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not cancel Flickr link.')
+    }
+  }
+
+  const handleOAuthProviderConnect = async (providerId: string) => {
+    if (providerId !== 'flickr' || !user) return
+    setError(null)
+    try {
+      const idToken = await user.getIdToken()
+      const res = await apiClient.postJson('/api/oauth/flickr/start', {}, { idToken })
+      const data = (await res.json()) as {
+        ok?: boolean
+        authorizeUrl?: string
+        error?: string
+      }
+      if (!res.ok || !data.ok || !data.authorizeUrl) {
+        throw new Error(data.error ?? `Could not start Flickr link (${res.status}).`)
+      }
+      window.location.assign(data.authorizeUrl)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Flickr link failed.')
+    }
+  }
+
   const handleSave = async () => {
     if (!user) return
     const baseline = baselineRef.current
@@ -113,7 +153,15 @@ export function AddProvidersFlyout({
         const errBody = await res.json().catch(() => ({} as { error?: string }))
         throw new Error(errBody.error ?? `Save failed (${res.status})`)
       }
-      baselineRef.current = { ...baseline, connectedProviderIds: Array.from(connected) }
+      const saved = (await res.json()) as { payload?: OnboardingProgressPayload }
+      const p = saved.payload
+      if (p) {
+        baselineRef.current = p
+        setConnected(new Set(p.connectedProviderIds ?? []))
+        setIntegrationStatuses(p.integrationStatuses ?? {})
+      } else {
+        baselineRef.current = { ...baseline, connectedProviderIds: Array.from(connected) }
+      }
       onSaved?.()
       onClose()
     } catch (e) {
@@ -183,7 +231,19 @@ export function AddProvidersFlyout({
             </div>
           )}
           {user && !loading && (
-            <ProviderConnectionGrid connectedIds={connected} onToggle={toggle} />
+            <ProviderConnectionGrid
+              connectedIds={connected}
+              integrationStatuses={integrationStatuses}
+              onToggle={toggle}
+              onOAuthProviderConnect={handleOAuthProviderConnect}
+            />
+          )}
+          {user && !loading && integrationStatuses.flickr === 'pending_oauth' && (
+            <p className={styles.cancelFlickr}>
+              <button type="button" className={styles.cancelFlickrBtn} onClick={() => void cancelFlickrPending()}>
+                Cancel Flickr link
+              </button>
+            </p>
           )}
           {error && (
             <div className={styles.error} role="alert">
