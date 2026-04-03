@@ -21,7 +21,7 @@ Consumer experiences today include the open-source [**Gatsby theme Chronogrove**
 This repository holds the **backend and operator console** (schema browser, status checks, authenticated sync). The themed marketing site and MDX content live in the Gatsby theme and site repos above.
 
 > [!NOTE]
-> **License:** This project is distributed under the [Apache License 2.0](LICENSE) (previously MIT). Details are in the root [CHANGELOG](CHANGELOG.md). You can remove or shorten this callout after the change is reflected in your next tagged release notes.
+> **License:** This project is distributed under the [Apache License 2.0](LICENSE) (previously MIT). Details are in the root [CHANGELOG](CHANGELOG.md).
 
 ## Quick start (first 5 minutes)
 
