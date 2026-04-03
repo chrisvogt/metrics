@@ -1,6 +1,7 @@
 {
   "name": "chronogrove",
   "private": true,
+  "license": "Apache-2.0",
   "description": "Chronogrove — Firebase-hosted API and operator console for provider-backed widgets (Discogs, Steam, Instagram, etc.)",
   "packageManager": "pnpm@10.32.1",
   "scripts": {

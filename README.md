@@ -293,4 +293,4 @@ Reference docs under [`docs/`](docs/):
 
 ## Copyright & License
 
-Copyright © 2020-2026 [Chris Vogt](https://www.chrisvogt.me). Released under the [MIT License](LICENSE).
+Copyright © 2020-2026 [Chris Vogt](https://www.chrisvogt.me). Licensed under the [Apache License 2.0](LICENSE).
