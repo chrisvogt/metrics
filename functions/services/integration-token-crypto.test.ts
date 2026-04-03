@@ -14,7 +14,9 @@ describe('integration-token-crypto', () => {
     const uid = 'firebaseUid1'
     const plain = { oauthToken: 't', oauthTokenSecret: 's' }
     const env = encryptJsonEnvelope(uid, plain)
+    expect(env.schemaVersion).toBe(1)
     expect(env.keyVersion).toBe(1)
+    expect(env.v).toBeUndefined()
     expect(decryptJsonEnvelope(uid, env)).toEqual(plain)
   })
 
@@ -23,7 +25,12 @@ describe('integration-token-crypto', () => {
     const uid = 'firebaseUid1'
     const plain = { x: 1 }
     const full = encryptJsonEnvelope(uid, plain)
-    const legacyShape = { v: full.v, iv: full.iv, tag: full.tag, ciphertext: full.ciphertext }
+    const legacyShape = {
+      v: 1,
+      iv: full.iv,
+      tag: full.tag,
+      ciphertext: full.ciphertext,
+    }
     expect(decryptJsonEnvelope(uid, legacyShape as import('./integration-token-crypto.js').IntegrationCredentialEnvelope)).toEqual(plain)
   })
 

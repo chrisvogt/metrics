@@ -3,6 +3,7 @@ import { getFlickrOAuthConfig } from '../config/backend-config.js'
 import { getUsersCollectionPath } from '../config/backend-paths.js'
 import {
   decryptJsonEnvelope,
+  readCredentialEnvelopeSchemaVersion,
   type IntegrationCredentialEnvelope,
 } from './integration-token-crypto.js'
 
@@ -39,7 +40,8 @@ export async function loadFlickrAuthForUser(
   if (!userNsid) return null
 
   const env = doc.credentialEnvelope as IntegrationCredentialEnvelope | undefined
-  if (!env || env.v !== 1) return null
+  const schemaVersion = env ? readCredentialEnvelopeSchemaVersion(env) : undefined
+  if (!env || schemaVersion !== 1) return null
 
   const { consumerKey, consumerSecret } = getFlickrOAuthConfig()
   if (!consumerKey || !consumerSecret) return null

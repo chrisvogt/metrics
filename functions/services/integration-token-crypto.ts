@@ -11,10 +11,10 @@ const AES_KEY_LEN = 32
 const GCM_IV_LEN = 12
 
 /**
- * Envelope layout version (JSON shape: v, keyVersion?, iv, tag, ciphertext).
- * Bump only if the serialized fields change, not when rotating the master key.
+ * Envelope **JSON shape** (fields: schemaVersion, keyVersion?, iv, tag, ciphertext).
+ * Bump only when the serialized structure changes, not when rotating the master key.
  */
-export const INTEGRATION_CREDENTIAL_ENVELOPE_V = 1 as const
+export const INTEGRATION_CREDENTIAL_SCHEMA_VERSION = 1 as const
 
 /**
  * Master-key / KDF generation. `1` must keep the same HKDF info string as the original
@@ -40,7 +40,10 @@ export function deriveUserIntegrationKey(uid: string, keyVersion: number): Buffe
 }
 
 export interface IntegrationCredentialEnvelope {
-  v: typeof INTEGRATION_CREDENTIAL_ENVELOPE_V
+  /** Current field name for envelope layout version. */
+  schemaVersion?: number
+  /** Legacy stored field; treated like `schemaVersion` when present. */
+  v?: number
   /**
    * Which master-key generation this ciphertext was derived under (see `deriveUserIntegrationKey`).
    * Omitted on older writes; treated as `1` when missing for backward compatibility.
@@ -49,6 +52,13 @@ export interface IntegrationCredentialEnvelope {
   iv: string
   tag: string
   ciphertext: string
+}
+
+/** Resolve layout version from new or legacy Firestore payloads. */
+export function readCredentialEnvelopeSchemaVersion(
+  envelope: IntegrationCredentialEnvelope
+): number | undefined {
+  return envelope.schemaVersion ?? envelope.v
 }
 
 export function encryptJsonEnvelope(
@@ -63,7 +73,7 @@ export function encryptJsonEnvelope(
   const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()])
   const tag = cipher.getAuthTag()
   return {
-    v: INTEGRATION_CREDENTIAL_ENVELOPE_V,
+    schemaVersion: INTEGRATION_CREDENTIAL_SCHEMA_VERSION,
     keyVersion,
     iv: iv.toString('base64'),
     tag: tag.toString('base64'),
@@ -72,8 +82,9 @@ export function encryptJsonEnvelope(
 }
 
 export function decryptJsonEnvelope<T>(uid: string, envelope: IntegrationCredentialEnvelope): T {
-  if (envelope.v !== INTEGRATION_CREDENTIAL_ENVELOPE_V) {
-    throw new Error('Unsupported credential envelope version')
+  const schemaVersion = readCredentialEnvelopeSchemaVersion(envelope)
+  if (schemaVersion !== INTEGRATION_CREDENTIAL_SCHEMA_VERSION) {
+    throw new Error('Unsupported credential envelope schemaVersion')
   }
   const keyVersion = envelope.keyVersion ?? 1
   if (!Number.isInteger(keyVersion) || keyVersion < 1) {
