@@ -253,8 +253,13 @@ export function OnboardingSection() {
     setSaveError(null)
     setOauthFlash(null)
     try {
+      await persistProgress(buildSnapshot())
+      const returnTo =
+        typeof window !== 'undefined'
+          ? `${window.location.pathname}${window.location.search}`
+          : '/onboarding'
       const idToken = await user.getIdToken()
-      const res = await apiClient.postJson('/api/oauth/flickr/start', {}, { idToken })
+      const res = await apiClient.postJson('/api/oauth/flickr/start', { returnTo }, { idToken })
       const data = (await res.json()) as {
         ok?: boolean
         authorizeUrl?: string

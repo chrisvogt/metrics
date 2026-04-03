@@ -114,8 +114,16 @@ export function AddProvidersFlyout({
     if (providerId !== 'flickr' || !user) return
     setError(null)
     try {
+      const returnTo =
+        typeof window !== 'undefined'
+          ? (() => {
+              const u = new URL(window.location.href)
+              u.searchParams.set('providers', 'open')
+              return `${u.pathname}${u.search}`
+            })()
+          : '/?providers=open'
       const idToken = await user.getIdToken()
-      const res = await apiClient.postJson('/api/oauth/flickr/start', {}, { idToken })
+      const res = await apiClient.postJson('/api/oauth/flickr/start', { returnTo }, { idToken })
       const data = (await res.json()) as {
         ok?: boolean
         authorizeUrl?: string

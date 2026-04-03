@@ -1,5 +1,5 @@
 import type { DocumentStore } from '../ports/document-store.js'
-import type express from 'express'
+import express from 'express'
 
 import { getFlickrOAuthConfig } from '../config/backend-config.js'
 import {
@@ -18,6 +18,7 @@ import {
   FLICKR_INTEGRATION_ID,
   type FlickrOAuthCredentialPayload,
 } from '../services/flickr-integration-credentials.js'
+import { validateReturnTo, withFlickrOAuthFlash } from '../services/oauth-return-path.js'
 
 const PENDING_TTL_MS = 15 * 60 * 1000
 
@@ -78,10 +79,12 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
   expressApp.post(
     '/api/oauth/flickr/start',
     createRateLimiter(15 * 60 * 1000, 30),
+    express.json({ limit: '4kb' }),
     authenticateUser,
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid
+      const returnTo = validateReturnTo((req.body as { returnTo?: unknown } | undefined)?.returnTo)
       if (!allowedEmail(req.user.email, isProductionEnvironment, allowedEmailDomains)) {
         res.status(403).json({ ok: false, error: 'Forbidden' })
         return
@@ -130,6 +133,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
           uid,
           oauthTokenSecret,
           createdAt: toStoredDateTime(),
+          ...(returnTo ? { returnTo } : {}),
         })
 
         await documentStore.setDocument(integrationPath, {
@@ -155,9 +159,12 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
       const oauthVerifier =
         typeof req.query.oauth_verifier === 'string' ? req.query.oauth_verifier : ''
 
+      let validatedReturnTo: string | null = null
+
       const failRedirect = (reason: string) => {
-        const cfg = getFlickrOAuthConfig()
-        const path = `/onboarding?oauth=flickr&status=error&reason=${encodeURIComponent(reason)}`
+        const path = validatedReturnTo
+          ? withFlickrOAuthFlash(validatedReturnTo, 'error', reason)
+          : withFlickrOAuthFlash('/onboarding', 'error', reason)
         res.redirect(302, resolveRedirectUrl(req, path))
       }
 
@@ -172,6 +179,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
         uid?: string
         oauthTokenSecret?: string
         createdAt?: string
+        returnTo?: string
       }>(pendingPath)
 
       if (!pending?.uid || !pending.oauthTokenSecret) {
@@ -179,6 +187,8 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
         failRedirect('session_expired')
         return
       }
+
+      validatedReturnTo = validateReturnTo(pending.returnTo)
 
       const created = pending.createdAt ? Date.parse(pending.createdAt) : NaN
       if (!Number.isFinite(created) || Date.now() - created > PENDING_TTL_MS) {
@@ -245,7 +255,11 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
         logger.info('Flickr OAuth completed', { uid, nsid: access.userNsid })
 
         const cfg = getFlickrOAuthConfig()
-        res.redirect(302, resolveRedirectUrl(req, cfg.appSuccessRedirect))
+        const successPath =
+          validatedReturnTo != null
+            ? withFlickrOAuthFlash(validatedReturnTo, 'success')
+            : cfg.appSuccessRedirect
+        res.redirect(302, resolveRedirectUrl(req, successPath))
       } catch (err) {
         logger.error('Flickr OAuth callback failed', { uid, error: err })
         failRedirect('token_exchange_failed')
