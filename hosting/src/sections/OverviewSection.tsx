@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
+import { useAuth } from '@/auth/AuthContext'
 import { getAppBaseUrl } from '../lib/baseUrl'
+import { AddProvidersFlyout } from '@/components/onboarding/AddProvidersFlyout'
 import {
   extractLastSynced,
   extractOverviewMetrics,
@@ -11,9 +12,6 @@ import {
 } from '../lib/overviewMetrics'
 import { getTenantDisplayHost } from '../lib/tenantDisplay'
 import styles from './OverviewSection.module.css'
-import type { GroveProvider } from '../components/GroveScene'
-
-const GroveScene = dynamic(() => import('../components/GroveScene'), { ssr: false })
 
 interface ProviderConfig {
   id: string
@@ -70,8 +68,14 @@ const initialState = (): ProviderState => ({
 })
 
 export function OverviewSection() {
+  const { user } = useAuth()
   const baseUrl = getAppBaseUrl()
   const [states, setStates] = useState<Record<string, ProviderState>>({})
+  const [addProvidersOpen, setAddProvidersOpen] = useState(false)
+
+  useEffect(() => {
+    if (!user) setAddProvidersOpen(false)
+  }, [user])
 
   const fetchAll = useCallback(async () => {
     setStates(Object.fromEntries(PROVIDERS.map((p) => [p.id, initialState()])))
@@ -118,12 +122,6 @@ export function OverviewSection() {
   const total = PROVIDERS.length
   const allDone = resolved.length === total && resolved.every((s) => !s.loading)
 
-  const groveProviders: GroveProvider[] = PROVIDERS.map((p) => ({
-    id: p.id,
-    alive: states[p.id]?.ok === true,
-    loading: states[p.id]?.loading ?? true,
-  }))
-
   const tenantHost = getTenantDisplayHost()
 
   return (
@@ -135,7 +133,7 @@ export function OverviewSection() {
           <p className={styles.meta}>
             {!allDone
               ? `${total} providers`
-              : `${healthy} of ${total} stems alive`}
+              : `${healthy} of ${total} providers healthy`}
           </p>
           <nav className={styles.quickLinks} aria-label="Quick navigation">
             {QUICK_LINKS.map((link) => (
@@ -145,10 +143,24 @@ export function OverviewSection() {
             ))}
           </nav>
         </div>
-        <div className={styles.orbWrap} aria-hidden>
-          <GroveScene className={styles.orb} providers={groveProviders} />
-        </div>
+        {user ? (
+          <div className={styles.heroAside}>
+            <button
+              type="button"
+              className={styles.addProviderBtn}
+              onClick={() => setAddProvidersOpen(true)}
+            >
+              Add a provider
+            </button>
+          </div>
+        ) : null}
       </div>
+
+      <AddProvidersFlyout
+        open={addProvidersOpen}
+        onClose={() => setAddProvidersOpen(false)}
+        onSaved={() => void fetchAll()}
+      />
 
       <div className={styles.grid}>
         {PROVIDERS.map((provider, index) => {

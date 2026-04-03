@@ -1,22 +1,9 @@
 .section {
-  max-width: 520px;
-  margin: 0 auto;
-  padding: 2rem 1rem 3rem;
-  min-height: min(88vh, 900px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  composes: sectionNarrow from '../components/authFlow/AuthFlowShell.module.css';
 }
 
 .card {
-  background: linear-gradient(180deg, rgba(10, 14, 32, 0.88), rgba(6, 8, 22, 0.92));
-  border: 1px solid rgba(78, 143, 203, 0.22);
-  border-radius: var(--radius-lg);
-  padding: 2.25rem;
-  box-shadow:
-    var(--shadow-lg),
-    0 0 0 1px rgba(232, 188, 56, 0.06);
-  backdrop-filter: blur(18px) saturate(1.1);
+  composes: card from '../components/authFlow/AuthFlowShell.module.css';
 }
 
 .badge {
@@ -29,7 +16,7 @@
   letter-spacing: 0.1em;
   color: var(--accent);
   background: var(--accent-soft);
-  border: 1px solid rgba(232, 188, 56, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
   border-radius: 999px;
 }
 
@@ -85,7 +72,7 @@
 .input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(78, 143, 203, 0.22);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .inputError {
@@ -94,7 +81,7 @@
 
 .inputError:focus {
   border-color: var(--error);
-  box-shadow: 0 0 0 3px rgba(192, 96, 96, 0.22);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--error) 22%, transparent);
 }
 
 .fieldError {
@@ -111,7 +98,7 @@
   background: linear-gradient(135deg, var(--accent-strong), var(--accent));
   border: none;
   border-radius: 999px;
-  color: #0a0c18;
+  color: var(--on-accent-fg);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -159,7 +146,7 @@
 
 .btnGoogle:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(78, 143, 203, 0.35);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .switchText {

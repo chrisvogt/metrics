@@ -1,32 +1,9 @@
 .section {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 2rem 1rem 3rem;
-  min-height: min(88vh, 900px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  /* Let the card grow with content; avoid clipping tall completion UI */
-  align-items: stretch;
+  composes: sectionWide from '../components/authFlow/AuthFlowShell.module.css';
 }
 
 .card {
-  background: linear-gradient(180deg, rgba(10, 14, 32, 0.88), rgba(6, 8, 22, 0.92));
-  border: 1px solid rgba(78, 143, 203, 0.22);
-  border-radius: var(--radius-lg);
-  padding: 2.25rem;
-  box-shadow:
-    var(--shadow-lg),
-    0 0 0 1px rgba(232, 188, 56, 0.06);
-  backdrop-filter: blur(18px) saturate(1.1);
-  position: relative;
-  /*
-   * Must stay visible: on a flex column parent, overflow:hidden makes this item’s
-   * automatic min-height 0, so the card can shrink and clip children (emoji, CTA).
-   */
-  overflow: visible;
-  flex-shrink: 0;
-  min-height: min-content;
+  composes: card from '../components/authFlow/AuthFlowShell.module.css';
 }
 
 .cardComplete {
@@ -34,17 +11,7 @@
 }
 
 .progressLoading {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  justify-content: center;
-  padding: 2rem 1rem;
-  color: var(--text-muted);
-}
-
-.progressLoading p {
-  margin: 0;
-  font-size: 0.95rem;
+  composes: loadingState from '../components/authFlow/AuthFlowShell.module.css';
 }
 
 .stepPosition {
@@ -156,12 +123,12 @@
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(232, 188, 56, 0.1);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 .stepDotDone {
   border-color: var(--success);
-  background: rgba(78, 143, 203, 0.15);
+  background: color-mix(in srgb, var(--success) 15%, transparent);
   color: var(--success);
 }
 
@@ -229,7 +196,7 @@
   background: linear-gradient(135deg, var(--accent-strong), var(--accent));
   border: none;
   border-radius: 999px;
-  color: #0a0c18;
+  color: var(--on-accent-fg);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -259,7 +226,7 @@
 
 .btnSecondary:hover {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(78, 143, 203, 0.35);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
   color: var(--text);
 }
 
@@ -271,7 +238,7 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 999px;
-  background: rgba(10, 12, 24, 0.3);
+  background: color-mix(in srgb, var(--surface-strong) 40%, transparent);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -301,7 +268,7 @@
 
 .usernameInputWrap:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(78, 143, 203, 0.22);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .usernamePrefix {
@@ -416,8 +383,9 @@
 .providerConnected {
   border-color: var(--provider-color, var(--success));
   background: rgba(255, 255, 255, 0.04);
-  box-shadow: 0 0 0 1px var(--provider-color, var(--success)),
-    inset 0 0 20px rgba(78, 143, 203, 0.05);
+  box-shadow:
+    0 0 0 1px var(--provider-color, var(--success)),
+    inset 0 0 20px color-mix(in srgb, var(--provider-color, var(--success)) 8%, transparent);
 }
 
 .providerIcon {
@@ -482,7 +450,7 @@
 .domainInput:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(78, 143, 203, 0.22);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .dnsInstructions {
@@ -561,8 +529,8 @@
   gap: 0.5rem;
   width: 100%;
   padding: 0.6rem 1rem;
-  background: rgba(78, 143, 203, 0.12);
-  border: 1px solid rgba(78, 143, 203, 0.25);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 28%, transparent);
   border-radius: 999px;
   color: var(--success);
   font-size: 0.9rem;
@@ -572,8 +540,8 @@
 }
 
 .btnVerify:hover:not(:disabled) {
-  background: rgba(78, 143, 203, 0.18);
-  border-color: rgba(78, 143, 203, 0.35);
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
 }
 
 .btnVerify .spinner {

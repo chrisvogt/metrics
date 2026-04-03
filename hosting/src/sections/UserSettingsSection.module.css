@@ -1,0 +1,47 @@
+.section {
+  composes: sectionWide from '../components/authFlow/AuthFlowShell.module.css';
+}
+
+.backLink {
+  composes: backLink from '../components/authFlow/AuthFlowShell.module.css';
+}
+
+.card {
+  composes: card from '../components/authFlow/AuthFlowShell.module.css';
+}
+
+.loadingState {
+  composes: loadingState from '../components/authFlow/AuthFlowShell.module.css';
+}
+
+.pageTitle {
+  composes: pageTitle from '../components/authFlow/AuthFlowShell.module.css';
+}
+
+.pageLede {
+  composes: pageLede from '../components/authFlow/AuthFlowShell.module.css';
+}
+
+.h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.lede {
+  margin: 0 0 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.hint,
+.feedback {
+  margin: 1rem 0 0;
+  font-size: 0.88rem;
+}
+
+.feedback {
+  color: var(--text-muted);
+}

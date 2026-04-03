@@ -9,10 +9,10 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 14% 18%, rgba(121, 137, 255, 0.12), transparent 18%),
-    radial-gradient(circle at 82% 26%, rgba(94, 219, 255, 0.08), transparent 16%),
-    radial-gradient(circle at 46% 78%, rgba(255, 255, 255, 0.035), transparent 18%);
-  opacity: 0.9;
+    radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 20%),
+    radial-gradient(circle at 82% 26%, color-mix(in srgb, var(--success) 10%, transparent), transparent 18%),
+    radial-gradient(circle at 46% 78%, rgba(255, 255, 255, 0.03), transparent 18%);
+  opacity: 0.95;
 }
 
 .header {
@@ -30,9 +30,9 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.85rem 1rem;
-  background: rgba(10, 12, 20, 0.52);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-strong) 52%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   backdrop-filter: blur(24px);
   box-shadow: var(--shadow-md);
 }
@@ -40,35 +40,74 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.75rem;
   color: var(--text);
-  font-size: 0.95rem;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
+  text-decoration: none;
+  transition: filter var(--duration-fast) var(--ease-standard);
 }
 
 .brand:hover {
-  color: var(--text);
+  filter: brightness(1.06);
 }
 
 .brandMark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.9rem;
-  height: 1.9rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
   color: var(--accent-strong);
-  font-size: 1rem;
-  box-shadow: inset 0 0 0 1px rgba(124, 140, 255, 0.08);
+  flex-shrink: 0;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent),
+    0 0 20px color-mix(in srgb, var(--glyph-glow) 25%, transparent);
+  transition:
+    box-shadow var(--duration-base) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
-.brandMeta {
-  color: var(--text-muted);
-  font-weight: 500;
+.brand:hover .brandMark {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent),
+    0 0 28px color-mix(in srgb, var(--glyph-glow) 35%, transparent);
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  line-height: 1.15;
+}
+
+.brandWordmark {
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
   text-transform: none;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.brandChrono {
+  font-weight: 720;
+  letter-spacing: -0.03em;
+}
+
+.brandGrove {
+  font-weight: 560;
+  opacity: 0.88;
+  margin-left: 0.02em;
+}
+
+.brandByline {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  text-transform: none;
+  letter-spacing: 0.01em;
 }
 
 .nav,
@@ -92,7 +131,7 @@
 .actionLink:hover,
 .footerLinks a:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--surface-soft);
 }
 
 .footer {

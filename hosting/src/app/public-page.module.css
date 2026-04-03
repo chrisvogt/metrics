@@ -9,8 +9,8 @@
   border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
-    linear-gradient(180deg, rgba(18, 20, 32, 0.84), rgba(9, 10, 16, 0.94)),
-    radial-gradient(circle at top left, rgba(124, 140, 255, 0.12), transparent 30%);
+    var(--panel-deep-bg),
+    radial-gradient(circle at top left, color-mix(in srgb, var(--accent) 14%, transparent), transparent 30%);
   box-shadow: var(--shadow-lg);
   position: relative;
   overflow: hidden;

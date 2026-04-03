@@ -1,0 +1,127 @@
+.wrap {
+  position: relative;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.45rem 0.2rem 0.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.trigger:hover {
+  background: var(--surface-soft);
+  border-color: var(--border-strong);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--accent-hover);
+  outline-offset: 2px;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--success);
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid var(--border-strong);
+}
+
+.chevron {
+  display: flex;
+  color: var(--text-muted);
+  margin-right: 0.15rem;
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 13.5rem;
+  padding: 0.35rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-elevated) 94%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-md);
+  z-index: 80;
+}
+
+.menuSectionLabel {
+  margin: 0.2rem 0.5rem 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.menuDivider {
+  height: 1px;
+  margin: 0.35rem 0.25rem;
+  background: var(--border);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.menuItem:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.menuItemActive {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.menuItemText {
+  flex: 1;
+  min-width: 0;
+}
+
+.menuCheck {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}

@@ -76,6 +76,14 @@ describe('FirestoreDocumentStore', () => {
     expect(mockSet).toHaveBeenCalledWith({ ok: true })
   })
 
+  it('merges documents with Firestore merge', async () => {
+    await adapter.mergeDocument('users/u1', { settings: { theme: 'sonoran-dusk' } })
+
+    expect(mockCollection).toHaveBeenCalledWith('users')
+    expect(mockDoc).toHaveBeenCalledWith('u1')
+    expect(mockSet).toHaveBeenCalledWith({ settings: { theme: 'sonoran-dusk' } }, { merge: true })
+  })
+
   it('reads documents when they exist', async () => {
     mockGet.mockResolvedValue({
       exists: true,

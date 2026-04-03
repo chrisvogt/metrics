@@ -36,15 +36,15 @@
 
 .hero {
   display: grid;
-  grid-template-columns: 1fr 260px;
+  grid-template-columns: 1fr minmax(200px, 240px);
   align-items: center;
   gap: 1.5rem;
   padding: 2rem 2rem 1.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(135deg, rgba(10, 14, 35, 0.97), rgba(6, 8, 22, 0.99)),
-    radial-gradient(circle at 72% 35%, rgba(78, 143, 203, 0.09), transparent 55%);
+    linear-gradient(135deg, color-mix(in srgb, var(--bg-elevated) 96%, transparent), color-mix(in srgb, var(--bg) 98%, transparent)),
+    radial-gradient(circle at 72% 35%, var(--surface-soft), transparent 55%);
   box-shadow: var(--shadow-lg);
   position: relative;
   overflow: hidden;
@@ -55,7 +55,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg, rgba(78, 143, 203, 0.03), transparent 35%);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 35%);
   pointer-events: none;
 }
 
@@ -116,13 +116,13 @@
 
 .quickLink:hover {
   background: var(--accent-soft);
-  border-color: rgba(232, 188, 56, 0.30);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--accent-strong);
 }
 
-/* ─── 3-D orb ───────────────────────────────────────────── */
+/* ─── Hero CTA ────────────────────────────────────────── */
 
-.orbWrap {
+.heroAside {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -130,10 +130,42 @@
   z-index: 1;
 }
 
-.orb {
-  filter:
-    drop-shadow(0 0 18px rgba(78, 143, 203, 0.22))
-    drop-shadow(0 0 44px rgba(232, 188, 56, 0.12));
+.addProviderBtn {
+  width: 100%;
+  max-width: 220px;
+  padding: 0.85rem 1.15rem;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent-soft) 90%, transparent),
+    rgba(255, 255, 255, 0.03)
+  );
+  color: var(--accent-strong);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent),
+    0 14px 36px color-mix(in srgb, var(--accent) 8%, transparent);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.addProviderBtn:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent),
+    0 18px 44px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.addProviderBtn:focus-visible {
+  outline: 2px solid var(--accent-hover);
+  outline-offset: 3px;
 }
 
 /* ─── Provider grid ─────────────────────────────────────── */
@@ -153,7 +185,7 @@
   padding: 1.25rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(10, 14, 32, 0.93), rgba(6, 8, 20, 0.97));
+  background: var(--panel-deep-bg);
   box-shadow: var(--shadow-md);
   animation: slideUp 0.5s ease both;
   animation-delay: calc(var(--delay, 0) * 1ms);
@@ -200,12 +232,12 @@
 
 .dotOk {
   background: var(--success);
-  box-shadow: 0 0 7px rgba(78, 143, 203, 0.65);
+  box-shadow: 0 0 7px var(--glow-success);
 }
 
 .dotBad {
   background: var(--error);
-  box-shadow: 0 0 7px rgba(251, 113, 133, 0.65);
+  box-shadow: 0 0 7px var(--glow-error);
 }
 
 /* ─── Metrics ───────────────────────────────────────────── */
@@ -293,14 +325,12 @@
     padding: 1.5rem;
   }
 
-  .orbWrap {
-    max-height: 200px;
-    overflow: hidden;
+  .heroAside {
+    justify-content: flex-start;
   }
 
-  .orb {
-    max-width: 200px;
-    margin: 0 auto;
+  .addProviderBtn {
+    max-width: none;
   }
 }
 

@@ -44,6 +44,9 @@ const createUser = async (
       updatedAt: now,
     },
     widgets: {},
+    settings: {
+      theme: 'sonoran-dusk',
+    },
     createdAt: now,
     updatedAt: now,
   }

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { AuthScene } from '@/components/AuthScene'
+import { AuthScenePageShell } from '@/components/AuthScenePageShell'
 import { AuthSection } from '@/sections/AuthSection'
 
 export const metadata: Metadata = {
@@ -9,11 +9,8 @@ export const metadata: Metadata = {
 
 export default function AuthPage() {
   return (
-    <>
-      <AuthScene />
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <AuthSection />
-      </div>
-    </>
+    <AuthScenePageShell>
+      <AuthSection />
+    </AuthScenePageShell>
   )
 }
