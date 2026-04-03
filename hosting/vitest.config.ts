@@ -7,7 +7,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
-      include: ['src/lib/baseUrl.ts', 'src/lib/buildSha.ts', 'src/lib/overviewMetrics.ts'],
+      include: [
+        'src/lib/baseUrl.ts',
+        'src/lib/buildSha.ts',
+        'src/lib/overviewMetrics.ts',
+        'src/lib/readFlickrAuthModeFromSyncPayload.ts',
+      ],
       all: true,
       thresholds: {
         perFile: true,

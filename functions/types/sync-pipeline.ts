@@ -8,6 +8,12 @@ export interface QueuedSyncJobDescriptor {
   mode: 'sync'
   provider: SyncProviderId
   userId: string
+  /**
+   * When set (manual sync with a signed-in user), Flickr OAuth credentials are
+   * loaded from `users/{integrationLookupUserId}/integrations/flickr` while
+   * widget documents still use `userId` (default widget owner id).
+   */
+  integrationLookupUserId?: string
 }
 
 /** Streamed to the browser during manual sync (SSE); ignored by scheduled worker. */
@@ -21,6 +27,8 @@ export type SyncProgressReporter = (event: SyncProgressEvent) => void
 
 export interface SyncJobExecutionOptions {
   userId?: string
+  /** See {@link QueuedSyncJobDescriptor.integrationLookupUserId}. */
+  integrationLookupUserId?: string
   onProgress?: SyncProgressReporter
 }
 

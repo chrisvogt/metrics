@@ -497,6 +497,7 @@ describe('createExpressApp auth and session branches', () => {
 
     expect(runSyncForProvider).toHaveBeenCalledWith({
       documentStore,
+      integrationLookupUserId: 'test-uid',
       provider,
       syncJobQueue,
     })

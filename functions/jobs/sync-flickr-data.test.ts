@@ -39,6 +39,40 @@ describe('syncFlickrData', () => {
     delete process.env.FLICKR_USER_ID
   })
 
+  it('reports OAuth vs legacy in flickr.auth progress messages', async () => {
+    const onProgress = vi.fn()
+    vi.mocked(fetchPhotos).mockResolvedValue({ total: 0, photos: [] })
+
+    await syncFlickrData(documentStore, { onProgress })
+
+    expect(onProgress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: 'flickr.auth',
+        message: expect.stringContaining('legacy'),
+      })
+    )
+
+    onProgress.mockClear()
+    vi.mocked(loadFlickrAuthForUser).mockResolvedValue({
+      mode: 'oauth',
+      consumerKey: 'ck',
+      consumerSecret: 'cs',
+      userNsid: 'nsid-99',
+      oauthToken: 'ot',
+      oauthTokenSecret: 'os',
+      flickrUsername: 'bert',
+    })
+
+    await syncFlickrData(documentStore, { onProgress })
+
+    expect(onProgress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phase: 'flickr.auth',
+        message: expect.stringContaining('OAuth'),
+      })
+    )
+  })
+
   it('uses OAuth profile and fetchPhotos({ oauth }) when integration is connected', async () => {
     const oauth = {
       mode: 'oauth' as const,
@@ -58,7 +92,9 @@ describe('syncFlickrData', () => {
 
     const result = await syncFlickrData(documentStore)
 
+    expect(loadFlickrAuthForUser).toHaveBeenCalledWith(documentStore, 'chrisvogt')
     expect(fetchPhotos).toHaveBeenCalledWith({ oauth })
+    expect(result).toMatchObject({ flickrAuthMode: 'oauth', result: 'SUCCESS' })
     expect(result.widgetContent.profile).toEqual({
       displayName: 'ernie',
       profileURL: 'https://www.flickr.com/photos/ernie/',
@@ -131,6 +167,7 @@ describe('syncFlickrData', () => {
     )
 
     expect(result).toEqual({
+      flickrAuthMode: 'env',
       result: 'SUCCESS',
       widgetContent: {
         collections: {
@@ -157,6 +194,7 @@ describe('syncFlickrData', () => {
       totalPhotos: 2,
       photosFetched: 2,
       userId: 'chrisvogt',
+      integrationLookupUserId: 'chrisvogt',
       authMode: 'env',
     })
   })
@@ -175,6 +213,7 @@ describe('syncFlickrData', () => {
       totalPhotos: 0,
       photosFetched: 0,
       userId: 'chrisvogt',
+      integrationLookupUserId: 'chrisvogt',
       authMode: 'env',
     })
   })
@@ -317,6 +356,41 @@ describe('syncFlickrData', () => {
       userId: 'chrisvogt',
     })
 
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
+      1,
+      'users/chrisvogt/flickr/last-response',
+      expect.any(Object)
+    )
+    expect(documentStore.setDocument).toHaveBeenNthCalledWith(
+      2,
+      'users/chrisvogt/flickr/widget-content',
+      expect.any(Object)
+    )
+  })
+
+  it('loads OAuth via integrationLookupUserId but writes widget paths for userId', async () => {
+    const oauth = {
+      mode: 'oauth' as const,
+      consumerKey: 'ck',
+      consumerSecret: 'cs',
+      userNsid: 'nsid-firebase',
+      oauthToken: 'ot',
+      oauthTokenSecret: 'os',
+      flickrUsername: 'from-oauth',
+    }
+    vi.mocked(loadFlickrAuthForUser).mockImplementation(async (_store, uid) =>
+      uid === 'firebase-abc' ? oauth : null
+    )
+    vi.mocked(fetchPhotos).mockResolvedValue({ total: 0, photos: [] })
+
+    const result = await syncFlickrData(documentStore, {
+      userId: 'chrisvogt',
+      integrationLookupUserId: 'firebase-abc',
+    })
+
+    expect(loadFlickrAuthForUser).toHaveBeenCalledWith(documentStore, 'firebase-abc')
+    expect(fetchPhotos).toHaveBeenCalledWith({ oauth })
+    expect(result).toMatchObject({ flickrAuthMode: 'oauth' })
     expect(documentStore.setDocument).toHaveBeenNthCalledWith(
       1,
       'users/chrisvogt/flickr/last-response',

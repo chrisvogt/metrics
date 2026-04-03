@@ -171,6 +171,30 @@
   word-break: break-word;
 }
 
+.flickrAuthBadge {
+  margin-top: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--surface) 92%, var(--accent) 8%);
+  color: var(--text);
+}
+
+.flickrAuthBadgeOAuth {
+  border-color: color-mix(in srgb, var(--success) 45%, var(--border) 55%);
+  background: color-mix(in srgb, var(--success) 12%, var(--surface) 88%);
+}
+
+.flickrAuthBadgeLegacy {
+  border-color: color-mix(in srgb, var(--text-muted) 35%, var(--border) 65%);
+  background: color-mix(in srgb, var(--text-muted) 8%, var(--surface) 92%);
+}
+
 .inlineCode {
   font-family: var(--font-mono);
   font-size: 0.88em;

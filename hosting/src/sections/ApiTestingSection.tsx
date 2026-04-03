@@ -5,6 +5,7 @@ import type { SectionId } from '../layout/Layout'
 import { useAuth } from '../auth/AuthContext'
 import { ApiClient } from '../auth/apiClient'
 import { getAppBaseUrl, getManualSyncStreamUrl } from '../lib/baseUrl'
+import { readFlickrAuthModeFromSyncPayload } from '../lib/readFlickrAuthModeFromSyncPayload'
 import styles from './ApiTestingSection.module.css'
 
 const WIDGET_PROVIDERS = ['discogs', 'flickr', 'github', 'goodreads', 'instagram', 'spotify', 'steam'] as const
@@ -66,6 +67,10 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
 
   const showApi = activeSection === 'api'
   const showSync = activeSection === 'sync'
+  const syncFlickrAuthMode =
+    showSync && syncProvider === 'flickr' && syncResult?.ok
+      ? readFlickrAuthModeFromSyncPayload(syncResult.data)
+      : undefined
 
   const fetchToken = async () => {
     if (!user) return
@@ -319,6 +324,9 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
               Run the queue-backed sync via{' '}
               <code className={styles.inlineCode}>GET /api/widgets/sync/&#123;provider&#125;/stream</code>{' '}
               so you can watch live steps and inspect the same final payload returned by the JSON endpoint.
+              {syncProvider === 'flickr'
+                ? ' Flickr manual sync loads OAuth from your signed-in user when you have connected Flickr; widget data still updates the default site owner path.'
+                : ''}
             </p>
             <div className={styles.endpoint}>
               <span className={styles.methodGet}>GET</span>
@@ -359,6 +367,20 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
                     {syncThinkingLine}
                   </p>
                 </div>
+              ) : null}
+              {syncFlickrAuthMode ? (
+                <p
+                  className={`${styles.flickrAuthBadge} ${
+                    syncFlickrAuthMode === 'oauth'
+                      ? styles.flickrAuthBadgeOAuth
+                      : styles.flickrAuthBadgeLegacy
+                  }`}
+                  role="status"
+                >
+                  {syncFlickrAuthMode === 'oauth'
+                    ? 'Flickr credentials: OAuth (connected account)'
+                    : 'Flickr credentials: legacy (server API key)'}
+                </p>
               ) : null}
               {syncResult && <ResultBox result={syncResult} />}
             </div>

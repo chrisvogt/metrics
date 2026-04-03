@@ -350,6 +350,55 @@ describe('createExpressApp route coverage', () => {
     expect(response.end).toHaveBeenCalled()
   })
 
+  it('passes integrationLookupUserId on manual sync SSE when req.user.uid is set', async () => {
+    const { runSyncForProvider } = await import('../services/sync-manual.js')
+    vi.mocked(runSyncForProvider).mockResolvedValueOnce({
+      afterJob: { jobId: 'j1', status: 'completed' },
+      beforeJob: { jobId: 'j1', status: 'queued' },
+      enqueue: { jobId: 'j1', status: 'enqueued' },
+      worker: { jobId: 'j1', result: 'SUCCESS' },
+    })
+
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+
+    const streamHandler = findRouteHandler(app, 'get', '/api/widgets/sync/:provider/stream')
+    const response = {
+      setHeader: vi.fn(),
+      write: vi.fn(),
+      end: vi.fn(),
+    }
+
+    const reqUser = {
+      email: 'ops@chrisvogt.me',
+      emailVerified: true,
+      uid: 'sse-signed-in-uid',
+    }
+
+    await streamHandler(
+      { params: { provider: 'flickr' }, user: reqUser },
+      response
+    )
+
+    expect(runSyncForProvider).toHaveBeenCalledWith(
+      expect.objectContaining({
+        documentStore,
+        integrationLookupUserId: 'sse-signed-in-uid',
+        provider: 'flickr',
+        syncJobQueue,
+        onProgress: expect.any(Function),
+      }),
+    )
+  })
+
   it('returns 400 for manual sync stream when provider param is not a string', async () => {
     const { createExpressApp } = await import('./create-express-app.js')
     const app = createExpressApp({

@@ -20,6 +20,7 @@ describe('syncFlickrData boundary wiring', () => {
     const { default: syncFlickrData } = await import('./sync-flickr-data.js')
 
     await expect(syncFlickrData(injectedStore)).resolves.toEqual({
+      flickrAuthMode: 'env',
       result: 'SUCCESS',
       widgetContent: expect.any(Object),
     })

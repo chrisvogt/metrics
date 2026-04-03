@@ -301,6 +301,7 @@ describe('index.js', () => {
           .expect(200)
 
         expect(runSyncForProvider).toHaveBeenCalledWith(expect.objectContaining({
+          integrationLookupUserId: 'sync-test-uid',
           provider: 'spotify',
         }))
         expect(response.body.enqueue.status).toBe('enqueued')
@@ -317,6 +318,7 @@ describe('index.js', () => {
 
         expect(response.body.worker.result).toBe('SUCCESS')
         expect(runSyncForProvider).toHaveBeenCalledWith(expect.objectContaining({
+          integrationLookupUserId: 'sync-test-uid',
           provider: 'flickr',
         }))
       })

@@ -21,14 +21,25 @@ const syncFlickrData = async (
 ) => {
   const logger = getLogger()
   const { onProgress } = options
-  const userId = options.userId ?? getDefaultWidgetUserId()
+  const storageUserId = options.userId ?? getDefaultWidgetUserId()
+  const integrationLookupUserId = options.integrationLookupUserId ?? storageUserId
 
   const envConfig = getFlickrConfig()
   let displayName: string | undefined = envConfig.userId ?? undefined
   let profilePathSegment = envConfig.userId ?? ''
 
   try {
-    const oauth = await loadFlickrAuthForUser(documentStore, userId)
+    const oauth = await loadFlickrAuthForUser(documentStore, integrationLookupUserId)
+    const flickrAuthMode = oauth ? 'oauth' : 'env'
+
+    onProgress?.({
+      phase: 'flickr.auth',
+      message:
+        flickrAuthMode === 'oauth'
+          ? 'Using your connected Flickr account (OAuth).'
+          : 'Using server Flickr API credentials (legacy).',
+    })
+
     if (oauth) {
       displayName = oauth.flickrUsername || oauth.userNsid
       profilePathSegment = oauth.flickrUsername || oauth.userNsid
@@ -46,7 +57,7 @@ const syncFlickrData = async (
       phase: 'flickr.persist',
       message: 'Reticulating splines.',
     })
-    await documentStore.setDocument(toFlickrLastResponsePath(options), {
+    await documentStore.setDocument(toFlickrLastResponsePath({ ...options, userId: storageUserId }), {
       response: photosResponse,
       fetchedAt: toStoredDateTime(),
     })
@@ -78,16 +89,18 @@ const syncFlickrData = async (
       },
     }
 
-    await documentStore.setDocument(toFlickrWidgetContentPath(options), widgetContent)
+    await documentStore.setDocument(toFlickrWidgetContentPath({ ...options, userId: storageUserId }), widgetContent)
 
     logger.info('Flickr data sync completed successfully', {
       totalPhotos: photoCount,
       photosFetched: photos.length,
-      userId,
-      authMode: oauth ? 'oauth' : 'env',
+      userId: storageUserId,
+      integrationLookupUserId,
+      authMode: flickrAuthMode,
     })
 
     return {
+      flickrAuthMode,
       result: 'SUCCESS',
       widgetContent,
     }

@@ -343,6 +343,57 @@ describe('runNextSyncJob', () => {
     })
   })
 
+  it('passes integrationLookupUserId into Flickr jobs without onProgress', async () => {
+    vi.mocked(syncFlickrData).mockResolvedValue({ flickrAuthMode: 'oauth', result: 'SUCCESS' })
+
+    await processSyncJob({
+      documentStore,
+      job: {
+        runCount: 1,
+        enqueuedAt: '2026-03-21T02:00:00.000Z',
+        jobId: 'sync-chrisvogt-flickr',
+        integrationLookupUserId: 'firebase-integration-uid',
+        mode: 'sync',
+        provider: 'flickr',
+        status: 'processing',
+        updatedAt: '2026-03-21T02:00:00.000Z',
+        userId: 'chrisvogt',
+      },
+      syncJobQueue,
+    })
+
+    expect(syncFlickrData).toHaveBeenCalledWith(documentStore, {
+      integrationLookupUserId: 'firebase-integration-uid',
+      userId: 'chrisvogt',
+    })
+  })
+
+  it('returns flickrAuthMode on successful Flickr sync', async () => {
+    vi.mocked(syncFlickrData).mockResolvedValue({
+      flickrAuthMode: 'env',
+      result: 'SUCCESS',
+    })
+
+    await expect(processSyncJob({
+      documentStore,
+      job: {
+        runCount: 1,
+        enqueuedAt: '2026-03-21T02:00:00.000Z',
+        jobId: 'sync-chrisvogt-flickr',
+        mode: 'sync',
+        provider: 'flickr',
+        status: 'processing',
+        updatedAt: '2026-03-21T02:00:00.000Z',
+        userId: 'chrisvogt',
+      },
+      syncJobQueue,
+    })).resolves.toEqual({
+      flickrAuthMode: 'env',
+      jobId: 'sync-chrisvogt-flickr',
+      result: 'SUCCESS',
+    })
+  })
+
   it('fails with a helpful error when the provider is not implemented', async () => {
     await expect(processSyncJob({
       documentStore,

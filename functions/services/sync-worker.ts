@@ -21,6 +21,7 @@ import type { SyncProviderId } from '../types/widget-content.js'
 interface SyncExecutionResult {
   data?: unknown
   error?: unknown
+  flickrAuthMode?: 'env' | 'oauth'
   metrics?: Record<string, number>
   result: 'FAILURE' | 'SUCCESS'
 }
@@ -60,10 +61,15 @@ const buildSummary = (
   }
 }
 
-const jobExecOpts = (job: QueuedSyncJob, onProgress?: SyncProgressReporter) =>
-  onProgress
+const jobExecOpts = (job: QueuedSyncJob, onProgress?: SyncProgressReporter) => {
+  const opts = onProgress
     ? { userId: job.userId, onProgress }
     : { userId: job.userId }
+  if (job.integrationLookupUserId) {
+    return { ...opts, integrationLookupUserId: job.integrationLookupUserId }
+  }
+  return opts
+}
 
 const runSyncJob = async (
   job: QueuedSyncJob,
@@ -94,6 +100,8 @@ const runSyncJob = async (
 
 export interface SyncWorkerResult {
   jobId?: string
+  /** Present after a successful Flickr sync (manual or scheduled). */
+  flickrAuthMode?: 'env' | 'oauth'
   result: 'FAILURE' | 'NOOP' | 'SUCCESS'
 }
 
@@ -123,9 +131,11 @@ export const processSyncJob = async ({
         provider: job.provider,
         userId: job.userId,
       })
+      const flickrAuthMode = result.flickrAuthMode
       return {
         jobId: job.jobId,
         result: 'SUCCESS',
+        ...(flickrAuthMode ? { flickrAuthMode } : {}),
       }
     }
 
