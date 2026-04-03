@@ -14,6 +14,17 @@ describe('oauth-return-path', () => {
     expect(validateReturnTo('/onboarding?step=connections')).toBe('/onboarding?step=connections')
   })
 
+  it('validateReturnTo rejects nullish and non-strings', () => {
+    expect(validateReturnTo(null)).toBeNull()
+    expect(validateReturnTo(undefined)).toBeNull()
+    expect(validateReturnTo(123 as unknown as string)).toBeNull()
+  })
+
+  it('validateReturnTo rejects scheme-like segments and backslash prefixes', () => {
+    expect(validateReturnTo('/foo/https://still-relative')).toBeNull()
+    expect(validateReturnTo('/\\evil')).toBeNull()
+  })
+
   it('validateReturnTo rejects open redirects and junk', () => {
     expect(validateReturnTo('//evil.com')).toBeNull()
     expect(validateReturnTo('https://evil.com/foo')).toBeNull()
@@ -37,5 +48,11 @@ describe('oauth-return-path', () => {
     expect(withFlickrOAuthFlash('/onboarding#pane', 'success')).toBe(
       '/onboarding?oauth=flickr&status=success#pane'
     )
+  })
+
+  it('withFlickrOAuthFlash omits reason for errors when reason is empty', () => {
+    const url = withFlickrOAuthFlash('/x', 'error', '')
+    expect(url).not.toContain('reason=')
+    expect(url).toContain('status=error')
   })
 })

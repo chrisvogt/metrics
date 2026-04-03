@@ -47,4 +47,28 @@ describe('integration-token-crypto', () => {
     const uid = 'sameUid'
     expect(deriveUserIntegrationKey(uid, 1).equals(deriveUserIntegrationKey(uid, 2))).toBe(false)
   })
+
+  it('deriveUserIntegrationKey rejects non-integer key versions', async () => {
+    const { deriveUserIntegrationKey } = await import('./integration-token-crypto.js')
+    expect(() => deriveUserIntegrationKey('u', 1.5)).toThrow(/Invalid integration keyVersion/)
+    expect(() => deriveUserIntegrationKey('u', 0)).toThrow(/Invalid integration keyVersion/)
+  })
+
+  it('decryptJsonEnvelope rejects unknown schema versions', async () => {
+    const { decryptJsonEnvelope, encryptJsonEnvelope } = await import('./integration-token-crypto.js')
+    const uid = 'u'
+    const envelope = encryptJsonEnvelope(uid, { a: 1 })
+    expect(() => decryptJsonEnvelope(uid, { ...envelope, schemaVersion: 9 })).toThrow(
+      /Unsupported credential envelope/
+    )
+  })
+
+  it('decryptJsonEnvelope rejects invalid keyVersion values', async () => {
+    const { decryptJsonEnvelope, encryptJsonEnvelope } = await import('./integration-token-crypto.js')
+    const uid = 'u'
+    const envelope = encryptJsonEnvelope(uid, { a: 1 })
+    expect(() => decryptJsonEnvelope(uid, { ...envelope, keyVersion: 0 })).toThrow(
+      /Invalid credential envelope keyVersion/
+    )
+  })
 })
