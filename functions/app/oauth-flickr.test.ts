@@ -35,7 +35,6 @@ const findRouteHandler = (
 
 describe('registerFlickrOAuthRoutes', () => {
   const logger = { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
-  const createRateLimiter = () => (_req: unknown, _res: unknown, next: () => void) => next()
 
   let documentStore: DocumentStore & { deleteDocument?: (path: string) => Promise<void> }
   let authUser: { uid: string; email?: string } | null
@@ -60,7 +59,6 @@ describe('registerFlickrOAuthRoutes', () => {
       logger,
       isProductionEnvironment: opts?.isProductionEnvironment ?? false,
       allowedEmailDomains: opts?.allowedEmailDomains ?? ['@allowed.com'],
-      createRateLimiter,
     })
     return app
   }

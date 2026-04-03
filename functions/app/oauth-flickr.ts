@@ -1,5 +1,6 @@
 import type { DocumentStore } from '../ports/document-store.js'
 import express from 'express'
+import { rateLimit } from 'express-rate-limit'
 
 import { getFlickrOAuthConfig } from '../config/backend-config.js'
 import {
@@ -19,8 +20,18 @@ import {
   type FlickrOAuthCredentialPayload,
 } from '../services/flickr-integration-credentials.js'
 import { validateReturnTo, withFlickrOAuthFlash } from '../services/oauth-return-path.js'
+import { getRateLimitKey } from '../middleware/rate-limit-key.js'
 
 const PENDING_TTL_MS = 15 * 60 * 1000
+
+const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
+
+const flickrOAuthRateLimitBase = {
+  message: rateLimitMessage,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: getRateLimitKey,
+} as const
 
 /** OAuth 1.0a request token while status is \`pending_oauth\` (pending Firestore doc id). */
 const FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD = 'oauthPendingRequestToken'
@@ -56,6 +67,29 @@ function resolveRedirectUrl(req: express.Request, target: string): string {
   return `${base}${path}`
 }
 
+/**
+ * Flickr OAuth 1.0a sends the callback as GET with `oauth_token` and `oauth_verifier` in the query
+ * string only — we cannot move them to a body. Extract solely those keys into strings and avoid
+ * passing `req.query` or these values to logging or other generic sinks.
+ */
+interface FlickrOAuthCallbackQuery {
+  oauthToken: string
+  oauthVerifier: string
+}
+
+function coerceOAuthQueryString(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value) && typeof value[0] === 'string') return value[0]
+  return ''
+}
+
+function readFlickrOAuthCallbackQuery(query: express.Request['query']): FlickrOAuthCallbackQuery {
+  return {
+    oauthToken: coerceOAuthQueryString(query.oauth_token),
+    oauthVerifier: coerceOAuthQueryString(query.oauth_verifier),
+  }
+}
+
 export interface RegisterFlickrOAuthOptions {
   expressApp: express.Express
   authenticateUser: express.RequestHandler
@@ -63,7 +97,6 @@ export interface RegisterFlickrOAuthOptions {
   logger: LoggerLike
   isProductionEnvironment: boolean
   allowedEmailDomains: string[]
-  createRateLimiter: (windowMs: number, max: number) => express.RequestHandler
 }
 
 export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): void {
@@ -74,14 +107,17 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
     logger,
     isProductionEnvironment,
     allowedEmailDomains,
-    createRateLimiter,
   } = opts
 
   const usersPath = getUsersCollectionPath()
 
   expressApp.post(
     '/api/oauth/flickr/start',
-    createRateLimiter(15 * 60 * 1000, 30),
+    rateLimit({
+      ...flickrOAuthRateLimitBase,
+      windowMs: 15 * 60 * 1000,
+      limit: 30,
+    }),
     express.json({ limit: '4kb' }),
     authenticateUser,
     async (req, res) => {
@@ -170,11 +206,13 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
 
   expressApp.get(
     '/api/oauth/flickr/callback',
-    createRateLimiter(15 * 60 * 1000, 60),
+    rateLimit({
+      ...flickrOAuthRateLimitBase,
+      windowMs: 15 * 60 * 1000,
+      limit: 60,
+    }),
     async (req, res) => {
-      const oauthToken = typeof req.query.oauth_token === 'string' ? req.query.oauth_token : ''
-      const oauthVerifier =
-        typeof req.query.oauth_verifier === 'string' ? req.query.oauth_verifier : ''
+      const { oauthToken, oauthVerifier } = readFlickrOAuthCallbackQuery(req.query)
 
       let validatedReturnTo: string | null = null
 
@@ -200,7 +238,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
       }>(pendingPath)
 
       if (!pending?.uid || !pending.oauthTokenSecret) {
-        logger.warn('Flickr OAuth callback: no pending session', { oauthToken: oauthToken.slice(0, 8) })
+        logger.warn('Flickr OAuth callback: no pending session')
         failRedirect('session_expired')
         return
       }
@@ -291,7 +329,11 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
    */
   expressApp.delete(
     '/api/oauth/flickr',
-    createRateLimiter(15 * 60 * 1000, 20),
+    rateLimit({
+      ...flickrOAuthRateLimitBase,
+      windowMs: 15 * 60 * 1000,
+      limit: 20,
+    }),
     authenticateUser,
     async (req, res) => {
       if (!req.user) return

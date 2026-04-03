@@ -198,10 +198,10 @@ export function OnboardingSection() {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !hydrated) return
-    const q = new URLSearchParams(window.location.search)
-    if (q.get('oauth') !== 'flickr') return
-    const status = q.get('status')
-    const reason = q.get('reason')
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('oauth') !== 'flickr') return
+    const status = params.get('status')
+    const reason = params.get('reason')
     if (status === 'success') {
       setOauthFlash('Flickr is now linked to your account.')
     } else if (status === 'error') {
@@ -211,8 +211,13 @@ export function OnboardingSection() {
           : 'Could not complete Flickr authorization.'
       )
     }
-    const path = window.location.pathname
-    window.history.replaceState(null, '', path)
+    params.delete('providers')
+    params.delete('oauth')
+    params.delete('status')
+    params.delete('reason')
+    const rest = params.toString()
+    const clean = `${window.location.pathname}${rest ? `?${rest}` : ''}`
+    window.history.replaceState(null, '', clean)
   }, [hydrated])
 
   const reloadProgressFromServer = useCallback(async () => {

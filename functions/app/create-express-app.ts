@@ -61,41 +61,13 @@ const ONBOARDING_DOMAIN_RATE_WINDOW_MS = 15 * 60 * 1000
 /** DNS probes are costlier than username lookups; limit harder. */
 const ONBOARDING_DOMAIN_RATE_LIMIT = 20
 
-function createRateLimiter(
-  windowMs: number,
-  max: number,
-  opts?: { logger?: LoggerLike; logLabel?: string }
-) {
-  const baseConfig = {
-    windowMs,
-    limit: max,
-    message: rateLimitMessage,
-    standardHeaders: true,
-    legacyHeaders: false,
-    keyGenerator: getRateLimitKey,
-  }
-
-  if (opts?.logger && opts.logLabel) {
-    const { logger: limitLogger, logLabel } = opts
-    return rateLimit({
-      ...baseConfig,
-      handler: (
-        request: express.Request,
-        response: express.Response,
-        _next: express.NextFunction,
-        optionsUsed: { statusCode: number }
-      ) => {
-        limitLogger.warn('rate_limit_exceeded', {
-          label: logLabel,
-          path: request.path,
-        })
-        response.status(optionsUsed.statusCode).json(rateLimitMessage)
-      },
-    })
-  }
-
-  return rateLimit(baseConfig)
-}
+/** Shared options for `express-rate-limit` — use `rateLimit({ ...rateLimitDefaults, ... })` at each route so CodeQL `js/missing-rate-limiting` recognizes guards. */
+const rateLimitDefaults = {
+  message: rateLimitMessage,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: getRateLimitKey,
+} as const
 
 const buildSuccessResponse = <TPayload>(
   payload: TPayload
@@ -389,7 +361,6 @@ export function createExpressApp({
     logger,
     isProductionEnvironment: isProductionEnvironment(),
     allowedEmailDomains: ALLOWED_EMAIL_DOMAINS,
-    createRateLimiter,
   })
 
   const runSyncHandler = async (
@@ -402,7 +373,7 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/media/{*mediaPath}',
-    createRateLimiter(15 * 60 * 1000, 100),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 100 }),
     async (req, res) => {
       const mediaStore = resolveMediaStore()
       if (!(mediaStore instanceof LocalDiskMediaStore)) {
@@ -444,7 +415,7 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/widgets/sync/:provider/stream',
-    createRateLimiter(15 * 60 * 1000, 10),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 10 }),
     authenticateUser,
     async (req, res) => {
       const providerParam = req.params.provider
@@ -491,7 +462,7 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/widgets/sync/:provider',
-    createRateLimiter(15 * 60 * 1000, 10),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 10 }),
     authenticateUser,
     async (req, res) => {
       const providerParam = req.params.provider
@@ -513,47 +484,57 @@ export function createExpressApp({
     }
   )
 
-  expressApp.get('/api/widgets/:provider', async (req, res) => {
-    const provider = req.params.provider
+  expressApp.get(
+    '/api/widgets/:provider',
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 100 }),
+    async (req, res) => {
+      const providerParam = req.params.provider
+      const provider =
+        typeof providerParam === 'string'
+          ? providerParam
+          : Array.isArray(providerParam)
+            ? providerParam[0]
+            : undefined
 
-    if (!provider || !isWidgetId(provider)) {
-      const response = buildFailureResponse({
-        message: 'A valid provider type is required.',
-      })
-      res.status(404).send(response)
+      if (!provider || !isWidgetId(provider)) {
+        const response = buildFailureResponse({
+          message: 'A valid provider type is required.',
+        })
+        res.status(404).send(response)
+        res.end()
+        return
+      }
+
+      const originalHostname = (req.headers['x-forwarded-host'] as string) || req.hostname
+      const userId = getWidgetUserIdForHostname(originalHostname)
+
+      try {
+        const widgetContent: WidgetContentUnion =
+          await getWidgetContent(provider, userId, documentStore)
+        const response = buildSuccessResponse(widgetContent)
+        // Always revalidate at the client, while allowing short shared-cache freshness.
+        res.set(
+          'Cache-Control',
+          'public, max-age=0, s-maxage=300, must-revalidate, stale-while-revalidate=60',
+        )
+        res.status(200).send(response)
+      } catch (err) {
+        logger.error('Error loading widget content', {
+          provider,
+          userId,
+          error: err instanceof Error ? err.message : err,
+        })
+        const response = buildFailureResponse(err)
+        res.status(500).send(response)
+      }
+
       res.end()
-      return
     }
-
-    const originalHostname = (req.headers['x-forwarded-host'] as string) || req.hostname
-    const userId = getWidgetUserIdForHostname(originalHostname)
-
-    try {
-      const widgetContent: WidgetContentUnion =
-        await getWidgetContent(provider, userId, documentStore)
-      const response = buildSuccessResponse(widgetContent)
-      // Always revalidate at the client, while allowing short shared-cache freshness.
-      res.set(
-        'Cache-Control',
-        'public, max-age=0, s-maxage=300, must-revalidate, stale-while-revalidate=60',
-      )
-      res.status(200).send(response)
-    } catch (err) {
-      logger.error('Error loading widget content', {
-        provider,
-        userId,
-        error: err instanceof Error ? err.message : err,
-      })
-      const response = buildFailureResponse(err)
-      res.status(500).send(response)
-    }
-
-    res.end()
-  })
+  )
 
   expressApp.get(
     '/api/user/profile',
-    createRateLimiter(15 * 60 * 1000, 50),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 50 }),
     authenticateUser,
     async (req, res) => {
       if (!req.user) return
@@ -570,7 +551,7 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/user/settings',
-    createRateLimiter(15 * 60 * 1000, 80),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 80 }),
     authenticateUser,
     async (req, res) => {
       if (!req.user) return
@@ -596,7 +577,7 @@ export function createExpressApp({
 
   expressApp.patch(
     '/api/user/settings',
-    createRateLimiter(15 * 60 * 1000, 40),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 40 }),
     express.json({ limit: '8kb' }),
     authenticateUser,
     async (req, res) => {
@@ -633,7 +614,7 @@ export function createExpressApp({
 
   expressApp.delete(
     '/api/user/account',
-    createRateLimiter(15 * 60 * 1000, 5),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 5 }),
     authenticateUser,
     async (req, res) => {
       if (!req.user) return
@@ -658,7 +639,7 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/onboarding/progress',
-    createRateLimiter(15 * 60 * 1000, 60),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 60 }),
     authenticateUser,
     async (req, res) => {
       if (!req.user) return
@@ -681,7 +662,7 @@ export function createExpressApp({
 
   expressApp.put(
     '/api/onboarding/progress',
-    createRateLimiter(15 * 60 * 1000, 40),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 40 }),
     express.json(),
     authenticateUser,
     async (req, res) => {
@@ -719,7 +700,7 @@ export function createExpressApp({
 
   expressApp.post(
     '/api/auth/session',
-    createRateLimiter(15 * 60 * 1000, 20),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 20 }),
     async (req, res) => {
       try {
         const authError = getSessionAuthError(req.headers.authorization)
@@ -780,7 +761,7 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/client-auth-config',
-    createRateLimiter(15 * 60 * 1000, 100),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 100 }),
     async (_req, res) => {
       await sendClientAuthConfig(res)
     }
@@ -788,7 +769,7 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/firebase-config',
-    createRateLimiter(15 * 60 * 1000, 100),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 100 }),
     async (_req, res) => {
       await sendClientAuthConfig(res)
     }
@@ -805,7 +786,7 @@ export function createExpressApp({
 
   expressApp.post(
     '/api/auth/logout',
-    createRateLimiter(15 * 60 * 1000, 30),
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 30 }),
     authenticateUser,
     async (req, res) => {
       if (!req.user) return
@@ -835,9 +816,22 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/onboarding/check-username',
-    createRateLimiter(ONBOARDING_USERNAME_RATE_WINDOW_MS, ONBOARDING_USERNAME_RATE_LIMIT, {
-      logger,
-      logLabel: 'onboarding_check_username',
+    rateLimit({
+      ...rateLimitDefaults,
+      windowMs: ONBOARDING_USERNAME_RATE_WINDOW_MS,
+      limit: ONBOARDING_USERNAME_RATE_LIMIT,
+      handler: (
+        request: express.Request,
+        response: express.Response,
+        _next: express.NextFunction,
+        optionsUsed: { statusCode: number }
+      ) => {
+        logger.warn('rate_limit_exceeded', {
+          label: 'onboarding_check_username',
+          path: request.path,
+        })
+        response.status(optionsUsed.statusCode).json(rateLimitMessage)
+      },
     }),
     async (req, res) => {
       const username = typeof req.query.username === 'string' ? req.query.username.toLowerCase() : ''
@@ -898,9 +892,22 @@ export function createExpressApp({
   /** Read-only DNS probe — GET avoids CSRF (same pattern as check-username). */
   expressApp.get(
     '/api/onboarding/check-domain',
-    createRateLimiter(ONBOARDING_DOMAIN_RATE_WINDOW_MS, ONBOARDING_DOMAIN_RATE_LIMIT, {
-      logger,
-      logLabel: 'onboarding_check_domain',
+    rateLimit({
+      ...rateLimitDefaults,
+      windowMs: ONBOARDING_DOMAIN_RATE_WINDOW_MS,
+      limit: ONBOARDING_DOMAIN_RATE_LIMIT,
+      handler: (
+        request: express.Request,
+        response: express.Response,
+        _next: express.NextFunction,
+        optionsUsed: { statusCode: number }
+      ) => {
+        logger.warn('rate_limit_exceeded', {
+          label: 'onboarding_check_domain',
+          path: request.path,
+        })
+        response.status(optionsUsed.statusCode).json(rateLimitMessage)
+      },
     }),
     async (req, res) => {
       const domain =
