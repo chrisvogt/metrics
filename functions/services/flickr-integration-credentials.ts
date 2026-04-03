@@ -1,6 +1,7 @@
 import type { DocumentStore } from '../ports/document-store.js'
 import { getFlickrOAuthConfig } from '../config/backend-config.js'
 import { getUsersCollectionPath } from '../config/backend-paths.js'
+import { USER_INTEGRATIONS_SEGMENT } from '../config/future-tenant-collections.js'
 import {
   decryptJsonEnvelope,
   readCredentialEnvelopeSchemaVersion,
@@ -29,7 +30,7 @@ export async function loadFlickrAuthForUser(
   documentStore: DocumentStore,
   uid: string
 ): Promise<ResolvedFlickrApiAuth | null> {
-  const path = `${getUsersCollectionPath()}/${uid}/integrations/${FLICKR_INTEGRATION_ID}`
+  const path = `${getUsersCollectionPath()}/${uid}/${USER_INTEGRATIONS_SEGMENT}/${FLICKR_INTEGRATION_ID}`
   const doc = await documentStore.getDocument<Record<string, unknown>>(path)
   if (!doc || typeof doc !== 'object') return null
 

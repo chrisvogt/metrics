@@ -5,6 +5,7 @@ import { getFlickrConfig } from '../../config/backend-config.js'
 import type { FlickrPhoto, FlickrPhotosResponse } from '../../types/flickr.js'
 import type { ResolvedFlickrApiAuth } from '../../services/flickr-integration-credentials.js'
 import {
+  FLICKR_HTTP_TIMEOUT_MS,
   flickrSignQuery,
   sortedQueryFromParams,
 } from '../../services/flickr-oauth1a.js'
@@ -35,6 +36,7 @@ const fetchPhotos = async (options: FetchPhotosOptions = {}): Promise<FlickrPhot
   try {
     const { body } = await got(FLICKR_API_BASE_URL, {
       responseType: 'json',
+      timeout: { request: FLICKR_HTTP_TIMEOUT_MS },
       searchParams: {
         method: 'flickr.people.getPhotos',
         api_key: apiKey,
@@ -80,6 +82,7 @@ async function fetchPhotosOAuth(auth: ResolvedFlickrApiAuth): Promise<FlickrPhot
   try {
     const { body } = await got(`${FLICKR_API_BASE_URL}?${qs}`, {
       responseType: 'json',
+      timeout: { request: FLICKR_HTTP_TIMEOUT_MS },
     })
     return normalizePhotosResponse(body, userNsid)
   } catch (error) {

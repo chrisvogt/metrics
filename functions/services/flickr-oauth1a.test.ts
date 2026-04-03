@@ -63,6 +63,16 @@ describe('flickr-oauth1a', () => {
     })
   })
 
+  it('parseFormStyleBody does not throw on malformed percent-encoding', () => {
+    expect(parseFormStyleBody('a=%ZZ&oauth_token=t&oauth_token_secret=s&user_nsid=n&username=u')).toEqual({
+      a: '%ZZ',
+      oauth_token: 't',
+      oauth_token_secret: 's',
+      user_nsid: 'n',
+      username: 'u',
+    })
+  })
+
   it('access-token fullname normalization does not double-decode (literal % in display name)', () => {
     const parsed = parseFormStyleBody(
       'fullname=100%25+Done&oauth_token=t&oauth_token_secret=s&user_nsid=n&username=u'

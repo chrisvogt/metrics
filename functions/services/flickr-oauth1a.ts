@@ -2,6 +2,19 @@ import { createHmac, randomBytes } from 'node:crypto'
 
 import got from 'got'
 
+/** Bounded wait for Flickr OAuth and REST calls (serverless-friendly). */
+export const FLICKR_HTTP_TIMEOUT_MS = 20_000
+
+const flickrHttpOptions = { timeout: { request: FLICKR_HTTP_TIMEOUT_MS } as const }
+
+function tryDecodeURIComponent(s: string): string {
+  try {
+    return decodeURIComponent(s)
+  } catch {
+    return s
+  }
+}
+
 /** OAuth 1.0a percent-encoding (RFC 5849 §3.6). */
 export function oauthPercentEncode(input: string): string {
   return encodeURIComponent(input)
@@ -72,9 +85,9 @@ export function parseFormStyleBody(body: string): Record<string, string> {
   for (const part of body.split('&')) {
     if (!part) continue
     const eq = part.indexOf('=')
-    const key = eq === -1 ? part : part.slice(0, eq)
-    const val = eq === -1 ? '' : part.slice(eq + 1)
-    out[decodeURIComponent(key)] = decodeURIComponent(val)
+    const keyRaw = eq === -1 ? part : part.slice(0, eq)
+    const valRaw = eq === -1 ? '' : part.slice(eq + 1)
+    out[tryDecodeURIComponent(keyRaw)] = tryDecodeURIComponent(valRaw)
   }
   return out
 }
@@ -101,7 +114,7 @@ export async function flickrGetRequestToken(params: {
   oauthParams.oauth_signature = signHmacSha1Base64(base, signingKey)
 
   const qs = sortedQueryFromParams(oauthParams)
-  const { body } = await got(`${FLICKR_REQUEST_TOKEN_URL}?${qs}`)
+  const { body } = await got(`${FLICKR_REQUEST_TOKEN_URL}?${qs}`, flickrHttpOptions)
   const parsed = parseFormStyleBody(body)
   if (parsed.oauth_callback_confirmed !== 'true') {
     throw new Error('Flickr OAuth: oauth_callback not confirmed')
@@ -142,7 +155,7 @@ export async function flickrGetAccessToken(params: {
   oauthParams.oauth_signature = signHmacSha1Base64(base, signingKey)
 
   const qs = sortedQueryFromParams(oauthParams)
-  const { body } = await got(`${FLICKR_ACCESS_TOKEN_URL}?${qs}`)
+  const { body } = await got(`${FLICKR_ACCESS_TOKEN_URL}?${qs}`, flickrHttpOptions)
   const parsed = parseFormStyleBody(body)
   if (!parsed.oauth_token || !parsed.oauth_token_secret) {
     throw new Error(`Flickr OAuth access_token failed: ${body}`)

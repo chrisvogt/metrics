@@ -22,6 +22,9 @@ import { validateReturnTo, withFlickrOAuthFlash } from '../services/oauth-return
 
 const PENDING_TTL_MS = 15 * 60 * 1000
 
+/** OAuth 1.0a request token while status is \`pending_oauth\` (pending Firestore doc id). */
+const FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD = 'oauthPendingRequestToken'
+
 interface LoggerLike {
   error: (message: string, ...args: unknown[]) => void
   info: (message: string, ...args: unknown[]) => void
@@ -122,6 +125,19 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
           return
         }
 
+        const priorPending =
+          typeof existing?.[FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD] === 'string'
+            ? existing[FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD]
+            : null
+        if (priorPending && documentStore.deleteDocument) {
+          const stalePendingPath = `${OAUTH_FLICKR_PENDING_COLLECTION}/${encodeURIComponent(priorPending)}`
+          try {
+            await documentStore.deleteDocument(stalePendingPath)
+          } catch {
+            /* ignore */
+          }
+        }
+
         const { oauthToken, oauthTokenSecret } = await flickrGetRequestToken({
           consumerKey: oauthCfg.consumerKey,
           consumerSecret: oauthCfg.consumerSecret,
@@ -139,6 +155,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
         await documentStore.setDocument(integrationPath, {
           providerId: FLICKR_INTEGRATION_ID,
           status: 'pending_oauth',
+          [FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD]: oauthToken,
           updatedAt: toStoredDateTime(),
         })
 
@@ -267,6 +284,11 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
     }
   )
 
+  /**
+   * Removes stored credentials and any in-flight OAuth pending row.
+   * Flickr does not offer a standard token-revocation call for these OAuth 1.0a tokens; users can
+   * remove app access from their Flickr account settings if needed.
+   */
   expressApp.delete(
     '/api/oauth/flickr',
     createRateLimiter(15 * 60 * 1000, 20),
@@ -279,6 +301,19 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
         if (!documentStore.deleteDocument) {
           res.status(500).json({ ok: false, error: 'Delete not supported by store.' })
           return
+        }
+        const integration = await documentStore.getDocument<Record<string, unknown>>(integrationPath)
+        const pendingTok =
+          typeof integration?.[FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD] === 'string'
+            ? integration[FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD]
+            : null
+        if (pendingTok) {
+          const pendingPath = `${OAUTH_FLICKR_PENDING_COLLECTION}/${encodeURIComponent(pendingTok)}`
+          try {
+            await documentStore.deleteDocument(pendingPath)
+          } catch {
+            /* ignore */
+          }
         }
         await documentStore.deleteDocument(integrationPath)
         res.status(200).json({ ok: true })

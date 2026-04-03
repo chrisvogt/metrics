@@ -16,6 +16,8 @@ describe('exported-config', () => {
       expect(CONFIG_PATH_TO_ENV['storage.media_store_backend']).toBe('MEDIA_STORE_BACKEND')
       expect(CONFIG_PATH_TO_ENV['storage.local_media_root']).toBe('LOCAL_MEDIA_ROOT')
       expect(CONFIG_PATH_TO_ENV['storage.media_public_base_url']).toBe('MEDIA_PUBLIC_BASE_URL')
+      expect(CONFIG_PATH_TO_ENV['flickr.api_secret']).toBe('FLICKR_API_SECRET')
+      expect(CONFIG_PATH_TO_ENV['flickr.oauth_callback_url']).toBe('FLICKR_OAUTH_CALLBACK_URL')
     })
   })
 
@@ -33,6 +35,28 @@ describe('exported-config', () => {
       expect(process.env.GITHUB_ACCESS_TOKEN).toBe('secret-token')
       expect(process.env.GITHUB_USERNAME).toBe('myuser')
       expect(process.env.CLIENT_API_KEY).toBe('api-key')
+    })
+
+    it('maps Flickr OAuth paths for production FUNCTIONS_CONFIG_EXPORT', () => {
+      const data = {
+        flickr: {
+          api_key: 'k',
+          api_secret: 's',
+          user_id: 'u',
+          oauth_callback_url: 'https://example.com/api/oauth/flickr/callback',
+          oauth_success_redirect: '/done',
+        },
+        app: { public_app_origin: 'https://example.com' },
+      }
+      applyExportedConfigToEnv(data)
+      expect(process.env.FLICKR_API_KEY).toBe('k')
+      expect(process.env.FLICKR_API_SECRET).toBe('s')
+      expect(process.env.FLICKR_USER_ID).toBe('u')
+      expect(process.env.FLICKR_OAUTH_CALLBACK_URL).toBe(
+        'https://example.com/api/oauth/flickr/callback'
+      )
+      expect(process.env.FLICKR_OAUTH_SUCCESS_REDIRECT).toBe('/done')
+      expect(process.env.PUBLIC_APP_ORIGIN).toBe('https://example.com')
     })
 
     it('skips non-string values', () => {

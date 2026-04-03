@@ -67,6 +67,7 @@ describe('fetchPhotos', () => {
 
     expect(mockGot).toHaveBeenCalledWith('https://www.flickr.com/services/rest', {
       responseType: 'json',
+      timeout: { request: 20_000 },
       searchParams: expect.objectContaining({
         method: 'flickr.people.getPhotos',
         api_key: 'test-flickr-api-key',
