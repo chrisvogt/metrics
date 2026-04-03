@@ -4,15 +4,7 @@ import { useEffect, type ReactNode } from 'react'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/auth/AuthContext'
 import { apiClient } from '@/auth/apiClient'
-import {
-  type ChronogroveThemeId,
-  isChronogroveTheme,
-  normalizeChronogroveThemeId,
-} from '@/theme/chronogroveTheme'
-
-function normalizeTheme(value: unknown): ChronogroveThemeId {
-  return normalizeChronogroveThemeId(value)
-}
+import { isChronogroveTheme, normalizeChronogroveThemeId } from '@/theme/chronogroveTheme'
 
 /**
  * After Firebase session is ready, load `settings.theme` from the API and align next-themes.
@@ -32,7 +24,7 @@ export function ThemeSync({ children }: { children: ReactNode }) {
         const res = await apiClient.getJson('/api/user/settings', { idToken })
         if (!res.ok || cancelled) return
         const data = (await res.json()) as { ok?: boolean; payload?: { theme?: string } }
-        const t = normalizeTheme(data.payload?.theme)
+        const t = normalizeChronogroveThemeId(data.payload?.theme)
         if (cancelled) return
         setTheme(t)
       } catch {
