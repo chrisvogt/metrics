@@ -62,4 +62,14 @@ describe('flickr-oauth1a', () => {
       username: 'jamal',
     })
   })
+
+  it('access-token fullname normalization does not double-decode (literal % in display name)', () => {
+    const parsed = parseFormStyleBody(
+      'fullname=100%25+Done&oauth_token=t&oauth_token_secret=s&user_nsid=n&username=u'
+    )
+    expect(parsed.fullname).toBe('100%+Done')
+    const fullname = parsed.fullname ? parsed.fullname.replace(/\+/g, ' ') : ''
+    expect(fullname).toBe('100% Done')
+    expect(() => decodeURIComponent(fullname)).toThrow(URIError)
+  })
 })

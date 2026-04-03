@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const defineJsonSecretMock = vi.hoisted(() => vi.fn())
+const defineSecretMock = vi.hoisted(() => vi.fn())
 const defineStringMock = vi.hoisted(() => vi.fn())
 const applyExportedConfigToEnvMock = vi.hoisted(() => vi.fn())
 
 vi.mock('firebase-functions/params', () => ({
   defineJsonSecret: defineJsonSecretMock,
+  defineSecret: defineSecretMock,
   defineString: defineStringMock,
 }))
 
@@ -20,6 +22,7 @@ describe('firebase runtime config', () => {
     defineJsonSecretMock.mockReturnValue({
       value: vi.fn(() => ({ auth: { client_api_key: 'secret-key' } })),
     })
+    defineSecretMock.mockReturnValue({})
     applyExportedConfigToEnvMock.mockReset()
   })
 
@@ -40,14 +43,17 @@ describe('firebase runtime config', () => {
     expect(value).toHaveBeenCalledTimes(1)
   })
 
-  it('exposes the Firebase runtime secret for trigger wiring', async () => {
-    const secret = { value: vi.fn(() => ({})) }
-    defineJsonSecretMock.mockReturnValueOnce(secret)
+  it('exposes the Firebase runtime secrets for trigger wiring', async () => {
+    const configSecret = { value: vi.fn(() => ({})) }
+    const integrationSecret = { id: 'integration-token-key' }
+    defineJsonSecretMock.mockReturnValueOnce(configSecret)
+    defineSecretMock.mockReturnValueOnce(integrationSecret)
 
     const { getFirebaseRuntimeSecrets } = await import('./firebase-runtime-config.js')
 
-    expect(getFirebaseRuntimeSecrets()).toEqual([secret])
+    expect(getFirebaseRuntimeSecrets()).toEqual([configSecret, integrationSecret])
     expect(defineJsonSecretMock).toHaveBeenCalledWith('FUNCTIONS_CONFIG_EXPORT')
+    expect(defineSecretMock).toHaveBeenCalledWith('INTEGRATION_TOKEN_MASTER_KEY')
   })
 
   it('loads and applies exported Firebase config through the runtime source', async () => {

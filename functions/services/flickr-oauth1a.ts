@@ -152,7 +152,7 @@ export async function flickrGetAccessToken(params: {
     oauthTokenSecret: parsed.oauth_token_secret,
     userNsid: parsed.user_nsid ?? '',
     username: parsed.username ?? '',
-    fullname: parsed.fullname ? decodeURIComponent(parsed.fullname.replace(/\+/g, ' ')) : '',
+    fullname: parsed.fullname ? parsed.fullname.replace(/\+/g, ' ') : '',
   }
 }
 

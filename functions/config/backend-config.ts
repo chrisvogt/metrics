@@ -71,7 +71,10 @@ export const getFlickrOAuthConfig = () => ({
 
 /**
  * 32+ byte secret (base64). Used with HKDF to derive per-user AES-256 keys for integration tokens.
- * Store in Google Secret Manager (or Cloud KMS-wrapped DEKs) in production.
+ *
+ * **Deployed:** bound from Secret Manager via `defineSecret('INTEGRATION_TOKEN_MASTER_KEY')` in
+ * `runtime/firebase-runtime-config.ts` (injected as `process.env.INTEGRATION_TOKEN_MASTER_KEY`).
+ * **Local:** `functions/.env.local` via `loadLocalDevelopmentEnv` when `NODE_ENV !== 'production'`.
  */
 export const getIntegrationTokenMasterKeyBytes = (): Buffer => {
   const b64 = process.env.INTEGRATION_TOKEN_MASTER_KEY
