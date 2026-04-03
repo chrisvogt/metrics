@@ -46,7 +46,7 @@ function isFlowStepId(v: string): v is FlowStepId {
 }
 
 export function OnboardingSection() {
-  const { user, apiSessionReady } = useAuth()
+  const { user, apiSessionReady, loading: authLoading } = useAuth()
   const [currentStep, setCurrentStep] = useState<FlowStepId>('username')
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set())
   const [hydrated, setHydrated] = useState(false)
@@ -371,6 +371,19 @@ export function OnboardingSection() {
   const safeVisualIndex = visualStepIndex >= 0 ? visualStepIndex : 0
   const progressPercent = ((safeVisualIndex + 1) / STEPS.length) * 100
   const stepMetaLabel = STEPS[safeVisualIndex]?.label ?? ''
+
+  if (authLoading) {
+    return (
+      <section className={styles.section}>
+        <div className={styles.card}>
+          <div className={styles.progressLoading}>
+            <span className="spinner" aria-hidden />
+            <p>Restoring your session…</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   if (!user) {
     return (
