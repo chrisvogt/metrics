@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MarketingShell } from '@/components/MarketingShell'
+import { CHRONOGROVE_GITHUB_REPO, CHRONOGROVE_LICENSE_URL } from '@/lib/chronogroveRepo'
 import styles from '../public-page.module.css'
 
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'What Chronogrove does: self-hosted provider sync, JSON feeds, and an operator console. Maintainer and repo links.',
+    'What Chronogrove does: self-hosted provider sync, JSON feeds, and an operator console. Open source under Apache 2.0; maintainer and repo links.',
 }
 
 export default function AboutPage() {
@@ -38,6 +39,26 @@ export default function AboutPage() {
               <a href="https://github.com/chrisvogt/gatsby-theme-chronogrove">Gatsby theme Chronogrove</a>, which renders
               those experiences on the public site. Other site builders (for example WordPress) and HTML-native pieces
               such as Web Components are natural next steps for consuming the same public routes.
+            </p>
+          </section>
+
+          <section className={styles.section} id="license">
+            <h2>Open source</h2>
+            <p>
+              The Chronogrove API and this operator console are{' '}
+              <a href={CHRONOGROVE_GITHUB_REPO} target="_blank" rel="noreferrer">
+                free software
+              </a>{' '}
+              under the{' '}
+              <a href={CHRONOGROVE_LICENSE_URL} target="_blank" rel="noreferrer">
+                Apache License, Version 2.0
+              </a>
+              . You may use, modify, and distribute the code subject to that license (including the patent grant). The
+              full legal text lives in the{' '}
+              <a href={CHRONOGROVE_LICENSE_URL} target="_blank" rel="noreferrer">
+                LICENSE
+              </a>{' '}
+              file in the repository.
             </p>
           </section>
 

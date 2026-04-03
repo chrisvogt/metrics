@@ -1,4 +1,6 @@
 import Link from 'next/link'
+
+import { CHRONOGROVE_GITHUB_REPO, CHRONOGROVE_LICENSE_URL } from '@/lib/chronogroveRepo'
 import styles from './MarketingShell.module.css'
 
 const primaryLinks = [
@@ -84,8 +86,11 @@ export function MarketingShell({
         <div className={styles.footerInner}>
           <p className={styles.footerCopy}>{footerCopy}</p>
           <div className={styles.footerLinks}>
-            <a href="https://github.com/chrisvogt/chronogrove" target="_blank" rel="noreferrer">
+            <a href={CHRONOGROVE_GITHUB_REPO} target="_blank" rel="noreferrer">
               GitHub
+            </a>
+            <a href={CHRONOGROVE_LICENSE_URL} target="_blank" rel="noreferrer">
+              Apache License 2.0
             </a>
             <a href="https://www.chrisvogt.me" target="_blank" rel="noreferrer">
               Chris Vogt

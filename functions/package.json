@@ -1,7 +1,8 @@
 {
   "name": "chronogrove-functions",
   "version": "0.25.9",
-  "description": "Chronogrove backend — Cloud Functions API and sync workers for third-party widget data.",
+  "license": "Apache-2.0",
+  "description": "Chronogrove server: Firebase Cloud Functions for the public widget API, authenticated admin routes, and provider sync jobs.",
   "type": "module",
   "main": "lib/index.js",
   "scripts": {

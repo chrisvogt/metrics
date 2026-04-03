@@ -1,7 +1,8 @@
 {
   "name": "chronogrove",
   "private": true,
-  "description": "Chronogrove — Firebase-hosted API and operator console for provider-backed widgets (Discogs, Steam, Instagram, etc.)",
+  "license": "Apache-2.0",
+  "description": "Chronogrove workspace: widget JSON API, provider sync, and operator console on Firebase (Hosting, Cloud Functions, Firestore).",
   "packageManager": "pnpm@10.32.1",
   "scripts": {
     "build": "NEXT_PUBLIC_GIT_SHA=$(git rev-parse --short HEAD) turbo run build",
