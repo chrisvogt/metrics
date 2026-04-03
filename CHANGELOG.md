@@ -15,6 +15,7 @@ Package-specific changes:
 
 ### Changed
 
+- **Repository** — Relicensed from **MIT** to [**Apache License 2.0**](LICENSE). Earlier revisions remain available under their original license; new contributions and the default license for the tree as checked in follow Apache 2.0. Root **`package.json`** and workspace packages now declare **`Apache-2.0`** (SPDX). See [hosting/CHANGELOG.md](hosting/CHANGELOG.md) and [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Workspace** — **Hosting 0.6.10** and **Functions 0.25.9**: non-major dependency bumps only (Next.js stays on 15.x, TypeScript on 5.x, `@types/node` within existing major lines: ^22 hosting, ^24 functions). Root **Turbo** ^2.9.3; shared **Firebase** client **^12.11.0**; Vitest **4.1.2** stack; minor patch lines for ESLint, typescript-eslint, and `express-rate-limit`. See [hosting/CHANGELOG.md](hosting/CHANGELOG.md) and [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Repository** — Weekly **Dependabot** **`npm`** updates at the workspace root (one entry for the shared **`pnpm-lock.yaml`**; covers `functions/` and `hosting/`).
 - **Firestore** — **Default-deny** security rules for the client SDK (`firestore.rules`); widget reads remain public via **`GET /api/widgets/*`** (Admin SDK). Deploy rules with **Functions 0.25.9**. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
