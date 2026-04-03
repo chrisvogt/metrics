@@ -26,7 +26,7 @@ vi.mock('../services/sync-manual.js', () => ({
 
 const findRouteHandler = (
   app: ReturnType<typeof import('express').default>,
-  method: 'get' | 'delete' | 'post',
+  method: 'get' | 'delete' | 'post' | 'patch',
   routePath: string
 ) => {
   const layer = app.router.stack.find(
@@ -616,5 +616,246 @@ describe('createExpressApp route coverage', () => {
     expect(authService.revokeRefreshTokens).not.toHaveBeenCalled()
     expect(res.status).not.toHaveBeenCalled()
     expect(res.send).not.toHaveBeenCalled()
+  })
+
+  describe('/api/user/settings', () => {
+    const uid = 'user-one'
+
+    it('GET returns saved theme, defaults, invalid theme coerced, array settings as empty', async () => {
+      const { createExpressApp } = await import('./create-express-app.js')
+      const app = createExpressApp({
+        authService,
+        documentStore,
+        ensureRuntimeConfigApplied,
+        getClientAuthConfig,
+        logger,
+        resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+        syncJobQueue,
+      })
+      const handler = findRouteHandler(app, 'get', '/api/user/settings')
+      const reqUser = { user: { uid, email: 'a@chrisvogt.me' } } as never
+
+      const res1 = createResponse()
+      documentStore.getDocument.mockResolvedValueOnce({ settings: { theme: 'starry-night' } })
+      await handler(reqUser, res1 as never)
+      expect(res1.status).toHaveBeenCalledWith(200)
+      expect(res1.json).toHaveBeenCalledWith({
+        ok: true,
+        payload: { theme: 'starry-night' },
+      })
+
+      const res2 = createResponse()
+      documentStore.getDocument.mockResolvedValueOnce(null)
+      await handler(reqUser, res2 as never)
+      expect(res2.json).toHaveBeenCalledWith({
+        ok: true,
+        payload: { theme: 'sonoran-dusk' },
+      })
+
+      const res3 = createResponse()
+      documentStore.getDocument.mockResolvedValueOnce({ settings: { theme: 'not-a-theme' } })
+      await handler(reqUser, res3 as never)
+      expect(res3.json).toHaveBeenCalledWith({
+        ok: true,
+        payload: { theme: 'sonoran-dusk' },
+      })
+
+      const res4 = createResponse()
+      documentStore.getDocument.mockResolvedValueOnce({ settings: ['x'] })
+      await handler(reqUser, res4 as never)
+      expect(res4.json).toHaveBeenCalledWith({
+        ok: true,
+        payload: { theme: 'sonoran-dusk' },
+      })
+    })
+
+    it('GET returns 500 when getDocument throws', async () => {
+      const { createExpressApp } = await import('./create-express-app.js')
+      const app = createExpressApp({
+        authService,
+        documentStore,
+        ensureRuntimeConfigApplied,
+        getClientAuthConfig,
+        logger,
+        resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+        syncJobQueue,
+      })
+      documentStore.getDocument.mockRejectedValueOnce(new Error('firestore down'))
+      const handler = findRouteHandler(app, 'get', '/api/user/settings')
+      const res = createResponse()
+      await handler({ user: { uid } } as never, res as never)
+      expect(res.status).toHaveBeenCalledWith(500)
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ ok: false }))
+    })
+
+    it('GET no-ops when req.user is missing', async () => {
+      const { createExpressApp } = await import('./create-express-app.js')
+      const app = createExpressApp({
+        authService,
+        documentStore,
+        ensureRuntimeConfigApplied,
+        getClientAuthConfig,
+        logger,
+        resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+        syncJobQueue,
+      })
+      const handler = findRouteHandler(app, 'get', '/api/user/settings')
+      const res = createResponse()
+      await handler({ user: undefined } as never, res as never)
+      expect(documentStore.getDocument).not.toHaveBeenCalled()
+    })
+
+    it('PATCH merges theme with prior settings and returns 200', async () => {
+      const { createExpressApp } = await import('./create-express-app.js')
+      const app = createExpressApp({
+        authService,
+        documentStore,
+        ensureRuntimeConfigApplied,
+        getClientAuthConfig,
+        logger,
+        resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+        syncJobQueue,
+      })
+      documentStore.getDocument.mockResolvedValue({
+        settings: { theme: 'sonoran-dusk', keep: true },
+      })
+      const handler = findRouteHandler(app, 'patch', '/api/user/settings')
+      const res = createResponse()
+      await handler(
+        {
+          user: { uid },
+          body: { theme: 'starry-night' },
+        } as never,
+        res as never
+      )
+      expect(documentStore.mergeDocument).toHaveBeenCalledWith(
+        `users/${uid}`,
+        expect.objectContaining({
+          settings: { theme: 'starry-night', keep: true },
+        })
+      )
+      expect(res.status).toHaveBeenCalledWith(200)
+      expect(res.json).toHaveBeenCalledWith({
+        ok: true,
+        payload: { theme: 'starry-night' },
+      })
+    })
+
+    it('PATCH uses empty prior settings when settings missing or non-object', async () => {
+      const { createExpressApp } = await import('./create-express-app.js')
+      const app = createExpressApp({
+        authService,
+        documentStore,
+        ensureRuntimeConfigApplied,
+        getClientAuthConfig,
+        logger,
+        resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+        syncJobQueue,
+      })
+      const handler = findRouteHandler(app, 'patch', '/api/user/settings')
+
+      documentStore.getDocument.mockResolvedValueOnce(null)
+      const res1 = createResponse()
+      await handler({ user: { uid }, body: { theme: 'sonoran-dusk' } } as never, res1 as never)
+      expect(documentStore.mergeDocument).toHaveBeenCalledWith(
+        `users/${uid}`,
+        expect.objectContaining({ settings: { theme: 'sonoran-dusk' } })
+      )
+      expect(res1.status).toHaveBeenCalledWith(200)
+
+      vi.mocked(documentStore.mergeDocument).mockClear()
+      documentStore.getDocument.mockResolvedValueOnce({ settings: [1] })
+      const res2 = createResponse()
+      await handler({ user: { uid }, body: { theme: 'sonoran-dusk' } } as never, res2 as never)
+      expect(documentStore.mergeDocument).toHaveBeenCalledWith(
+        `users/${uid}`,
+        expect.objectContaining({ settings: { theme: 'sonoran-dusk' } })
+      )
+    })
+
+    it('PATCH returns 400 for invalid theme', async () => {
+      const { createExpressApp } = await import('./create-express-app.js')
+      const app = createExpressApp({
+        authService,
+        documentStore,
+        ensureRuntimeConfigApplied,
+        getClientAuthConfig,
+        logger,
+        resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+        syncJobQueue,
+      })
+      const handler = findRouteHandler(app, 'patch', '/api/user/settings')
+      const res = createResponse()
+      await handler({ user: { uid }, body: { theme: 'hack' } } as never, res as never)
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({ ok: false, error: 'Invalid theme' })
+      expect(documentStore.mergeDocument).not.toHaveBeenCalled()
+
+      const res2 = createResponse()
+      await handler({ user: { uid }, body: { theme: 42 } } as never, res2 as never)
+      expect(res2.status).toHaveBeenCalledWith(400)
+    })
+
+    it('PATCH returns 500 when mergeDocument is unavailable', async () => {
+      const storeNoMerge = {
+        getDocument: vi.fn(),
+        setDocument: vi.fn(),
+      }
+      const { createExpressApp } = await import('./create-express-app.js')
+      const app = createExpressApp({
+        authService,
+        documentStore: storeNoMerge,
+        ensureRuntimeConfigApplied,
+        getClientAuthConfig,
+        logger,
+        resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+        syncJobQueue,
+      })
+      const handler = findRouteHandler(app, 'patch', '/api/user/settings')
+      const res = createResponse()
+      await handler({ user: { uid }, body: { theme: 'sonoran-dusk' } } as never, res as never)
+      expect(res.status).toHaveBeenCalledWith(500)
+      expect(res.json).toHaveBeenCalledWith({
+        ok: false,
+        error: 'Settings merge not available',
+      })
+    })
+
+    it('PATCH returns 500 when mergeDocument throws', async () => {
+      const { createExpressApp } = await import('./create-express-app.js')
+      const app = createExpressApp({
+        authService,
+        documentStore,
+        ensureRuntimeConfigApplied,
+        getClientAuthConfig,
+        logger,
+        resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+        syncJobQueue,
+      })
+      documentStore.getDocument.mockResolvedValue({ settings: {} })
+      documentStore.mergeDocument.mockRejectedValueOnce(new Error('write failed'))
+      const handler = findRouteHandler(app, 'patch', '/api/user/settings')
+      const res = createResponse()
+      await handler({ user: { uid }, body: { theme: 'sonoran-dusk' } } as never, res as never)
+      expect(res.status).toHaveBeenCalledWith(500)
+    })
+
+    it('PATCH no-ops when req.user is missing', async () => {
+      const { createExpressApp } = await import('./create-express-app.js')
+      const app = createExpressApp({
+        authService,
+        documentStore,
+        ensureRuntimeConfigApplied,
+        getClientAuthConfig,
+        logger,
+        resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+        syncJobQueue,
+      })
+      const handler = findRouteHandler(app, 'patch', '/api/user/settings')
+      const res = createResponse()
+      vi.mocked(documentStore.mergeDocument).mockClear()
+      await handler({ user: undefined, body: { theme: 'sonoran-dusk' } } as never, res as never)
+      expect(documentStore.mergeDocument).not.toHaveBeenCalled()
+    })
   })
 })

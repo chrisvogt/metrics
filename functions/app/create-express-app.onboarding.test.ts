@@ -368,6 +368,56 @@ describe('createExpressApp onboarding routes', () => {
     expect(json).toHaveBeenCalledWith({ ok: true, available: true })
   })
 
+  it('GET check-username uses legacyUsernameClaimed when legacyUsernameOwnerUid is absent (available)', async () => {
+    const store = {
+      getDocument: vi.fn().mockResolvedValue(null),
+      setDocument: vi.fn(),
+      legacyUsernameClaimed: vi.fn().mockResolvedValue(false),
+    }
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore: store,
+      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
+      getClientAuthConfig: vi.fn(() => ({})),
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-onb-legacy-claimed-only'),
+      syncJobQueue,
+    })
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+    await handler({ query: { username: 'valid_user' } }, { json, status })
+
+    expect(store.legacyUsernameClaimed).toHaveBeenCalledWith('users', 'valid_user')
+    expect(json).toHaveBeenCalledWith({ ok: true, available: true })
+  })
+
+  it('GET check-username uses legacyUsernameClaimed when legacyUsernameOwnerUid is absent (taken)', async () => {
+    const store = {
+      getDocument: vi.fn().mockResolvedValue(null),
+      setDocument: vi.fn(),
+      legacyUsernameClaimed: vi.fn().mockResolvedValue(true),
+    }
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore: store,
+      ensureRuntimeConfigApplied: vi.fn().mockResolvedValue(undefined),
+      getClientAuthConfig: vi.fn(() => ({})),
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-onb-legacy-claimed-only2'),
+      syncJobQueue,
+    })
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+    await handler({ query: { username: 'valid_user' } }, { json, status })
+
+    expect(store.legacyUsernameClaimed).toHaveBeenCalledWith('users', 'valid_user')
+    expect(json).toHaveBeenCalledWith({ ok: true, available: false })
+  })
+
   it('GET check-username legacy username owned by viewer is available', async () => {
     const { app } = await buildApp()
     documentStore.getDocument.mockResolvedValue(null)
