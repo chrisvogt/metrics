@@ -572,7 +572,6 @@ export function createExpressApp({
             : {}
         let theme: string =
           typeof settings.theme === 'string' ? settings.theme : DEFAULT_USER_UI_THEME
-        if (theme === 'dark-forest') theme = 'sonoran-dusk'
         if (!USER_UI_THEMES.has(theme)) theme = DEFAULT_USER_UI_THEME
         res.status(200).json(buildSuccessResponse({ theme }))
       } catch (err) {

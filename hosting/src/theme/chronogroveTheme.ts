@@ -11,8 +11,7 @@ export function isChronogroveTheme(value: unknown): value is ChronogroveThemeId 
   return typeof value === 'string' && (CHRONOGROVE_THEMES as readonly string[]).includes(value)
 }
 
-/** Maps retired theme slugs (e.g. Firestore or old localStorage) to the current id. */
+/** Coerce API or other unknown values to a valid Chronogrove theme id. */
 export function normalizeChronogroveThemeId(value: unknown): ChronogroveThemeId {
-  if (value === 'dark-forest') return 'sonoran-dusk'
   return isChronogroveTheme(value) ? value : DEFAULT_THEME
 }

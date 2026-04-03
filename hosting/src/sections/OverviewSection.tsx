@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/auth/AuthContext'
 import { getAppBaseUrl } from '../lib/baseUrl'
 import { AddProvidersFlyout } from '@/components/onboarding/AddProvidersFlyout'
 import {
@@ -67,9 +68,14 @@ const initialState = (): ProviderState => ({
 })
 
 export function OverviewSection() {
+  const { user } = useAuth()
   const baseUrl = getAppBaseUrl()
   const [states, setStates] = useState<Record<string, ProviderState>>({})
   const [addProvidersOpen, setAddProvidersOpen] = useState(false)
+
+  useEffect(() => {
+    if (!user) setAddProvidersOpen(false)
+  }, [user])
 
   const fetchAll = useCallback(async () => {
     setStates(Object.fromEntries(PROVIDERS.map((p) => [p.id, initialState()])))
@@ -137,15 +143,17 @@ export function OverviewSection() {
             ))}
           </nav>
         </div>
-        <div className={styles.heroAside}>
-          <button
-            type="button"
-            className={styles.addProviderBtn}
-            onClick={() => setAddProvidersOpen(true)}
-          >
-            Add a provider
-          </button>
-        </div>
+        {user ? (
+          <div className={styles.heroAside}>
+            <button
+              type="button"
+              className={styles.addProviderBtn}
+              onClick={() => setAddProvidersOpen(true)}
+            >
+              Add a provider
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <AddProvidersFlyout
