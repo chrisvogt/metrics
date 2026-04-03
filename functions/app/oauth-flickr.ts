@@ -77,6 +77,12 @@ interface FlickrOAuthCallbackQuery {
   oauthVerifier: string
 }
 
+/** Only keys we accept on the Flickr callback; keeps reads off the full `Request['query']` shape. */
+type FlickrOAuthCallbackQueryRaw = {
+  oauth_token?: unknown
+  oauth_verifier?: unknown
+}
+
 function coerceOAuthQueryString(value: unknown): string {
   if (typeof value === 'string') return value
   if (Array.isArray(value) && typeof value[0] === 'string') return value[0]
@@ -84,9 +90,10 @@ function coerceOAuthQueryString(value: unknown): string {
 }
 
 function readFlickrOAuthCallbackQuery(query: express.Request['query']): FlickrOAuthCallbackQuery {
+  const raw = query as FlickrOAuthCallbackQueryRaw
   return {
-    oauthToken: coerceOAuthQueryString(query.oauth_token),
-    oauthVerifier: coerceOAuthQueryString(query.oauth_verifier),
+    oauthToken: coerceOAuthQueryString(raw.oauth_token),
+    oauthVerifier: coerceOAuthQueryString(raw.oauth_verifier),
   }
 }
 
