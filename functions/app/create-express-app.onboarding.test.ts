@@ -61,6 +61,7 @@ describe('createExpressApp onboarding routes', () => {
   const documentStore = {
     getDocument: vi.fn(),
     setDocument: vi.fn(),
+    deleteDocument: vi.fn(),
     legacyUsernameClaimed: vi.fn(),
     legacyUsernameOwnerUid: vi.fn(),
   }
@@ -162,8 +163,21 @@ describe('createExpressApp onboarding routes', () => {
   })
 
   it('PUT /api/onboarding/progress persists and returns 200', async () => {
-    const { app, persistOnboardingWizardState } = await buildApp()
+    const { app, persistOnboardingWizardState, loadOnboardingStateForApi } = await buildApp()
     vi.mocked(persistOnboardingWizardState).mockResolvedValue(undefined)
+    documentStore.getDocument.mockResolvedValue({
+      username: 'valid_slug',
+      onboarding: { currentStep: 'connections', completedSteps: ['username'], updatedAt: 't' },
+    })
+    vi.mocked(loadOnboardingStateForApi).mockResolvedValue({
+      currentStep: 'connections',
+      completedSteps: ['username'],
+      username: 'valid_slug',
+      connectedProviderIds: ['github'],
+      integrationStatuses: {},
+      customDomain: null,
+      updatedAt: 't',
+    })
 
     const handler = findRouteHandler(app, 'put', '/api/onboarding/progress')
     const json = vi.fn()
@@ -181,6 +195,7 @@ describe('createExpressApp onboarding routes', () => {
     )
 
     expect(persistOnboardingWizardState).toHaveBeenCalled()
+    expect(loadOnboardingStateForApi).toHaveBeenCalled()
     expect(status).toHaveBeenCalledWith(200)
     expect(json.mock.calls[0][0].ok).toBe(true)
   })

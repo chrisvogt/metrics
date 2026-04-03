@@ -11,31 +11,31 @@ import {
   type UserOnboardingDoc,
 } from '../app/onboarding-progress.js'
 
-async function listIntegrationProviderIds(
-  usersCollection: string,
-  uid: string
-): Promise<string[]> {
-  const snap = await admin
-    .firestore()
-    .collection(usersCollection)
-    .doc(uid)
-    .collection(USER_INTEGRATIONS_SEGMENT)
-    .get()
-  return snap.docs.map((d) => d.id)
-}
-
 export async function loadOnboardingStateForApi(params: {
   usersCollection: string
   uid: string
   userDoc: Record<string, unknown> | null
 }): Promise<OnboardingProgressPayload> {
-  const integrationProviderIds = await listIntegrationProviderIds(
-    params.usersCollection,
-    params.uid
-  )
+  const snap = await admin
+    .firestore()
+    .collection(params.usersCollection)
+    .doc(params.uid)
+    .collection(USER_INTEGRATIONS_SEGMENT)
+    .get()
+
+  const integrationProviderIds = snap.docs.map((d) => d.id)
+  const integrationStatuses: Record<string, string> = {}
+  for (const d of snap.docs) {
+    const data = d.data() as Record<string, unknown>
+    const st = data.status
+    integrationStatuses[d.id] =
+      typeof st === 'string' && st.length > 0 ? st : 'unknown'
+  }
+
   return buildClientPayloadFromFirestore({
     userDoc: params.userDoc,
     integrationProviderIds,
+    integrationStatuses,
   })
 }
 

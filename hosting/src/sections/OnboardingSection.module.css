@@ -80,6 +80,35 @@
   font-size: 0.9rem;
 }
 
+.oauthFlash {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.28);
+  border-radius: 12px;
+  color: #a7f3d0;
+  font-size: 0.9rem;
+}
+
+.oauthCancelRow {
+  margin: -0.5rem 0 1.25rem;
+  font-size: 0.85rem;
+}
+
+.oauthCancelBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--muted);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.oauthCancelBtn:hover {
+  color: var(--foreground);
+}
+
 /* ── Step indicator ─────────────────────────────────────────────────────── */
 
 .stepIndicator {

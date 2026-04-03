@@ -140,6 +140,25 @@
   font-weight: 600;
 }
 
+.cancelFlickr {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+}
+
+.cancelFlickrBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.cancelFlickrBtn:hover {
+  color: var(--text);
+}
+
 .actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

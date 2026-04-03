@@ -24,6 +24,8 @@ export interface OnboardingProgressPayload {
   completedSteps: OnboardingWizardStep[]
   username: string | null
   connectedProviderIds: string[]
+  /** Firestore `users/{uid}/integrations/{id}.status` (server-derived; omit on PUT). */
+  integrationStatuses?: Record<string, string>
   customDomain: string | null
   updatedAt: string
 }
@@ -55,6 +57,7 @@ export function defaultOnboardingProgress(): OnboardingProgressPayload {
     completedSteps: [],
     username: null,
     connectedProviderIds: [],
+    integrationStatuses: {},
     customDomain: null,
     updatedAt: toStoredDateTime(),
   }
@@ -128,6 +131,7 @@ function normalizeLegacyOnboardingProgress(raw: unknown): Partial<OnboardingProg
 export function buildClientPayloadFromFirestore(params: {
   userDoc: Record<string, unknown> | null
   integrationProviderIds: string[]
+  integrationStatuses?: Record<string, string>
 }): OnboardingProgressPayload {
   const base = defaultOnboardingProgress()
   const doc = params.userDoc
@@ -177,6 +181,7 @@ export function buildClientPayloadFromFirestore(params: {
     completedSteps,
     username,
     connectedProviderIds,
+    integrationStatuses: params.integrationStatuses ?? {},
     customDomain,
     updatedAt,
   }
@@ -192,6 +197,7 @@ export function normalizeOnboardingProgress(
         ? null
         : { onboardingProgress: legacyBlob },
     integrationProviderIds: [],
+    integrationStatuses: {},
   })
 }
 

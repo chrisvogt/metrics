@@ -6,6 +6,7 @@ import { toStoredDateTime } from '../utils/time.js'
 import fetchPhotos from '../api/flickr/fetch-photos.js'
 import type { FlickrWidgetDocument } from '../types/widget-content.js'
 import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
+import { loadFlickrAuthForUser } from '../services/flickr-integration-credentials.js'
 
 export const toFlickrLastResponsePath = ({
   userId = getDefaultWidgetUserId(),
@@ -20,15 +21,26 @@ const syncFlickrData = async (
 ) => {
   const logger = getLogger()
   const { onProgress } = options
-   
-  const { userId: flickrUsername } = getFlickrConfig()
+  const userId = options.userId ?? getDefaultWidgetUserId()
+
+  const envConfig = getFlickrConfig()
+  let displayName: string | undefined = envConfig.userId ?? undefined
+  let profilePathSegment = envConfig.userId ?? ''
 
   try {
+    const oauth = await loadFlickrAuthForUser(documentStore, userId)
+    if (oauth) {
+      displayName = oauth.flickrUsername || oauth.userNsid
+      profilePathSegment = oauth.flickrUsername || oauth.userNsid
+    }
+
     onProgress?.({
       phase: 'flickr.photos',
       message: 'Fetching recent photos from Flickr.',
     })
-    const photosResponse = await fetchPhotos()
+    const photosResponse = oauth
+      ? await fetchPhotos({ oauth })
+      : await fetchPhotos()
 
     onProgress?.({
       phase: 'flickr.persist',
@@ -61,8 +73,8 @@ const syncFlickrData = async (
           : []),
       ],
       profile: {
-        displayName: flickrUsername,
-        profileURL: `https://www.flickr.com/photos/${flickrUsername}/`,
+        displayName,
+        profileURL: `https://www.flickr.com/photos/${profilePathSegment}/`,
       },
     }
 
@@ -71,6 +83,8 @@ const syncFlickrData = async (
     logger.info('Flickr data sync completed successfully', {
       totalPhotos: photoCount,
       photosFetched: photos.length,
+      userId,
+      authMode: oauth ? 'oauth' : 'env',
     })
 
     return {

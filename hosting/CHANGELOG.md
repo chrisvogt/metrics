@@ -11,6 +11,16 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.6.11] - 2026-04-03
+
+### Added
+
+- **Onboarding** — **Flickr** link via OAuth (`ProviderConnectionGrid` / **`handleOAuthProviderConnect`**), optional cancel of a **pending** link, and flash copy for OAuth **success** or **error** query params.
+
+### Fixed
+
+- **Onboarding OAuth flash cleanup** — After reading **`oauth`**, **`status`**, **`reason`** (and **`providers`**), **`history.replaceState`** keeps unrelated query parameters, matching **Overview** behavior. **Deploy with Functions ≥ 0.26.0** for the Flickr API routes and **`PUT /api/onboarding/progress`** payload shape.
+
 ## [0.6.10] - 2026-03-31
 
 ### Changed

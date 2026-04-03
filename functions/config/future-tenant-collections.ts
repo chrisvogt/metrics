@@ -24,6 +24,12 @@ export const TENANT_HOSTS_COLLECTION = 'tenant_hosts'
 /** Segment under `users/{uid}` for per-provider OAuth material (Admin SDK only). */
 export const USER_INTEGRATIONS_SEGMENT = 'integrations'
 
+/**
+ * Short-lived Flickr OAuth 1.0a request-token bridge (doc id = oauth_token from Flickr).
+ * Admin SDK only; cleared after access token exchange.
+ */
+export const OAUTH_FLICKR_PENDING_COLLECTION = 'oauth_flickr_pending'
+
 export const toTenantUsernameDocPath = (slug: string): string =>
   `${TENANT_USERNAMES_COLLECTION}/${slug}`
 

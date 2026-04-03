@@ -3,7 +3,7 @@
   "private": true,
   "license": "Apache-2.0",
   "description": "Chronogrove operator console: Next.js admin UI (static export) for schema, status, sync, and onboarding.",
-  "version": "0.6.10",
+  "version": "0.6.11",
   "scripts": {
     "dev": "next dev --port 5173",
     "build": "next build",

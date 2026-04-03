@@ -67,6 +67,7 @@ describe('fetchPhotos', () => {
 
     expect(mockGot).toHaveBeenCalledWith('https://www.flickr.com/services/rest', {
       responseType: 'json',
+      timeout: { request: 20_000 },
       searchParams: expect.objectContaining({
         method: 'flickr.people.getPhotos',
         api_key: 'test-flickr-api-key',
@@ -137,11 +138,91 @@ describe('fetchPhotos', () => {
     await expect(fetchPhotos()).rejects.toThrow('Invalid response from Flickr API')
   })
 
+  it('throws when public API returns stat fail', async () => {
+    mockGot.mockResolvedValue({ body: { stat: 'fail', message: 'Invalid API Key' } })
+    await expect(fetchPhotos()).rejects.toThrow('Flickr API error: Invalid API Key')
+  })
+
+  it('uses default Flickr error message when stat fail omits message', async () => {
+    mockGot.mockResolvedValue({ body: { stat: 'fail' } })
+    await expect(fetchPhotos()).rejects.toThrow('Flickr API error: unknown')
+  })
+
   it('should log and rethrow errors from got', async () => {
     const error = new Error('Network error')
     mockGot.mockRejectedValue(error)
     await expect(fetchPhotos()).rejects.toThrow('Network error')
     expect(mockLogger.error).toHaveBeenCalledWith('Error fetching Flickr photos:', error)
+  })
+
+  it('fetches photos using OAuth-signed requests when oauth is provided', async () => {
+    const oauth = {
+      mode: 'oauth' as const,
+      consumerKey: 'ck',
+      consumerSecret: 'cs',
+      userNsid: 'nsid-1',
+      oauthToken: 'ot',
+      oauthTokenSecret: 'ots',
+    }
+    const mockApiResponse = {
+      photos: {
+        photo: [
+          {
+            id: '1',
+            title: 'OAuth pic',
+            description: { _content: '' },
+            datetaken: '2024-01-01',
+            ownername: 'me',
+            url_q: 'q.jpg',
+            url_m: 'm.jpg',
+            url_l: 'l.jpg',
+          },
+        ],
+        total: 1,
+        page: 1,
+        pages: 1,
+      },
+    }
+    mockGot.mockResolvedValue({ body: mockApiResponse })
+
+    const result = await fetchPhotos({ oauth })
+
+    expect(mockGot).toHaveBeenCalledWith(
+      expect.stringMatching(/^https:\/\/www\.flickr\.com\/services\/rest\?/),
+      expect.objectContaining({
+        responseType: 'json',
+        timeout: { request: 20_000 },
+      })
+    )
+    expect(result.photos[0]?.link).toBe('https://www.flickr.com/photos/nsid-1/1')
+  })
+
+  it('throws when Flickr responds with stat fail (OAuth path)', async () => {
+    const oauth = {
+      mode: 'oauth' as const,
+      consumerKey: 'ck',
+      consumerSecret: 'cs',
+      userNsid: 'nsid',
+      oauthToken: 'ot',
+      oauthTokenSecret: 'ots',
+    }
+    mockGot.mockResolvedValue({ body: { stat: 'fail', message: 'Permission denied' } })
+    await expect(fetchPhotos({ oauth })).rejects.toThrow('Flickr API error: Permission denied')
+  })
+
+  it('logs and rethrows OAuth fetch errors', async () => {
+    const oauth = {
+      mode: 'oauth' as const,
+      consumerKey: 'ck',
+      consumerSecret: 'cs',
+      userNsid: 'nsid',
+      oauthToken: 'ot',
+      oauthTokenSecret: 'ots',
+    }
+    const err = new Error('oauth http')
+    mockGot.mockRejectedValue(err)
+    await expect(fetchPhotos({ oauth })).rejects.toThrow('oauth http')
+    expect(mockLogger.error).toHaveBeenCalledWith('Error fetching Flickr photos (OAuth):', err)
   })
 
   it('maps photos with nullish optional fields using defaults', async () => {

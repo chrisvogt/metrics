@@ -8,7 +8,12 @@ vi.mock('../api/flickr/fetch-photos.js', () => ({
   default: vi.fn(),
 }))
 
+vi.mock('../services/flickr-integration-credentials.js', () => ({
+  loadFlickrAuthForUser: vi.fn(),
+}))
+
 import fetchPhotos from '../api/flickr/fetch-photos.js'
+import { loadFlickrAuthForUser } from '../services/flickr-integration-credentials.js'
 
 describe('syncFlickrData', () => {
   let documentStore: DocumentStore
@@ -22,6 +27,7 @@ describe('syncFlickrData', () => {
     vi.clearAllMocks()
     configureLogger(logger)
     process.env.FLICKR_USER_ID = 'testuser'
+    vi.mocked(loadFlickrAuthForUser).mockResolvedValue(null)
 
     documentStore = {
       getDocument: vi.fn(),
@@ -31,6 +37,51 @@ describe('syncFlickrData', () => {
 
   afterEach(() => {
     delete process.env.FLICKR_USER_ID
+  })
+
+  it('uses OAuth profile and fetchPhotos({ oauth }) when integration is connected', async () => {
+    const oauth = {
+      mode: 'oauth' as const,
+      consumerKey: 'ck',
+      consumerSecret: 'cs',
+      userNsid: 'nsid-99',
+      oauthToken: 'ot',
+      oauthTokenSecret: 'os',
+      flickrUsername: 'ernie',
+    }
+    vi.mocked(loadFlickrAuthForUser).mockResolvedValue(oauth)
+    const mockPhotosResponse = {
+      total: 1,
+      photos: [{ id: '1', title: 'Photo 1' }],
+    }
+    vi.mocked(fetchPhotos).mockResolvedValue(mockPhotosResponse)
+
+    const result = await syncFlickrData(documentStore)
+
+    expect(fetchPhotos).toHaveBeenCalledWith({ oauth })
+    expect(result.widgetContent.profile).toEqual({
+      displayName: 'ernie',
+      profileURL: 'https://www.flickr.com/photos/ernie/',
+    })
+    expect(logger.info).toHaveBeenCalledWith(
+      'Flickr data sync completed successfully',
+      expect.objectContaining({ authMode: 'oauth' })
+    )
+  })
+
+  it('falls back to nsid for profile when OAuth username is absent', async () => {
+    vi.mocked(loadFlickrAuthForUser).mockResolvedValue({
+      mode: 'oauth',
+      consumerKey: 'ck',
+      consumerSecret: 'cs',
+      userNsid: 'nsid-only',
+      oauthToken: 'ot',
+      oauthTokenSecret: 'os',
+    })
+    vi.mocked(fetchPhotos).mockResolvedValue({ total: 0, photos: [] })
+    const result = await syncFlickrData(documentStore)
+    expect(result.widgetContent.profile.displayName).toBe('nsid-only')
+    expect(result.widgetContent.profile.profileURL).toBe('https://www.flickr.com/photos/nsid-only/')
   })
 
   it('should sync Flickr data successfully', async () => {
@@ -105,6 +156,8 @@ describe('syncFlickrData', () => {
     expect(logger.info).toHaveBeenCalledWith('Flickr data sync completed successfully', {
       totalPhotos: 2,
       photosFetched: 2,
+      userId: 'chrisvogt',
+      authMode: 'env',
     })
   })
 
@@ -121,6 +174,8 @@ describe('syncFlickrData', () => {
     expect(logger.info).toHaveBeenCalledWith('Flickr data sync completed successfully', {
       totalPhotos: 0,
       photosFetched: 0,
+      userId: 'chrisvogt',
+      authMode: 'env',
     })
   })
 
@@ -136,7 +191,7 @@ describe('syncFlickrData', () => {
 
     expect(result.result).toBe('SUCCESS')
     expect(result.widgetContent.profile.displayName).toBeUndefined()
-    expect(result.widgetContent.profile.profileURL).toBe('https://www.flickr.com/photos/undefined/')
+    expect(result.widgetContent.profile.profileURL).toBe('https://www.flickr.com/photos//')
   })
 
   it('should handle API errors gracefully', async () => {

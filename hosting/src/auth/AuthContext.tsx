@@ -55,6 +55,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             apiClient.clearSession()
             setUser(null)
             setApiSessionReady(true)
+            setLoading(false)
             return
           }
 
@@ -71,15 +72,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // ignore
             }
           }
-          if (!cancelled) setApiSessionReady(true)
+          if (!cancelled) {
+            setApiSessionReady(true)
+            setLoading(false)
+          }
         })
         return () => unsub()
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e))
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : String(e))
+          setLoading(false)
+        }
       })
     return () => {
       cancelled = true

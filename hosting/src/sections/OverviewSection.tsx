@@ -68,7 +68,7 @@ const initialState = (): ProviderState => ({
 })
 
 export function OverviewSection() {
-  const { user } = useAuth()
+  const { user, apiSessionReady } = useAuth()
   const baseUrl = getAppBaseUrl()
   const [states, setStates] = useState<Record<string, ProviderState>>({})
   const [addProvidersOpen, setAddProvidersOpen] = useState(false)
@@ -116,6 +116,27 @@ export function OverviewSection() {
   useEffect(() => {
     void fetchAll()
   }, [fetchAll])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !user || !apiSessionReady) return
+    const params = new URLSearchParams(window.location.search)
+    const openFlyout =
+      params.get('providers') === 'open' ||
+      (params.get('oauth') === 'flickr' &&
+        (params.get('status') === 'success' || params.get('status') === 'error'))
+    if (!openFlyout) return
+
+    setAddProvidersOpen(true)
+    void fetchAll()
+
+    params.delete('providers')
+    params.delete('oauth')
+    params.delete('status')
+    params.delete('reason')
+    const rest = params.toString()
+    const clean = `${window.location.pathname}${rest ? `?${rest}` : ''}`
+    window.history.replaceState(null, '', clean)
+  }, [user, apiSessionReady, fetchAll])
 
   const resolved = Object.values(states)
   const healthy = resolved.filter((s) => s.ok === true).length

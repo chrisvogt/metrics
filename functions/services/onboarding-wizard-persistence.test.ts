@@ -66,7 +66,12 @@ import {
 describe('onboarding-wizard-persistence', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockIntegrationGet.mockResolvedValue({ docs: [{ id: 'spotify' }, { id: 'github' }] })
+    mockIntegrationGet.mockResolvedValue({
+      docs: [
+        { id: 'spotify', data: () => ({ status: 'connected', providerId: 'spotify' }) },
+        { id: 'github', data: () => ({ status: 'pending_oauth', providerId: 'github' }) },
+      ],
+    })
     mockBatchCommit.mockResolvedValue(undefined)
   })
 
@@ -93,8 +98,40 @@ describe('onboarding-wizard-persistence', () => {
     })
 
     expect(payload.connectedProviderIds).toEqual(['spotify', 'github'])
+    expect(payload.integrationStatuses).toEqual({
+      spotify: 'connected',
+      github: 'pending_oauth',
+    })
     expect(payload.username).toBe('x')
     expect(mockFirestoreInstance.collection).toHaveBeenCalledWith('users')
+  })
+
+  it('loadOnboardingStateForApi maps empty or non-string integration status to unknown', async () => {
+    mockIntegrationGet.mockResolvedValueOnce({
+      docs: [
+        { id: 'flickr', data: () => ({ status: '' }) },
+        { id: 'x', data: () => ({ providerId: 'x' }) },
+        { id: 'y', data: () => ({ status: 404 }) },
+      ],
+    })
+    const payload = await loadOnboardingStateForApi({
+      usersCollection: 'users',
+      uid: 'u1',
+      userDoc: {
+        username: 'slug',
+        onboarding: {
+          currentStep: 'connections',
+          completedSteps: ['username'],
+          draftCustomDomain: null,
+          updatedAt: 't',
+        },
+      },
+    })
+    expect(payload.integrationStatuses).toEqual({
+      flickr: 'unknown',
+      x: 'unknown',
+      y: 'unknown',
+    })
   })
 
   it('persistOnboardingWizardState treats missing user doc as empty profile', async () => {

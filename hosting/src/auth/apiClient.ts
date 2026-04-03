@@ -121,6 +121,34 @@ export class ApiClient {
     })
   }
 
+  async deleteJson(path: string, auth?: ApiClientAuth): Promise<Response> {
+    const csrfToken = await this.getCsrfToken(true)
+    const bearer = this.bearerFrom(auth)
+    return fetch(`${this.baseUrl}${path}`, {
+      method: 'DELETE',
+      headers: {
+        ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+        ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
+      },
+      credentials: 'include',
+    })
+  }
+
+  async postJson(path: string, body: unknown, auth?: ApiClientAuth): Promise<Response> {
+    const csrfToken = await this.getCsrfToken(true)
+    const bearer = this.bearerFrom(auth)
+    return fetch(`${this.baseUrl}${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+        ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
+      },
+      credentials: 'include',
+      body: JSON.stringify(body ?? {}),
+    })
+  }
+
   async patchJson(path: string, body: unknown, auth?: ApiClientAuth): Promise<Response> {
     const csrfToken = await this.getCsrfToken(true)
     const bearer = this.bearerFrom(auth)

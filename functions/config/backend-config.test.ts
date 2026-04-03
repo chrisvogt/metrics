@@ -34,6 +34,12 @@ describe('backend config', () => {
     delete process.env.DEFAULT_WIDGET_USER_ID
     delete process.env.WIDGET_USER_ID_BY_HOSTNAME
     delete process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+    delete process.env.INTEGRATION_TOKEN_MASTER_KEY
+    delete process.env.FLICKR_API_SECRET
+    delete process.env.FLICKR_CONSUMER_SECRET
+    delete process.env.FLICKR_OAUTH_CALLBACK_URL
+    delete process.env.FLICKR_OAUTH_REDIRECT_URI
+    delete process.env.FLICKR_OAUTH_SUCCESS_REDIRECT
   })
 
   it('detects production mode from NODE_ENV', async () => {
@@ -271,6 +277,37 @@ describe('backend config', () => {
     expect(getBackendPathConfig().widgetUserIdByHostname).toEqual({
       'api.custom.example': 'custom-user',
     })
+  })
+
+  it('parses Flickr OAuth config including consumer secret fallbacks', async () => {
+    process.env.FLICKR_API_KEY = 'ck'
+    process.env.FLICKR_CONSUMER_SECRET = 'legacy-secret'
+    process.env.FLICKR_OAUTH_CALLBACK_URL = 'https://cb'
+    process.env.FLICKR_OAUTH_SUCCESS_REDIRECT = ' /done '
+    const { getFlickrOAuthConfig } = await import('./backend-config.js')
+    expect(getFlickrOAuthConfig()).toMatchObject({
+      consumerKey: 'ck',
+      consumerSecret: 'legacy-secret',
+      callbackUrl: 'https://cb',
+      appSuccessRedirect: '/done',
+    })
+  })
+
+  it('getIntegrationTokenMasterKeyBytes throws when unset', async () => {
+    const { getIntegrationTokenMasterKeyBytes } = await import('./backend-config.js')
+    expect(() => getIntegrationTokenMasterKeyBytes()).toThrow(/not configured/)
+  })
+
+  it('getIntegrationTokenMasterKeyBytes throws when decoded key is too short', async () => {
+    process.env.INTEGRATION_TOKEN_MASTER_KEY = Buffer.alloc(16, 1).toString('base64')
+    const { getIntegrationTokenMasterKeyBytes } = await import('./backend-config.js')
+    expect(() => getIntegrationTokenMasterKeyBytes()).toThrow(/at least 32 bytes/)
+  })
+
+  it('getIntegrationTokenMasterKeyBytes returns decoded material for valid secrets', async () => {
+    process.env.INTEGRATION_TOKEN_MASTER_KEY = Buffer.alloc(32, 2).toString('base64')
+    const { getIntegrationTokenMasterKeyBytes } = await import('./backend-config.js')
+    expect(getIntegrationTokenMasterKeyBytes()).toEqual(Buffer.alloc(32, 2))
   })
 
 })
