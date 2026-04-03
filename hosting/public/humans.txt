@@ -11,4 +11,4 @@ Do not index: yes (admin/dashboard)
 https://github.com/chrisvogt/chronogrove
 
 /* LICENCE */
-MIT License – https://github.com/chrisvogt/chronogrove/blob/main/LICENSE
+Apache License, Version 2.0 – https://github.com/chrisvogt/chronogrove/blob/main/LICENSE

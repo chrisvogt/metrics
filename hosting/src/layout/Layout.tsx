@@ -5,6 +5,7 @@ import { useState, type ReactNode } from 'react'
 import type { User } from 'firebase/auth'
 
 import { AuthScene } from '@/components/AuthScene'
+import { CHRONOGROVE_LICENSE_URL } from '@/lib/chronogroveRepo'
 import { getTenantDisplayHost } from '../lib/tenantDisplay'
 import { UserMenu } from '../components/UserMenu'
 import styles from './Layout.module.css'
@@ -144,6 +145,9 @@ export function Layout({ children, user, activeSection, onSectionChange }: Layou
             <Link href="/privacy/" className={styles.navLink}>
               Privacy
             </Link>
+            <a href={CHRONOGROVE_LICENSE_URL} className={styles.navLink} target="_blank" rel="noreferrer">
+              License
+            </a>
           </div>
         </nav>
       </aside>
