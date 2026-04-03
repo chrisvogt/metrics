@@ -14,7 +14,17 @@ describe('integration-token-crypto', () => {
     const uid = 'firebaseUid1'
     const plain = { oauthToken: 't', oauthTokenSecret: 's' }
     const env = encryptJsonEnvelope(uid, plain)
+    expect(env.keyVersion).toBe(1)
     expect(decryptJsonEnvelope(uid, env)).toEqual(plain)
+  })
+
+  it('treats missing keyVersion as 1 for backward compatibility', async () => {
+    const { encryptJsonEnvelope, decryptJsonEnvelope } = await import('./integration-token-crypto.js')
+    const uid = 'firebaseUid1'
+    const plain = { x: 1 }
+    const full = encryptJsonEnvelope(uid, plain)
+    const legacyShape = { v: full.v, iv: full.iv, tag: full.tag, ciphertext: full.ciphertext }
+    expect(decryptJsonEnvelope(uid, legacyShape as import('./integration-token-crypto.js').IntegrationCredentialEnvelope)).toEqual(plain)
   })
 
   it('uses distinct ciphertext for different uids with same plaintext', async () => {
@@ -23,5 +33,11 @@ describe('integration-token-crypto', () => {
     const a = encryptJsonEnvelope('u1', plain)
     const b = encryptJsonEnvelope('u2', plain)
     expect(a.ciphertext).not.toBe(b.ciphertext)
+  })
+
+  it('uses distinct keys for keyVersion 1 vs 2 (rotation hook)', async () => {
+    const { deriveUserIntegrationKey } = await import('./integration-token-crypto.js')
+    const uid = 'sameUid'
+    expect(deriveUserIntegrationKey(uid, 1).equals(deriveUserIntegrationKey(uid, 2))).toBe(false)
   })
 })
