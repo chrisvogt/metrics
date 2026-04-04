@@ -18,6 +18,8 @@ describe('exported-config', () => {
       expect(CONFIG_PATH_TO_ENV['storage.media_public_base_url']).toBe('MEDIA_PUBLIC_BASE_URL')
       expect(CONFIG_PATH_TO_ENV['flickr.api_secret']).toBe('FLICKR_API_SECRET')
       expect(CONFIG_PATH_TO_ENV['flickr.oauth_callback_url']).toBe('FLICKR_OAUTH_CALLBACK_URL')
+      expect(CONFIG_PATH_TO_ENV['discogs.consumer_key']).toBe('DISCOGS_CONSUMER_KEY')
+      expect(CONFIG_PATH_TO_ENV['discogs.oauth_callback_url']).toBe('DISCOGS_OAUTH_CALLBACK_URL')
     })
   })
 
@@ -35,6 +37,22 @@ describe('exported-config', () => {
       expect(process.env.GITHUB_ACCESS_TOKEN).toBe('secret-token')
       expect(process.env.GITHUB_USERNAME).toBe('myuser')
       expect(process.env.CLIENT_API_KEY).toBe('api-key')
+    })
+
+    it('maps Discogs OAuth paths for production FUNCTIONS_CONFIG_EXPORT', () => {
+      const data = {
+        discogs: {
+          consumer_key: 'dck',
+          consumer_secret: 'dsec',
+          oauth_callback_url: 'https://example.com/api/oauth/discogs/callback',
+          oauth_success_redirect: '/discogs-done',
+        },
+      }
+      applyExportedConfigToEnv(data)
+      expect(process.env.DISCOGS_CONSUMER_KEY).toBe('dck')
+      expect(process.env.DISCOGS_CONSUMER_SECRET).toBe('dsec')
+      expect(process.env.DISCOGS_OAUTH_CALLBACK_URL).toBe('https://example.com/api/oauth/discogs/callback')
+      expect(process.env.DISCOGS_OAUTH_SUCCESS_REDIRECT).toBe('/discogs-done')
     })
 
     it('maps Flickr OAuth paths for production FUNCTIONS_CONFIG_EXPORT', () => {

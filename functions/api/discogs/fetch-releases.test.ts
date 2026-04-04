@@ -15,10 +15,17 @@ vi.mock('firebase-functions', () => ({
   logger: mockLogger
 }))
 
+const discogsOAuthGotGetMock = vi.hoisted(() => vi.fn())
+
+vi.mock('../../services/discogs-oauth1a.js', () => ({
+  discogsOAuthGotGet: (...args: unknown[]) => discogsOAuthGotGetMock(...args),
+}))
+
 describe('fetchDiscogsReleases', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    discogsOAuthGotGetMock.mockReset()
     if (typeof global.fetch === 'function' && global.fetch.mockReset) {
       global.fetch.mockReset()
     }
@@ -266,5 +273,34 @@ describe('fetchDiscogsReleases', () => {
       },
       releases: []
     })
+  })
+
+  it('uses OAuth signed GET when options.oauth is set', async () => {
+    const pageJson = {
+      pagination: { page: 1, pages: 1, per_page: 1, items: 1 },
+      releases: [{ id: 1, basic_information: { title: 'A' } }],
+    }
+    discogsOAuthGotGetMock.mockResolvedValue({ body: JSON.stringify(pageJson) })
+    const fetchDiscogsReleases = (await import('./fetch-releases.js')).default
+    const oauth = {
+      mode: 'oauth' as const,
+      consumerKey: 'ck',
+      consumerSecret: 'cs',
+      discogsUsername: 'collector',
+      oauthToken: 'ot',
+      oauthTokenSecret: 'ots',
+    }
+    const result = await fetchDiscogsReleases({ oauth })
+    expect(discogsOAuthGotGetMock).toHaveBeenCalledWith(
+      'https://api.discogs.com/users/collector/collection/folders/0/releases?page=1&per_page=50',
+      expect.objectContaining({
+        consumerKey: 'ck',
+        consumerSecret: 'cs',
+        oauthToken: 'ot',
+        oauthTokenSecret: 'ots',
+      })
+    )
+    expect(result.releases).toHaveLength(1)
+    expect(mockLogger.info).toHaveBeenCalledWith('Fetching Discogs releases page 1 (OAuth)')
   })
 }) 

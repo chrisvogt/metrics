@@ -120,9 +120,10 @@ export function OverviewSection() {
   useEffect(() => {
     if (typeof window === 'undefined' || !user || !apiSessionReady) return
     const params = new URLSearchParams(window.location.search)
+    const oauth = params.get('oauth')
     const openFlyout =
       params.get('providers') === 'open' ||
-      (params.get('oauth') === 'flickr' &&
+      ((oauth === 'flickr' || oauth === 'discogs') &&
         (params.get('status') === 'success' || params.get('status') === 'error'))
     if (!openFlyout) return
 

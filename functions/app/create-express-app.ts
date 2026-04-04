@@ -30,6 +30,7 @@ import {
   ONBOARDING_USERNAME_PATTERN,
   parseOnboardingProgressBody,
 } from './onboarding-progress.js'
+import { registerDiscogsOAuthRoutes } from './oauth-discogs.js'
 import { registerFlickrOAuthRoutes } from './oauth-flickr.js'
 import { toStoredDateTime } from '../utils/time.js'
 
@@ -122,6 +123,8 @@ const CSRF_EXCLUDED_PATHS_WIDGET_READS = [
   { path: '/api/onboarding/check-domain', type: 'exact' as const },
   /** Flickr redirects here without CSRF headers. */
   { path: '/api/oauth/flickr/callback', type: 'exact' as const },
+  /** Discogs redirects here without CSRF headers. */
+  { path: '/api/oauth/discogs/callback', type: 'exact' as const },
 ]
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader?.startsWith('Bearer ')) {
@@ -355,6 +358,15 @@ export function createExpressApp({
   )
 
   registerFlickrOAuthRoutes({
+    expressApp,
+    authenticateUser,
+    documentStore,
+    logger,
+    isProductionEnvironment: isProductionEnvironment(),
+    allowedEmailDomains: ALLOWED_EMAIL_DOMAINS,
+  })
+
+  registerDiscogsOAuthRoutes({
     expressApp,
     authenticateUser,
     documentStore,

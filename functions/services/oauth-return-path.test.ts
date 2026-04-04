@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   OAUTH_RETURN_TO_MAX_LEN,
   validateReturnTo,
+  withDiscogsOAuthFlash,
   withFlickrOAuthFlash,
 } from './oauth-return-path.js'
 
@@ -67,5 +68,10 @@ describe('oauth-return-path', () => {
   it('withFlickrOAuthFlash handles hash-only path and success ignores extra reason arg', () => {
     expect(withFlickrOAuthFlash('/#section', 'success')).toBe('/?oauth=flickr&status=success#section')
     expect(withFlickrOAuthFlash('/z', 'success', 'nope')).toBe('/z?oauth=flickr&status=success')
+  })
+
+  it('withDiscogsOAuthFlash sets oauth=discogs', () => {
+    expect(withDiscogsOAuthFlash('/onboarding', 'success')).toBe('/onboarding?oauth=discogs&status=success')
+    expect(withDiscogsOAuthFlash('/x', 'error', 'bad')).toBe('/x?oauth=discogs&status=error&reason=bad')
   })
 })

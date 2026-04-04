@@ -8,7 +8,9 @@ import {
 
 import fetchDiscogsReleases from '../api/discogs/fetch-releases.js'
 import fetchReleasesBatch from '../api/discogs/fetch-releases-batch.js'
+import { getDiscogsConfig } from '../config/backend-config.js'
 import { getLogger } from '../services/logger.js'
+import { loadDiscogsAuthForUser } from '../services/discogs-integration-credentials.js'
 import toDiscogsDestinationPath from '../transformers/to-discogs-destination-path.js'
 import transformDiscogsRelease from '../transformers/transform-discogs-release.js'
 import { toStoredDateTime } from '../utils/time.js'
@@ -19,10 +21,6 @@ import type {
 } from '../types/discogs.js'
 import type { DiscogsWidgetDocument } from '../types/widget-content.js'
 import type { SyncJobExecutionOptions } from '../types/sync-pipeline.js'
-
-import { 
-  DISCOGS_USERNAME
-} from '../config/constants.js'
 
 const truncateLabel = (s: string, max = 64): string =>
   s.length > max ? `${s.slice(0, max - 1)}…` : s
@@ -89,16 +87,31 @@ const getMediaReducer = (storedMediaFileNames: string[] = []) =>
 
 const syncDiscogsData = async (
   documentStore: DocumentStore,
-  { userId = getDefaultWidgetUserId(), onProgress }: SyncJobExecutionOptions = {}
+  options: SyncJobExecutionOptions = {}
 ) => {
   const logger = getLogger()
+  const { onProgress } = options
+  const storageUserId = options.userId ?? getDefaultWidgetUserId()
+  const integrationLookupUserId = options.integrationLookupUserId ?? storageUserId
+
   try {
-    const discogsCollectionPath = toProviderCollectionPath('discogs', userId)
+    const discogsCollectionPath = toProviderCollectionPath('discogs', storageUserId)
+    const oauth = await loadDiscogsAuthForUser(documentStore, integrationLookupUserId)
+    const discogsAuthMode = oauth ? 'oauth' : 'env'
+
+    onProgress?.({
+      phase: 'discogs.auth',
+      message:
+        discogsAuthMode === 'oauth'
+          ? 'Using your connected Discogs account (OAuth).'
+          : 'Using server Discogs API credentials (legacy).',
+    })
+
     onProgress?.({
       phase: 'discogs.collection',
       message: 'Fetching your Discogs collection.',
     })
-    const discogsResponse = await fetchDiscogsReleases()
+    const discogsResponse = await fetchDiscogsReleases({ oauth: oauth ?? undefined })
 
     const { releases, pagination } = discogsResponse
 
@@ -114,6 +127,7 @@ const syncDiscogsData = async (
       delayMs: 1000, // 1 second delay between requests to respect rate limits
       onProgress,
       stopOnError: false,
+      oauth: oauth ?? undefined,
     })
 
     const storedMediaFileNames = await listStoredMedia()
@@ -150,6 +164,8 @@ const syncDiscogsData = async (
 
     const transformedReleases = enhancedReleases.map(transformDiscogsRelease)
 
+    const profileUsername = oauth?.discogsUsername ?? getDiscogsConfig().username ?? ''
+
     const updatedWidgetContent: DiscogsWidgetDocument = {
       collections: {
         releases: transformedReleases
@@ -158,7 +174,7 @@ const syncDiscogsData = async (
         'LPs Owned': pagination.items
       },
       profile: {
-        profileURL: `https://www.discogs.com/user/${DISCOGS_USERNAME}/collection`
+        profileURL: `https://www.discogs.com/user/${profileUsername}/collection`
       },
       meta: {
         synced: toStoredDateTime(),
@@ -187,6 +203,7 @@ const syncDiscogsData = async (
     if (!mediaToDownloadTyped.length) {
       return {
         data: updatedWidgetContent,
+        discogsAuthMode,
         ok: true,
         result: 'SUCCESS',
         totalUploadedCount: 0,
@@ -226,11 +243,12 @@ const syncDiscogsData = async (
     })
 
     return {
+      data: updatedWidgetContent,
+      discogsAuthMode,
       mediaStore: describeMediaStore(),
       result: 'SUCCESS',
       totalUploadedCount: result.length,
       uploadedFiles: result.map(({ fileName }) => fileName),
-      data: updatedWidgetContent,
     }
   } catch (error: unknown) {
     logger.error('Failed to sync Discogs data.', error)

@@ -15,6 +15,11 @@ describe('backend config', () => {
     delete process.env.IMAGE_CDN_BASE_URL
     delete process.env.DISCOGS_API_KEY
     delete process.env.DISCOGS_USERNAME
+    delete process.env.DISCOGS_CONSUMER_KEY
+    delete process.env.DISCOGS_CONSUMER_SECRET
+    delete process.env.DISCOGS_OAUTH_CALLBACK_URL
+    delete process.env.DISCOGS_OAUTH_REDIRECT_URI
+    delete process.env.DISCOGS_OAUTH_SUCCESS_REDIRECT
     delete process.env.FLICKR_API_KEY
     delete process.env.FLICKR_USER_ID
     delete process.env.GITHUB_ACCESS_TOKEN
@@ -290,6 +295,20 @@ describe('backend config', () => {
       consumerSecret: 'legacy-secret',
       callbackUrl: 'https://cb',
       appSuccessRedirect: '/done',
+    })
+  })
+
+  it('parses Discogs OAuth config from env', async () => {
+    process.env.DISCOGS_CONSUMER_KEY = 'dck'
+    process.env.DISCOGS_CONSUMER_SECRET = 'dsec'
+    process.env.DISCOGS_OAUTH_CALLBACK_URL = 'https://cb/discogs'
+    process.env.DISCOGS_OAUTH_SUCCESS_REDIRECT = ' /done-d '
+    const { getDiscogsOAuthConfig } = await import('./backend-config.js')
+    expect(getDiscogsOAuthConfig()).toMatchObject({
+      consumerKey: 'dck',
+      consumerSecret: 'dsec',
+      callbackUrl: 'https://cb/discogs',
+      appSuccessRedirect: '/done-d',
     })
   })
 

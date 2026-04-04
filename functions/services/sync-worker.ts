@@ -20,6 +20,7 @@ import type { SyncProviderId } from '../types/widget-content.js'
 
 interface SyncExecutionResult {
   data?: unknown
+  discogsAuthMode?: 'env' | 'oauth'
   error?: unknown
   flickrAuthMode?: 'env' | 'oauth'
   metrics?: Record<string, number>
@@ -100,6 +101,8 @@ const runSyncJob = async (
 
 export interface SyncWorkerResult {
   jobId?: string
+  /** Present after a successful Discogs sync (manual or scheduled). */
+  discogsAuthMode?: 'env' | 'oauth'
   /** Present after a successful Flickr sync (manual or scheduled). */
   flickrAuthMode?: 'env' | 'oauth'
   result: 'FAILURE' | 'NOOP' | 'SUCCESS'
@@ -132,9 +135,11 @@ export const processSyncJob = async ({
         userId: job.userId,
       })
       const flickrAuthMode = result.flickrAuthMode
+      const discogsAuthMode = result.discogsAuthMode
       return {
         jobId: job.jobId,
         result: 'SUCCESS',
+        ...(discogsAuthMode ? { discogsAuthMode } : {}),
         ...(flickrAuthMode ? { flickrAuthMode } : {}),
       }
     }

@@ -304,6 +304,8 @@ describe('fetchReleasesBatch', () => {
     expect(fetchReleaseDetails).toHaveBeenCalledWith(
       'https://api.discogs.com/releases/anon',
       '',
+      3,
+      undefined,
     )
   })
 

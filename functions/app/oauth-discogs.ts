@@ -2,39 +2,40 @@ import type { DocumentStore } from '../ports/document-store.js'
 import express from 'express'
 import { rateLimit } from 'express-rate-limit'
 
-import { getFlickrOAuthConfig } from '../config/backend-config.js'
+import { getDiscogsOAuthConfig } from '../config/backend-config.js'
 import {
-  OAUTH_FLICKR_PENDING_COLLECTION,
+  OAUTH_DISCOGS_PENDING_COLLECTION,
   USER_INTEGRATIONS_SEGMENT,
 } from '../config/future-tenant-collections.js'
 import { getUsersCollectionPath } from '../config/backend-paths.js'
 import { toStoredDateTime } from '../utils/time.js'
 import { encryptJsonEnvelope } from '../services/integration-token-crypto.js'
 import {
-  buildFlickrAuthorizeUrl,
-  flickrGetAccessToken,
-  flickrGetRequestToken,
-} from '../services/flickr-oauth1a.js'
+  buildDiscogsAuthorizeUrl,
+  discogsGetAccessToken,
+  discogsGetIdentity,
+  discogsGetRequestToken,
+} from '../services/discogs-oauth1a.js'
 import {
-  FLICKR_INTEGRATION_ID,
-  type FlickrOAuthCredentialPayload,
-} from '../services/flickr-integration-credentials.js'
-import { validateReturnTo, withFlickrOAuthFlash } from '../services/oauth-return-path.js'
+  DISCOGS_INTEGRATION_ID,
+  type DiscogsOAuthCredentialPayload,
+} from '../services/discogs-integration-credentials.js'
+import { validateReturnTo, withDiscogsOAuthFlash } from '../services/oauth-return-path.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
 
 const PENDING_TTL_MS = 15 * 60 * 1000
 
 const rateLimitMessage = { ok: false, error: 'Too many requests. Please try again later.' }
 
-const flickrOAuthRateLimitBase = {
+const discogsOAuthRateLimitBase = {
   message: rateLimitMessage,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: getRateLimitKey,
 } as const
 
-/** OAuth 1.0a request token while status is \`pending_oauth\` (pending Firestore doc id). */
-const FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD = 'oauthPendingRequestToken'
+/** OAuth 1.0a request token while status is `pending_oauth` (pending Firestore doc id). */
+const DISCOGS_OAUTH_PENDING_REQUEST_TOKEN_FIELD = 'oauthPendingRequestToken'
 
 interface LoggerLike {
   error: (message: string, ...args: unknown[]) => void
@@ -48,7 +49,7 @@ function allowedEmail(email: string | undefined, isProduction: boolean, allowLis
   return allowList.some((domain) => email.endsWith(domain))
 }
 
-export function resolveFlickrOAuthPublicOrigin(req: express.Request): string {
+export function resolveDiscogsOAuthPublicOrigin(req: express.Request): string {
   const explicit = process.env.PUBLIC_APP_ORIGIN?.trim()
   if (explicit) return explicit.replace(/\/$/, '')
   const host = (req.headers['x-forwarded-host'] as string) || req.get('host') || 'localhost'
@@ -58,27 +59,27 @@ export function resolveFlickrOAuthPublicOrigin(req: express.Request): string {
   return `${proto}://${host}`
 }
 
-export function resolveFlickrOAuthRedirectUrl(req: express.Request, target: string): string {
+export function resolveDiscogsOAuthRedirectUrl(req: express.Request, target: string): string {
   if (target.startsWith('http://') || target.startsWith('https://')) {
     return target
   }
-  const base = resolveFlickrOAuthPublicOrigin(req)
+  const base = resolveDiscogsOAuthPublicOrigin(req)
   const path = target.startsWith('/') ? target : `/${target}`
   return `${base}${path}`
 }
 
 /**
- * Flickr OAuth 1.0a sends the callback as GET with `oauth_token` and `oauth_verifier` in the query
- * string only — we cannot move them to a body. Extract solely those keys into strings and avoid
- * passing `req.query` or these values to logging or other generic sinks.
+ * Discogs OAuth 1.0a redirects the browser to this callback with `oauth_token` and `oauth_verifier`
+ * in the query string only — the provider does not POST a body. We read those two keys, exchange
+ * the verifier for access credentials server-side once, and never log the query or verifier.
  */
-interface FlickrOAuthCallbackQuery {
+interface DiscogsOAuthCallbackQuery {
   oauthToken: string
   oauthVerifier: string
 }
 
-/** Only keys we accept on the Flickr callback; keeps reads off the full `Request['query']` shape. */
-type FlickrOAuthCallbackQueryRaw = {
+/** Only keys we accept on the Discogs callback; keeps reads off the full `Request['query']` shape. */
+type DiscogsOAuthCallbackQueryRaw = {
   oauth_token?: unknown
   oauth_verifier?: unknown
 }
@@ -89,15 +90,15 @@ function coerceOAuthQueryString(value: unknown): string {
   return ''
 }
 
-function readFlickrOAuthCallbackQuery(query: express.Request['query']): FlickrOAuthCallbackQuery {
-  const raw = query as FlickrOAuthCallbackQueryRaw
+function readDiscogsOAuthCallbackQuery(query: express.Request['query']): DiscogsOAuthCallbackQuery {
+  const raw = query as DiscogsOAuthCallbackQueryRaw
   return {
     oauthToken: coerceOAuthQueryString(raw.oauth_token),
     oauthVerifier: coerceOAuthQueryString(raw.oauth_verifier),
   }
 }
 
-export interface RegisterFlickrOAuthOptions {
+export interface RegisterDiscogsOAuthOptions {
   expressApp: express.Express
   authenticateUser: express.RequestHandler
   documentStore: DocumentStore
@@ -106,7 +107,7 @@ export interface RegisterFlickrOAuthOptions {
   allowedEmailDomains: string[]
 }
 
-export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): void {
+export function registerDiscogsOAuthRoutes(opts: RegisterDiscogsOAuthOptions): void {
   const {
     expressApp,
     authenticateUser,
@@ -119,9 +120,9 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
   const usersPath = getUsersCollectionPath()
 
   expressApp.post(
-    '/api/oauth/flickr/start',
+    '/api/oauth/discogs/start',
     rateLimit({
-      ...flickrOAuthRateLimitBase,
+      ...discogsOAuthRateLimitBase,
       windowMs: 15 * 60 * 1000,
       limit: 30,
     }),
@@ -144,11 +145,11 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
         encryptionReady = false
       }
 
-      const oauthCfg = getFlickrOAuthConfig()
+      const oauthCfg = getDiscogsOAuthConfig()
       if (!oauthCfg.consumerKey || !oauthCfg.consumerSecret || !oauthCfg.callbackUrl) {
         res.status(503).json({
           ok: false,
-          error: 'Flickr OAuth is not configured on the server.',
+          error: 'Discogs OAuth is not configured on the server.',
         })
         return
       }
@@ -161,19 +162,19 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
       }
 
       try {
-        const integrationPath = `${usersPath}/${uid}/${USER_INTEGRATIONS_SEGMENT}/${FLICKR_INTEGRATION_ID}`
+        const integrationPath = `${usersPath}/${uid}/${USER_INTEGRATIONS_SEGMENT}/${DISCOGS_INTEGRATION_ID}`
         const existing = await documentStore.getDocument<Record<string, unknown>>(integrationPath)
         if (existing?.status === 'connected') {
-          res.status(400).json({ ok: false, error: 'Flickr is already linked for this account.' })
+          res.status(400).json({ ok: false, error: 'Discogs is already linked for this account.' })
           return
         }
 
         const priorPending =
-          typeof existing?.[FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD] === 'string'
-            ? existing[FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD]
+          typeof existing?.[DISCOGS_OAUTH_PENDING_REQUEST_TOKEN_FIELD] === 'string'
+            ? existing[DISCOGS_OAUTH_PENDING_REQUEST_TOKEN_FIELD]
             : null
         if (priorPending && documentStore.deleteDocument) {
-          const stalePendingPath = `${OAUTH_FLICKR_PENDING_COLLECTION}/${encodeURIComponent(priorPending)}`
+          const stalePendingPath = `${OAUTH_DISCOGS_PENDING_COLLECTION}/${encodeURIComponent(priorPending)}`
           try {
             await documentStore.deleteDocument(stalePendingPath)
           } catch {
@@ -181,13 +182,13 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
           }
         }
 
-        const { oauthToken, oauthTokenSecret } = await flickrGetRequestToken({
+        const { oauthToken, oauthTokenSecret } = await discogsGetRequestToken({
           consumerKey: oauthCfg.consumerKey,
           consumerSecret: oauthCfg.consumerSecret,
           oauthCallback: oauthCfg.callbackUrl,
         })
 
-        const pendingPath = `${OAUTH_FLICKR_PENDING_COLLECTION}/${encodeURIComponent(oauthToken)}`
+        const pendingPath = `${OAUTH_DISCOGS_PENDING_COLLECTION}/${encodeURIComponent(oauthToken)}`
         await documentStore.setDocument(pendingPath, {
           uid,
           oauthTokenSecret,
@@ -196,25 +197,25 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
         })
 
         await documentStore.setDocument(integrationPath, {
-          providerId: FLICKR_INTEGRATION_ID,
+          providerId: DISCOGS_INTEGRATION_ID,
           status: 'pending_oauth',
-          [FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD]: oauthToken,
+          [DISCOGS_OAUTH_PENDING_REQUEST_TOKEN_FIELD]: oauthToken,
           updatedAt: toStoredDateTime(),
         })
 
-        const authorizeUrl = buildFlickrAuthorizeUrl(oauthToken, 'read')
+        const authorizeUrl = buildDiscogsAuthorizeUrl(oauthToken)
         res.status(200).json({ ok: true, authorizeUrl })
       } catch (err) {
-        logger.error('Flickr OAuth start failed', { uid, error: err })
-        res.status(500).json({ ok: false, error: 'Could not start Flickr authorization.' })
+        logger.error('Discogs OAuth start failed', { uid, error: err })
+        res.status(500).json({ ok: false, error: 'Could not start Discogs authorization.' })
       }
     }
   )
 
   expressApp.get(
-    '/api/oauth/flickr/callback',
+    '/api/oauth/discogs/callback',
     rateLimit({
-      ...flickrOAuthRateLimitBase,
+      ...discogsOAuthRateLimitBase,
       windowMs: 15 * 60 * 1000,
       limit: 60,
     }),
@@ -222,24 +223,24 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
       // Do not send OAuth query params onward as Referer on the next navigation.
       res.setHeader('Referrer-Policy', 'no-referrer')
 
-      const { oauthToken, oauthVerifier } = readFlickrOAuthCallbackQuery(req.query)
+      const { oauthToken, oauthVerifier } = readDiscogsOAuthCallbackQuery(req.query)
 
       let validatedReturnTo: string | null = null
 
       const failRedirect = (reason: string) => {
         const path = validatedReturnTo
-          ? withFlickrOAuthFlash(validatedReturnTo, 'error', reason)
-          : withFlickrOAuthFlash('/onboarding', 'error', reason)
-        res.redirect(302, resolveFlickrOAuthRedirectUrl(req, path))
+          ? withDiscogsOAuthFlash(validatedReturnTo, 'error', reason)
+          : withDiscogsOAuthFlash('/onboarding', 'error', reason)
+        res.redirect(302, resolveDiscogsOAuthRedirectUrl(req, path))
       }
 
       if (!oauthToken || !oauthVerifier) {
-        logger.warn('Flickr OAuth callback missing token or verifier')
+        logger.warn('Discogs OAuth callback missing token or verifier')
         failRedirect('missing_token')
         return
       }
 
-      const pendingPath = `${OAUTH_FLICKR_PENDING_COLLECTION}/${encodeURIComponent(oauthToken)}`
+      const pendingPath = `${OAUTH_DISCOGS_PENDING_COLLECTION}/${encodeURIComponent(oauthToken)}`
       const pending = await documentStore.getDocument<{
         uid?: string
         oauthTokenSecret?: string
@@ -248,7 +249,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
       }>(pendingPath)
 
       if (!pending?.uid || !pending.oauthTokenSecret) {
-        logger.warn('Flickr OAuth callback: no pending session')
+        logger.warn('Discogs OAuth callback: no pending session')
         failRedirect('session_expired')
         return
       }
@@ -269,7 +270,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
       }
 
       const uid = pending.uid
-      const oauthCfg = getFlickrOAuthConfig()
+      const oauthCfg = getDiscogsOAuthConfig()
       if (!oauthCfg.consumerKey || !oauthCfg.consumerSecret) {
         failRedirect('server_misconfigured')
         return
@@ -288,7 +289,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
       }
 
       try {
-        const access = await flickrGetAccessToken({
+        const access = await discogsGetAccessToken({
           consumerKey: oauthCfg.consumerKey,
           consumerSecret: oauthCfg.consumerSecret,
           oauthToken,
@@ -296,18 +297,24 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
           oauthVerifier,
         })
 
-        const credPayload: FlickrOAuthCredentialPayload = {
+        const { username } = await discogsGetIdentity({
+          consumerKey: oauthCfg.consumerKey,
+          consumerSecret: oauthCfg.consumerSecret,
+          oauthToken: access.oauthToken,
+          oauthTokenSecret: access.oauthTokenSecret,
+        })
+
+        const credPayload: DiscogsOAuthCredentialPayload = {
           oauthToken: access.oauthToken,
           oauthTokenSecret: access.oauthTokenSecret,
         }
         const envelope = encryptJsonEnvelope(uid, credPayload)
 
-        const integrationPath = `${usersPath}/${uid}/${USER_INTEGRATIONS_SEGMENT}/${FLICKR_INTEGRATION_ID}`
+        const integrationPath = `${usersPath}/${uid}/${USER_INTEGRATIONS_SEGMENT}/${DISCOGS_INTEGRATION_ID}`
         await documentStore.setDocument(integrationPath, {
-          providerId: FLICKR_INTEGRATION_ID,
+          providerId: DISCOGS_INTEGRATION_ID,
           status: 'connected',
-          flickrUserNsid: access.userNsid,
-          flickrUsername: access.username || null,
+          discogsUsername: username,
           credentialEnvelope: envelope,
           oauthCompletedAt: toStoredDateTime(),
           updatedAt: toStoredDateTime(),
@@ -317,30 +324,25 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
           await documentStore.deleteDocument(pendingPath)
         }
 
-        logger.info('Flickr OAuth completed', { uid, nsid: access.userNsid })
+        logger.info('Discogs OAuth completed', { uid, username })
 
-        const cfg = getFlickrOAuthConfig()
+        const cfg = getDiscogsOAuthConfig()
         const successPath =
           validatedReturnTo != null
-            ? withFlickrOAuthFlash(validatedReturnTo, 'success')
+            ? withDiscogsOAuthFlash(validatedReturnTo, 'success')
             : cfg.appSuccessRedirect
-        res.redirect(302, resolveFlickrOAuthRedirectUrl(req, successPath))
+        res.redirect(302, resolveDiscogsOAuthRedirectUrl(req, successPath))
       } catch (err) {
-        logger.error('Flickr OAuth callback failed', { uid, error: err })
+        logger.error('Discogs OAuth callback failed', { uid, error: err })
         failRedirect('token_exchange_failed')
       }
     }
   )
 
-  /**
-   * Removes stored credentials and any in-flight OAuth pending row.
-   * Flickr does not offer a standard token-revocation call for these OAuth 1.0a tokens; users can
-   * remove app access from their Flickr account settings if needed.
-   */
   expressApp.delete(
-    '/api/oauth/flickr',
+    '/api/oauth/discogs',
     rateLimit({
-      ...flickrOAuthRateLimitBase,
+      ...discogsOAuthRateLimitBase,
       windowMs: 15 * 60 * 1000,
       limit: 20,
     }),
@@ -348,7 +350,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid
-      const integrationPath = `${usersPath}/${uid}/${USER_INTEGRATIONS_SEGMENT}/${FLICKR_INTEGRATION_ID}`
+      const integrationPath = `${usersPath}/${uid}/${USER_INTEGRATIONS_SEGMENT}/${DISCOGS_INTEGRATION_ID}`
       try {
         if (!documentStore.deleteDocument) {
           res.status(500).json({ ok: false, error: 'Delete not supported by store.' })
@@ -356,11 +358,11 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
         }
         const integration = await documentStore.getDocument<Record<string, unknown>>(integrationPath)
         const pendingTok =
-          typeof integration?.[FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD] === 'string'
-            ? integration[FLICKR_OAUTH_PENDING_REQUEST_TOKEN_FIELD]
+          typeof integration?.[DISCOGS_OAUTH_PENDING_REQUEST_TOKEN_FIELD] === 'string'
+            ? integration[DISCOGS_OAUTH_PENDING_REQUEST_TOKEN_FIELD]
             : null
         if (pendingTok) {
-          const pendingPath = `${OAUTH_FLICKR_PENDING_COLLECTION}/${encodeURIComponent(pendingTok)}`
+          const pendingPath = `${OAUTH_DISCOGS_PENDING_COLLECTION}/${encodeURIComponent(pendingTok)}`
           try {
             await documentStore.deleteDocument(pendingPath)
           } catch {
@@ -370,8 +372,8 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
         await documentStore.deleteDocument(integrationPath)
         res.status(200).json({ ok: true })
       } catch (err) {
-        logger.error('Flickr disconnect failed', { uid, error: err })
-        res.status(500).json({ ok: false, error: 'Could not disconnect Flickr.' })
+        logger.error('Discogs disconnect failed', { uid, error: err })
+        res.status(500).json({ ok: false, error: 'Could not disconnect Discogs.' })
       }
     }
   )

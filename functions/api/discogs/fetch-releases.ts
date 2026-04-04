@@ -1,9 +1,24 @@
 import { logger } from 'firebase-functions'
+
 import { getDiscogsConfig } from '../../config/backend-config.js'
 import { chronogroveHttpUserAgent } from '../../config/chronogrove-http-user-agent.js'
+import type { ResolvedDiscogsApiAuth } from '../../services/discogs-integration-credentials.js'
+import { discogsOAuthGotGet } from '../../services/discogs-oauth1a.js'
 import type { DiscogsCollectionReleaseItem, DiscogsCollectionResponse } from '../../types/discogs.js'
 
-const fetchDiscogsReleases = async (): Promise<DiscogsCollectionResponse> => {
+export interface FetchDiscogsReleasesOptions {
+  oauth?: ResolvedDiscogsApiAuth
+}
+
+const fetchDiscogsReleases = async (
+  options: FetchDiscogsReleasesOptions = {}
+): Promise<DiscogsCollectionResponse> => {
+  const { oauth } = options
+
+  if (oauth) {
+    return fetchDiscogsReleasesOAuth(oauth)
+  }
+
   const { apiKey, username } = getDiscogsConfig()
 
   if (!apiKey || !username) {
@@ -17,13 +32,13 @@ const fetchDiscogsReleases = async (): Promise<DiscogsCollectionResponse> => {
 
     while (hasMore) {
       const url = `https://api.discogs.com/users/${username}/collection/folders/0/releases?token=${apiKey}&page=${page}&per_page=50`
-      
+
       logger.info(`Fetching Discogs releases page ${page}`)
-      
+
       const response = await fetch(url, {
         headers: {
-          'User-Agent': chronogroveHttpUserAgent
-        }
+          'User-Agent': chronogroveHttpUserAgent,
+        },
       })
 
       if (!response.ok) {
@@ -34,24 +49,22 @@ const fetchDiscogsReleases = async (): Promise<DiscogsCollectionResponse> => {
         releases: DiscogsCollectionReleaseItem[]
         pagination: { page: number; pages: number }
       }
-      
+
       allReleases = allReleases.concat(data.releases)
-      
-      // Check if there are more pages
+
       hasMore = data.pagination.page < data.pagination.pages
       page++
     }
 
-    // Return data in the same format as the original response but with all releases
     return {
       pagination: {
         page: 1,
         pages: 1,
         per_page: allReleases.length,
         items: allReleases.length,
-        urls: {}
+        urls: {},
       },
-      releases: allReleases
+      releases: allReleases,
     }
   } catch (error) {
     logger.error('Failed to fetch Discogs releases', error)
@@ -59,4 +72,42 @@ const fetchDiscogsReleases = async (): Promise<DiscogsCollectionResponse> => {
   }
 }
 
-export default fetchDiscogsReleases 
+async function fetchDiscogsReleasesOAuth(oauth: ResolvedDiscogsApiAuth): Promise<DiscogsCollectionResponse> {
+  const { discogsUsername, consumerKey, consumerSecret, oauthToken, oauthTokenSecret } = oauth
+  let allReleases: DiscogsCollectionReleaseItem[] = []
+  let page = 1
+  let hasMore = true
+
+  while (hasMore) {
+    const url = `https://api.discogs.com/users/${encodeURIComponent(
+      discogsUsername
+    )}/collection/folders/0/releases?page=${page}&per_page=50`
+
+    logger.info(`Fetching Discogs releases page ${page} (OAuth)`)
+
+    const signing = { consumerKey, consumerSecret, oauthToken, oauthTokenSecret }
+    const { body } = await discogsOAuthGotGet(url, signing)
+    const data = JSON.parse(body as string) as {
+      releases: DiscogsCollectionReleaseItem[]
+      pagination: { page: number; pages: number }
+    }
+
+    allReleases = allReleases.concat(data.releases)
+
+    hasMore = data.pagination.page < data.pagination.pages
+    page++
+  }
+
+  return {
+    pagination: {
+      page: 1,
+      pages: 1,
+      per_page: allReleases.length,
+      items: allReleases.length,
+      urls: {},
+    },
+    releases: allReleases,
+  }
+}
+
+export default fetchDiscogsReleases
