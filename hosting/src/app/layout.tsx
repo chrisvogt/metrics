@@ -16,6 +16,12 @@ const mono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '64x64' },
+    ],
+  },
   title: {
     default: 'Chronogrove',
     template: '%s | Chronogrove',
