@@ -14,7 +14,11 @@ import {
 } from 'firebase/auth'
 import { getFirebaseApp } from './firebase'
 import { apiClient } from './apiClient'
-import { establishApiSession } from './establishApiSession'
+import {
+  establishApiSessionCoalesced,
+  resetSessionEstablishmentTracking,
+  isApiSessionEstablishedForUid,
+} from './establishApiSession'
 
 export interface AuthContextValue {
   user: User | null
@@ -53,6 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const unsub = onAuthStateChanged(a, async (u) => {
           if (cancelled) return
           if (!u) {
+            resetSessionEstablishmentTracking()
             apiClient.clearSession()
             setUser(null)
             setApiSessionReady(true)
@@ -61,8 +66,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
 
           setUser(u)
-          setApiSessionReady(false)
-          await establishApiSession(u)
+          if (!isApiSessionEstablishedForUid(u.uid)) {
+            setApiSessionReady(false)
+          }
+          await establishApiSessionCoalesced(u)
           if (!cancelled) {
             setApiSessionReady(true)
             setLoading(false)
@@ -92,7 +99,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null)
     try {
       const cred = await signInWithPopup(auth, googleProvider)
-      await establishApiSession(cred.user)
+      await establishApiSessionCoalesced(cred.user)
     } catch (e) {
       const err = e as { message?: string }
       setError(err.message ?? 'Google sign-in failed')
@@ -105,7 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null)
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password)
-      await establishApiSession(cred.user)
+      await establishApiSessionCoalesced(cred.user)
     } catch (e) {
       const err = e as { code?: string; message?: string }
       const msg =

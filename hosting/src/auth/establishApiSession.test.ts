@@ -4,7 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { User } from 'firebase/auth'
 
-import { establishApiSession } from './establishApiSession'
+import {
+  establishApiSession,
+  establishApiSessionCoalesced,
+  resetSessionEstablishmentTracking,
+  isApiSessionEstablishedForUid,
+} from './establishApiSession'
 
 const createSession = vi.fn()
 const getIdToken = vi.fn()
@@ -15,10 +20,10 @@ vi.mock('./apiClient', () => ({
   },
 }))
 
-function mockUser(tokenReturns: string[] = ['tok-a', 'tok-b']): User {
+function mockUser(tokenReturns: string[] = ['tok-a', 'tok-b'], uid = 'mock-uid'): User {
   let i = 0
   getIdToken.mockImplementation(() => Promise.resolve(tokenReturns[Math.min(i++, tokenReturns.length - 1)]!))
-  return { getIdToken } as unknown as User
+  return { uid, getIdToken } as unknown as User
 }
 
 describe('establishApiSession', () => {
@@ -26,6 +31,7 @@ describe('establishApiSession', () => {
     createSession.mockReset()
     getIdToken.mockReset()
     localStorage.clear()
+    resetSessionEstablishmentTracking()
   })
 
   it('calls createSession with ID token on success', async () => {
@@ -57,5 +63,52 @@ describe('establishApiSession', () => {
     await establishApiSession(u)
     expect(createSession).not.toHaveBeenCalled()
     expect(localStorage.getItem('authToken')).toBe('recovery')
+  })
+})
+
+describe('establishApiSessionCoalesced', () => {
+  beforeEach(() => {
+    createSession.mockReset()
+    getIdToken.mockReset()
+    localStorage.clear()
+    resetSessionEstablishmentTracking()
+  })
+
+  it('joins concurrent calls so createSession runs once', async () => {
+    createSession.mockImplementation(
+      () => new Promise((r) => setTimeout(() => r({ ok: true }), 10)),
+    )
+    const u = mockUser(['one', 'one'])
+    await Promise.all([establishApiSessionCoalesced(u), establishApiSessionCoalesced(u)])
+    expect(createSession).toHaveBeenCalledTimes(1)
+    expect(isApiSessionEstablishedForUid(u.uid)).toBe(true)
+  })
+
+  it('returns immediately after success without another createSession', async () => {
+    createSession.mockResolvedValue({ ok: true })
+    const u = mockUser(['one'])
+    await establishApiSessionCoalesced(u)
+    await establishApiSessionCoalesced(u)
+    expect(createSession).toHaveBeenCalledTimes(1)
+  })
+
+  it('reset clears completed uid so a later call can createSession again', async () => {
+    createSession.mockResolvedValue({ ok: true })
+    const u = mockUser(['one', 'two'])
+    await establishApiSessionCoalesced(u)
+    resetSessionEstablishmentTracking()
+    await establishApiSessionCoalesced(u)
+    expect(createSession).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not throw if reset clears in-flight map before the handshake settles', async () => {
+    createSession.mockImplementation(
+      () => new Promise((r) => setTimeout(() => r({ ok: true }), 25)),
+    )
+    const u = mockUser(['one'])
+    const p = establishApiSessionCoalesced(u)
+    resetSessionEstablishmentTracking()
+    await expect(p).resolves.toBeUndefined()
+    expect(isApiSessionEstablishedForUid(u.uid)).toBe(false)
   })
 })
