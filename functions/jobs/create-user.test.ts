@@ -47,12 +47,11 @@ describe('createUser', () => {
       },
       entitlements: {
         cdn: false,
-        customDomain: false,
+        customDomain: true,
       },
       onboarding: {
         currentStep: 'username',
         completedSteps: [],
-        draftCustomDomain: null,
         updatedAt: expect.any(String),
       },
       widgets: {},
@@ -76,12 +75,11 @@ describe('createUser', () => {
         },
         entitlements: {
           cdn: false,
-          customDomain: false,
+          customDomain: true,
         },
         onboarding: {
           currentStep: 'username',
           completedSteps: [],
-          draftCustomDomain: null,
           updatedAt: expect.any(String),
         },
         widgets: {},

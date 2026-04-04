@@ -722,6 +722,14 @@ export function createExpressApp({
           res.status(409).json({ ok: false, error: 'Username is already taken' })
           return
         }
+        if (err instanceof Error && err.message === 'hostname_taken') {
+          res.status(409).json({ ok: false, error: 'That hostname is already claimed' })
+          return
+        }
+        if (err instanceof Error && err.message === 'custom_domain_not_entitled') {
+          res.status(403).json({ ok: false, error: 'Custom domain is not enabled for this account' })
+          return
+        }
         logger.error('Error saving onboarding progress', { uid, error: err })
         res.status(500).json(buildFailureResponse(err))
       }

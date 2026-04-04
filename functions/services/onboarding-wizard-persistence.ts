@@ -1,10 +1,12 @@
-import { FieldValue } from 'firebase-admin/firestore'
+import { FieldValue, type DocumentSnapshot } from 'firebase-admin/firestore'
 import admin from 'firebase-admin'
 
 import {
+  TENANT_HOSTS_COLLECTION,
   TENANT_USERNAMES_COLLECTION,
   USER_INTEGRATIONS_SEGMENT,
 } from '../config/future-tenant-collections.js'
+import { readStoredTenantHostnameFromUserDoc } from '../utils/read-stored-tenant-hostname.js'
 import {
   buildClientPayloadFromFirestore,
   type OnboardingProgressPayload,
@@ -86,14 +88,16 @@ function onboardingDocFromPayload(onboarding: UserOnboardingDoc): Record<string,
   return {
     currentStep: onboarding.currentStep,
     completedSteps: onboarding.completedSteps,
-    draftCustomDomain: onboarding.draftCustomDomain,
     updatedAt: onboarding.updatedAt,
+    /** Legacy key removed — hostname lives in `tenantHostname` + `tenant_hosts`. */
+    draftCustomDomain: FieldValue.delete(),
   }
 }
 
 /**
  * Persist parsed onboarding PUT into first-class Firestore fields:
- * `username`, `tenant_usernames/{slug}`, `onboarding`, `integrations/*`, clear legacy `onboardingProgress`.
+ * `username`, `tenantHostname`, `tenant_hosts/{hostname}`, `tenant_usernames/{slug}`, `onboarding`,
+ * `integrations/*`, clear legacy `onboardingProgress`.
  */
 export async function persistOnboardingWizardState(params: {
   usersCollection: string
@@ -108,7 +112,6 @@ export async function persistOnboardingWizardState(params: {
   const onboardingDoc: UserOnboardingDoc = {
     currentStep: params.parsed.currentStep,
     completedSteps: params.parsed.completedSteps,
-    draftCustomDomain: params.parsed.customDomain,
     updatedAt: t,
   }
 
@@ -123,24 +126,88 @@ export async function persistOnboardingWizardState(params: {
         ? existing.username.toLowerCase()
         : null
 
+    const domainNext = params.parsed.customDomain
+    const domainPrev = readStoredTenantHostnameFromUserDoc(existing)
+
+    const entitlementsRaw = existing.entitlements
+    const customDomainEntitled =
+      entitlementsRaw &&
+      typeof entitlementsRaw === 'object' &&
+      !Array.isArray(entitlementsRaw) &&
+      (entitlementsRaw as Record<string, unknown>).customDomain === false
+        ? false
+        : true
+
+    if (domainNext && !customDomainEntitled) {
+      throw new Error('custom_domain_not_entitled')
+    }
+
+    /**
+     * Firestore requires every tx.get before any tx.set/delete/update.
+     * We used to read the new username/host claim after deleting the old one, which
+     * fails when both change in one request.
+     */
+    let oldUsernameSnap: DocumentSnapshot | null = null
+    let newUsernameSnap: DocumentSnapshot | null = null
+    let oldHostSnap: DocumentSnapshot | null = null
+    let newHostSnap: DocumentSnapshot | null = null
+
     if (usernameNext !== usernamePrev) {
       if (usernamePrev) {
-        const oldClaim = db.collection(TENANT_USERNAMES_COLLECTION).doc(usernamePrev)
-        const oldSnap = await tx.get(oldClaim)
-        if (oldSnap.exists && oldSnap.get('uid') === params.uid) {
-          tx.delete(oldClaim)
-        }
+        oldUsernameSnap = await tx.get(
+          db.collection(TENANT_USERNAMES_COLLECTION).doc(usernamePrev)
+        )
       }
       if (usernameNext) {
-        const claimRef = db.collection(TENANT_USERNAMES_COLLECTION).doc(usernameNext)
-        const claimSnap = await tx.get(claimRef)
-        if (claimSnap.exists) {
-          const owner = claimSnap.get('uid')
+        newUsernameSnap = await tx.get(
+          db.collection(TENANT_USERNAMES_COLLECTION).doc(usernameNext)
+        )
+      }
+    }
+
+    if (domainNext !== domainPrev) {
+      if (domainPrev) {
+        oldHostSnap = await tx.get(db.collection(TENANT_HOSTS_COLLECTION).doc(domainPrev))
+      }
+      if (domainNext) {
+        newHostSnap = await tx.get(db.collection(TENANT_HOSTS_COLLECTION).doc(domainNext))
+      }
+    }
+
+    if (usernameNext !== usernamePrev) {
+      if (usernamePrev && oldUsernameSnap) {
+        if (oldUsernameSnap.exists && oldUsernameSnap.get('uid') === params.uid) {
+          tx.delete(oldUsernameSnap.ref)
+        }
+      }
+      if (usernameNext && newUsernameSnap) {
+        if (newUsernameSnap.exists) {
+          const owner = newUsernameSnap.get('uid')
           if (owner !== params.uid) {
             throw new Error('username_taken')
           }
         }
-        tx.set(claimRef, {
+        tx.set(newUsernameSnap.ref, {
+          uid: params.uid,
+          claimedAt: FieldValue.serverTimestamp(),
+        })
+      }
+    }
+
+    if (domainNext !== domainPrev) {
+      if (domainPrev && oldHostSnap) {
+        if (oldHostSnap.exists && oldHostSnap.get('uid') === params.uid) {
+          tx.delete(oldHostSnap.ref)
+        }
+      }
+      if (domainNext && newHostSnap) {
+        if (newHostSnap.exists) {
+          const owner = newHostSnap.get('uid')
+          if (owner !== params.uid) {
+            throw new Error('hostname_taken')
+          }
+        }
+        tx.set(newHostSnap.ref, {
           uid: params.uid,
           claimedAt: FieldValue.serverTimestamp(),
         })
@@ -156,6 +223,12 @@ export async function persistOnboardingWizardState(params: {
       userPatch.username = usernameNext
     } else if (usernamePrev && !usernameNext) {
       userPatch.username = FieldValue.delete()
+    }
+
+    if (domainNext) {
+      userPatch.tenantHostname = domainNext
+    } else if (domainPrev) {
+      userPatch.tenantHostname = FieldValue.delete()
     }
 
     tx.set(userRef, userPatch, { merge: true })

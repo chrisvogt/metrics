@@ -38,6 +38,14 @@ function makeCollectionMock() {
   }))
 }
 
+/** Snapshot returned from `tx.get`; persistence uses `.ref` for follow-up set/delete. */
+function txDocSnap(
+  ref: { path: string },
+  snap: { exists: boolean; data?: () => unknown; get?: (f: string) => unknown }
+) {
+  return { ...snap, ref }
+}
+
 const mockCollection = makeCollectionMock()
 const mockFirestoreInstance = {
   collection: mockCollection,
@@ -91,7 +99,6 @@ describe('onboarding-wizard-persistence', () => {
         onboarding: {
           currentStep: 'done',
           completedSteps: ['username', 'connections', 'domain'],
-          draftCustomDomain: null,
           updatedAt: 't',
         },
       },
@@ -122,7 +129,6 @@ describe('onboarding-wizard-persistence', () => {
         onboarding: {
           currentStep: 'connections',
           completedSteps: ['username'],
-          draftCustomDomain: null,
           updatedAt: 't',
         },
       },
@@ -135,10 +141,12 @@ describe('onboarding-wizard-persistence', () => {
   })
 
   it('persistOnboardingWizardState treats missing user doc as empty profile', async () => {
-    const txGet = vi
-      .fn()
-      .mockResolvedValueOnce({ exists: false })
-      .mockResolvedValueOnce({ exists: false })
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/new-user') {
+        return Promise.resolve(txDocSnap(ref, { exists: false }))
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
     const txSet = vi.fn()
     mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
       await fn({ get: txGet, set: txSet, delete: vi.fn() })
@@ -163,17 +171,23 @@ describe('onboarding-wizard-persistence', () => {
 
   it('persistOnboardingWizardState does not delete old claim when snapshot uid mismatches', async () => {
     const txDelete = vi.fn()
-    const txGet = vi
-      .fn()
-      .mockResolvedValueOnce({
-        exists: true,
-        data: () => ({ username: 'oldsl' }),
-      })
-      .mockResolvedValueOnce({
-        exists: true,
-        get: (f: string) => (f === 'uid' ? 'someone-else' : undefined),
-      })
-      .mockResolvedValueOnce({ exists: false })
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/me') {
+        return Promise.resolve(txDocSnap(ref, { exists: true, data: () => ({ username: 'oldsl' }) }))
+      }
+      if (ref.path === 'tenant_usernames/oldsl') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (f: string) => (f === 'uid' ? 'someone-else' : undefined),
+          })
+        )
+      }
+      if (ref.path === 'tenant_usernames/newsl') {
+        return Promise.resolve(txDocSnap(ref, { exists: false }))
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
 
     mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
       await fn({ get: txGet, set: vi.fn(), delete: txDelete })
@@ -201,18 +215,23 @@ describe('onboarding-wizard-persistence', () => {
     const txSet = vi.fn()
     const txDelete = vi.fn()
 
-    txGet
-      .mockResolvedValueOnce({
-        exists: true,
-        data: () => ({ username: 'oldslug' }),
-      })
-      .mockResolvedValueOnce({
-        exists: true,
-        get: (field: string) => (field === 'uid' ? 'abc' : undefined),
-      })
-      .mockResolvedValueOnce({
-        exists: false,
-      })
+    txGet.mockImplementation((ref: { path: string }) => {
+      if (ref.path === 'users/abc') {
+        return Promise.resolve(txDocSnap(ref, { exists: true, data: () => ({ username: 'oldslug' }) }))
+      }
+      if (ref.path === 'tenant_usernames/oldslug') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (field: string) => (field === 'uid' ? 'abc' : undefined),
+          })
+        )
+      }
+      if (ref.path === 'tenant_usernames/newslug') {
+        return Promise.resolve(txDocSnap(ref, { exists: false }))
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
 
     mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
       await fn({
@@ -249,10 +268,15 @@ describe('onboarding-wizard-persistence', () => {
   })
 
   it('persistOnboardingWizardState creates integration stubs that do not yet exist', async () => {
-    const txGet = vi
-      .fn()
-      .mockResolvedValueOnce({ exists: true, data: () => ({}) })
-      .mockResolvedValueOnce({ exists: false })
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/abc') {
+        return Promise.resolve(txDocSnap(ref, { exists: true, data: () => ({}) }))
+      }
+      if (ref.path === 'tenant_usernames/newbie') {
+        return Promise.resolve(txDocSnap(ref, { exists: false }))
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
     mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
       await fn({ get: txGet, set: vi.fn(), delete: vi.fn() })
     })
@@ -278,10 +302,9 @@ describe('onboarding-wizard-persistence', () => {
   })
 
   it('persistOnboardingWizardState does not set username patch when slug stays unset', async () => {
-    const txGet = vi.fn().mockResolvedValueOnce({
-      exists: true,
-      data: () => ({}),
-    })
+    const txGet = vi.fn((ref: { path: string }) =>
+      Promise.resolve(txDocSnap(ref, { exists: true, data: () => ({}) }))
+    )
     const txSet = vi.fn()
     mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
       await fn({ get: txGet, set: txSet, delete: vi.fn() })
@@ -306,10 +329,9 @@ describe('onboarding-wizard-persistence', () => {
   })
 
   it('persistOnboardingWizardState skips claim churn when username unchanged', async () => {
-    const txGet = vi.fn().mockResolvedValueOnce({
-      exists: true,
-      data: () => ({ username: 'same' }),
-    })
+    const txGet = vi.fn((ref: { path: string }) =>
+      Promise.resolve(txDocSnap(ref, { exists: true, data: () => ({ username: 'same' }) }))
+    )
     const txSet = vi.fn()
     mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
       await fn({ get: txGet, set: txSet, delete: vi.fn() })
@@ -334,13 +356,20 @@ describe('onboarding-wizard-persistence', () => {
   })
 
   it('persistOnboardingWizardState keeps claim when slug already owned by same uid', async () => {
-    const txGet = vi
-      .fn()
-      .mockResolvedValueOnce({ exists: true, data: () => ({}) })
-      .mockResolvedValueOnce({
-        exists: true,
-        get: (f: string) => (f === 'uid' ? 'me' : undefined),
-      })
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/me') {
+        return Promise.resolve(txDocSnap(ref, { exists: true, data: () => ({}) }))
+      }
+      if (ref.path === 'tenant_usernames/mine') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (f: string) => (f === 'uid' ? 'me' : undefined),
+          })
+        )
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
     const txSet = vi.fn()
     mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
       await fn({ get: txGet, set: txSet, delete: vi.fn() })
@@ -364,13 +393,20 @@ describe('onboarding-wizard-persistence', () => {
   })
 
   it('persistOnboardingWizardState throws username_taken when claim owned by another uid', async () => {
-    const txGet = vi
-      .fn()
-      .mockResolvedValueOnce({ exists: true, data: () => ({}) })
-      .mockResolvedValueOnce({
-        exists: true,
-        get: (f: string) => (f === 'uid' ? 'someone-else' : undefined),
-      })
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/me') {
+        return Promise.resolve(txDocSnap(ref, { exists: true, data: () => ({}) }))
+      }
+      if (ref.path === 'tenant_usernames/taken') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (f: string) => (f === 'uid' ? 'someone-else' : undefined),
+          })
+        )
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
 
     mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
       await fn({
@@ -397,16 +433,20 @@ describe('onboarding-wizard-persistence', () => {
   })
 
   it('persistOnboardingWizardState clears username field when slug removed', async () => {
-    const txGet = vi
-      .fn()
-      .mockResolvedValueOnce({
-        exists: true,
-        data: () => ({ username: 'gone' }),
-      })
-      .mockResolvedValueOnce({
-        exists: true,
-        get: (f: string) => (f === 'uid' ? 'u' : undefined),
-      })
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u') {
+        return Promise.resolve(txDocSnap(ref, { exists: true, data: () => ({ username: 'gone' }) }))
+      }
+      if (ref.path === 'tenant_usernames/gone') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (f: string) => (f === 'uid' ? 'u' : undefined),
+          })
+        )
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
 
     const txSet = vi.fn()
     const txDelete = vi.fn()
@@ -433,5 +473,344 @@ describe('onboarding-wizard-persistence', () => {
       (c) => c[1] && typeof c[1] === 'object' && 'onboarding' in (c[1] as object)
     )?.[1] as Record<string, unknown>
     expect(patchArg?.username).toEqual({ __sv: 'deleteField' })
+  })
+
+  it('persistOnboardingWizardState claims tenant_hosts and sets tenantHostname when domain is new', async () => {
+    const txSet = vi.fn()
+    const txDelete = vi.fn()
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/uid-new') {
+        return Promise.resolve(txDocSnap(ref, { exists: true, data: () => ({ username: 'sl' }) }))
+      }
+      if (ref.path === 'tenant_hosts/api.new.example.com') {
+        return Promise.resolve(txDocSnap(ref, { exists: false }))
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: txSet, delete: txDelete })
+    })
+    mockIntegrationGet.mockResolvedValueOnce({ docs: [] })
+
+    await persistOnboardingWizardState({
+      usersCollection: 'users',
+      uid: 'uid-new',
+      parsed: {
+        currentStep: 'domain',
+        completedSteps: ['username', 'connections'],
+        username: 'sl',
+        connectedProviderIds: [],
+        customDomain: 'api.new.example.com',
+        updatedAt: 't',
+      },
+    })
+
+    expect(txSet).toHaveBeenCalled()
+    const hostSet = txSet.mock.calls.find(
+      (c) =>
+        c[0]?.path === 'tenant_hosts/api.new.example.com' &&
+        c[1] &&
+        typeof c[1] === 'object' &&
+        (c[1] as Record<string, unknown>).uid === 'uid-new'
+    )
+    expect(hostSet).toBeDefined()
+    const userMerge = txSet.mock.calls.find(
+      (c) => c[0]?.path === 'users/uid-new' && c[1] && (c[1] as Record<string, unknown>).tenantHostname
+    )?.[1] as Record<string, unknown>
+    expect(userMerge?.tenantHostname).toBe('api.new.example.com')
+  })
+
+  it('persistOnboardingWizardState throws hostname_taken when another uid owns the host', async () => {
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/me') {
+        return Promise.resolve(txDocSnap(ref, { exists: true, data: () => ({}) }))
+      }
+      if (ref.path === 'tenant_hosts/api.taken.example.com') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (f: string) => (f === 'uid' ? 'someone-else' : undefined),
+          })
+        )
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: vi.fn(), delete: vi.fn() })
+    })
+
+    await expect(
+      persistOnboardingWizardState({
+        usersCollection: 'users',
+        uid: 'me',
+        parsed: {
+          currentStep: 'domain',
+          completedSteps: [],
+          username: null,
+          connectedProviderIds: [],
+          customDomain: 'api.taken.example.com',
+          updatedAt: 't',
+        },
+      })
+    ).rejects.toThrow('hostname_taken')
+  })
+
+  it('persistOnboardingWizardState releases prior tenant_hosts when domain changes', async () => {
+    const txDelete = vi.fn()
+    const txSet = vi.fn()
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u1') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            data: () => ({
+              username: 'a',
+              tenantHostname: 'old.example.com',
+            }),
+          })
+        )
+      }
+      if (ref.path === 'tenant_hosts/old.example.com') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (f: string) => (f === 'uid' ? 'u1' : undefined),
+          })
+        )
+      }
+      if (ref.path === 'tenant_hosts/new.example.com') {
+        return Promise.resolve(txDocSnap(ref, { exists: false }))
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: txSet, delete: txDelete })
+    })
+    mockIntegrationGet.mockResolvedValueOnce({ docs: [] })
+
+    await persistOnboardingWizardState({
+      usersCollection: 'users',
+      uid: 'u1',
+      parsed: {
+        currentStep: 'domain',
+        completedSteps: ['username', 'connections', 'domain'],
+        username: 'a',
+        connectedProviderIds: [],
+        customDomain: 'new.example.com',
+        updatedAt: 't',
+      },
+    })
+
+    expect(txDelete).toHaveBeenCalled()
+    const userMerge = txSet.mock.calls.find(
+      (c) => c[0]?.path === 'users/u1'
+    )?.[1] as Record<string, unknown>
+    expect(userMerge?.tenantHostname).toBe('new.example.com')
+  })
+
+  it('persistOnboardingWizardState clears tenantHostname when custom domain is removed', async () => {
+    const txSet = vi.fn()
+    const txDelete = vi.fn()
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u-clear') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            data: () => ({
+              username: 'sluggy',
+              tenantHostname: 'api.oldclear.example.com',
+            }),
+          })
+        )
+      }
+      if (ref.path === 'tenant_hosts/api.oldclear.example.com') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (f: string) => (f === 'uid' ? 'u-clear' : undefined),
+          })
+        )
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: txSet, delete: txDelete })
+    })
+    mockIntegrationGet.mockResolvedValueOnce({ docs: [] })
+
+    await persistOnboardingWizardState({
+      usersCollection: 'users',
+      uid: 'u-clear',
+      parsed: {
+        currentStep: 'done',
+        completedSteps: ['username', 'connections', 'domain'],
+        username: 'sluggy',
+        connectedProviderIds: [],
+        customDomain: null,
+        updatedAt: 't',
+      },
+    })
+
+    expect(txDelete).toHaveBeenCalled()
+    const userMerge = txSet.mock.calls.find((c) => c[0]?.path === 'users/u-clear')?.[1] as Record<
+      string,
+      unknown
+    >
+    expect(userMerge?.tenantHostname).toEqual({ __sv: 'deleteField' })
+  })
+
+  it('persistOnboardingWizardState does not delete prior host when stored claim belongs to another uid', async () => {
+    const txDelete = vi.fn()
+    const txSet = vi.fn()
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u-conflict') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            data: () => ({
+              tenantHostname: 'api.stolen.example.com',
+            }),
+          })
+        )
+      }
+      if (ref.path === 'tenant_hosts/api.stolen.example.com') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (f: string) => (f === 'uid' ? 'someone-else' : undefined),
+          })
+        )
+      }
+      if (ref.path === 'tenant_hosts/api.mine.example.com') {
+        return Promise.resolve(txDocSnap(ref, { exists: false }))
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: txSet, delete: txDelete })
+    })
+    mockIntegrationGet.mockResolvedValueOnce({ docs: [] })
+
+    await persistOnboardingWizardState({
+      usersCollection: 'users',
+      uid: 'u-conflict',
+      parsed: {
+        currentStep: 'domain',
+        completedSteps: ['domain'],
+        username: null,
+        connectedProviderIds: [],
+        customDomain: 'api.mine.example.com',
+        updatedAt: 't',
+      },
+    })
+
+    expect(txDelete).not.toHaveBeenCalled()
+    const userMerge = txSet.mock.calls.find(
+      (c) => c[0]?.path === 'users/u-conflict'
+    )?.[1] as Record<string, unknown>
+    expect(userMerge?.tenantHostname).toBe('api.mine.example.com')
+  })
+
+  it('persistOnboardingWizardState sets host doc when new hostname already claimed by same uid', async () => {
+    const txSet = vi.fn()
+    const txDelete = vi.fn()
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u-self') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            data: () => ({
+              tenantHostname: 'api.oldself.example.com',
+            }),
+          })
+        )
+      }
+      if (ref.path === 'tenant_hosts/api.oldself.example.com') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (f: string) => (f === 'uid' ? 'u-self' : undefined),
+          })
+        )
+      }
+      if (ref.path === 'tenant_hosts/api.sharedself.example.com') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            get: (f: string) => (f === 'uid' ? 'u-self' : undefined),
+          })
+        )
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: txSet, delete: txDelete })
+    })
+    mockIntegrationGet.mockResolvedValueOnce({ docs: [] })
+
+    await persistOnboardingWizardState({
+      usersCollection: 'users',
+      uid: 'u-self',
+      parsed: {
+        currentStep: 'domain',
+        completedSteps: ['domain'],
+        username: null,
+        connectedProviderIds: [],
+        customDomain: 'api.sharedself.example.com',
+        updatedAt: 't',
+      },
+    })
+
+    expect(txDelete).toHaveBeenCalled()
+    const hostSets = txSet.mock.calls.filter(
+      (c) => c[0]?.path === 'tenant_hosts/api.sharedself.example.com'
+    )
+    expect(hostSets.length).toBeGreaterThan(0)
+    const userMerge = txSet.mock.calls.find((c) => c[0]?.path === 'users/u-self')?.[1] as Record<
+      string,
+      unknown
+    >
+    expect(userMerge?.tenantHostname).toBe('api.sharedself.example.com')
+  })
+
+  it('persistOnboardingWizardState throws custom_domain_not_entitled when entitlement is false', async () => {
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u1') {
+        return Promise.resolve(
+          txDocSnap(ref, {
+            exists: true,
+            data: () => ({
+              entitlements: { customDomain: false },
+            }),
+          })
+        )
+      }
+      return Promise.resolve(txDocSnap(ref, { exists: false }))
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: vi.fn(), delete: vi.fn() })
+    })
+
+    await expect(
+      persistOnboardingWizardState({
+        usersCollection: 'users',
+        uid: 'u1',
+        parsed: {
+          currentStep: 'domain',
+          completedSteps: [],
+          username: null,
+          connectedProviderIds: [],
+          customDomain: 'api.x.com',
+          updatedAt: 't',
+        },
+      })
+    ).rejects.toThrow('custom_domain_not_entitled')
   })
 })

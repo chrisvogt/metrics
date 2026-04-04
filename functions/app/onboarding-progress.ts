@@ -31,13 +31,12 @@ export interface OnboardingProgressPayload {
 }
 
 /**
- * Firestore: only wizard position + provisional domain hint (until custom domain is an entitlement).
- * Username, provider links, and OAuth live in first-class fields / `integrations`.
+ * Firestore: wizard position only. Custom API hostname lives in `users.{uid}.tenantHostname`
+ * and `tenant_hosts/{hostname}`; the API still exposes it as `customDomain` in payloads.
  */
 export interface UserOnboardingDoc {
   currentStep: OnboardingFlowStep
   completedSteps: OnboardingWizardStep[]
-  draftCustomDomain: string | null
   updatedAt: string
 }
 
@@ -68,7 +67,6 @@ function defaultUserOnboardingDoc(): UserOnboardingDoc {
   return {
     currentStep: 'username',
     completedSteps: [],
-    draftCustomDomain: null,
     updatedAt: t,
   }
 }
@@ -84,16 +82,11 @@ function normalizeUserOnboarding(raw: unknown): UserOnboardingDoc {
   const completedSteps: OnboardingWizardStep[] = Array.isArray(comp)
     ? comp.filter((x): x is OnboardingWizardStep => typeof x === 'string' && isWizardStep(x))
     : []
-  const draft =
-    typeof o.draftCustomDomain === 'string' && o.draftCustomDomain.length > 0
-      ? o.draftCustomDomain.toLowerCase().trim()
-      : null
   const ua = o.updatedAt
   const updatedAt = typeof ua === 'string' ? ua : base.updatedAt
   return {
     currentStep,
     completedSteps,
-    draftCustomDomain: draft,
     updatedAt,
   }
 }
@@ -126,6 +119,13 @@ function normalizeLegacyOnboardingProgress(raw: unknown): Partial<OnboardingProg
   }
   if (typeof o.updatedAt === 'string') out.updatedAt = o.updatedAt
   return out
+}
+
+function tenantHostnameFromUserDoc(doc: Record<string, unknown> | null | undefined): string | null {
+  if (!doc) return null
+  const th = doc.tenantHostname
+  if (typeof th !== 'string' || th.length === 0) return null
+  return th.toLowerCase().trim()
 }
 
 export function buildClientPayloadFromFirestore(params: {
@@ -168,9 +168,8 @@ export function buildClientPayloadFromFirestore(params: {
       ? userOnboarding.completedSteps
       : (legacy.completedSteps ?? base.completedSteps)
 
-  const customDomain = noOnboardingDoc
-    ? legacy.customDomain ?? userOnboarding.draftCustomDomain ?? base.customDomain
-    : (userOnboarding.draftCustomDomain ?? legacy.customDomain ?? base.customDomain)
+  const customDomain =
+    tenantHostnameFromUserDoc(doc) ?? legacy.customDomain ?? base.customDomain
 
   const updatedAt = noOnboardingDoc
     ? legacy.updatedAt ?? userOnboarding.updatedAt

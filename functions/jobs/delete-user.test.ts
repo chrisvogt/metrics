@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import deleteUser from './delete-user.js'
 import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
-import { TENANT_USERNAMES_COLLECTION } from '../config/future-tenant-collections.js'
+import {
+  TENANT_HOSTS_COLLECTION,
+  TENANT_USERNAMES_COLLECTION,
+} from '../config/future-tenant-collections.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import { configureLogger } from '../services/logger.js'
 
@@ -58,6 +61,39 @@ describe('deleteUser', () => {
     expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
   })
 
+  it('should remove tenant hostname claim when profile maps to uid', async () => {
+    vi.mocked(documentStore.getDocument!)
+      .mockResolvedValueOnce({
+        username: 'hosty',
+        tenantHostname: 'api.hosty.example.com',
+      })
+      .mockResolvedValueOnce({ uid: 'test-uid-host' })
+
+    const result = await deleteUser({ uid: 'test-uid-host' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(documentStore.deleteDocument).toHaveBeenCalledWith(
+      `${TENANT_HOSTS_COLLECTION}/api.hosty.example.com`
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
+  })
+
+  it('should not delete tenant hostname claim owned by another uid', async () => {
+    vi.mocked(documentStore.getDocument!)
+      .mockResolvedValueOnce({
+        tenantHostname: 'api.shared.example.com',
+      })
+      .mockResolvedValueOnce({ uid: 'other-user' })
+
+    const result = await deleteUser({ uid: 'test-uid-safe' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(documentStore.deleteDocument).not.toHaveBeenCalledWith(
+      `${TENANT_HOSTS_COLLECTION}/api.shared.example.com`
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
+  })
+
   it('should continue when user profile fetch throws', async () => {
     vi.mocked(documentStore.getDocument!).mockRejectedValueOnce(new Error('read failed'))
 
@@ -68,6 +104,45 @@ describe('deleteUser', () => {
     expect(documentStore.recursiveDeleteDocument).toHaveBeenCalledWith(
       `${DATABASE_COLLECTION_USERS}/test-uid-profile-miss`
     )
+  })
+
+  it('should log and continue when tenant hostname claim lookup throws', async () => {
+    vi.mocked(documentStore.getDocument!)
+      .mockResolvedValueOnce({ tenantHostname: 'api.lookup-fail.example.com' })
+      .mockRejectedValueOnce(new Error('host lookup failed'))
+
+    const result = await deleteUser({ uid: 'test-uid-host-lookup-fail' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Failed to delete tenant hostname claim during user delete',
+      expect.objectContaining({
+        uid: 'test-uid-host-lookup-fail',
+        hostname: 'api.lookup-fail.example.com',
+        error: 'host lookup failed',
+      })
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
+  })
+
+  it('should log and continue when tenant hostname claim delete throws', async () => {
+    vi.mocked(documentStore.getDocument!)
+      .mockResolvedValueOnce({ tenantHostname: 'api.del-fail.example.com' })
+      .mockResolvedValueOnce({ uid: 'test-uid-host-del-fail' })
+    vi.mocked(documentStore.deleteDocument!).mockRejectedValueOnce(new Error('delete host failed'))
+
+    const result = await deleteUser({ uid: 'test-uid-host-del-fail' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Failed to delete tenant hostname claim during user delete',
+      expect.objectContaining({
+        uid: 'test-uid-host-del-fail',
+        hostname: 'api.del-fail.example.com',
+        error: 'delete host failed',
+      })
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
   })
 
   it('should log and continue when username claim delete fails', async () => {

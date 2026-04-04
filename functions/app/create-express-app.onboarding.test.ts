@@ -238,6 +238,63 @@ describe('createExpressApp onboarding routes', () => {
     expect(json).toHaveBeenCalledWith({ ok: false, error: 'Username is already taken' })
   })
 
+  it('PUT /api/onboarding/progress returns 409 on hostname_taken', async () => {
+    const { app, persistOnboardingWizardState } = await buildApp()
+    vi.mocked(persistOnboardingWizardState).mockRejectedValue(new Error('hostname_taken'))
+
+    const handler = findRouteHandler(app, 'put', '/api/onboarding/progress')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+
+    await handler(
+      {
+        user: { uid: 'u1', email: 'a@chrisvogt.me', emailVerified: true },
+        body: {
+          currentStep: 'domain',
+          completedSteps: ['username', 'connections'],
+          username: 'sluggy',
+          connectedProviderIds: [],
+          customDomain: 'api.taken.example.com',
+        },
+      },
+      { status, json }
+    )
+
+    expect(status).toHaveBeenCalledWith(409)
+    expect(json).toHaveBeenCalledWith({ ok: false, error: 'That hostname is already claimed' })
+  })
+
+  it('PUT /api/onboarding/progress returns 403 on custom_domain_not_entitled', async () => {
+    const { app, persistOnboardingWizardState } = await buildApp()
+    vi.mocked(persistOnboardingWizardState).mockRejectedValue(
+      new Error('custom_domain_not_entitled')
+    )
+
+    const handler = findRouteHandler(app, 'put', '/api/onboarding/progress')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+
+    await handler(
+      {
+        user: { uid: 'u1', email: 'a@chrisvogt.me', emailVerified: true },
+        body: {
+          currentStep: 'domain',
+          completedSteps: [],
+          username: null,
+          connectedProviderIds: [],
+          customDomain: 'api.x.com',
+        },
+      },
+      { status, json }
+    )
+
+    expect(status).toHaveBeenCalledWith(403)
+    expect(json).toHaveBeenCalledWith({
+      ok: false,
+      error: 'Custom domain is not enabled for this account',
+    })
+  })
+
   it('PUT /api/onboarding/progress returns 500 on unexpected persistence error', async () => {
     const { app, persistOnboardingWizardState } = await buildApp()
     vi.mocked(persistOnboardingWizardState).mockRejectedValue(new Error('firestore down'))

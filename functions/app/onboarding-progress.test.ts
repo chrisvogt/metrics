@@ -63,10 +63,10 @@ describe('onboarding progress', () => {
     const payload = buildClientPayloadFromFirestore({
       userDoc: {
         username: 'alpha',
+        tenantHostname: 'x.example.com',
         onboarding: {
           currentStep: 'domain',
           completedSteps: ['username', 'connections'],
-          draftCustomDomain: 'x.example.com',
           updatedAt: '2026-01-01T00:00:00.000Z',
         },
       },
@@ -78,13 +78,24 @@ describe('onboarding progress', () => {
     expect(payload.currentStep).toBe('domain')
   })
 
+  it('prefers tenantHostname over legacy onboardingProgress.customDomain', () => {
+    const payload = buildClientPayloadFromFirestore({
+      userDoc: {
+        tenantHostname: 'api.authoritative.com',
+        onboarding: { currentStep: 'domain', completedSteps: ['domain'], updatedAt: 't' },
+        onboardingProgress: { customDomain: 'legacy-only.example.com' },
+      },
+      integrationProviderIds: [],
+    })
+    expect(payload.customDomain).toBe('api.authoritative.com')
+  })
+
   it('merges legacy blob for username and steps when onboarding completed is empty', () => {
     const payload = buildClientPayloadFromFirestore({
       userDoc: {
         onboarding: {
           currentStep: 'connections',
           completedSteps: [],
-          draftCustomDomain: null,
           updatedAt: 'new-t',
         },
         onboardingProgress: {
@@ -119,13 +130,13 @@ describe('onboarding progress', () => {
     expect(payload.connectedProviderIds).toEqual(['spotify'])
   })
 
-  it('normalizes onboarding draft domain and coerces invalid flow steps', () => {
+  it('normalizes tenantHostname and coerces invalid flow steps', () => {
     const payload = buildClientPayloadFromFirestore({
       userDoc: {
+        tenantHostname: '  Example.COM ',
         onboarding: {
           currentStep: 'not_a_real_step',
           completedSteps: ['bogus', 'username'],
-          draftCustomDomain: '  Example.COM ',
         },
       },
       integrationProviderIds: [],
