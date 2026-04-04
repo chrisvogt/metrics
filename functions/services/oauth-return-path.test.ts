@@ -4,6 +4,7 @@ import {
   OAUTH_RETURN_TO_MAX_LEN,
   validateReturnTo,
   withFlickrOAuthFlash,
+  withSteamOAuthFlash,
 } from './oauth-return-path.js'
 
 describe('oauth-return-path', () => {
@@ -67,5 +68,12 @@ describe('oauth-return-path', () => {
   it('withFlickrOAuthFlash handles hash-only path and success ignores extra reason arg', () => {
     expect(withFlickrOAuthFlash('/#section', 'success')).toBe('/?oauth=flickr&status=success#section')
     expect(withFlickrOAuthFlash('/z', 'success', 'nope')).toBe('/z?oauth=flickr&status=success')
+  })
+
+  it('withSteamOAuthFlash mirrors Flickr with oauth=steam', () => {
+    expect(withSteamOAuthFlash('/onboarding', 'success')).toBe('/onboarding?oauth=steam&status=success')
+    expect(withSteamOAuthFlash('/?providers=open', 'error', 'bad')).toBe(
+      '/?providers=open&oauth=steam&status=error&reason=bad'
+    )
   })
 })

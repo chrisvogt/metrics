@@ -121,6 +121,20 @@ export const getSteamConfig = () => ({
   userId: process.env.STEAM_USER_ID,
 })
 
+/**
+ * Valve-issued OAuth Client ID; user returns with `#access_token` on the registered browser URL.
+ * @see https://partner.steamgames.com/doc/webapi_overview/oauth
+ */
+export const getSteamOAuthConfig = () => ({
+  clientId: process.env.STEAM_OAUTH_CLIENT_ID ?? process.env.STEAM_CLIENT_ID ?? '',
+  /** Must match the redirect URI registered with Valve (hosting page that reads the URL fragment). */
+  browserRedirectUrl:
+    process.env.STEAM_OAUTH_REDIRECT_URI ?? process.env.STEAM_OAUTH_CALLBACK_URL ?? '',
+  appSuccessRedirect:
+    process.env.STEAM_OAUTH_SUCCESS_REDIRECT?.trim() ||
+    '/onboarding?oauth=steam&status=success',
+})
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' &&
   value !== null &&

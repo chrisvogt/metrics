@@ -110,8 +110,24 @@ export function AddProvidersFlyout({
     }
   }
 
+  const cancelSteamPending = async () => {
+    if (!user) return
+    setError(null)
+    try {
+      const idToken = await user.getIdToken()
+      const res = await apiClient.deleteJson('/api/oauth/steam', { idToken })
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({} as { error?: string }))
+        throw new Error(errBody.error ?? `Cancel failed (${res.status})`)
+      }
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not cancel Steam link.')
+    }
+  }
+
   const handleOAuthProviderConnect = async (providerId: string) => {
-    if (providerId !== 'flickr' || !user) return
+    if ((providerId !== 'flickr' && providerId !== 'steam') || !user) return
     setError(null)
     try {
       const returnTo =
@@ -123,18 +139,22 @@ export function AddProvidersFlyout({
             })()
           : '/?providers=open'
       const idToken = await user.getIdToken()
-      const res = await apiClient.postJson('/api/oauth/flickr/start', { returnTo }, { idToken })
+      const startPath =
+        providerId === 'flickr' ? '/api/oauth/flickr/start' : '/api/oauth/steam/start'
+      const res = await apiClient.postJson(startPath, { returnTo }, { idToken })
       const data = (await res.json()) as {
         ok?: boolean
         authorizeUrl?: string
         error?: string
       }
       if (!res.ok || !data.ok || !data.authorizeUrl) {
-        throw new Error(data.error ?? `Could not start Flickr link (${res.status}).`)
+        throw new Error(
+          data.error ?? `Could not start ${providerId === 'flickr' ? 'Flickr' : 'Steam'} link (${res.status}).`
+        )
       }
       window.location.assign(data.authorizeUrl)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Flickr link failed.')
+      setError(e instanceof Error ? e.message : 'OAuth link failed.')
     }
   }
 
@@ -250,6 +270,13 @@ export function AddProvidersFlyout({
             <p className={styles.cancelFlickr}>
               <button type="button" className={styles.cancelFlickrBtn} onClick={() => void cancelFlickrPending()}>
                 Cancel Flickr link
+              </button>
+            </p>
+          )}
+          {user && !loading && integrationStatuses.steam === 'pending_oauth' && (
+            <p className={styles.cancelFlickr}>
+              <button type="button" className={styles.cancelFlickrBtn} onClick={() => void cancelSteamPending()}>
+                Cancel Steam link
               </button>
             </p>
           )}

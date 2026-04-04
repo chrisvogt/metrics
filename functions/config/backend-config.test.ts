@@ -31,6 +31,11 @@ describe('backend config', () => {
     delete process.env.SPOTIFY_REFRESH_TOKEN
     delete process.env.STEAM_API_KEY
     delete process.env.STEAM_USER_ID
+    delete process.env.STEAM_OAUTH_CLIENT_ID
+    delete process.env.STEAM_OAUTH_REDIRECT_URI
+    delete process.env.STEAM_OAUTH_CALLBACK_URL
+    delete process.env.STEAM_OAUTH_SUCCESS_REDIRECT
+    delete process.env.STEAM_CLIENT_ID
     delete process.env.DEFAULT_WIDGET_USER_ID
     delete process.env.WIDGET_USER_ID_BY_HOSTNAME
     delete process.env.ENABLE_FIRESTORE_TENANT_ROUTING
@@ -143,6 +148,20 @@ describe('backend config', () => {
       refreshToken: 'spotify-refresh',
     })
     expect(getSteamConfig()).toEqual({ apiKey: 'steam-key', userId: 'steam-user' })
+  })
+
+  it('returns Steam OAuth config from env', async () => {
+    process.env.STEAM_OAUTH_CLIENT_ID = 'steam-oauth-client'
+    process.env.STEAM_OAUTH_REDIRECT_URI = 'https://example.com/oauth/steam/'
+    process.env.STEAM_OAUTH_SUCCESS_REDIRECT = '/done?oauth=steam'
+
+    const { getSteamOAuthConfig } = await import('./backend-config.js')
+
+    expect(getSteamOAuthConfig()).toEqual({
+      clientId: 'steam-oauth-client',
+      browserRedirectUrl: 'https://example.com/oauth/steam/',
+      appSuccessRedirect: '/done?oauth=steam',
+    })
   })
 
   it('returns normalized storage config with development defaults', async () => {

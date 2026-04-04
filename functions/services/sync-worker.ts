@@ -22,6 +22,7 @@ interface SyncExecutionResult {
   data?: unknown
   error?: unknown
   flickrAuthMode?: 'env' | 'oauth'
+  steamAuthMode?: 'env' | 'oauth'
   metrics?: Record<string, number>
   result: 'FAILURE' | 'SUCCESS'
 }
@@ -102,6 +103,8 @@ export interface SyncWorkerResult {
   jobId?: string
   /** Present after a successful Flickr sync (manual or scheduled). */
   flickrAuthMode?: 'env' | 'oauth'
+  /** Present after a successful Steam sync (manual or scheduled). */
+  steamAuthMode?: 'env' | 'oauth'
   result: 'FAILURE' | 'NOOP' | 'SUCCESS'
 }
 
@@ -132,10 +135,12 @@ export const processSyncJob = async ({
         userId: job.userId,
       })
       const flickrAuthMode = result.flickrAuthMode
+      const steamAuthMode = result.steamAuthMode
       return {
         jobId: job.jobId,
         result: 'SUCCESS',
         ...(flickrAuthMode ? { flickrAuthMode } : {}),
+        ...(steamAuthMode ? { steamAuthMode } : {}),
       }
     }
 

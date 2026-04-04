@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import syncSteamData from './sync-steam-data.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import { configureLogger } from '../services/logger.js'
+import { getSteamConfig } from '../config/backend-config.js'
 
 vi.mock('../config/backend-config.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../config/backend-config.js')>()
@@ -31,10 +32,15 @@ vi.mock('../api/gemini/generate-steam-summary.js', () => ({
   default: vi.fn(),
 }))
 
+vi.mock('../services/steam-integration-credentials.js', () => ({
+  loadSteamAuthForUser: vi.fn(),
+}))
+
 import getOwnedGames from '../api/steam/get-owned-games.js'
 import getPlayerSummary from '../api/steam/get-player-summary.js'
 import getRecentlyPlayedGames from '../api/steam/get-recently-played-games.js'
 import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
+import { loadSteamAuthForUser } from '../services/steam-integration-credentials.js'
 
 describe('syncSteamData', () => {
   let documentStore: DocumentStore
@@ -47,10 +53,20 @@ describe('syncSteamData', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     configureLogger(logger)
+    vi.mocked(loadSteamAuthForUser).mockResolvedValue(null)
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),
     }
+  })
+
+  it('fails when Steam API key or Steam user id is missing', async () => {
+    vi.mocked(getSteamConfig).mockReturnValueOnce({ apiKey: '', userId: '' })
+    const result = await syncSteamData(documentStore)
+    expect(result).toEqual({
+      result: 'FAILURE',
+      error: 'Steam is not configured (API key and Steam account).',
+    })
   })
 
   it('should successfully sync Steam data to the document store', async () => {
@@ -267,7 +283,30 @@ describe('syncSteamData', () => {
 
     await syncSteamData(documentStore, { onProgress })
 
-    expect(onProgress.mock.calls.map((c) => c[0].phase)).toEqual(['steam.api', 'steam.ai', 'steam.persist'])
+    expect(onProgress.mock.calls.map((c) => c[0].phase)).toEqual([
+      'steam.auth',
+      'steam.api',
+      'steam.ai',
+      'steam.persist',
+    ])
+  })
+
+  it('uses OAuth steam id when integration credentials exist', async () => {
+    vi.mocked(loadSteamAuthForUser).mockResolvedValue({
+      mode: 'oauth',
+      steamId: '76561198000000000',
+      accessToken: 'opaque',
+    })
+    vi.mocked(getRecentlyPlayedGames).mockResolvedValue([])
+    vi.mocked(getOwnedGames).mockResolvedValue({ game_count: 0, games: [] })
+    vi.mocked(getPlayerSummary).mockResolvedValue({})
+    vi.mocked(generateSteamSummary).mockResolvedValue(null)
+
+    const result = await syncSteamData(documentStore, { integrationLookupUserId: 'firebase-uid' })
+
+    expect(loadSteamAuthForUser).toHaveBeenCalledWith(documentStore, 'firebase-uid')
+    expect(getOwnedGames).toHaveBeenCalledWith('steam-api-key', '76561198000000000')
+    expect(result).toMatchObject({ result: 'SUCCESS', steamAuthMode: 'oauth' })
   })
 
   it('uses an empty icon URL when img_icon_url is missing', async () => {

@@ -122,7 +122,7 @@ export function OverviewSection() {
     const params = new URLSearchParams(window.location.search)
     const openFlyout =
       params.get('providers') === 'open' ||
-      (params.get('oauth') === 'flickr' &&
+      ((params.get('oauth') === 'flickr' || params.get('oauth') === 'steam') &&
         (params.get('status') === 'success' || params.get('status') === 'error'))
     if (!openFlyout) return
 

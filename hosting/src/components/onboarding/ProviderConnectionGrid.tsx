@@ -10,7 +10,8 @@ function labelForProvider(
   status: string | undefined
 ): string {
   if (!connected) return 'Connect'
-  if (providerId === 'flickr' && status === 'pending_oauth') return 'Link account'
+  if ((providerId === 'flickr' || providerId === 'steam') && status === 'pending_oauth')
+    return 'Link account'
   if (status === 'pending_oauth') return 'Pending'
   if (status === 'connected') return 'Connected'
   return 'Connected'
@@ -34,10 +35,10 @@ export function ProviderConnectionGrid({
         const connected = connectedIds.has(provider.id)
         const status = integrationStatuses[provider.id]
         const oauthReady = status === 'connected'
-        const isFlickr = provider.id === 'flickr'
+        const isOauthLink = provider.id === 'flickr' || provider.id === 'steam'
         const label = labelForProvider(provider.id, connected, status)
         const showConnectedStyle =
-          connected && (!isFlickr || oauthReady) && status !== 'pending_oauth'
+          connected && (!isOauthLink || oauthReady) && status !== 'pending_oauth'
 
         return (
           <button
@@ -45,7 +46,7 @@ export function ProviderConnectionGrid({
             type="button"
             className={`${styles.providerCard} ${showConnectedStyle ? styles.providerConnected : ''}`}
             onClick={() => {
-              if (isFlickr) {
+              if (isOauthLink) {
                 if (oauthReady) {
                   onToggle(provider.id)
                   return

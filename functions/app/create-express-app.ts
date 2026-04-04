@@ -31,6 +31,7 @@ import {
   parseOnboardingProgressBody,
 } from './onboarding-progress.js'
 import { registerFlickrOAuthRoutes } from './oauth-flickr.js'
+import { registerSteamOAuthRoutes } from './oauth-steam.js'
 import { toStoredDateTime } from '../utils/time.js'
 
 interface LoggerLike {
@@ -355,6 +356,15 @@ export function createExpressApp({
   )
 
   registerFlickrOAuthRoutes({
+    expressApp,
+    authenticateUser,
+    documentStore,
+    logger,
+    isProductionEnvironment: isProductionEnvironment(),
+    allowedEmailDomains: ALLOWED_EMAIL_DOMAINS,
+  })
+
+  registerSteamOAuthRoutes({
     expressApp,
     authenticateUser,
     documentStore,

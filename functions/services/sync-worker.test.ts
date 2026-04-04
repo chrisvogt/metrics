@@ -394,6 +394,32 @@ describe('runNextSyncJob', () => {
     })
   })
 
+  it('returns steamAuthMode on successful Steam sync', async () => {
+    vi.mocked(syncSteamData).mockResolvedValue({
+      steamAuthMode: 'oauth',
+      result: 'SUCCESS',
+    })
+
+    await expect(processSyncJob({
+      documentStore,
+      job: {
+        runCount: 1,
+        enqueuedAt: '2026-03-21T02:00:00.000Z',
+        jobId: 'sync-chrisvogt-steam',
+        mode: 'sync',
+        provider: 'steam',
+        status: 'processing',
+        updatedAt: '2026-03-21T02:00:00.000Z',
+        userId: 'chrisvogt',
+      },
+      syncJobQueue,
+    })).resolves.toEqual({
+      jobId: 'sync-chrisvogt-steam',
+      result: 'SUCCESS',
+      steamAuthMode: 'oauth',
+    })
+  })
+
   it('fails with a helpful error when the provider is not implemented', async () => {
     await expect(processSyncJob({
       documentStore,

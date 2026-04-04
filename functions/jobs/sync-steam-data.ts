@@ -18,6 +18,7 @@ import generateSteamSummary from '../api/gemini/generate-steam-summary.js'
 
 import { getDefaultWidgetUserId, toProviderCollectionPath } from '../config/backend-paths.js'
 import { getSteamConfig } from '../config/backend-config.js'
+import { loadSteamAuthForUser } from '../services/steam-integration-credentials.js'
 
 const transformSteamGame = (game: SteamApiGame) => {
   const {
@@ -64,11 +65,38 @@ const syncSteamData = async (
   documentStore: DocumentStore,
   {
     userId: targetUserId = getDefaultWidgetUserId(),
+    integrationLookupUserId: integrationLookupUserIdOpt,
     onProgress,
   }: SyncJobExecutionOptions = {}
-): Promise<SyncJobResult<SteamWidgetDocument>> => {
+): Promise<SyncJobResult<SteamWidgetDocument, { steamAuthMode?: 'env' | 'oauth' }>> => {
   const logger = getLogger()
-  const { apiKey, userId } = getSteamConfig()
+  const { apiKey, userId: envSteamId } = getSteamConfig()
+  const integrationLookupUserId = integrationLookupUserIdOpt ?? targetUserId
+
+  let steamId = envSteamId ?? ''
+  let steamAuthMode: 'env' | 'oauth' = 'env'
+  const oauth = await loadSteamAuthForUser(documentStore, integrationLookupUserId)
+  if (oauth) {
+    steamId = oauth.steamId
+    steamAuthMode = 'oauth'
+  }
+
+  if (!apiKey?.trim() || !steamId?.trim()) {
+    logger.error('Steam sync: missing STEAM_API_KEY or Steam user id (env or OAuth).')
+    return {
+      result: 'FAILURE',
+      error: 'Steam is not configured (API key and Steam account).',
+    }
+  }
+
+  onProgress?.({
+    phase: 'steam.auth',
+    message:
+      steamAuthMode === 'oauth'
+        ? 'Using your linked Steam account (OAuth).'
+        : 'Using server Steam credentials (legacy).',
+  })
+
   const steamCollectionPath = toProviderCollectionPath('steam', targetUserId)
 
   onProgress?.({
@@ -76,9 +104,9 @@ const syncSteamData = async (
     message: 'Loading your Steam profile, library, and recently played games.',
   })
   const [recentlyPlayedGames, ownedGames, playerSummary] = await Promise.all([
-    getRecentlyPlayedGames(apiKey, userId),
-    getOwnedGames(apiKey, userId),
-    getPlayerSummary(apiKey, userId),
+    getRecentlyPlayedGames(apiKey, steamId),
+    getOwnedGames(apiKey, steamId),
+    getPlayerSummary(apiKey, steamId),
   ])
 
   const saveOwnedGames = async () => await documentStore.setDocument(
@@ -191,6 +219,7 @@ const syncSteamData = async (
     return {
       data: widgetContent,
       result: 'SUCCESS',
+      steamAuthMode,
     }
   } catch (err: unknown) {
     logger.error('Failed to save Steam data to database.', err)

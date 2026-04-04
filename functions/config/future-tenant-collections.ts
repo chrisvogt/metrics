@@ -30,6 +30,12 @@ export const USER_INTEGRATIONS_SEGMENT = 'integrations'
  */
 export const OAUTH_FLICKR_PENDING_COLLECTION = 'oauth_flickr_pending'
 
+/**
+ * Short-lived Steam OAuth state bridge (doc id = `state` sent to steamcommunity.com).
+ * Admin SDK only; cleared after token exchange.
+ */
+export const OAUTH_STEAM_PENDING_COLLECTION = 'oauth_steam_pending'
+
 export const toTenantUsernameDocPath = (slug: string): string =>
   `${TENANT_USERNAMES_COLLECTION}/${slug}`
 

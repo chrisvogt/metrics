@@ -9,9 +9,10 @@ export interface QueuedSyncJobDescriptor {
   provider: SyncProviderId
   userId: string
   /**
-   * When set (manual sync with a signed-in user), Flickr OAuth credentials are
-   * loaded from `users/{integrationLookupUserId}/integrations/flickr` while
-   * widget documents still use `userId` (default widget owner id).
+   * When set (manual sync with a signed-in user), per-user integration docs are
+   * loaded from `users/{integrationLookupUserId}/integrations/<provider>` (e.g.
+   * Flickr or Steam OAuth) while widget documents still use `userId` (default
+   * widget owner id).
    */
   integrationLookupUserId?: string
 }

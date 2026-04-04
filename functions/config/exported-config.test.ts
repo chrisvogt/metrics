@@ -18,6 +18,8 @@ describe('exported-config', () => {
       expect(CONFIG_PATH_TO_ENV['storage.media_public_base_url']).toBe('MEDIA_PUBLIC_BASE_URL')
       expect(CONFIG_PATH_TO_ENV['flickr.api_secret']).toBe('FLICKR_API_SECRET')
       expect(CONFIG_PATH_TO_ENV['flickr.oauth_callback_url']).toBe('FLICKR_OAUTH_CALLBACK_URL')
+      expect(CONFIG_PATH_TO_ENV['steam.oauth_client_id']).toBe('STEAM_OAUTH_CLIENT_ID')
+      expect(CONFIG_PATH_TO_ENV['steam.oauth_redirect_uri']).toBe('STEAM_OAUTH_REDIRECT_URI')
     })
   })
 

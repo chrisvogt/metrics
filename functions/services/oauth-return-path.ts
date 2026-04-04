@@ -49,3 +49,28 @@ export function withFlickrOAuthFlash(
   const joined = qs ? `${pathname}?${qs}` : pathname
   return hash ? `${joined}#${hash}` : joined
 }
+
+/** Append Steam OAuth result query params for UI flash (same rules as Flickr). */
+export function withSteamOAuthFlash(
+  returnPath: string,
+  status: 'success' | 'error',
+  reason?: string
+): string {
+  const hashIdx = returnPath.indexOf('#')
+  const beforeHash = hashIdx === -1 ? returnPath : returnPath.slice(0, hashIdx)
+  const hash = hashIdx === -1 ? '' : returnPath.slice(hashIdx + 1)
+
+  const qIdx = beforeHash.indexOf('?')
+  const pathname = qIdx === -1 ? beforeHash : beforeHash.slice(0, qIdx)
+  const search = qIdx === -1 ? '' : beforeHash.slice(qIdx + 1)
+
+  const params = new URLSearchParams(search)
+  params.set('oauth', 'steam')
+  params.set('status', status)
+  if (status === 'error' && reason != null && reason.length > 0) {
+    params.set('reason', reason)
+  }
+  const qs = params.toString()
+  const joined = qs ? `${pathname}?${qs}` : pathname
+  return hash ? `${joined}#${hash}` : joined
+}
