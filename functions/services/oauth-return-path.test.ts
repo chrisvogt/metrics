@@ -5,6 +5,7 @@ import {
   validateReturnTo,
   withDiscogsOAuthFlash,
   withFlickrOAuthFlash,
+  withGitHubOAuthFlash,
 } from './oauth-return-path.js'
 
 describe('oauth-return-path', () => {
@@ -73,5 +74,10 @@ describe('oauth-return-path', () => {
   it('withDiscogsOAuthFlash sets oauth=discogs', () => {
     expect(withDiscogsOAuthFlash('/onboarding', 'success')).toBe('/onboarding?oauth=discogs&status=success')
     expect(withDiscogsOAuthFlash('/x', 'error', 'bad')).toBe('/x?oauth=discogs&status=error&reason=bad')
+  })
+
+  it('withGitHubOAuthFlash sets oauth=github', () => {
+    expect(withGitHubOAuthFlash('/onboarding', 'success')).toBe('/onboarding?oauth=github&status=success')
+    expect(withGitHubOAuthFlash('/x', 'error', 'bad')).toBe('/x?oauth=github&status=error&reason=bad')
   })
 })

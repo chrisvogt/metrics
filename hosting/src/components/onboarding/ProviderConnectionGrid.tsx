@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react'
 import { ONBOARDING_PROVIDERS } from '@/onboarding/onboardingProviders'
 import styles from '@/sections/OnboardingSection.module.css'
 
-const OAUTH_LINK_PROVIDERS = new Set(['flickr', 'discogs'])
+const OAUTH_LINK_PROVIDERS = new Set(['flickr', 'discogs', 'github'])
 
 function labelForProvider(
   providerId: string,

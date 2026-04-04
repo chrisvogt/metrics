@@ -24,6 +24,13 @@ describe('backend config', () => {
     delete process.env.FLICKR_USER_ID
     delete process.env.GITHUB_ACCESS_TOKEN
     delete process.env.GITHUB_USERNAME
+    delete process.env.GITHUB_APP_CLIENT_ID
+    delete process.env.GITHUB_APP_CLIENT_SECRET
+    delete process.env.GITHUB_OAUTH_CLIENT_ID
+    delete process.env.GITHUB_OAUTH_CLIENT_SECRET
+    delete process.env.GITHUB_OAUTH_CALLBACK_URL
+    delete process.env.GITHUB_OAUTH_REDIRECT_URI
+    delete process.env.GITHUB_OAUTH_SUCCESS_REDIRECT
     delete process.env.GOODREADS_API_KEY
     delete process.env.GOODREADS_USER_ID
     delete process.env.GOOGLE_BOOKS_API_KEY
@@ -309,6 +316,20 @@ describe('backend config', () => {
       consumerSecret: 'dsec',
       callbackUrl: 'https://cb/discogs',
       appSuccessRedirect: '/done-d',
+    })
+  })
+
+  it('parses GitHub OAuth config from env', async () => {
+    process.env.GITHUB_APP_CLIENT_ID = 'ghid'
+    process.env.GITHUB_APP_CLIENT_SECRET = 'ghsecret'
+    process.env.GITHUB_OAUTH_CALLBACK_URL = 'https://cb/gh'
+    process.env.GITHUB_OAUTH_SUCCESS_REDIRECT = ' /gh-ok '
+    const { getGitHubOAuthConfig } = await import('./backend-config.js')
+    expect(getGitHubOAuthConfig()).toMatchObject({
+      clientId: 'ghid',
+      clientSecret: 'ghsecret',
+      callbackUrl: 'https://cb/gh',
+      appSuccessRedirect: '/gh-ok',
     })
   })
 

@@ -69,17 +69,29 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('discogs', 'user123', documentStore)
 
     expect(getDiscogsWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should call github widget content function', async () => {
     const mockContent = { repositories: [] }
-    getGitHubWidgetContent.mockResolvedValue(mockContent)
+    getGitHubWidgetContent.mockResolvedValue({ payload: mockContent, authMode: 'env' })
 
     const result = await getWidgetContent('github', 'user123', documentStore)
 
-    expect(getGitHubWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(getGitHubWidgetContent).toHaveBeenCalledWith('user123', documentStore, undefined)
+    expect(result).toEqual({ payload: mockContent, meta: { githubAuthMode: 'env' } })
+  })
+
+  it('passes integrationLookupUserId to github widget loader', async () => {
+    const mockContent = { repositories: [] }
+    getGitHubWidgetContent.mockResolvedValue({ payload: mockContent, authMode: 'oauth' })
+
+    const result = await getWidgetContent('github', 'user123', documentStore, {
+      integrationLookupUserId: 'firebase-uid-9',
+    })
+
+    expect(getGitHubWidgetContent).toHaveBeenCalledWith('user123', documentStore, 'firebase-uid-9')
+    expect(result).toEqual({ payload: mockContent, meta: { githubAuthMode: 'oauth' } })
   })
 
   it('should call goodreads widget content function', async () => {
@@ -89,7 +101,7 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('goodreads', 'user123', documentStore)
 
     expect(getGoodreadsWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should call instagram widget content function', async () => {
@@ -99,7 +111,7 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('instagram', 'user123', documentStore)
 
     expect(getInstagramWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should call spotify widget content function', async () => {
@@ -109,7 +121,7 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('spotify', 'user123', documentStore)
 
     expect(getSpotifyWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should call steam widget content function', async () => {
@@ -119,7 +131,7 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('steam', 'user123', documentStore)
 
     expect(getSteamWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should call flickr widget content function', async () => {
@@ -129,7 +141,7 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('flickr', 'user123', documentStore)
 
     expect(getFlickrWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should pass the document store to goodreads widget content when provided', async () => {
@@ -139,7 +151,7 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('goodreads', 'user123', documentStore)
 
     expect(getGoodreadsWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should pass the document store to discogs widget content when provided', async () => {
@@ -149,7 +161,7 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('discogs', 'user123', documentStore)
 
     expect(getDiscogsWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should pass the document store to instagram widget content when provided', async () => {
@@ -159,7 +171,7 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('instagram', 'user123', documentStore)
 
     expect(getInstagramWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should pass the document store to spotify widget content when provided', async () => {
@@ -169,7 +181,7 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('spotify', 'user123', documentStore)
 
     expect(getSpotifyWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should pass the document store to steam widget content when provided', async () => {
@@ -179,7 +191,7 @@ describe('getWidgetContent', () => {
     const result = await getWidgetContent('steam', 'user123', documentStore)
 
     expect(getSteamWidgetContent).toHaveBeenCalledWith('user123', documentStore)
-    expect(result).toEqual(mockContent)
+    expect(result).toEqual({ payload: mockContent })
   })
 
   it('should throw error for unrecognized widget type', async () => {

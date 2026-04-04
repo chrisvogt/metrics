@@ -7,6 +7,7 @@ import { ApiClient } from '../auth/apiClient'
 import { getAppBaseUrl, getManualSyncStreamUrl } from '../lib/baseUrl'
 import { readDiscogsAuthModeFromSyncPayload } from '../lib/readDiscogsAuthModeFromSyncPayload'
 import { readFlickrAuthModeFromSyncPayload } from '../lib/readFlickrAuthModeFromSyncPayload'
+import { readGitHubAuthModeFromWidgetResponse } from '../lib/readGitHubAuthModeFromWidgetResponse'
 import styles from './ApiTestingSection.module.css'
 
 const WIDGET_PROVIDERS = ['discogs', 'flickr', 'github', 'goodreads', 'instagram', 'spotify', 'steam'] as const
@@ -76,6 +77,10 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
     showSync && syncProvider === 'discogs' && syncResult?.ok
       ? readDiscogsAuthModeFromSyncPayload(syncResult.data)
       : undefined
+  const widgetGitHubAuthMode =
+    showApi && widgetProvider === 'github' && widgetResult?.ok
+      ? readGitHubAuthModeFromWidgetResponse(widgetResult.data)
+      : undefined
 
   const fetchToken = async () => {
     if (!user) return
@@ -93,7 +98,15 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
     setWidgetResult(null)
     const start = Date.now()
     try {
-      const res = await fetch(`${baseUrl}/api/widgets/${widgetProvider}`, { credentials: 'include', cache: 'no-store' })
+      const headers: HeadersInit = {}
+      if (idToken) {
+        headers.Authorization = `Bearer ${idToken}`
+      }
+      const res = await fetch(`${baseUrl}/api/widgets/${widgetProvider}`, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers,
+      })
       const data = await res.json().catch(() => ({}))
       setWidgetResult({
         ok: res.ok,
@@ -284,6 +297,10 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
           </div>
           <div className={styles.block}>
             <h3 className={styles.blockTitle}>Get widget data</h3>
+            <p className={styles.sectionSubtitle}>
+              When you are signed in, requests include your Firebase ID token so GitHub uses your linked account (OAuth)
+              instead of the server PAT. Session cookies from <strong>Session → Test</strong> work too.
+            </p>
             <div className={styles.endpoint}>
               <span className={styles.methodGet}>GET</span>
               <code className={styles.path}>/api/widgets/&#123;provider&#125;</code>
@@ -308,6 +325,20 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
                   {loading.widgets ? 'Testing…' : 'Test'}
                 </button>
               </div>
+              {widgetGitHubAuthMode ? (
+                <p
+                  className={`${styles.flickrAuthBadge} ${
+                    widgetGitHubAuthMode === 'oauth'
+                      ? styles.flickrAuthBadgeOAuth
+                      : styles.flickrAuthBadgeLegacy
+                  }`}
+                  role="status"
+                >
+                  {widgetGitHubAuthMode === 'oauth'
+                    ? 'GitHub credentials: OAuth (connected account)'
+                    : 'GitHub credentials: PAT (server env / legacy)'}
+                </p>
+              ) : null}
               {widgetResult && <ResultBox result={widgetResult} />}
             </div>
           </div>

@@ -138,7 +138,7 @@ vi.mock('express-rate-limit', () => ({
 
 // Mock the widget content module
 vi.mock('./widgets/get-widget-content.js', () => ({
-  getWidgetContent: vi.fn(() => Promise.resolve({ mock: 'widget-content' })),
+  getWidgetContent: vi.fn(() => Promise.resolve({ payload: { mock: 'widget-content' } })),
   validWidgetIds: ['discogs', 'github', 'goodreads', 'instagram', 'spotify', 'steam', 'flickr']
 }))
 
@@ -190,6 +190,20 @@ describe('index.js', () => {
           'public, max-age=0, s-maxage=300, must-revalidate, stale-while-revalidate=60'
         )
         expect(response.headers['set-cookie']).toBeUndefined()
+      })
+
+      it('should include githubAuthMode on GitHub widget responses when provided', async () => {
+        const { getWidgetContent } = await import('./widgets/get-widget-content.js')
+        vi.mocked(getWidgetContent).mockResolvedValueOnce({
+          payload: { login: 'octocat' },
+          meta: { githubAuthMode: 'oauth' },
+        })
+        const response = await request(app).get('/api/widgets/github').expect(200)
+        expect(response.body).toEqual({
+          ok: true,
+          payload: { login: 'octocat' },
+          githubAuthMode: 'oauth',
+        })
       })
 
       it('should return 404 for invalid provider', async () => {

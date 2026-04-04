@@ -94,7 +94,7 @@ export function AddProvidersFlyout({
     })
   }
 
-  const cancelOAuthPending = async (providerId: 'flickr' | 'discogs') => {
+  const cancelOAuthPending = async (providerId: 'flickr' | 'discogs' | 'github') => {
     if (!user) return
     setError(null)
     try {
@@ -106,13 +106,15 @@ export function AddProvidersFlyout({
       }
       await load()
     } catch (e) {
-      const label = providerId === 'discogs' ? 'Discogs' : 'Flickr'
+      const label =
+        providerId === 'discogs' ? 'Discogs' : providerId === 'github' ? 'GitHub' : 'Flickr'
       setError(e instanceof Error ? e.message : `Could not cancel ${label} link.`)
     }
   }
 
   const handleOAuthProviderConnect = async (providerId: string) => {
-    if ((providerId !== 'flickr' && providerId !== 'discogs') || !user) return
+    if ((providerId !== 'flickr' && providerId !== 'discogs' && providerId !== 'github') || !user)
+      return
     setError(null)
     try {
       const returnTo =
@@ -258,6 +260,13 @@ export function AddProvidersFlyout({
             <p className={styles.cancelFlickr}>
               <button type="button" className={styles.cancelFlickrBtn} onClick={() => void cancelOAuthPending('discogs')}>
                 Cancel Discogs link
+              </button>
+            </p>
+          )}
+          {user && !loading && integrationStatuses.github === 'pending_oauth' && (
+            <p className={styles.cancelFlickr}>
+              <button type="button" className={styles.cancelFlickrBtn} onClick={() => void cancelOAuthPending('github')}>
+                Cancel GitHub link
               </button>
             </p>
           )}

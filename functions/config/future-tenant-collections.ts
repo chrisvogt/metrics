@@ -33,6 +33,9 @@ export const OAUTH_FLICKR_PENDING_COLLECTION = 'oauth_flickr_pending'
 /** Short-lived Discogs OAuth 1.0a request-token bridge (doc id = oauth_token from Discogs). */
 export const OAUTH_DISCOGS_PENDING_COLLECTION = 'oauth_discogs_pending'
 
+/** Short-lived GitHub OAuth `state` bridge (doc id = `state` query param). */
+export const OAUTH_GITHUB_PENDING_COLLECTION = 'oauth_github_pending'
+
 export const toTenantUsernameDocPath = (slug: string): string =>
   `${TENANT_USERNAMES_COLLECTION}/${slug}`
 

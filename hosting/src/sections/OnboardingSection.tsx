@@ -200,10 +200,11 @@ export function OnboardingSection() {
     if (typeof window === 'undefined' || !hydrated) return
     const params = new URLSearchParams(window.location.search)
     const oauthProvider = params.get('oauth')
-    if (oauthProvider !== 'flickr' && oauthProvider !== 'discogs') return
+    if (oauthProvider !== 'flickr' && oauthProvider !== 'discogs' && oauthProvider !== 'github') return
     const status = params.get('status')
     const reason = params.get('reason')
-    const label = oauthProvider === 'discogs' ? 'Discogs' : 'Flickr'
+    const label =
+      oauthProvider === 'discogs' ? 'Discogs' : oauthProvider === 'github' ? 'GitHub' : 'Flickr'
     if (status === 'success') {
       setOauthFlash(`${label} is now linked to your account.`)
     } else if (status === 'error') {
@@ -239,7 +240,7 @@ export function OnboardingSection() {
     setDomain(p.customDomain ?? '')
   }, [user, apiSessionReady])
 
-  const cancelOAuthPending = async (providerId: 'flickr' | 'discogs') => {
+  const cancelOAuthPending = async (providerId: 'flickr' | 'discogs' | 'github') => {
     if (!user) return
     setSaveError(null)
     try {
@@ -251,13 +252,15 @@ export function OnboardingSection() {
       }
       await reloadProgressFromServer()
     } catch (e) {
-      const label = providerId === 'discogs' ? 'Discogs' : 'Flickr'
+      const label =
+        providerId === 'discogs' ? 'Discogs' : providerId === 'github' ? 'GitHub' : 'Flickr'
       setSaveError(e instanceof Error ? e.message : `Could not cancel ${label} link.`)
     }
   }
 
   const handleOAuthProviderConnect = async (providerId: string) => {
-    if ((providerId !== 'flickr' && providerId !== 'discogs') || !user) return
+    if ((providerId !== 'flickr' && providerId !== 'discogs' && providerId !== 'github') || !user)
+      return
     setSaveError(null)
     setOauthFlash(null)
     try {
@@ -596,6 +599,13 @@ export function OnboardingSection() {
               <p className={styles.oauthCancelRow}>
                 <button type="button" className={styles.oauthCancelBtn} onClick={() => void cancelOAuthPending('discogs')}>
                   Cancel Discogs link
+                </button>
+              </p>
+            )}
+            {integrationStatuses.github === 'pending_oauth' && (
+              <p className={styles.oauthCancelRow}>
+                <button type="button" className={styles.oauthCancelBtn} onClick={() => void cancelOAuthPending('github')}>
+                  Cancel GitHub link
                 </button>
               </p>
             )}

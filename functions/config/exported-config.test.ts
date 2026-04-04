@@ -20,6 +20,8 @@ describe('exported-config', () => {
       expect(CONFIG_PATH_TO_ENV['flickr.oauth_callback_url']).toBe('FLICKR_OAUTH_CALLBACK_URL')
       expect(CONFIG_PATH_TO_ENV['discogs.consumer_key']).toBe('DISCOGS_CONSUMER_KEY')
       expect(CONFIG_PATH_TO_ENV['discogs.oauth_callback_url']).toBe('DISCOGS_OAUTH_CALLBACK_URL')
+      expect(CONFIG_PATH_TO_ENV['github.app_client_id']).toBe('GITHUB_APP_CLIENT_ID')
+      expect(CONFIG_PATH_TO_ENV['github.oauth_callback_url']).toBe('GITHUB_OAUTH_CALLBACK_URL')
     })
   })
 
@@ -53,6 +55,22 @@ describe('exported-config', () => {
       expect(process.env.DISCOGS_CONSUMER_SECRET).toBe('dsec')
       expect(process.env.DISCOGS_OAUTH_CALLBACK_URL).toBe('https://example.com/api/oauth/discogs/callback')
       expect(process.env.DISCOGS_OAUTH_SUCCESS_REDIRECT).toBe('/discogs-done')
+    })
+
+    it('maps GitHub OAuth paths for production FUNCTIONS_CONFIG_EXPORT', () => {
+      const data = {
+        github: {
+          app_client_id: 'ghcid',
+          app_client_secret: 'ghsec',
+          oauth_callback_url: 'https://example.com/api/oauth/github/callback',
+          oauth_success_redirect: '/gh-done',
+        },
+      }
+      applyExportedConfigToEnv(data)
+      expect(process.env.GITHUB_APP_CLIENT_ID).toBe('ghcid')
+      expect(process.env.GITHUB_APP_CLIENT_SECRET).toBe('ghsec')
+      expect(process.env.GITHUB_OAUTH_CALLBACK_URL).toBe('https://example.com/api/oauth/github/callback')
+      expect(process.env.GITHUB_OAUTH_SUCCESS_REDIRECT).toBe('/gh-done')
     })
 
     it('maps Flickr OAuth paths for production FUNCTIONS_CONFIG_EXPORT', () => {
