@@ -13,6 +13,18 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation** — [docs/APP_HOSTING.md](../docs/APP_HOSTING.md) and [README.md](README.md) document App Hosting backends (`chronogrove-console` / `chronogrove-console-pr`) and deploy (Firebase GitHub integration vs CLI); root [README.md](../README.md) adds production-edge diagram and backend tables.
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.6.17] - 2026-04-04
+
+### Changed
+
+- **Custom domain (onboarding + settings)** — DNS instructions use a **CNAME** to **`NEXT_PUBLIC_ONBOARDING_CNAME_TARGET`** (default App Hosting **`personal-stats-chrisvogt.web.app`**) instead of two Fastly **A** records; aligns with **`GET /api/onboarding/check-domain`** (`requiredCname`).
+- **`next.config.ts` / `apphosting.yaml`** — Public env **`NEXT_PUBLIC_ONBOARDING_CNAME_TARGET`** (default **`personal-stats-chrisvogt.web.app`**).
+- **`middleware.ts`** — TODO note for future host-based routing so tenant API hostnames do not serve the full console.
+
+### Added
+
+- **`lib/onboardingCnameTarget.ts`** — Shared default for DNS copy; Vitest **`onboardingCnameTarget.test.ts`**. Coverage config includes this module (per-file **95%** thresholds unchanged).
+
 ## [0.6.16] - 2026-04-04
 
 ### Added

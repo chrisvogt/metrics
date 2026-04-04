@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.29.2] - 2026-04-04
+
+### Changed
+
+- **`GET /api/onboarding/check-domain`** — Verifies a **CNAME** chain to a configurable target (`ONBOARDING_REQUIRED_CNAME_TARGET`, default **`personal-stats-chrisvogt.web.app`**) instead of hardcoded Fastly **A** records. Response field **`requiredRecords`** is replaced by **`requiredCname`**.
+
+### Added
+
+- **`utils/dns-cname-verify.ts`** — **`hostnameCnameChainsTo`** (CNAME chain walk for DNS verification). Unit tests in **`dns-cname-verify.test.ts`**.
+
 ## [0.29.1] - 2026-04-04
 
 ### Security

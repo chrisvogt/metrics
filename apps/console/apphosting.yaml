@@ -19,3 +19,8 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  - variable: NEXT_PUBLIC_ONBOARDING_CNAME_TARGET
+    value: personal-stats-chrisvogt.web.app
+    availability:
+      - BUILD
+      - RUNTIME

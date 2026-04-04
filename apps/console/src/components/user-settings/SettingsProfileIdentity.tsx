@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { User } from 'firebase/auth'
 import { apiClient } from '@/auth/apiClient'
 import { getAppBaseUrl } from '@/lib/baseUrl'
+import { getOnboardingCnameTarget } from '@/lib/onboardingCnameTarget'
 import { clearDnsVerificationTimers } from '@/lib/clearDnsVerificationTimers'
 import { ONBOARDING_USERNAME_PATTERN } from '@/lib/onboardingConstraints'
 import obStyles from '@/sections/OnboardingSection.module.css'
@@ -351,19 +352,15 @@ function SettingsCustomDomainBlock({
 
       {domainDraft ? (
         <div className={obStyles.dnsInstructions}>
-          <p className={obStyles.dnsTitle}>Add these A records to your DNS provider:</p>
+          <p className={obStyles.dnsTitle}>
+            Add a CNAME record pointing your hostname to the Chronogrove target:
+          </p>
           <div className={obStyles.dnsRecords}>
             <div className={obStyles.dnsRecord}>
-              <span className={obStyles.dnsType}>A</span>
+              <span className={obStyles.dnsType}>CNAME</span>
               <span className={obStyles.dnsHost}>{domainDraft}</span>
               <span className={obStyles.dnsArrow}>→</span>
-              <code className={obStyles.dnsValue}>151.101.65.195</code>
-            </div>
-            <div className={obStyles.dnsRecord}>
-              <span className={obStyles.dnsType}>A</span>
-              <span className={obStyles.dnsHost}>{domainDraft}</span>
-              <span className={obStyles.dnsArrow}>→</span>
-              <code className={obStyles.dnsValue}>151.101.1.195</code>
+              <code className={obStyles.dnsValue}>{getOnboardingCnameTarget()}</code>
             </div>
           </div>
 
@@ -388,7 +385,9 @@ function SettingsCustomDomainBlock({
               <span className={obStyles.statusOk}>✓</span>
               <div>
                 <strong>DNS verified!</strong>
-                <p className={obStyles.dnsResultSub}>Both A records are pointing to Chronogrove.</p>
+                <p className={obStyles.dnsResultSub}>
+                  Your CNAME points to {getOnboardingCnameTarget()}.
+                </p>
               </div>
             </div>
           )}

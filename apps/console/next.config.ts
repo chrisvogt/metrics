@@ -51,6 +51,9 @@ const nextConfig: NextConfig = {
      * Non-SSE `/api/*` traffic uses same-origin URLs and is proxied via rewrites below.
      */
     NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN: cloudFunctionsAppOrigin,
+    /** Must match Functions `ONBOARDING_REQUIRED_CNAME_TARGET` (custom-domain DNS instructions). */
+    NEXT_PUBLIC_ONBOARDING_CNAME_TARGET:
+      process.env.NEXT_PUBLIC_ONBOARDING_CNAME_TARGET ?? 'personal-stats-chrisvogt.web.app',
   },
   /**
    * Proxy `/api/*` to Cloud Function `app`: local dev hits the emulator; production SSR hits the deployed function.
