@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **chronogrove-hosting** (the Next.js admin UI and static export for Firebase Hosting) are documented in this file.
+All notable changes to **chronogrove-hosting** (the Next.js admin UI on Firebase App Hosting) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -10,6 +10,25 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
+
+## [0.6.16] - 2026-04-04
+
+### Added
+
+- **`auth/establishApiSession.ts`** — Shared helper for **`POST /api/auth/session`** plus **`localStorage`** Bearer fallback; covered by Vitest (jsdom).
+- **`hosting/apphosting.yaml`** — Firebase App Hosting run config and public env for the console (see root `firebase.json`).
+
+### Changed
+
+- **Next.js** — SSR App Hosting build (removed static `output: 'export'` / `trailingSlash`); production **`/api/:path*`** rewrites proxy to **`NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN`**; dev uses **`beforeFiles`** rewrites to the Functions emulator (avoids App Router eating `/api` before proxy).
+- **`getAppBaseUrl()`** — Same-origin **`/api`** only (no hardcoded metrics hostname); SSE unchanged (`getSyncStreamBaseUrl`).
+- **Sign-up / Google** — Await **`establishApiSession`** before navigation; **`router.push('/onboarding/')`** instead of **`window.location`** so session `fetch` is not aborted mid-flight.
+- **Onboarding** — Clear load error when retrying progress fetch; username field layout uses CSS grid and drops inner **`input:focus-visible`** outline in favor of the composite control ring.
+- **Vitest** — Coverage includes **`establishApiSession`**; per-file thresholds **95%** (lines / statements / functions / branches). **`jsdom`** dev dependency for session tests.
+
+### Fixed
+
+- **Sign-up → onboarding** — “Could not load saved progress” on first paint when full navigation interrupted session cookie creation.
 
 ## [0.6.15] - 2026-04-03
 

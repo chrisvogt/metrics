@@ -1,0 +1,21 @@
+# Firebase App Hosting — root is `hosting/` (see firebase.json apphosting.rootDir).
+# Backend IDs must match backends created in the Firebase console / CLI (e.g. apphosting:backends:create --backend chronogrove-console).
+
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  minInstances: 0
+  maxInstances: 1
+  concurrency: 20
+
+env:
+  - variable: NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN
+    value: https://us-central1-personal-stats-chrisvogt.cloudfunctions.net/app
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_TENANT_DISPLAY_HOST
+    value: www.chrisvogt.me
+    availability:
+      - BUILD
+      - RUNTIME

@@ -14,6 +14,11 @@ import {
 } from 'firebase/auth'
 import { getFirebaseApp } from './firebase'
 import { apiClient } from './apiClient'
+import {
+  establishApiSessionCoalesced,
+  resetSessionEstablishmentTracking,
+  isApiSessionEstablishedForUid,
+} from './establishApiSession'
 
 export interface AuthContextValue {
   user: User | null
@@ -52,6 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const unsub = onAuthStateChanged(a, async (u) => {
           if (cancelled) return
           if (!u) {
+            resetSessionEstablishmentTracking()
             apiClient.clearSession()
             setUser(null)
             setApiSessionReady(true)
@@ -60,18 +66,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
 
           setUser(u)
-          setApiSessionReady(false)
-          try {
-            const token = await u.getIdToken()
-            await apiClient.createSession(token)
-          } catch {
-            try {
-              const token = await u.getIdToken()
-              localStorage.setItem('authToken', token)
-            } catch {
-              // ignore
-            }
+          if (!isApiSessionEstablishedForUid(u.uid)) {
+            setApiSessionReady(false)
           }
+          await establishApiSessionCoalesced(u)
           if (!cancelled) {
             setApiSessionReady(true)
             setLoading(false)
@@ -100,7 +98,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!auth) return
     setError(null)
     try {
-      await signInWithPopup(auth, googleProvider)
+      const cred = await signInWithPopup(auth, googleProvider)
+      await establishApiSessionCoalesced(cred.user)
     } catch (e) {
       const err = e as { message?: string }
       setError(err.message ?? 'Google sign-in failed')
@@ -112,7 +111,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!auth) return
     setError(null)
     try {
-      await createUserWithEmailAndPassword(auth, email, password)
+      const cred = await createUserWithEmailAndPassword(auth, email, password)
+      await establishApiSessionCoalesced(cred.user)
     } catch (e) {
       const err = e as { code?: string; message?: string }
       const msg =

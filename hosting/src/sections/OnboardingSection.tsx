@@ -154,6 +154,7 @@ export function OnboardingSection() {
     let cancelled = false
     ;(async () => {
       setProgressLoading(true)
+      setSaveError(null)
       try {
         const idToken = await user.getIdToken()
         const res = await apiClient.getJson('/api/onboarding/progress', { idToken })

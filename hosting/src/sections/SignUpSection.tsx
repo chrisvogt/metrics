@@ -2,10 +2,12 @@
 
 import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '../auth/AuthContext'
 import styles from './SignUpSection.module.css'
 
 export function SignUpSection() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -28,7 +30,7 @@ export function SignUpSection() {
     setLoading(true)
     try {
       await signUpWithEmail(email, password)
-      window.location.href = '/onboarding/'
+      router.push('/onboarding/')
     } catch {
       // error is set by AuthContext
     } finally {
@@ -41,7 +43,7 @@ export function SignUpSection() {
     setLoading(true)
     try {
       await signInWithGoogle()
-      window.location.href = '/onboarding/'
+      router.push('/onboarding/')
     } catch {
       // error is set by AuthContext
     } finally {

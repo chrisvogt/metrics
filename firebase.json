@@ -13,53 +13,36 @@
     "source": "functions",
     "codebase": "default"
   },
-  "hosting": {
-    "public": "hosting/out",
-    "rewrites": [
-      {
-        "source": "/api/**",
-        "function": "app"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=0, must-revalidate"
-          }
-        ]
-      },
-      {
-        "source": "/_next/static/**",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
-          }
-        ]
-      },
-      {
-        "source": "/api/widgets/**",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=3600, s-maxage=7200"
-          }
-        ]
-      },
-      {
-        "source": "/api/widgets/sync/**",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-transform"
-          }
-        ]
-      }
-    ]
-  },
+  "apphosting": [
+    {
+      "backendId": "chronogrove-console",
+      "rootDir": "./hosting",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions",
+        ".turbo",
+        "**/node_modules",
+        "**/.next/cache"
+      ]
+    },
+    {
+      "backendId": "chronogrove-console-pr",
+      "rootDir": "./hosting",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions",
+        ".turbo",
+        "**/node_modules",
+        "**/.next/cache"
+      ]
+    }
+  ],
   "emulators": {
     "auth": {
       "port": 9099
@@ -70,7 +53,7 @@
     "firestore": {
       "port": 8080
     },
-    "hosting": {
+    "apphosting": {
       "port": 8084,
       "host": "metrics.dev-chrisvogt.me"
     },
