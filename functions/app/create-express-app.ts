@@ -1,7 +1,6 @@
 import compressionImport from 'compression'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
-import dns from 'dns'
 import express from 'express'
 import lusca from 'lusca'
 import path from 'path'
@@ -34,6 +33,7 @@ import { registerDiscogsOAuthRoutes } from './oauth-discogs.js'
 import { registerFlickrOAuthRoutes } from './oauth-flickr.js'
 import { registerGitHubOAuthRoutes } from './oauth-github.js'
 import { toStoredDateTime } from '../utils/time.js'
+import { hostnameCnameChainsTo } from '../utils/dns-cname-verify.js'
 
 interface LoggerLike {
   error: (message: string, ...args: unknown[]) => void
@@ -850,7 +850,12 @@ export function createExpressApp({
     }
   )
 
-  const REQUIRED_A_RECORDS = ['151.101.65.195', '151.101.1.195']
+  const DEFAULT_ONBOARDING_CNAME_TARGET = 'personal-stats-chrisvogt.web.app'
+  const requiredCnameTarget = (() => {
+    const raw = process.env.ONBOARDING_REQUIRED_CNAME_TARGET?.trim()
+    if (!raw) return DEFAULT_ONBOARDING_CNAME_TARGET
+    return raw.toLowerCase().replace(/\.$/, '')
+  })()
 
   expressApp.get(
     '/api/onboarding/check-username',
@@ -957,14 +962,12 @@ export function createExpressApp({
       }
 
       try {
-        const resolve4 = dns.promises.resolve4
-        const records = await resolve4(domain).catch(() => [] as string[])
-        const hasAll = REQUIRED_A_RECORDS.every((ip) => records.includes(ip))
+        const verified = await hostnameCnameChainsTo(domain, requiredCnameTarget)
 
         res.json({
           ok: true,
-          verified: hasAll,
-          requiredRecords: REQUIRED_A_RECORDS,
+          verified,
+          requiredCname: requiredCnameTarget,
         })
       } catch (err) {
         logger.error('Error checking domain DNS', { domainLength: domain.length, error: err })

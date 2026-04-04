@@ -101,7 +101,9 @@ describe('createExpressApp onboarding rate limits (real limiter)', () => {
   })
 
   it('returns 429 and logs after check-domain exceeds onboarding limit', async () => {
-    vi.spyOn(dns.promises, 'resolve4').mockResolvedValue([])
+    vi.spyOn(dns.promises, 'resolveCname').mockRejectedValue(
+      Object.assign(new Error('ENOTFOUND'), { code: 'ENOTFOUND' as const })
+    )
 
     const app = await buildApp()
 

@@ -44,6 +44,8 @@ const SCANNER_PATTERN = new RegExp(
 const PHP_PROBE = /\.php$/i
 
 export function middleware(request: NextRequest) {
+  // TODO(hostname-routing): Registered tenant API hostnames should not serve the full console
+  // (status-only + link to Chronogrove). Track as follow-up to onboarding DNS (#254).
   const path = request.nextUrl.pathname
   if (SCANNER_PATTERN.test(path) || PHP_PROBE.test(path)) {
     return new NextResponse(null, { status: 403 })

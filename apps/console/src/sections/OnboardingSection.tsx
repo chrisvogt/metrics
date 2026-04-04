@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { apiClient } from '../auth/apiClient'
 import { useAuth } from '../auth/AuthContext'
 import { getAppBaseUrl } from '../lib/baseUrl'
+import { getOnboardingCnameTarget } from '../lib/onboardingCnameTarget'
 import { ProviderConnectionGrid } from '@/components/onboarding/ProviderConnectionGrid'
 import { ONBOARDING_USERNAME_PATTERN } from '@/lib/onboardingConstraints'
 import styles from './OnboardingSection.module.css'
@@ -657,19 +658,15 @@ export function OnboardingSection() {
 
             {domain && (
               <div className={styles.dnsInstructions}>
-                <p className={styles.dnsTitle}>Add these A records to your DNS provider:</p>
+                <p className={styles.dnsTitle}>
+                  Add a CNAME record pointing your hostname to the Chronogrove target:
+                </p>
                 <div className={styles.dnsRecords}>
                   <div className={styles.dnsRecord}>
-                    <span className={styles.dnsType}>A</span>
+                    <span className={styles.dnsType}>CNAME</span>
                     <span className={styles.dnsHost}>{domain}</span>
                     <span className={styles.dnsArrow}>→</span>
-                    <code className={styles.dnsValue}>151.101.65.195</code>
-                  </div>
-                  <div className={styles.dnsRecord}>
-                    <span className={styles.dnsType}>A</span>
-                    <span className={styles.dnsHost}>{domain}</span>
-                    <span className={styles.dnsArrow}>→</span>
-                    <code className={styles.dnsValue}>151.101.1.195</code>
+                    <code className={styles.dnsValue}>{getOnboardingCnameTarget()}</code>
                   </div>
                 </div>
 
@@ -695,7 +692,7 @@ export function OnboardingSection() {
                     <div>
                       <strong>DNS verified!</strong>
                       <p className={styles.dnsResultSub}>
-                        Both A records are pointing to Chronogrove.
+                        Your CNAME points to {getOnboardingCnameTarget()}.
                       </p>
                     </div>
                   </div>

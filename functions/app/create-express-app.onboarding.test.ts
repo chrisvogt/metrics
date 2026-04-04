@@ -692,11 +692,10 @@ describe('createExpressApp onboarding routes', () => {
     expect(status).toHaveBeenCalledWith(400)
   })
 
-  it('GET check-domain returns verified true when A records match', async () => {
+  it('GET check-domain returns verified true when CNAME chain reaches required target', async () => {
     const { app } = await buildApp()
-    const spy = vi.spyOn(dns.promises, 'resolve4').mockResolvedValue([
-      '151.101.65.195',
-      '151.101.1.195',
+    const spy = vi.spyOn(dns.promises, 'resolveCname').mockResolvedValue([
+      'personal-stats-chrisvogt.web.app',
     ])
 
     const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
@@ -707,15 +706,15 @@ describe('createExpressApp onboarding routes', () => {
       expect.objectContaining({
         ok: true,
         verified: true,
-        requiredRecords: ['151.101.65.195', '151.101.1.195'],
+        requiredCname: 'personal-stats-chrisvogt.web.app',
       })
     )
     spy.mockRestore()
   })
 
-  it('GET check-domain returns verified false when records mismatch', async () => {
+  it('GET check-domain returns verified false when CNAME does not reach target', async () => {
     const { app } = await buildApp()
-    const spy = vi.spyOn(dns.promises, 'resolve4').mockResolvedValue(['1.2.3.4'])
+    const spy = vi.spyOn(dns.promises, 'resolveCname').mockResolvedValue(['wrong.example.com'])
 
     const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
     const json = vi.fn()
@@ -725,7 +724,7 @@ describe('createExpressApp onboarding routes', () => {
       expect.objectContaining({
         ok: true,
         verified: false,
-        requiredRecords: ['151.101.65.195', '151.101.1.195'],
+        requiredCname: 'personal-stats-chrisvogt.web.app',
       })
     )
     spy.mockRestore()
@@ -733,7 +732,7 @@ describe('createExpressApp onboarding routes', () => {
 
   it('GET check-domain returns 500 when the success res.json throws', async () => {
     const { app } = await buildApp()
-    const spy = vi.spyOn(dns.promises, 'resolve4').mockResolvedValue([])
+    const spy = vi.spyOn(dns.promises, 'resolveCname').mockResolvedValue([])
 
     const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
     const errorJson = vi.fn().mockImplementationOnce(() => {
