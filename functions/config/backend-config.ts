@@ -51,6 +51,20 @@ export const getDiscogsConfig = () => ({
   username: process.env.DISCOGS_USERNAME,
 })
 
+/** Discogs Developer Settings: Consumer Key / Consumer Secret (OAuth 1.0a app). */
+export const getDiscogsOAuthConfig = () => ({
+  consumerKey: process.env.DISCOGS_CONSUMER_KEY,
+  consumerSecret: process.env.DISCOGS_CONSUMER_SECRET,
+  callbackUrl:
+    process.env.DISCOGS_OAUTH_CALLBACK_URL ??
+    process.env.DISCOGS_OAUTH_REDIRECT_URI ??
+    '',
+  /** Browser redirect after successful token exchange (path or absolute URL). */
+  appSuccessRedirect:
+    process.env.DISCOGS_OAUTH_SUCCESS_REDIRECT?.trim() ||
+    '/onboarding?oauth=discogs&status=success',
+})
+
 export const getFlickrConfig = () => ({
   apiKey: process.env.FLICKR_API_KEY,
   userId: process.env.FLICKR_USER_ID,

@@ -5,6 +5,7 @@ import type { SectionId } from '../layout/Layout'
 import { useAuth } from '../auth/AuthContext'
 import { ApiClient } from '../auth/apiClient'
 import { getAppBaseUrl, getManualSyncStreamUrl } from '../lib/baseUrl'
+import { readDiscogsAuthModeFromSyncPayload } from '../lib/readDiscogsAuthModeFromSyncPayload'
 import { readFlickrAuthModeFromSyncPayload } from '../lib/readFlickrAuthModeFromSyncPayload'
 import styles from './ApiTestingSection.module.css'
 
@@ -70,6 +71,10 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
   const syncFlickrAuthMode =
     showSync && syncProvider === 'flickr' && syncResult?.ok
       ? readFlickrAuthModeFromSyncPayload(syncResult.data)
+      : undefined
+  const syncDiscogsAuthMode =
+    showSync && syncProvider === 'discogs' && syncResult?.ok
+      ? readDiscogsAuthModeFromSyncPayload(syncResult.data)
       : undefined
 
   const fetchToken = async () => {
@@ -324,8 +329,8 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
               Run the queue-backed sync via{' '}
               <code className={styles.inlineCode}>GET /api/widgets/sync/&#123;provider&#125;/stream</code>{' '}
               so you can watch live steps and inspect the same final payload returned by the JSON endpoint.
-              {syncProvider === 'flickr'
-                ? ' Flickr manual sync loads OAuth from your signed-in user when you have connected Flickr; widget data still updates the default site owner path.'
+              {syncProvider === 'flickr' || syncProvider === 'discogs'
+                ? ' Flickr and Discogs manual sync load OAuth from your signed-in user when that provider is linked; otherwise the job uses server env credentials. Widget data still updates the default site owner path.'
                 : ''}
             </p>
             <div className={styles.endpoint}>
@@ -380,6 +385,20 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
                   {syncFlickrAuthMode === 'oauth'
                     ? 'Flickr credentials: OAuth (connected account)'
                     : 'Flickr credentials: legacy (server API key)'}
+                </p>
+              ) : null}
+              {syncDiscogsAuthMode ? (
+                <p
+                  className={`${styles.flickrAuthBadge} ${
+                    syncDiscogsAuthMode === 'oauth'
+                      ? styles.flickrAuthBadgeOAuth
+                      : styles.flickrAuthBadgeLegacy
+                  }`}
+                  role="status"
+                >
+                  {syncDiscogsAuthMode === 'oauth'
+                    ? 'Discogs credentials: OAuth (connected account)'
+                    : 'Discogs credentials: legacy (personal token + username in env)'}
                 </p>
               ) : null}
               {syncResult && <ResultBox result={syncResult} />}

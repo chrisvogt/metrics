@@ -43,6 +43,10 @@ vi.mock('../transformers/to-discogs-destination-path.js', () => ({
   default: vi.fn((imageURL, releaseId, imageType) => `chrisvogt/discogs/${releaseId}_${imageType}.jpg`),
 }))
 
+vi.mock('../services/discogs-integration-credentials.js', () => ({
+  loadDiscogsAuthForUser: vi.fn().mockResolvedValue(null),
+}))
+
 import fetchDiscogsReleases from '../api/discogs/fetch-releases.js'
 import fetchReleasesBatch from '../api/discogs/fetch-releases-batch.js'
 import { listStoredMedia, storeRemoteMedia } from '../services/media/media-service.js'
@@ -98,6 +102,7 @@ describe('syncDiscogsData', () => {
     const result = await syncDiscogsData(documentStore)
 
     expect(result.result).toBe('SUCCESS')
+    expect(result.discogsAuthMode).toBe('env')
     expect(result.data.metrics['LPs Owned']).toBe(2)
     expect(result.data.meta.synced).toEqual(expect.any(String))
 
@@ -211,6 +216,7 @@ describe('syncDiscogsData', () => {
     await syncDiscogsData(documentStore, { onProgress })
 
     expect(onProgress.mock.calls.map((c) => c[0].phase)).toEqual([
+      'discogs.auth',
       'discogs.collection',
       'discogs.save_raw',
       'discogs.save_widget',

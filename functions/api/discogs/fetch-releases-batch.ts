@@ -2,6 +2,7 @@ import { logger } from 'firebase-functions'
 import pMap from 'p-map'
 import fetchReleaseDetails from './fetch-release-details.js'
 import filterDiscogsResource from '../../transformers/filter-discogs-resource.js'
+import type { ResolvedDiscogsApiAuth } from '../../services/discogs-integration-credentials.js'
 import type {
   DiscogsBasicInformation,
   DiscogsCollectionReleaseItem,
@@ -34,9 +35,10 @@ const fetchReleasesBatch = async (
     delayMs?: number
     onProgress?: SyncProgressReporter
     stopOnError?: boolean
+    oauth?: ResolvedDiscogsApiAuth
   } = {},
 ): Promise<DiscogsEnhancedRelease[]> => {
-  const { concurrency = 5, stopOnError = false, delayMs = 100, onProgress } = options
+  const { concurrency = 5, stopOnError = false, delayMs = 100, onProgress, oauth } = options
 
   logger.info(`Starting batch fetch for ${releases.length} releases with concurrency ${concurrency}`)
 
@@ -99,6 +101,8 @@ const fetchReleasesBatch = async (
         const resourceData = await fetchReleaseDetails(
           resourceUrl as string,
           String(releaseId ?? ''),
+          3,
+          oauth,
         )
         
         if (resourceData) {

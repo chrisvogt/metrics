@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.27.0] - 2026-04-03
+
+### Added
+
+- **Discogs OAuth 1.0a** — `POST /api/oauth/discogs/start`, `GET /api/oauth/discogs/callback`, `DELETE /api/oauth/discogs`. Pending bridge collection **`oauth_discogs_pending/{requestToken}`** (server-only). **`DISCOGS_CONSUMER_KEY`**, **`DISCOGS_CONSUMER_SECRET`**, **`DISCOGS_OAUTH_CALLBACK_URL`**, optional **`DISCOGS_OAUTH_SUCCESS_REDIRECT`** (see **`.env.template`** and **`exported-config`**).
+- **`discogs-oauth1a`** — PLAINTEXT token exchange per Discogs docs; **HMAC-SHA1** signed API GETs; **`/oauth/identity`** after access token for username.
+- **Sync** — **`discogsAuthMode`** (`env` \| `oauth`) on successful Discogs sync jobs (manual queue worker), same pattern as Flickr.
+
+### Changed
+
+- **`fetchDiscogsReleases` / `fetchReleaseDetails` / batch** — Accept per-user OAuth auth when present; legacy **`DISCOGS_API_KEY`** + **`DISCOGS_USERNAME`** unchanged.
+- **`sync-discogs-data`** — Loads **`integrations/discogs`** via **`loadDiscogsAuthForUser`**; profile URL uses linked username when OAuth is active.
+- **CSRF** — **`/api/oauth/discogs/callback`** excluded from CSRF (GET redirect).
+- **Tests** — **`oauth-discogs.test.ts`**, **`discogs-oauth1a.test`**, **`discogs-integration-credentials.test`**, OAuth branches for Discogs fetch helpers; **`oauth-discogs.helpers`** for redirect resolution.
+
 ## [0.26.0] - 2026-04-03
 
 ### Added

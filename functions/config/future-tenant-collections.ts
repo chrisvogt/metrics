@@ -30,6 +30,9 @@ export const USER_INTEGRATIONS_SEGMENT = 'integrations'
  */
 export const OAUTH_FLICKR_PENDING_COLLECTION = 'oauth_flickr_pending'
 
+/** Short-lived Discogs OAuth 1.0a request-token bridge (doc id = oauth_token from Discogs). */
+export const OAUTH_DISCOGS_PENDING_COLLECTION = 'oauth_discogs_pending'
+
 export const toTenantUsernameDocPath = (slug: string): string =>
   `${TENANT_USERNAMES_COLLECTION}/${slug}`
 

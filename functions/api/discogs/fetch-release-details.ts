@@ -1,43 +1,64 @@
 import { logger } from 'firebase-functions'
+
 import { getDiscogsConfig } from '../../config/backend-config.js'
 import { chronogroveHttpUserAgent } from '../../config/chronogrove-http-user-agent.js'
+import type { ResolvedDiscogsApiAuth } from '../../services/discogs-integration-credentials.js'
+import { discogsOAuthGotGet } from '../../services/discogs-oauth1a.js'
 
 /**
  * Fetches detailed release resource data from Discogs API with retry logic
- * @param {string} resourceUrl - The resource_url to fetch
- * @param {string} releaseId - The release ID for logging purposes
- * @param {number} maxRetries - Maximum number of retries (default: 3)
- * @returns {Promise<Object|null>} The detailed release resource data or null if failed
+ * @param resourceUrl - The resource_url to fetch
+ * @param releaseId - The release ID for logging purposes
+ * @param maxRetries - Maximum number of retries (default: 3)
+ * @param oauth - Optional OAuth 1.0a signing (otherwise uses DISCOGS_API_KEY token query param)
  */
-const fetchReleaseDetails = async (resourceUrl, releaseId, maxRetries = 3) => {
+const fetchReleaseDetails = async (
+  resourceUrl: string,
+  releaseId: string,
+  maxRetries = 3,
+  oauth?: ResolvedDiscogsApiAuth
+) => {
   const { apiKey } = getDiscogsConfig()
 
-  if (!apiKey) {
+  if (!oauth && !apiKey) {
     throw new Error('Missing required environment variable: DISCOGS_API_KEY')
   }
 
-  // Add API key to URL if it's not already present
-  const urlWithAuth = resourceUrl.includes('token=') 
-    ? resourceUrl 
-    : `${resourceUrl}${resourceUrl.includes('?') ? '&' : '?'}token=${apiKey}`
+  const urlWithAuth =
+    oauth || resourceUrl.includes('token=')
+      ? resourceUrl
+      : `${resourceUrl}${resourceUrl.includes('?') ? '&' : '?'}token=${apiKey}`
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      logger.debug(`Fetching release resource for ${releaseId} (attempt ${attempt}/${maxRetries}) from ${urlWithAuth}`)
+      logger.debug(
+        `Fetching release resource for ${releaseId} (attempt ${attempt}/${maxRetries})${oauth ? ' (OAuth)' : ''}`
+      )
+
+      if (oauth) {
+        const { body } = await discogsOAuthGotGet(resourceUrl, {
+          consumerKey: oauth.consumerKey,
+          consumerSecret: oauth.consumerSecret,
+          oauthToken: oauth.oauthToken,
+          oauthTokenSecret: oauth.oauthTokenSecret,
+        })
+        const resourceData = JSON.parse(body as string) as unknown
+        logger.debug(`Successfully fetched release resource for ${releaseId}`)
+        return resourceData
+      }
 
       const response = await fetch(urlWithAuth, {
         headers: {
-          'User-Agent': chronogroveHttpUserAgent
-        }
+          'User-Agent': chronogroveHttpUserAgent,
+        },
       })
 
       if (response.status === 429) {
-        // Rate limited - wait longer before retrying
-        const waitTime = Math.pow(2, attempt) * 3000 // Exponential backoff: 6s, 12s, 24s
+        const waitTime = Math.pow(2, attempt) * 3000
         logger.warn(`Rate limited for release ${releaseId}, waiting ${waitTime}ms before retry ${attempt}/${maxRetries}`)
-        
+
         if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, waitTime))
+          await new Promise((resolve) => setTimeout(resolve, waitTime))
           continue
         } else {
           logger.error(`Max retries reached for release ${releaseId} due to rate limiting`)
@@ -52,18 +73,17 @@ const fetchReleaseDetails = async (resourceUrl, releaseId, maxRetries = 3) => {
 
       const resourceData = await response.json()
       logger.debug(`Successfully fetched release resource for ${releaseId}`)
-      
+
       return resourceData
     } catch (error) {
       logger.error(`Error fetching release resource for ${releaseId} (attempt ${attempt}/${maxRetries}):`, error)
-      
+
       if (attempt === maxRetries) {
         return null
       }
-      
-      // Wait before retrying on network errors
-      const waitTime = Math.pow(2, attempt) * 1000 // Exponential backoff: 2s, 4s, 8s
-      await new Promise(resolve => setTimeout(resolve, waitTime))
+
+      const waitTime = Math.pow(2, attempt) * 1000
+      await new Promise((resolve) => setTimeout(resolve, waitTime))
     }
   }
 

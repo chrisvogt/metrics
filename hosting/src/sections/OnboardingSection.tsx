@@ -199,16 +199,18 @@ export function OnboardingSection() {
   useEffect(() => {
     if (typeof window === 'undefined' || !hydrated) return
     const params = new URLSearchParams(window.location.search)
-    if (params.get('oauth') !== 'flickr') return
+    const oauthProvider = params.get('oauth')
+    if (oauthProvider !== 'flickr' && oauthProvider !== 'discogs') return
     const status = params.get('status')
     const reason = params.get('reason')
+    const label = oauthProvider === 'discogs' ? 'Discogs' : 'Flickr'
     if (status === 'success') {
-      setOauthFlash('Flickr is now linked to your account.')
+      setOauthFlash(`${label} is now linked to your account.`)
     } else if (status === 'error') {
       setOauthFlash(
         reason
-          ? `Could not complete Flickr authorization (${reason.replace(/_/g, ' ')}).`
-          : 'Could not complete Flickr authorization.'
+          ? `Could not complete ${label} authorization (${reason.replace(/_/g, ' ')}).`
+          : `Could not complete ${label} authorization.`
       )
     }
     params.delete('providers')
@@ -237,24 +239,25 @@ export function OnboardingSection() {
     setDomain(p.customDomain ?? '')
   }, [user, apiSessionReady])
 
-  const cancelFlickrPending = async () => {
+  const cancelOAuthPending = async (providerId: 'flickr' | 'discogs') => {
     if (!user) return
     setSaveError(null)
     try {
       const idToken = await user.getIdToken()
-      const res = await apiClient.deleteJson('/api/oauth/flickr', { idToken })
+      const res = await apiClient.deleteJson(`/api/oauth/${providerId}`, { idToken })
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({} as { error?: string }))
         throw new Error(errBody.error ?? `Cancel failed (${res.status})`)
       }
       await reloadProgressFromServer()
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Could not cancel Flickr link.')
+      const label = providerId === 'discogs' ? 'Discogs' : 'Flickr'
+      setSaveError(e instanceof Error ? e.message : `Could not cancel ${label} link.`)
     }
   }
 
   const handleOAuthProviderConnect = async (providerId: string) => {
-    if (providerId !== 'flickr' || !user) return
+    if ((providerId !== 'flickr' && providerId !== 'discogs') || !user) return
     setSaveError(null)
     setOauthFlash(null)
     try {
@@ -264,18 +267,18 @@ export function OnboardingSection() {
           ? `${window.location.pathname}${window.location.search}`
           : '/onboarding'
       const idToken = await user.getIdToken()
-      const res = await apiClient.postJson('/api/oauth/flickr/start', { returnTo }, { idToken })
+      const res = await apiClient.postJson(`/api/oauth/${providerId}/start`, { returnTo }, { idToken })
       const data = (await res.json()) as {
         ok?: boolean
         authorizeUrl?: string
         error?: string
       }
       if (!res.ok || !data.ok || !data.authorizeUrl) {
-        throw new Error(data.error ?? `Could not start Flickr link (${res.status}).`)
+        throw new Error(data.error ?? `Could not start ${providerId} link (${res.status}).`)
       }
       window.location.assign(data.authorizeUrl)
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Flickr link failed.')
+      setSaveError(e instanceof Error ? e.message : `${providerId} link failed.`)
     }
   }
 
@@ -584,8 +587,15 @@ export function OnboardingSection() {
 
             {integrationStatuses.flickr === 'pending_oauth' && (
               <p className={styles.oauthCancelRow}>
-                <button type="button" className={styles.oauthCancelBtn} onClick={() => void cancelFlickrPending()}>
+                <button type="button" className={styles.oauthCancelBtn} onClick={() => void cancelOAuthPending('flickr')}>
                   Cancel Flickr link
+                </button>
+              </p>
+            )}
+            {integrationStatuses.discogs === 'pending_oauth' && (
+              <p className={styles.oauthCancelRow}>
+                <button type="button" className={styles.oauthCancelBtn} onClick={() => void cancelOAuthPending('discogs')}>
+                  Cancel Discogs link
                 </button>
               </p>
             )}

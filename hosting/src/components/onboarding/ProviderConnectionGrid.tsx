@@ -4,13 +4,15 @@ import type { CSSProperties } from 'react'
 import { ONBOARDING_PROVIDERS } from '@/onboarding/onboardingProviders'
 import styles from '@/sections/OnboardingSection.module.css'
 
+const OAUTH_LINK_PROVIDERS = new Set(['flickr', 'discogs'])
+
 function labelForProvider(
   providerId: string,
   connected: boolean,
   status: string | undefined
 ): string {
   if (!connected) return 'Connect'
-  if (providerId === 'flickr' && status === 'pending_oauth') return 'Link account'
+  if (OAUTH_LINK_PROVIDERS.has(providerId) && status === 'pending_oauth') return 'Link account'
   if (status === 'pending_oauth') return 'Pending'
   if (status === 'connected') return 'Connected'
   return 'Connected'
@@ -34,10 +36,10 @@ export function ProviderConnectionGrid({
         const connected = connectedIds.has(provider.id)
         const status = integrationStatuses[provider.id]
         const oauthReady = status === 'connected'
-        const isFlickr = provider.id === 'flickr'
+        const usesOAuthFlow = OAUTH_LINK_PROVIDERS.has(provider.id)
         const label = labelForProvider(provider.id, connected, status)
         const showConnectedStyle =
-          connected && (!isFlickr || oauthReady) && status !== 'pending_oauth'
+          connected && (!usesOAuthFlow || oauthReady) && status !== 'pending_oauth'
 
         return (
           <button
@@ -45,7 +47,7 @@ export function ProviderConnectionGrid({
             type="button"
             className={`${styles.providerCard} ${showConnectedStyle ? styles.providerConnected : ''}`}
             onClick={() => {
-              if (isFlickr) {
+              if (usesOAuthFlow) {
                 if (oauthReady) {
                   onToggle(provider.id)
                   return

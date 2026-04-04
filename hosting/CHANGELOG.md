@@ -11,6 +11,17 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.6.12] - 2026-04-03
+
+### Added
+
+- **Discogs OAuth** — Same onboarding / flyout flow as Flickr (**`ProviderConnectionGrid`**, cancel pending, **`?oauth=discogs`** flash on **Onboarding** and **Overview**).
+- **Sync page** — Badge after manual Discogs sync showing **OAuth (connected)** vs **legacy (env token)** via **`readDiscogsAuthModeFromSyncPayload`** and **`worker.discogsAuthMode`**.
+
+### Changed
+
+- **Deploy with Functions ≥ 0.27.0** for Discogs OAuth routes and sync **`discogsAuthMode`**.
+
 ## [0.6.11] - 2026-04-03
 
 ### Added

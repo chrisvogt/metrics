@@ -14,10 +14,17 @@ vi.mock('firebase-functions', () => ({
 // Mock fetch globally
 global.fetch = vi.fn()
 
+const discogsOAuthGotGetMock = vi.hoisted(() => vi.fn())
+
+vi.mock('../../services/discogs-oauth1a.js', () => ({
+  discogsOAuthGotGet: (...args: unknown[]) => discogsOAuthGotGetMock(...args),
+}))
+
 describe('fetchReleaseDetails', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    discogsOAuthGotGetMock.mockReset()
     global.fetch.mockReset()
     
     // Mock setTimeout to make tests run faster
@@ -190,5 +197,30 @@ describe('fetchReleaseDetails', () => {
 
     await expect(fetchReleaseDetails('https://api.discogs.com/releases/123', '123'))
       .rejects.toThrow('Missing required environment variable: DISCOGS_API_KEY')
+  })
+
+  it('uses OAuth signed GET when oauth auth is passed', async () => {
+    vi.unstubAllEnvs()
+    const mockReleaseData = { id: 99, title: 'OAuth Release' }
+    discogsOAuthGotGetMock.mockResolvedValue({ body: JSON.stringify(mockReleaseData) })
+    const fetchReleaseDetails = (await import('./fetch-release-details.js')).default
+    const oauth = {
+      mode: 'oauth' as const,
+      consumerKey: 'ck',
+      consumerSecret: 'cs',
+      discogsUsername: 'u',
+      oauthToken: 'ot',
+      oauthTokenSecret: 'ots',
+    }
+    const url = 'https://api.discogs.com/releases/99'
+    const result = await fetchReleaseDetails(url, '99', 3, oauth)
+    expect(discogsOAuthGotGetMock).toHaveBeenCalledWith(url, {
+      consumerKey: 'ck',
+      consumerSecret: 'cs',
+      oauthToken: 'ot',
+      oauthTokenSecret: 'ots',
+    })
+    expect(result).toEqual(mockReleaseData)
+    expect(fetch).not.toHaveBeenCalled()
   })
 })
