@@ -362,6 +362,9 @@ export function OnboardingSection() {
   useEffect(() => {
     if (!user || !hydrated) return
     if (currentStep !== 'connections' && currentStep !== 'domain') return
+    // Custom domain is persisted when the user completes the step (or navigates), not on every
+    // keystroke — avoids partial hostnames claiming tenant_hosts and avoids noisy PUTs.
+    if (currentStep === 'domain') return
     if (suppressDraftSaveRef.current) {
       suppressDraftSaveRef.current = false
       return
@@ -370,7 +373,7 @@ export function OnboardingSection() {
       void persistProgress(buildSnapshot())
     }, 650)
     return () => clearTimeout(t)
-  }, [user, hydrated, currentStep, connectedProviders, domain, buildSnapshot, persistProgress])
+  }, [user, hydrated, currentStep, connectedProviders, buildSnapshot, persistProgress])
 
   const handleConnectProvider = (providerId: string) => {
     setConnectedProviders((prev) => {

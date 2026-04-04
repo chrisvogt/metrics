@@ -1,4 +1,4 @@
-import { FieldValue } from 'firebase-admin/firestore'
+import { FieldValue, type DocumentSnapshot } from 'firebase-admin/firestore'
 import admin from 'firebase-admin'
 
 import {
@@ -126,30 +126,6 @@ export async function persistOnboardingWizardState(params: {
         ? existing.username.toLowerCase()
         : null
 
-    if (usernameNext !== usernamePrev) {
-      if (usernamePrev) {
-        const oldClaim = db.collection(TENANT_USERNAMES_COLLECTION).doc(usernamePrev)
-        const oldSnap = await tx.get(oldClaim)
-        if (oldSnap.exists && oldSnap.get('uid') === params.uid) {
-          tx.delete(oldClaim)
-        }
-      }
-      if (usernameNext) {
-        const claimRef = db.collection(TENANT_USERNAMES_COLLECTION).doc(usernameNext)
-        const claimSnap = await tx.get(claimRef)
-        if (claimSnap.exists) {
-          const owner = claimSnap.get('uid')
-          if (owner !== params.uid) {
-            throw new Error('username_taken')
-          }
-        }
-        tx.set(claimRef, {
-          uid: params.uid,
-          claimedAt: FieldValue.serverTimestamp(),
-        })
-      }
-    }
-
     const domainNext = params.parsed.customDomain
     const domainPrev = readStoredTenantHostnameFromUserDoc(existing)
 
@@ -166,24 +142,72 @@ export async function persistOnboardingWizardState(params: {
       throw new Error('custom_domain_not_entitled')
     }
 
+    /**
+     * Firestore requires every tx.get before any tx.set/delete/update.
+     * We used to read the new username/host claim after deleting the old one, which
+     * fails when both change in one request.
+     */
+    let oldUsernameSnap: DocumentSnapshot | null = null
+    let newUsernameSnap: DocumentSnapshot | null = null
+    let oldHostSnap: DocumentSnapshot | null = null
+    let newHostSnap: DocumentSnapshot | null = null
+
+    if (usernameNext !== usernamePrev) {
+      if (usernamePrev) {
+        oldUsernameSnap = await tx.get(
+          db.collection(TENANT_USERNAMES_COLLECTION).doc(usernamePrev)
+        )
+      }
+      if (usernameNext) {
+        newUsernameSnap = await tx.get(
+          db.collection(TENANT_USERNAMES_COLLECTION).doc(usernameNext)
+        )
+      }
+    }
+
     if (domainNext !== domainPrev) {
       if (domainPrev) {
-        const oldHostRef = db.collection(TENANT_HOSTS_COLLECTION).doc(domainPrev)
-        const oldHostSnap = await tx.get(oldHostRef)
-        if (oldHostSnap.exists && oldHostSnap.get('uid') === params.uid) {
-          tx.delete(oldHostRef)
-        }
+        oldHostSnap = await tx.get(db.collection(TENANT_HOSTS_COLLECTION).doc(domainPrev))
       }
       if (domainNext) {
-        const hostRef = db.collection(TENANT_HOSTS_COLLECTION).doc(domainNext)
-        const hostSnap = await tx.get(hostRef)
-        if (hostSnap.exists) {
-          const owner = hostSnap.get('uid')
+        newHostSnap = await tx.get(db.collection(TENANT_HOSTS_COLLECTION).doc(domainNext))
+      }
+    }
+
+    if (usernameNext !== usernamePrev) {
+      if (usernamePrev && oldUsernameSnap) {
+        if (oldUsernameSnap.exists && oldUsernameSnap.get('uid') === params.uid) {
+          tx.delete(oldUsernameSnap.ref)
+        }
+      }
+      if (usernameNext && newUsernameSnap) {
+        if (newUsernameSnap.exists) {
+          const owner = newUsernameSnap.get('uid')
+          if (owner !== params.uid) {
+            throw new Error('username_taken')
+          }
+        }
+        tx.set(newUsernameSnap.ref, {
+          uid: params.uid,
+          claimedAt: FieldValue.serverTimestamp(),
+        })
+      }
+    }
+
+    if (domainNext !== domainPrev) {
+      if (domainPrev && oldHostSnap) {
+        if (oldHostSnap.exists && oldHostSnap.get('uid') === params.uid) {
+          tx.delete(oldHostSnap.ref)
+        }
+      }
+      if (domainNext && newHostSnap) {
+        if (newHostSnap.exists) {
+          const owner = newHostSnap.get('uid')
           if (owner !== params.uid) {
             throw new Error('hostname_taken')
           }
         }
-        tx.set(hostRef, {
+        tx.set(newHostSnap.ref, {
           uid: params.uid,
           claimedAt: FieldValue.serverTimestamp(),
         })
