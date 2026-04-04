@@ -25,9 +25,10 @@ vi.mock('fs', () => {
   }
 })
 
-// Mock graphql-got
-vi.mock('graphql-got', () => ({
-  default: vi.fn()
+vi.mock('got', () => ({
+  default: {
+    post: vi.fn(),
+  },
 }))
 
 // Mock path and url modules
@@ -49,7 +50,7 @@ vi.mock('../services/github-integration-credentials.js', () => ({
 import type { DocumentStore } from '../ports/document-store.js'
 import getGitHubWidgetContent from './get-github-widget-content.js'
 import { loadGitHubAuthForUser } from '../services/github-integration-credentials.js'
-import graphqlGot from 'graphql-got'
+import got from 'got'
 import fs from 'fs'
 
 describe('getGitHubWidgetContent', () => {
@@ -136,20 +137,26 @@ describe('getGitHubWidgetContent', () => {
       }
     }
 
-    graphqlGot.mockResolvedValue(mockResponse)
+    vi.mocked(got.post).mockResolvedValue({ body: { data: mockResponse.body } } as never)
 
     const result = await getGitHubWidgetContent('u1', documentStore)
 
-    expect(graphqlGot).toHaveBeenCalledWith('https://api.github.com/graphql', {
-      query: expect.stringContaining('contributionsCollection'),
-      headers: {
-        Authorization: 'Bearer test-token',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-      variables: {
-        username: 'testuser'
-      }
-    })
+    expect(got.post).toHaveBeenCalledWith(
+      'https://api.github.com/graphql',
+      expect.objectContaining({
+        json: expect.objectContaining({
+          query: expect.stringContaining('contributionsCollection'),
+          variables: {
+            username: 'testuser',
+          },
+        }),
+        headers: {
+          Authorization: 'Bearer test-token',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        responseType: 'json',
+      })
+    )
 
     expect(result.payload).toEqual(mockResponse.body)
     expect(result.authMode).toBe('env')
@@ -174,12 +181,12 @@ describe('getGitHubWidgetContent', () => {
       }
     }
 
-    graphqlGot.mockResolvedValue(mockResponse)
+    vi.mocked(got.post).mockResolvedValue({ body: { data: mockResponse.body } } as never)
 
     await getGitHubWidgetContent('u1', documentStore)
 
-    const queryCall = graphqlGot.mock.calls[0]
-    const query = queryCall[1].query
+    const queryCall = vi.mocked(got.post).mock.calls[0]
+    const query = (queryCall[1] as { json: { query: string } }).json.query
 
     // Verify the query includes contributionsCollection
     expect(query).toContain('contributionsCollection')
@@ -197,7 +204,7 @@ describe('getGitHubWidgetContent', () => {
 
     await expect(getGitHubWidgetContent('u1', documentStore)).rejects.toThrow(/Missing GitHub credentials/)
 
-    expect(graphqlGot).not.toHaveBeenCalled()
+    expect(got.post).not.toHaveBeenCalled()
   })
 
   it('should throw error when GITHUB_USERNAME is missing', async () => {
@@ -205,7 +212,7 @@ describe('getGitHubWidgetContent', () => {
 
     await expect(getGitHubWidgetContent('u1', documentStore)).rejects.toThrow(/Missing GitHub credentials/)
 
-    expect(graphqlGot).not.toHaveBeenCalled()
+    expect(got.post).not.toHaveBeenCalled()
   })
 
   it('prefers connected GitHub OAuth credentials over env', async () => {
@@ -213,18 +220,22 @@ describe('getGitHubWidgetContent', () => {
       accessToken: 'oauth-token',
       githubUsername: 'oauth-user',
     })
-    graphqlGot.mockResolvedValue({ body: { user: { login: 'oauth-user' } } })
+    vi.mocked(got.post).mockResolvedValue({
+      body: { data: { user: { login: 'oauth-user' } } },
+    } as never)
 
     const result = await getGitHubWidgetContent('u1', documentStore)
     expect(result.authMode).toBe('oauth')
 
-    expect(graphqlGot).toHaveBeenCalledWith(
+    expect(got.post).toHaveBeenCalledWith(
       'https://api.github.com/graphql',
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: 'Bearer oauth-token',
         }),
-        variables: { username: 'oauth-user' },
+        json: expect.objectContaining({
+          variables: { username: 'oauth-user' },
+        }),
       })
     )
   })
@@ -234,7 +245,9 @@ describe('getGitHubWidgetContent', () => {
       accessToken: 'oauth-token',
       githubUsername: 'oauth-user',
     })
-    graphqlGot.mockResolvedValue({ body: { user: { login: 'oauth-user' } } })
+    vi.mocked(got.post).mockResolvedValue({
+      body: { data: { user: { login: 'oauth-user' } } },
+    } as never)
 
     await getGitHubWidgetContent('hostname-slug', documentStore, 'firebase-uid-xyz')
 
@@ -243,7 +256,7 @@ describe('getGitHubWidgetContent', () => {
 
   it('should handle API errors gracefully', async () => {
     const apiError = new Error('GitHub API error')
-    graphqlGot.mockRejectedValue(apiError)
+    vi.mocked(got.post).mockRejectedValue(apiError)
 
     await expect(getGitHubWidgetContent('u1', documentStore)).rejects.toThrow('GitHub API error')
   })
@@ -263,7 +276,7 @@ describe('getGitHubWidgetContent', () => {
       }
     }
 
-    graphqlGot.mockResolvedValue(mockResponse)
+    vi.mocked(got.post).mockResolvedValue({ body: { data: mockResponse.body } } as never)
 
     const result = await getGitHubWidgetContent('u1', documentStore)
 
@@ -299,7 +312,7 @@ describe('getGitHubWidgetContent', () => {
       }
     }
 
-    graphqlGot.mockResolvedValue(mockResponse)
+    vi.mocked(got.post).mockResolvedValue({ body: { data: mockResponse.body } } as never)
 
     const result = await getGitHubWidgetContent('u1', documentStore)
 
@@ -327,16 +340,44 @@ describe('getGitHubWidgetContent', () => {
       }
     }
 
-    graphqlGot.mockResolvedValue(mockResponse)
+    vi.mocked(got.post).mockResolvedValue({ body: { data: mockResponse.body } } as never)
 
     await getGitHubWidgetContent('u1', documentStore)
 
     // Verify the query was used and contains the contributionsCollection field
-    const queryCall = graphqlGot.mock.calls[0]
-    const query = queryCall[1].query
+    const queryCall = vi.mocked(got.post).mock.calls[0]
+    const query = (queryCall[1] as { json: { query: string } }).json.query
     expect(query).toBeDefined()
     expect(query).toContain('contributionsCollection')
     expect(query).toContain('contributionCalendar')
+  })
+
+  it('throws when GitHub GraphQL returns errors', async () => {
+    vi.mocked(got.post).mockResolvedValue({
+      body: {
+        errors: [{ message: 'Bad credentials' }, { message: 'Rate limited' }],
+      },
+    } as never)
+
+    await expect(getGitHubWidgetContent('u1', documentStore)).rejects.toThrow('Bad credentials; Rate limited')
+  })
+
+  it('throws when GitHub GraphQL errors have empty messages (fallback text)', async () => {
+    vi.mocked(got.post).mockResolvedValue({
+      body: {
+        errors: [{ message: '' }],
+      },
+    } as never)
+
+    await expect(getGitHubWidgetContent('u1', documentStore)).rejects.toThrow('GitHub GraphQL error')
+  })
+
+  it('throws when GitHub GraphQL response has no data', async () => {
+    vi.mocked(got.post).mockResolvedValue({
+      body: {},
+    } as never)
+
+    await expect(getGitHubWidgetContent('u1', documentStore)).rejects.toThrow('GitHub GraphQL response missing data')
   })
 })
 

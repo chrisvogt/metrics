@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.29.1] - 2026-04-04
+
+### Security
+
+- **got** — Upgraded to **15.x** (addresses known vulnerabilities in older majors). Removed **graphql-got** (it pinned an outdated **got**); GitHub GraphQL uses **`got.post`** with standard **`{ data, errors }`** handling in **`get-github-widget-content`**.
+
+### Tests
+
+- **get-github-widget-content** — GraphQL **`errors`**, missing **`data`**, and empty error-message fallback.
+
 ## [0.29.0] - 2026-04-03
 
 ### Added

@@ -1,5 +1,5 @@
 import fs from 'fs'
-import graphqlGot from 'graphql-got'
+import got from 'got'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -23,6 +23,38 @@ const query = fs.readFileSync(
   'utf8'
 )
 
+interface GithubGraphqlEnvelope<T> {
+  data?: T
+  errors?: ReadonlyArray<{ message: string }>
+}
+
+async function postGithubGraphql<T>(
+  url: string,
+  opts: {
+    query: string
+    headers?: Record<string, string>
+    variables?: Record<string, string>
+  }
+): Promise<{ body: T }> {
+  const response = await got.post(url, {
+    json: {
+      query: opts.query,
+      variables: opts.variables,
+    },
+    responseType: 'json',
+    headers: opts.headers,
+  })
+
+  const envelope = response.body as GithubGraphqlEnvelope<T>
+  if (envelope.errors?.length) {
+    throw new Error(envelope.errors.map((e) => e.message).join('; ') || 'GitHub GraphQL error')
+  }
+  if (envelope.data === undefined) {
+    throw new Error('GitHub GraphQL response missing data')
+  }
+  return { body: envelope.data }
+}
+
 const getGitHubWidgetContent = async (
   userId: string,
   documentStore: DocumentStore,
@@ -41,7 +73,7 @@ const getGitHubWidgetContent = async (
     )
   }
 
-  const { body } = await graphqlGot('https://api.github.com/graphql', {
+  const { body } = await postGithubGraphql<GitHubWidgetContent>('https://api.github.com/graphql', {
     query,
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -52,7 +84,7 @@ const getGitHubWidgetContent = async (
     },
   })
 
-  return { payload: body as GitHubWidgetContent, authMode }
+  return { payload: body, authMode }
 }
 
 export default getGitHubWidgetContent
