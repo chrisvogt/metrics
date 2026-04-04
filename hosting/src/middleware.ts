@@ -40,8 +40,12 @@ const SCANNER_PATTERN = new RegExp(
   'i'
 )
 
+/** Root / nested PHP probes (e.g. /admin.php); real app has no .php routes. */
+const PHP_PROBE = /\.php$/i
+
 export function middleware(request: NextRequest) {
-  if (SCANNER_PATTERN.test(request.nextUrl.pathname)) {
+  const path = request.nextUrl.pathname
+  if (SCANNER_PATTERN.test(path) || PHP_PROBE.test(path)) {
     return new NextResponse(null, { status: 403 })
   }
 
