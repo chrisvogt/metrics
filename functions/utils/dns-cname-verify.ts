@@ -31,7 +31,10 @@ export async function hostnameCnameChainsTo(
       }
       current = normalizeDnsName(cnames[0]!)
     } catch (err: unknown) {
-      const code = (err as NodeJS.ErrnoException)?.code
+      const code =
+        err !== null && typeof err === 'object' && 'code' in err
+          ? (err as { code?: string }).code
+          : undefined
       if (code === 'ENOTFOUND' || code === 'ENODATA') return false
       throw err
     }
