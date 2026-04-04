@@ -12,6 +12,10 @@ For product behavior and UI changes, see [apps/console/CHANGELOG.md](../apps/con
 | **Cloud Functions (`app`)** | Serves **`/api/**`** for the console via **same-origin rewrites** from Next (`apps/console/next.config.ts`). Widget traffic from other sites can still call Functions URLs directly. |
 | **Firestore / Auth** | Same Firebase project as Functions; the console uses the client SDK and session cookies as documented in [SESSION_COOKIES.md](SESSION_COOKIES.md). |
 
+### Email verification action URL
+
+In **Firebase Console → Authentication → Templates → Email address verification**, set the **custom action URL** to the console’s verify route (Firebase appends `mode` and `oobCode`). **Current production:** `https://metrics.chrisvogt.me/verify-email`. Ensure **metrics.chrisvogt.me** appears under **Authentication → Settings → Authorized domains**. When the operator console moves to **chronogrove.com**, update this URL and domains to match the new host.
+
 ## Backends (`firebase.json`)
 
 Two **App Hosting backends** share **`rootDir`: `./apps/console`** (see [`firebase.json`](../firebase.json) `apphosting`):

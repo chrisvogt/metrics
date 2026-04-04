@@ -51,11 +51,12 @@ const findProtectedRouteMiddleware = (
       entry.route?.path === routePath && entry.route?.methods?.[method]
   )
 
-  if (!layer?.route?.stack || layer.route.stack.length < 2) {
+  if (!layer?.route?.stack || layer.route.stack.length < 3) {
     throw new Error(`Protected route middleware not found: ${method.toUpperCase()} ${routePath}`)
   }
 
-  return layer.route.stack[layer.route.stack.length - 2].handle
+  // rateLimit → authenticateUser → requireVerifiedEmail → route handler
+  return layer.route.stack[layer.route.stack.length - 3].handle
 }
 
 const createResponse = () => {
@@ -945,6 +946,61 @@ describe('createExpressApp route coverage', () => {
       vi.mocked(documentStore.mergeDocument).mockClear()
       await handler({ user: undefined, body: { theme: 'sonoran-dusk' } } as never, res as never)
       expect(documentStore.mergeDocument).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('requireVerifiedEmail', () => {
+    it('calls next when req.user is absent', async () => {
+      const { requireVerifiedEmail } = await import('./create-express-app.js')
+      const next = vi.fn()
+      const res = createResponse()
+      await requireVerifiedEmail({} as never, res as never, next)
+      expect(next).toHaveBeenCalledTimes(1)
+      expect(res.status).not.toHaveBeenCalled()
+    })
+
+    it('returns 403 when the signed-in user must verify their email', async () => {
+      const { requireVerifiedEmail, API_ERROR_EMAIL_NOT_VERIFIED } = await import(
+        './create-express-app.js'
+      )
+      const next = vi.fn()
+      const res = createResponse()
+      await requireVerifiedEmail(
+        {
+          user: {
+            uid: 'unverified-uid',
+            email: 'new@chronogrove.com',
+            emailVerified: false,
+          },
+        } as never,
+        res as never,
+        next
+      )
+      expect(next).not.toHaveBeenCalled()
+      expect(res.status).toHaveBeenCalledWith(403)
+      expect(res.json).toHaveBeenCalledWith({
+        ok: false,
+        error: API_ERROR_EMAIL_NOT_VERIFIED,
+      })
+    })
+
+    it('calls next when the user email is verified', async () => {
+      const { requireVerifiedEmail } = await import('./create-express-app.js')
+      const next = vi.fn()
+      const res = createResponse()
+      await requireVerifiedEmail(
+        {
+          user: {
+            uid: 'uid',
+            email: 'member@chrisvogt.me',
+            emailVerified: true,
+          },
+        } as never,
+        res as never,
+        next
+      )
+      expect(next).toHaveBeenCalledTimes(1)
+      expect(res.status).not.toHaveBeenCalled()
     })
   })
 })

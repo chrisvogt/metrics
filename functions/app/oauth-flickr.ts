@@ -100,6 +100,7 @@ function readFlickrOAuthCallbackQuery(query: express.Request['query']): FlickrOA
 export interface RegisterFlickrOAuthOptions {
   expressApp: express.Express
   authenticateUser: express.RequestHandler
+  requireVerifiedEmail: express.RequestHandler
   documentStore: DocumentStore
   logger: LoggerLike
   isProductionEnvironment: boolean
@@ -110,6 +111,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
   const {
     expressApp,
     authenticateUser,
+    requireVerifiedEmail,
     documentStore,
     logger,
     isProductionEnvironment,
@@ -127,6 +129,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
     }),
     express.json({ limit: '4kb' }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid
@@ -345,6 +348,7 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
       limit: 20,
     }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid

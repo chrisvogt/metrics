@@ -1,6 +1,6 @@
 import type { User } from 'firebase/auth'
 
-import { apiClient } from './apiClient'
+import { apiClient, API_ERROR_EMAIL_NOT_VERIFIED, SessionCreateError } from './apiClient'
 
 let completedSessionUid: string | null = null
 const inflightByUid = new Map<string, Promise<void>>()
@@ -17,17 +17,29 @@ export function isApiSessionEstablishedForUid(uid: string): boolean {
   return completedSessionUid === uid
 }
 
-/** Create HttpOnly session cookie; fall back to localStorage Bearer if session POST fails. */
-export async function establishApiSession(u: User): Promise<void> {
+/**
+ * Create HttpOnly session cookie; fall back to localStorage Bearer if session POST fails.
+ * @returns whether a backend session or Bearer fallback was stored (false for unverified-email 403).
+ */
+export async function establishApiSession(u: User): Promise<boolean> {
   try {
     const token = await u.getIdToken()
     await apiClient.createSession(token)
-  } catch {
+    return true
+  } catch (e) {
+    if (
+      e instanceof SessionCreateError &&
+      e.status === 403 &&
+      e.errorCode === API_ERROR_EMAIL_NOT_VERIFIED
+    ) {
+      return false
+    }
     try {
       const token = await u.getIdToken()
       localStorage.setItem('authToken', token)
+      return true
     } catch {
-      // ignore
+      return false
     }
   }
 }
@@ -46,12 +58,11 @@ export function establishApiSessionCoalesced(u: User): Promise<void> {
   if (existing) return existing
 
   const gen = establishmentGeneration
-  const p = establishApiSession(u)
-    .then(() => {
-      if (gen === establishmentGeneration) {
-        completedSessionUid = uid
-      }
-    })
+  const p = establishApiSession(u).then((established) => {
+    if (gen === establishmentGeneration && established) {
+      completedSessionUid = uid
+    }
+  })
     .finally(() => {
       if (inflightByUid.get(uid) === p) {
         inflightByUid.delete(uid)

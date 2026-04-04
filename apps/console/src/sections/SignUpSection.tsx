@@ -30,7 +30,7 @@ export function SignUpSection() {
     setLoading(true)
     try {
       await signUpWithEmail(email, password)
-      router.push('/onboarding/')
+      router.push('/verify-email/')
     } catch {
       // error is set by AuthContext
     } finally {

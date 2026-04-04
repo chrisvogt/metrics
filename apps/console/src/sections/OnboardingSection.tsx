@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { apiClient } from '../auth/apiClient'
 import { useAuth } from '../auth/AuthContext'
+import { mustVerifyEmailBeforeConsole } from '../lib/emailVerificationGate'
 import { getAppBaseUrl } from '../lib/baseUrl'
 import { getOnboardingCnameTarget } from '../lib/onboardingCnameTarget'
 import { ProviderConnectionGrid } from '@/components/onboarding/ProviderConnectionGrid'
@@ -46,7 +48,15 @@ function isFlowStepId(v: string): v is FlowStepId {
 }
 
 export function OnboardingSection() {
+  const router = useRouter()
   const { user, apiSessionReady, loading: authLoading } = useAuth()
+
+  useEffect(() => {
+    if (authLoading || !user) return
+    if (mustVerifyEmailBeforeConsole(user)) {
+      router.replace('/verify-email/')
+    }
+  }, [authLoading, user, router])
   const [currentStep, setCurrentStep] = useState<FlowStepId>('username')
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set())
   const [hydrated, setHydrated] = useState(false)

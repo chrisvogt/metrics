@@ -10,15 +10,31 @@ import {
   resetSessionEstablishmentTracking,
   isApiSessionEstablishedForUid,
 } from './establishApiSession'
+import { SessionCreateError } from './apiClient'
 
 const createSession = vi.fn()
 const getIdToken = vi.fn()
 
-vi.mock('./apiClient', () => ({
-  apiClient: {
-    createSession: (...args: unknown[]) => createSession(...args),
-  },
-}))
+vi.mock('./apiClient', () => {
+  class SessionCreateError extends Error {
+    readonly status: number
+    readonly errorCode?: string
+
+    constructor(message: string, status: number, errorCode?: string) {
+      super(message)
+      this.name = 'SessionCreateError'
+      this.status = status
+      this.errorCode = errorCode
+    }
+  }
+  return {
+    apiClient: {
+      createSession: (...args: unknown[]) => createSession(...args),
+    },
+    API_ERROR_EMAIL_NOT_VERIFIED: 'email_not_verified',
+    SessionCreateError,
+  }
+})
 
 function mockUser(tokenReturns: string[] = ['tok-a', 'tok-b'], uid = 'mock-uid'): User {
   let i = 0
@@ -36,14 +52,23 @@ describe('establishApiSession', () => {
 
   it('calls createSession with ID token on success', async () => {
     createSession.mockResolvedValue({ ok: true })
-    await establishApiSession(mockUser(['one']))
+    const ok = await establishApiSession(mockUser(['one']))
+    expect(ok).toBe(true)
     expect(createSession).toHaveBeenCalledWith('one')
+    expect(localStorage.getItem('authToken')).toBe(null)
+  })
+
+  it('does not store fallback when session rejects email_not_verified', async () => {
+    createSession.mockRejectedValue(new SessionCreateError('email_not_verified', 403, 'email_not_verified'))
+    const ok = await establishApiSession(mockUser(['one']))
+    expect(ok).toBe(false)
     expect(localStorage.getItem('authToken')).toBe(null)
   })
 
   it('stores token in localStorage when createSession fails', async () => {
     createSession.mockRejectedValue(new Error('network'))
-    await establishApiSession(mockUser(['fallback-token', 'fallback-token']))
+    const ok = await establishApiSession(mockUser(['fallback-token', 'fallback-token']))
+    expect(ok).toBe(true)
     expect(localStorage.getItem('authToken')).toBe('fallback-token')
   })
 
@@ -51,7 +76,8 @@ describe('establishApiSession', () => {
     createSession.mockRejectedValue(new Error('network'))
     getIdToken.mockRejectedValueOnce(new Error('expired')).mockRejectedValue(new Error('still bad'))
     const u = { getIdToken } as unknown as User
-    await establishApiSession(u)
+    const ok = await establishApiSession(u)
+    expect(ok).toBe(false)
     expect(localStorage.getItem('authToken')).toBe(null)
   })
 
@@ -60,7 +86,8 @@ describe('establishApiSession', () => {
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce('recovery')
     const u = { getIdToken } as unknown as User
-    await establishApiSession(u)
+    const ok = await establishApiSession(u)
+    expect(ok).toBe(true)
     expect(createSession).not.toHaveBeenCalled()
     expect(localStorage.getItem('authToken')).toBe('recovery')
   })
@@ -90,6 +117,13 @@ describe('establishApiSessionCoalesced', () => {
     await establishApiSessionCoalesced(u)
     await establishApiSessionCoalesced(u)
     expect(createSession).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not mark session established when createSession rejects email_not_verified', async () => {
+    createSession.mockRejectedValue(new SessionCreateError('email_not_verified', 403, 'email_not_verified'))
+    const u = mockUser(['one'])
+    await establishApiSessionCoalesced(u)
+    expect(isApiSessionEstablishedForUid(u.uid)).toBe(false)
   })
 
   it('reset clears completed uid so a later call can createSession again', async () => {

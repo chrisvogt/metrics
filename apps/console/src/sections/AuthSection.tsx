@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import type { ConfirmationResult } from 'firebase/auth'
 import { useAuth } from '../auth/AuthContext'
+import { mustVerifyEmailBeforeConsole } from '../lib/emailVerificationGate'
 import styles from './AuthSection.module.css'
 
 const TABS = [
@@ -14,6 +16,7 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id']
 
 export function AuthSection() {
+  const router = useRouter()
   const [tab, setTab] = useState<TabId>('email')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,7 +26,15 @@ export function AuthSection() {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const { error, setError, signInWithGoogle, signInWithEmail, signInWithPhone } = useAuth()
+  const { user, loading: authLoading, error, setError, signInWithGoogle, signInWithEmail, signInWithPhone } =
+    useAuth()
+
+  useEffect(() => {
+    if (authLoading || !user) return
+    if (mustVerifyEmailBeforeConsole(user)) {
+      router.replace('/verify-email/')
+    }
+  }, [authLoading, user, router])
 
   const handleEmailSubmit = async (e: FormEvent) => {
     e.preventDefault()

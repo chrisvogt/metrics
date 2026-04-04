@@ -738,30 +738,24 @@ describe('index.js', () => {
       })
 
       it('should reject request when token has no email (isAllowedEmail falsy)', async () => {
-        const prevEnv = process.env.NODE_ENV
-        process.env.NODE_ENV = 'production'
-        try {
-          const admin = await import('firebase-admin')
-          admin.default.auth = vi.fn(() => ({
-            verifyIdToken: vi.fn().mockResolvedValue({
-              uid: 'test-uid',
-              email: null,
-              email_verified: false
-            })
-          }))
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifyIdToken: vi.fn().mockResolvedValue({
+            uid: 'test-uid',
+            email: null,
+            email_verified: false,
+          }),
+        }))
 
-          const { agent, csrfToken } = await getCsrfHeaders(app)
-          const response = await agent
-            .post('/api/auth/session')
-            .set('X-XSRF-TOKEN', csrfToken)
-            .set('Authorization', 'Bearer valid-jwt-token')
-            .expect(403)
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
+          .post('/api/auth/session')
+          .set('X-XSRF-TOKEN', csrfToken)
+          .set('Authorization', 'Bearer valid-jwt-token')
+          .expect(403)
 
-          expect(response.body.ok).toBe(false)
-          expect(response.body.error).toContain('Access denied')
-        } finally {
-          process.env.NODE_ENV = prevEnv
-        }
+        expect(response.body.ok).toBe(false)
+        expect(response.body.error).toContain('Access denied')
       })
 
       it('should handle session cookie creation errors', async () => {
