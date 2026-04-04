@@ -54,10 +54,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
           node-version: 24
+          cache: "pnpm"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
