@@ -114,6 +114,50 @@ describe('github-oauth2', () => {
     })
   })
 
+  it('exchangeGitHubOAuthCode ignores empty string error field and maps only well-typed optionals', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        error: '',
+        access_token: 'at',
+        token_type: 'bearer',
+        scope: ['not-a-string'],
+        expires_in: '3600',
+        refresh_token: 1,
+        refresh_token_expires_in: '999',
+      }),
+    })
+    const out = await exchangeGitHubOAuthCode({
+      clientId: 'a',
+      clientSecret: 'b',
+      code: 'c',
+      redirectUri: 'https://r',
+    })
+    expect(out).toEqual({
+      access_token: 'at',
+      token_type: 'bearer',
+    })
+  })
+
+  it('exchangeGitHubOAuthCode treats non-string OAuth error as success path', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        error: 403,
+        access_token: 'at',
+        token_type: 'bearer',
+      }),
+    })
+    await expect(
+      exchangeGitHubOAuthCode({
+        clientId: 'a',
+        clientSecret: 'b',
+        code: 'c',
+        redirectUri: 'https://r',
+      }),
+    ).resolves.toMatchObject({ access_token: 'at' })
+  })
+
   it('refreshGitHubUserAccessToken throws when refresh response missing tokens', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
@@ -144,6 +188,53 @@ describe('github-oauth2', () => {
     expect(out.access_token).toBe('new')
     expect(out.token_type).toBe('Bearer')
     expect(out.scope).toBeUndefined()
+  })
+
+  it('refreshGitHubUserAccessToken maps optional fields when types match', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        access_token: 'new',
+        token_type: 'bearer',
+        scope: 'repo',
+        expires_in: 120,
+        refresh_token: 'rotated',
+        refresh_token_expires_in: 999999,
+      }),
+    })
+    const out = await refreshGitHubUserAccessToken({
+      clientId: 'a',
+      clientSecret: 'b',
+      refreshToken: 'oldrt',
+    })
+    expect(out).toEqual({
+      access_token: 'new',
+      token_type: 'bearer',
+      scope: 'repo',
+      expires_in: 120,
+      refresh_token: 'rotated',
+      refresh_token_expires_in: 999999,
+    })
+  })
+
+  it('refreshGitHubUserAccessToken omits optionals when JSON uses wrong types', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        access_token: 'new',
+        token_type: 'bearer',
+        scope: null,
+        expires_in: null,
+        refresh_token: false,
+        refresh_token_expires_in: 'n',
+      }),
+    })
+    const out = await refreshGitHubUserAccessToken({
+      clientId: 'a',
+      clientSecret: 'b',
+      refreshToken: 'oldrt',
+    })
+    expect(out).toEqual({ access_token: 'new', token_type: 'bearer' })
   })
 
   it('fetchGitHubViewerLogin throws on non-OK response', async () => {

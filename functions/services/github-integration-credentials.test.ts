@@ -87,6 +87,37 @@ describe('github-integration-credentials', () => {
     expect(await loadGitHubAuthForUser(documentStore, 'u1')).toBeNull()
   })
 
+  it('loadGitHubAuthForUser returns null when document is a non-object', async () => {
+    const { loadGitHubAuthForUser } = await import('./github-integration-credentials.js')
+    const documentStore = {
+      getDocument: vi.fn().mockResolvedValue('not-a-doc'),
+    } as unknown as DocumentStore
+    expect(await loadGitHubAuthForUser(documentStore, 'u1')).toBeNull()
+  })
+
+  it('loadGitHubAuthForUser returns null when credential envelope is missing', async () => {
+    const { loadGitHubAuthForUser } = await import('./github-integration-credentials.js')
+    const documentStore = {
+      getDocument: vi.fn().mockResolvedValue({
+        status: 'connected',
+        githubUsername: 'g',
+      }),
+    } as unknown as DocumentStore
+    expect(await loadGitHubAuthForUser(documentStore, 'u1')).toBeNull()
+  })
+
+  it('loadGitHubAuthForUser returns null when githubUsername is not a string', async () => {
+    const { loadGitHubAuthForUser } = await import('./github-integration-credentials.js')
+    const documentStore = {
+      getDocument: vi.fn().mockResolvedValue({
+        status: 'connected',
+        githubUsername: 12345,
+        credentialEnvelope: encryptJsonEnvelope('u1', { accessToken: 't' }),
+      }),
+    } as unknown as DocumentStore
+    expect(await loadGitHubAuthForUser(documentStore, 'u1')).toBeNull()
+  })
+
   it('loadGitHubAuthForUser returns null when githubUsername is empty', async () => {
     const { loadGitHubAuthForUser } = await import('./github-integration-credentials.js')
     const documentStore = {
@@ -140,6 +171,82 @@ describe('github-integration-credentials', () => {
       }),
     } as unknown as DocumentStore
     expect(await loadGitHubAuthForUser(documentStore, 'u1')).toBeNull()
+  })
+
+  it('loadGitHubAuthForUser skips refresh when access token is not near expiry', async () => {
+    const { loadGitHubAuthForUser } = await import('./github-integration-credentials.js')
+    const documentStore = {
+      getDocument: vi.fn().mockResolvedValue({
+        status: 'connected',
+        githubUsername: 'gh-user',
+        credentialEnvelope: encryptJsonEnvelope('u1', {
+          accessToken: 'tok',
+          refreshToken: 'r1',
+          expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+        }),
+      }),
+    } as unknown as DocumentStore
+    const auth = await loadGitHubAuthForUser(documentStore, 'u1')
+    expect(auth).toEqual({ accessToken: 'tok', githubUsername: 'gh-user' })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('loadGitHubAuthForUser skips refresh when expiresAt is invalid ISO', async () => {
+    const { loadGitHubAuthForUser } = await import('./github-integration-credentials.js')
+    const documentStore = {
+      getDocument: vi.fn().mockResolvedValue({
+        status: 'connected',
+        githubUsername: 'gh-user',
+        credentialEnvelope: encryptJsonEnvelope('u1', {
+          accessToken: 'tok',
+          refreshToken: 'r1',
+          expiresAt: 'not-a-date',
+        }),
+      }),
+    } as unknown as DocumentStore
+    expect(await loadGitHubAuthForUser(documentStore, 'u1')).toEqual({
+      accessToken: 'tok',
+      githubUsername: 'gh-user',
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('loadGitHubAuthForUser returns stale access token when expired but refresh token is absent', async () => {
+    const { loadGitHubAuthForUser } = await import('./github-integration-credentials.js')
+    const documentStore = {
+      getDocument: vi.fn().mockResolvedValue({
+        status: 'connected',
+        githubUsername: 'gh-user',
+        credentialEnvelope: encryptJsonEnvelope('u1', {
+          accessToken: 'stale',
+          expiresAt: new Date(Date.now() - 60_000).toISOString(),
+        }),
+      }),
+    } as unknown as DocumentStore
+    expect(await loadGitHubAuthForUser(documentStore, 'u1')).toEqual({
+      accessToken: 'stale',
+      githubUsername: 'gh-user',
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('loadGitHubAuthForUser returns null on refresh when client secret is not configured', async () => {
+    delete process.env.GITHUB_APP_CLIENT_SECRET
+    delete process.env.GITHUB_OAUTH_CLIENT_SECRET
+    const { loadGitHubAuthForUser } = await import('./github-integration-credentials.js')
+    const documentStore = {
+      getDocument: vi.fn().mockResolvedValue({
+        status: 'connected',
+        githubUsername: 'gh-user',
+        credentialEnvelope: encryptJsonEnvelope('u1', {
+          accessToken: 'old',
+          refreshToken: 'r1',
+          expiresAt: new Date(Date.now() - 60_000).toISOString(),
+        }),
+      }),
+    } as unknown as DocumentStore
+    expect(await loadGitHubAuthForUser(documentStore, 'u1')).toBeNull()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('loadGitHubAuthForUser returns null on refresh when OAuth client is not configured', async () => {
@@ -237,5 +344,43 @@ describe('github-integration-credentials', () => {
         credentialEnvelope: expect.anything(),
       }),
     )
+  })
+
+  it('mergeCredentialRefresh skips Firestore merge when mergeDocument is absent', async () => {
+    const { mergeCredentialRefresh } = await import('./github-integration-credentials.js')
+    const out = await mergeCredentialRefresh(
+      {} as DocumentStore,
+      'users/u1/integrations/github',
+      'u1',
+      { accessToken: 't' },
+    )
+    expect(out).toEqual({ accessToken: 't' })
+  })
+
+  it('loadGitHubAuthForUser omits refreshed expiresAt when GitHub omits expires_in', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        access_token: 'n',
+        token_type: 'bearer',
+        expires_in: Number.POSITIVE_INFINITY,
+      }),
+    })
+    const mergeDocument = vi.fn().mockResolvedValue(undefined)
+    const { loadGitHubAuthForUser } = await import('./github-integration-credentials.js')
+    const documentStore = {
+      getDocument: vi.fn().mockResolvedValue({
+        status: 'connected',
+        githubUsername: 'gh-user',
+        credentialEnvelope: encryptJsonEnvelope('u1', {
+          accessToken: 'old',
+          refreshToken: 'r1',
+          expiresAt: new Date(Date.now() - 60_000).toISOString(),
+        }),
+      }),
+      mergeDocument,
+    } as unknown as DocumentStore
+    await loadGitHubAuthForUser(documentStore, 'u1')
+    expect(mergeDocument).toHaveBeenCalled()
   })
 })

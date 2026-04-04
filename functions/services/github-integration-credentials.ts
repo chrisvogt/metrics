@@ -39,7 +39,7 @@ function expiresAtFromGithubExpiresIn(expiresInSeconds: number | undefined): str
   return new Date(Date.now() + expiresInSeconds * 1000).toISOString()
 }
 
-async function mergeCredentialRefresh(
+export async function mergeCredentialRefresh(
   documentStore: DocumentStore,
   path: string,
   uid: string,
