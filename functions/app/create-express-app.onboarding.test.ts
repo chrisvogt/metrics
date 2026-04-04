@@ -730,6 +730,52 @@ describe('createExpressApp onboarding routes', () => {
     spy.mockRestore()
   })
 
+  it('GET check-domain uses ONBOARDING_REQUIRED_CNAME_TARGET when set', async () => {
+    const prev = process.env.ONBOARDING_REQUIRED_CNAME_TARGET
+    process.env.ONBOARDING_REQUIRED_CNAME_TARGET = 'API.CHRONOGROVE.COM.'
+    try {
+      const { app } = await buildApp()
+      const spy = vi.spyOn(dns.promises, 'resolveCname').mockResolvedValue(['api.chronogrove.com'])
+
+      const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
+      const json = vi.fn()
+      await handler({ query: { domain: 'widgets.example.com' } }, { json })
+
+      expect(json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ok: true,
+          verified: true,
+          requiredCname: 'api.chronogrove.com',
+        })
+      )
+      spy.mockRestore()
+    } finally {
+      if (prev === undefined) {
+        delete process.env.ONBOARDING_REQUIRED_CNAME_TARGET
+      } else {
+        process.env.ONBOARDING_REQUIRED_CNAME_TARGET = prev
+      }
+    }
+  })
+
+  it('GET check-domain returns 500 when DNS resolution throws a non-recoverable error', async () => {
+    const { app } = await buildApp()
+    const spy = vi.spyOn(dns.promises, 'resolveCname').mockRejectedValue(new Error('SERVFAIL'))
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-domain')
+    const json = vi.fn()
+    const status = vi.fn().mockReturnValue({ json })
+    await handler({ query: { domain: 'widgets.example.com' } }, { json, status })
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'Error checking domain DNS',
+      expect.objectContaining({ domainLength: 'widgets.example.com'.length })
+    )
+    expect(status).toHaveBeenCalledWith(500)
+    expect(json).toHaveBeenCalledWith(expect.objectContaining({ ok: false }))
+    spy.mockRestore()
+  })
+
   it('GET check-domain returns 500 when the success res.json throws', async () => {
     const { app } = await buildApp()
     const spy = vi.spyOn(dns.promises, 'resolveCname').mockResolvedValue([])
