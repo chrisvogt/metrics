@@ -219,6 +219,9 @@ export function registerFlickrOAuthRoutes(opts: RegisterFlickrOAuthOptions): voi
       limit: 60,
     }),
     async (req, res) => {
+      // Do not send OAuth query params onward as Referer on the next navigation.
+      res.setHeader('Referrer-Policy', 'no-referrer')
+
       const { oauthToken, oauthVerifier } = readFlickrOAuthCallbackQuery(req.query)
 
       let validatedReturnTo: string | null = null

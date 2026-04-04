@@ -68,11 +68,17 @@ export function resolveDiscogsOAuthRedirectUrl(req: express.Request, target: str
   return `${base}${path}`
 }
 
+/**
+ * Discogs OAuth 1.0a redirects the browser to this callback with `oauth_token` and `oauth_verifier`
+ * in the query string only — the provider does not POST a body. We read those two keys, exchange
+ * the verifier for access credentials server-side once, and never log the query or verifier.
+ */
 interface DiscogsOAuthCallbackQuery {
   oauthToken: string
   oauthVerifier: string
 }
 
+/** Only keys we accept on the Discogs callback; keeps reads off the full `Request['query']` shape. */
 type DiscogsOAuthCallbackQueryRaw = {
   oauth_token?: unknown
   oauth_verifier?: unknown
@@ -214,6 +220,9 @@ export function registerDiscogsOAuthRoutes(opts: RegisterDiscogsOAuthOptions): v
       limit: 60,
     }),
     async (req, res) => {
+      // Do not send OAuth query params onward as Referer on the next navigation.
+      res.setHeader('Referrer-Policy', 'no-referrer')
+
       const { oauthToken, oauthVerifier } = readDiscogsOAuthCallbackQuery(req.query)
 
       let validatedReturnTo: string | null = null
