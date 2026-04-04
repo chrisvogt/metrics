@@ -5,12 +5,6 @@
       "outputs": ["dist", "lib", "out", ".next"],
       "dependsOn": []
     },
-    /**
-     * `NEXT_PUBLIC_GIT_SHA` is baked into the Next bundle in `hosting/next.config.ts`.
-     * Local builds set it from `git rev-parse --short HEAD`; CI may provide `GITHUB_SHA`.
-     * Without both here, Turbo can restore a stale hosting `.next` output across commits and ship
-     * an older UI bundle that still shows an outdated sidebar SHA.
-     */
     "chronogrove-hosting#build": {
       "env": ["NEXT_PUBLIC_GIT_SHA", "GITHUB_SHA", "COMMIT_SHA", "VERCEL_GIT_COMMIT_SHA", "CF_PAGES_COMMIT_SHA"]
     },
