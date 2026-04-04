@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **chronogrove-hosting** (the Next.js admin UI on Firebase App Hosting) are documented in this file.
+All notable changes to **chronogrove-console** (the Next.js admin UI on Firebase App Hosting) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -9,7 +9,8 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Documentation** — [docs/APP_HOSTING.md](../docs/APP_HOSTING.md) and [hosting/README.md](../hosting/README.md) document App Hosting backends (`chronogrove-console` / `chronogrove-console-pr`) and manual deploy vs CI; root [README.md](../README.md) adds production-edge diagram and backend tables.
+- **Workspace** — Package directory **`hosting/`** → **`apps/console/`**; package name **`chronogrove-console`** (formerly **`chronogrove-hosting`**); Turbo **`chronogrove-console#build`**.
+- **Documentation** — [docs/APP_HOSTING.md](../docs/APP_HOSTING.md) and [README.md](README.md) document App Hosting backends (`chronogrove-console` / `chronogrove-console-pr`) and deploy (Firebase GitHub integration vs CLI); root [README.md](../README.md) adds production-edge diagram and backend tables.
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
 ## [0.6.16] - 2026-04-04
@@ -17,7 +18,7 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`auth/establishApiSession.ts`** — Shared helper for **`POST /api/auth/session`** plus **`localStorage`** Bearer fallback; covered by Vitest (jsdom).
-- **`hosting/apphosting.yaml`** — Firebase App Hosting run config and public env for the console (see root `firebase.json`).
+- **`apphosting.yaml`** (at the console package root) — Firebase App Hosting run config and public env for the console (see root `firebase.json`).
 
 ### Changed
 
@@ -122,7 +123,7 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Build metadata SHA** — Local `pnpm run build`, `pnpm run dev`, `pnpm run dev:full:fresh`, and hosting deploys now pass the current short git SHA into the hosting build, and Turbo keys `chronogrove-hosting#build` on the SHA env vars used by `next.config.ts`. This prevents cached `hosting/out` bundles from reusing an older sidebar SHA across commits.
+- **Build metadata SHA** — Local `pnpm run build`, `pnpm run dev`, `pnpm run dev:full:fresh`, and hosting deploys now pass the current short git SHA into the hosting build, and Turbo keys `chronogrove-console#build` on the SHA env vars used by `next.config.ts`. This prevents cached `hosting/out` bundles from reusing an older sidebar SHA across commits.
 
 ### Added
 

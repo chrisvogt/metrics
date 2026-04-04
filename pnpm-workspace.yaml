@@ -1,5 +1,5 @@
 packages:
-  - hosting
+  - apps/console
   - functions
 
 onlyBuiltDependencies:

@@ -1,4 +1,4 @@
-# Chronogrove hosting (Next.js app)
+# Chronogrove console (Next.js app)
 
 Next.js operator console for the Chronogrove API: sign-in (Google / email / phone), schema, status, and sync testing. Production builds are deployed with **Firebase App Hosting** (SSR); the Cloud Function `app` still serves **`/api/**`** (rewritten in `next.config.ts` in prod, and via the dev proxy locally).
 
@@ -55,7 +55,7 @@ From the repo root:
 pnpm run build
 ```
 
-Next.js output is under **`hosting/.next`** (SSR bundle for App Hosting). The root scripts run this build before App Hosting deploys.
+Next.js output is under **`apps/console/.next`** (SSR bundle for App Hosting). The root scripts run this build before App Hosting deploys.
 
 ## Deploy
 
@@ -64,7 +64,7 @@ From the **repo root**:
 - **App Hosting (production backend `chronogrove-console`):** `pnpm run deploy:hosting` — runs a workspace build, then `firebase deploy --only apphosting:chronogrove-console`.
 - **Rules + Functions + App Hosting:** `pnpm run deploy:all` — deploys Firestore, Functions, and the production App Hosting backend (see root `package.json` for exact `--only` list).
 
-Backends and **`hosting/apphosting.yaml`** must exist in the Firebase project. The **CI** workflow runs lint, tests, and a workspace build; production deploy is **manual** from the repo root using the commands above (see root [README](../README.md#deployment)).
+Backends and **`apps/console/apphosting.yaml`** must exist in the Firebase project. **CI** runs lint, tests, and build only. Releases usually go through the **Firebase** GitHub integration; the commands above are for CLI deploy from the repo root (see root [README](../README.md#deployment)).
 
 ### App Hosting backends
 
@@ -73,7 +73,7 @@ Backends and **`hosting/apphosting.yaml`** must exist in the Firebase project. T
 | **`chronogrove-console`** | Production console (`pnpm run deploy:hosting`). |
 | **`chronogrove-console-pr`** | Optional second backend (e.g. staging/previews); deploy with `firebase deploy --only apphosting:chronogrove-console-pr` when configured in the Firebase project. |
 
-Both use **`rootDir`** `hosting/` in [`firebase.json`](../firebase.json). See **[docs/APP_HOSTING.md](../docs/APP_HOSTING.md)** for run config, env vars, and operations detail.
+Both use **`rootDir`** `apps/console/` in [`firebase.json`](../firebase.json). See **[docs/APP_HOSTING.md](../docs/APP_HOSTING.md)** for run config, env vars, and operations detail.
 
 ## Routes
 

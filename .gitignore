@@ -49,15 +49,15 @@ build/Release
 node_modules/
 
 # npm lockfiles under workspace packages (root uses pnpm-lock.yaml only)
-hosting/package-lock.json
+apps/console/package-lock.json
 functions/package-lock.json
 
 # Turborepo (local task cache)
 .turbo
 
 # Hosting build output (built on deploy)
-hosting/out
-hosting/.next
+apps/console/out
+apps/console/.next
 
 # Functions TypeScript build output (tsc → lib/); source lives in config/, widgets/, utils/, helpers/
 functions/lib/

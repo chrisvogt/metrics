@@ -487,9 +487,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Developer experience
 
-- Local dev: from repo root run `pnpm run dev` with Functions + Auth emulators, or build and use `firebase emulators:start --only hosting,functions,auth`. See root [README](../README.md) and [hosting/README.md](../hosting/README.md).
+- Local dev: from repo root run `pnpm run dev` with Functions + Auth emulators, or build and use `firebase emulators:start --only hosting,functions,auth`. See root [README](../README.md) and [apps/console/README.md](../apps/console/README.md).
 
-**Update:** Hosting later moved from Vite to **Next.js** (static export to `hosting/out`), and the Hosting catch-all rewrite to `/index.html` was removed so unknown URLs use **`404.html`**. See [hosting/CHANGELOG.md](../hosting/CHANGELOG.md).
+**Update:** Hosting later moved from Vite to **Next.js** (static export to `hosting/out`), and the Hosting catch-all rewrite to `/index.html` was removed so unknown URLs use **`404.html`**. See [apps/console/CHANGELOG.md](../apps/console/CHANGELOG.md).
 
 ## [0.20.2] - 2025-02-14
 
