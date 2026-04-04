@@ -7,6 +7,7 @@ import { ApiClient } from '../auth/apiClient'
 import { getAppBaseUrl, getManualSyncStreamUrl } from '../lib/baseUrl'
 import { readDiscogsAuthModeFromSyncPayload } from '../lib/readDiscogsAuthModeFromSyncPayload'
 import { readFlickrAuthModeFromSyncPayload } from '../lib/readFlickrAuthModeFromSyncPayload'
+import { buildWidgetFetchHeaders } from '../lib/buildWidgetFetchHeaders'
 import { readGitHubAuthModeFromWidgetResponse } from '../lib/readGitHubAuthModeFromWidgetResponse'
 import styles from './ApiTestingSection.module.css'
 
@@ -98,10 +99,7 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
     setWidgetResult(null)
     const start = Date.now()
     try {
-      const headers: HeadersInit = {}
-      if (idToken) {
-        headers.Authorization = `Bearer ${idToken}`
-      }
+      const headers: HeadersInit = await buildWidgetFetchHeaders(user)
       const res = await fetch(`${baseUrl}/api/widgets/${widgetProvider}`, {
         credentials: 'include',
         cache: 'no-store',
@@ -298,8 +296,9 @@ export function ApiTestingSection({ activeSection }: ApiTestingSectionProps) {
           <div className={styles.block}>
             <h3 className={styles.blockTitle}>Get widget data</h3>
             <p className={styles.sectionSubtitle}>
-              When you are signed in, requests include your Firebase ID token so GitHub uses your linked account (OAuth)
-              instead of the server PAT. Session cookies from <strong>Session → Test</strong> work too.
+              When you are signed in, each test sends your current Firebase ID token so GitHub can use your linked
+              account (OAuth) instead of the server PAT. On production the console origin is usually cross-site to the
+              API, so session cookies are not relied on here; the token is attached automatically.
             </p>
             <div className={styles.endpoint}>
               <span className={styles.methodGet}>GET</span>

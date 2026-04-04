@@ -10,6 +10,7 @@ export default defineConfig({
       include: [
         'src/lib/baseUrl.ts',
         'src/lib/buildSha.ts',
+        'src/lib/buildWidgetFetchHeaders.ts',
         'src/lib/overviewMetrics.ts',
         'src/lib/readDiscogsAuthModeFromSyncPayload.ts',
         'src/lib/readFlickrAuthModeFromSyncPayload.ts',
