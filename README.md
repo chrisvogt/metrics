@@ -65,6 +65,22 @@ If `/api` calls fail in local dev, the Functions emulator is usually not reachab
 
 This service backs widgets on [www.chrisvogt.me](https://www.chrisvogt.me) and any client using the same API contract (for example the [Gatsby theme](https://github.com/chrisvogt/gatsby-theme-chronogrove)). Each diagram is intentionally focused on one path. For queue semantics and job document fields, see [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md).
 
+### 0) Production edge (operator console)
+
+The dashboard is **SSR on Firebase App Hosting**. The browser calls **`/api/*` on the same origin**; Next.js **rewrites** those requests to the **`app`** Cloud Function (see `hosting/next.config.ts`). Public widget traffic from other sites still hits Functions directly (diagrams 1–2).
+
+```mermaid
+flowchart TB
+  browser[Browser]
+  ah[Firebase App Hosting<br/>Next.js · metrics.chrisvogt.me]
+  cf[Cloud Functions · app<br/>/api/**]
+  fs[(Firestore)]
+  browser -->|pages, assets, SSR| ah
+  browser -->|same-origin /api/*| ah
+  ah -->|rewrite / proxy| cf
+  cf --> fs
+```
+
 ### 1) Public widget reads
 
 Unauthenticated widget reads from Firestore-backed content.
@@ -96,11 +112,11 @@ flowchart TB
 
 ### 3) Operator console manual sync
 
-[metrics.chrisvogt.me](https://metrics.chrisvogt.me) uses Firebase Auth + session cookie. Manual sync runs inline (enqueue -> claim -> process) instead of waiting for worker cadence.
+[metrics.chrisvogt.me](https://metrics.chrisvogt.me) (App Hosting) uses Firebase Auth + session cookie. **`/api/*`** reaches Functions via the rewrite shown in diagram 0. Manual sync runs inline (enqueue → claim → process) instead of waiting for worker cadence.
 
 ```mermaid
 flowchart TB
-  admin[Operator console] --> auth[Firebase Auth]
+  admin[Operator console<br/>App Hosting · Next.js] --> auth[Firebase Auth]
   admin --> sess[POST /api/auth/session]
   admin --> sync[GET /api/widgets/sync/:provider]
   admin --> stream[GET .../sync/:provider/stream SSE]
@@ -240,11 +256,22 @@ Syncable `provider` values are:
 
 ## Hosting and backend notes
 
+### App Hosting backends
+
+[`firebase.json`](firebase.json) registers two **App Hosting** backends, both with **`rootDir`: `hosting`**:
+
+| Backend | Typical use |
+|---------|-------------|
+| **`chronogrove-console`** | Production console; **`alwaysDeployFromSource`: true** in repo config. |
+| **`chronogrove-console-pr`** | Optional second backend (e.g. previews/staging); same app tree, separate deploy target. |
+
+Deploy scripts use **`chronogrove-console`** by default (`pnpm run deploy:hosting`). Classic **Firebase Hosting** (static CDN sites) is **not** used for this console.
+
 ### API routing
 
 1. **Production (App Hosting):** Next.js rewrites **`/api/:path*`** to the deployed **`app`** Cloud Functions URL (same-origin in the browser; see `hosting/next.config.ts`).
 2. **Local dev:** the same rewrites target the Functions emulator on **`127.0.0.1:5001`** (`beforeFiles` so the App Router does not handle `/api` first).
-3. **`firebase.json`** defines **App Hosting** backends (`chronogrove-console`, `chronogrove-console-pr`) with **`rootDir`: `hosting`**; classic static Hosting is not used for the console.
+3. **Environment for rewrites:** public origins and tenant display host for the Next build are set in **`hosting/apphosting.yaml`** (`NEXT_PUBLIC_*`); see [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
 
 ### Backend details (`functions/`)
 
@@ -269,7 +296,7 @@ pnpm --filter chronogrove-functions run test:watch
 
 ## Deployment
 
-From repo root:
+Production deploys are **manual** from the repo root (the **CI** workflow runs lint, tests, and a workspace build only—it does not push to App Hosting or Functions).
 
 ```bash
 pnpm run build
@@ -278,12 +305,15 @@ pnpm run deploy:hosting
 pnpm run deploy:functions
 ```
 
+Operator console layout, backends, `apphosting.yaml`, and how that ties to Cloud Functions are documented in **[docs/APP_HOSTING.md](docs/APP_HOSTING.md)**.
+
 ## Additional docs
 
 Reference docs under [`docs/`](docs/):
 
 | Document | What it covers |
 |----------|----------------|
+| [docs/APP_HOSTING.md](docs/APP_HOSTING.md) | Firebase App Hosting backends, `apphosting.yaml`, deploy vs CI, pointers to Next/`/api` routing. |
 | [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md) | `sync_jobs` queue behavior (planner, worker, manual sync, states, summary metrics). |
 | [docs/SESSION_COOKIES.md](docs/SESSION_COOKIES.md) | Session cookie model, `/api/auth/session`, JWT fallback, security properties. |
 | [docs/MULTI_TENANT_ARCHITECTURE_PLAN.md](docs/MULTI_TENANT_ARCHITECTURE_PLAN.md) | Migration plan from single-tenant env config toward user-scoped storage and sync. |
