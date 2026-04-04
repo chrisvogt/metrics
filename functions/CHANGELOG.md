@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.28.0] - 2026-04-03
+
+### Added
+
+- **GitHub App OAuth 2.0** — `POST /api/oauth/github/start`, `GET /api/oauth/github/callback`, `DELETE /api/oauth/github`. Pending bridge **`oauth_github_pending/{state}`**. Config: **`GITHUB_APP_CLIENT_ID`**, **`GITHUB_APP_CLIENT_SECRET`**, **`GITHUB_OAUTH_CALLBACK_URL`**, optional **`GITHUB_OAUTH_SUCCESS_REDIRECT`** (see **`.env.template`** and **`exported-config`**).
+- **`github-oauth2`** — Authorization URL builder, authorization-code exchange, refresh grant, **`GET /api/user`** for GitHub login after connect.
+- **`github-integration-credentials`** — **`loadGitHubAuthForUser`** with optional access-token refresh when **`mergeDocument`** is available.
+- **`GET /api/widgets/github`** — Response may include **`githubAuthMode`** (`oauth` \| `env`) for operator tooling. Public **`payload`** shape unchanged; extra field is additive.
+- **Tests** — **`oauth-github.test.ts`**, **`github-integration-credentials.test.ts`**, **`github-oauth2`** coverage via integration paths; index test for **`githubAuthMode`** on widget JSON.
+
+### Changed
+
+- **`get-github-widget-content`** — Resolves tokens via **`loadGitHubAuthForUser`** (Firebase uid from **`integrationLookupUserId`** or hostname storage id), then env PAT fallback; returns **`{ payload, authMode }`**.
+- **`getWidgetContent`** — Returns **`WidgetFetchResult`** (`payload` + optional **`meta.githubAuthMode`** for GitHub only).
+- **`GET /api/widgets/:provider`** — Uses **`resolveViewerUidForPublicOnboarding`** (session cookie or Bearer) and passes **`integrationLookupUserId`** into widget load so signed-in operators hit **`users/{uid}/integrations/github`**.
+- **`withGitHubOAuthFlash`** — Query params for **`?oauth=github`** onboarding redirects.
+
 ## [0.27.0] - 2026-04-03
 
 ### Added

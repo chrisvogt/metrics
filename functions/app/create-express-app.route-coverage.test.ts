@@ -186,6 +186,46 @@ describe('createExpressApp route coverage', () => {
     }))
   })
 
+  it('widget GET uses first element when provider param is a string[]', async () => {
+    const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+    vi.mocked(getWidgetContent).mockResolvedValueOnce({ payload: { from: 'test' } })
+
+    const { createExpressApp } = await import('./create-express-app.js')
+    const app = createExpressApp({
+      authService,
+      documentStore,
+      ensureRuntimeConfigApplied,
+      getClientAuthConfig,
+      logger,
+      resolveMediaStore: () => new LocalDiskMediaStore('/tmp/metrics-unused-route-coverage'),
+      syncJobQueue,
+    })
+
+    const handler = findRouteHandler(app, 'get', '/api/widgets/:provider')
+    const send = vi.fn()
+    const set = vi.fn()
+    const status = vi.fn().mockReturnValue({ send })
+    const end = vi.fn()
+
+    await handler(
+      {
+        params: { provider: ['spotify', 'ignored'] },
+        headers: {},
+        hostname: 'api.chrisvogt.me',
+      },
+      { set, status, send, end },
+    )
+
+    expect(getWidgetContent).toHaveBeenCalledWith(
+      'spotify',
+      'chrisvogt',
+      documentStore,
+      { integrationLookupUserId: undefined },
+    )
+    expect(status).toHaveBeenCalledWith(200)
+    expect(send).toHaveBeenCalled()
+    expect(end).toHaveBeenCalled()
+  })
 
   it('returns 401 when session auth reaches the defensive no-token branch', async () => {
     const { createExpressApp } = await import('./create-express-app.js')

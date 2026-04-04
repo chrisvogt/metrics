@@ -108,6 +108,31 @@ export const getGitHubConfig = () => ({
   username: process.env.GITHUB_USERNAME,
 })
 
+/**
+ * GitHub App: OAuth 2.0 user-to-server tokens (Authorize URL → code → access_token on callback).
+ * Register **Callback URL** (same as `callbackUrl` here); **Homepage URL** can differ.
+ *
+ * App ID + private key (PEM) are for JWT-based *app* auth (installations), not for this exchange —
+ * keep them in secrets only if you add installation APIs later.
+ */
+export const getGitHubOAuthConfig = () => ({
+  clientId:
+    process.env.GITHUB_APP_CLIENT_ID?.trim() ||
+    process.env.GITHUB_OAUTH_CLIENT_ID?.trim() ||
+    '',
+  clientSecret:
+    process.env.GITHUB_APP_CLIENT_SECRET?.trim() ||
+    process.env.GITHUB_OAUTH_CLIENT_SECRET?.trim() ||
+    '',
+  callbackUrl:
+    process.env.GITHUB_OAUTH_CALLBACK_URL?.trim() ||
+    process.env.GITHUB_OAUTH_REDIRECT_URI?.trim() ||
+    '',
+  appSuccessRedirect:
+    process.env.GITHUB_OAUTH_SUCCESS_REDIRECT?.trim() ||
+    '/onboarding?oauth=github&status=success',
+})
+
 export const getGoodreadsConfig = () => ({
   apiKey: process.env.GOODREADS_API_KEY,
   userId: process.env.GOODREADS_USER_ID,

@@ -14,7 +14,7 @@ import { getWidgetUserIdForHostname, getUsersCollectionPath } from '../config/ba
 import { isProductionEnvironment } from '../config/backend-config.js'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
-import type { SyncProviderId, WidgetContentUnion } from '../types/widget-content.js'
+import type { SyncProviderId } from '../types/widget-content.js'
 import { isSyncProviderId, isWidgetId, widgetIds } from '../types/widget-content.js'
 import deleteUserJob from '../jobs/delete-user.js'
 import { runSyncForProvider } from '../services/sync-manual.js'
@@ -32,6 +32,7 @@ import {
 } from './onboarding-progress.js'
 import { registerDiscogsOAuthRoutes } from './oauth-discogs.js'
 import { registerFlickrOAuthRoutes } from './oauth-flickr.js'
+import { registerGitHubOAuthRoutes } from './oauth-github.js'
 import { toStoredDateTime } from '../utils/time.js'
 
 interface LoggerLike {
@@ -375,6 +376,15 @@ export function createExpressApp({
     allowedEmailDomains: ALLOWED_EMAIL_DOMAINS,
   })
 
+  registerGitHubOAuthRoutes({
+    expressApp,
+    authenticateUser,
+    documentStore,
+    logger,
+    isProductionEnvironment: isProductionEnvironment(),
+    allowedEmailDomains: ALLOWED_EMAIL_DOMAINS,
+  })
+
   const runSyncHandler = async (
     provider: SyncProviderId,
     integrationLookupUserId?: string
@@ -522,11 +532,16 @@ export function createExpressApp({
 
       const originalHostname = (req.headers['x-forwarded-host'] as string) || req.hostname
       const userId = getWidgetUserIdForHostname(originalHostname)
+      const viewerUid = await resolveViewerUidForPublicOnboarding(req)
 
       try {
-        const widgetContent: WidgetContentUnion =
-          await getWidgetContent(provider, userId, documentStore)
-        const response = buildSuccessResponse(widgetContent)
+        const { payload: widgetContent, meta } = await getWidgetContent(provider, userId, documentStore, {
+          integrationLookupUserId: viewerUid ?? undefined,
+        })
+        const response = {
+          ...buildSuccessResponse(widgetContent),
+          ...(meta?.githubAuthMode ? { githubAuthMode: meta.githubAuthMode } : {}),
+        }
         // Always revalidate at the client, while allowing short shared-cache freshness.
         res.set(
           'Cache-Control',

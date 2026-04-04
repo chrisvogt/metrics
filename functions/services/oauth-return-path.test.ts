@@ -5,6 +5,7 @@ import {
   validateReturnTo,
   withDiscogsOAuthFlash,
   withFlickrOAuthFlash,
+  withGitHubOAuthFlash,
 } from './oauth-return-path.js'
 
 describe('oauth-return-path', () => {
@@ -73,5 +74,40 @@ describe('oauth-return-path', () => {
   it('withDiscogsOAuthFlash sets oauth=discogs', () => {
     expect(withDiscogsOAuthFlash('/onboarding', 'success')).toBe('/onboarding?oauth=discogs&status=success')
     expect(withDiscogsOAuthFlash('/x', 'error', 'bad')).toBe('/x?oauth=discogs&status=error&reason=bad')
+  })
+
+  it('withDiscogsOAuthFlash merges query, preserves hash, and handles error reason edge cases', () => {
+    expect(withDiscogsOAuthFlash('/?providers=open', 'success')).toBe(
+      '/?providers=open&oauth=discogs&status=success',
+    )
+    expect(withDiscogsOAuthFlash('/onboarding#pane', 'success')).toBe(
+      '/onboarding?oauth=discogs&status=success#pane',
+    )
+    expect(withDiscogsOAuthFlash('/#section', 'success')).toBe('/?oauth=discogs&status=success#section')
+    expect(withDiscogsOAuthFlash('/z', 'success', 'ignored')).toBe('/z?oauth=discogs&status=success')
+    const errEmpty = withDiscogsOAuthFlash('/a', 'error', '')
+    expect(errEmpty).toContain('status=error')
+    expect(errEmpty).not.toContain('reason=')
+    expect(withDiscogsOAuthFlash('/b', 'error')).toBe('/b?oauth=discogs&status=error')
+  })
+
+  it('withGitHubOAuthFlash sets oauth=github', () => {
+    expect(withGitHubOAuthFlash('/onboarding', 'success')).toBe('/onboarding?oauth=github&status=success')
+    expect(withGitHubOAuthFlash('/x', 'error', 'bad')).toBe('/x?oauth=github&status=error&reason=bad')
+  })
+
+  it('withGitHubOAuthFlash merges query, preserves hash, and handles error reason edge cases', () => {
+    expect(withGitHubOAuthFlash('/?providers=open', 'success')).toBe(
+      '/?providers=open&oauth=github&status=success',
+    )
+    expect(withGitHubOAuthFlash('/onboarding#pane', 'success')).toBe(
+      '/onboarding?oauth=github&status=success#pane',
+    )
+    expect(withGitHubOAuthFlash('/#section', 'success')).toBe('/?oauth=github&status=success#section')
+    expect(withGitHubOAuthFlash('/z', 'success', 'ignored')).toBe('/z?oauth=github&status=success')
+    const errEmpty = withGitHubOAuthFlash('/a', 'error', '')
+    expect(errEmpty).toContain('status=error')
+    expect(errEmpty).not.toContain('reason=')
+    expect(withGitHubOAuthFlash('/b', 'error')).toBe('/b?oauth=github&status=error')
   })
 })

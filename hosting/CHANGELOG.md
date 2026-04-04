@@ -11,6 +11,17 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.6.13] - 2026-04-03
+
+### Added
+
+- **GitHub OAuth** — **Onboarding** and **Add providers** flyout: link/cancel flow (**`ProviderConnectionGrid`**), **`?oauth=github`** flash, same patterns as Flickr/Discogs.
+- **Try API** — **Get widget data** sends **`Authorization: Bearer`** when an ID token is present; badge after a successful **github** request (**OAuth** vs **PAT / env**) via **`readGitHubAuthModeFromWidgetResponse`** and **`githubAuthMode`** on the widget JSON.
+
+### Changed
+
+- **Deploy with Functions ≥ 0.28.0** for GitHub OAuth routes, **`githubAuthMode`**, and authenticated widget reads.
+
 ## [0.6.12] - 2026-04-03
 
 ### Added
