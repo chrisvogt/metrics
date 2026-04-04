@@ -9,6 +9,7 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Documentation** — [docs/APP_HOSTING.md](../docs/APP_HOSTING.md) and [hosting/README.md](../hosting/README.md) document App Hosting backends (`chronogrove-console` / `chronogrove-console-pr`) and manual deploy vs CI; root [README.md](../README.md) adds production-edge diagram and backend tables.
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
 ## [0.6.16] - 2026-04-04
