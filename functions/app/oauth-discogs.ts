@@ -101,6 +101,7 @@ function readDiscogsOAuthCallbackQuery(query: express.Request['query']): Discogs
 export interface RegisterDiscogsOAuthOptions {
   expressApp: express.Express
   authenticateUser: express.RequestHandler
+  requireVerifiedEmail: express.RequestHandler
   documentStore: DocumentStore
   logger: LoggerLike
   isProductionEnvironment: boolean
@@ -111,6 +112,7 @@ export function registerDiscogsOAuthRoutes(opts: RegisterDiscogsOAuthOptions): v
   const {
     expressApp,
     authenticateUser,
+    requireVerifiedEmail,
     documentStore,
     logger,
     isProductionEnvironment,
@@ -128,6 +130,7 @@ export function registerDiscogsOAuthRoutes(opts: RegisterDiscogsOAuthOptions): v
     }),
     express.json({ limit: '4kb' }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid
@@ -347,6 +350,7 @@ export function registerDiscogsOAuthRoutes(opts: RegisterDiscogsOAuthOptions): v
       limit: 20,
     }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid

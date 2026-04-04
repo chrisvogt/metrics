@@ -40,8 +40,13 @@ describe('registerFlickrOAuthRoutes', () => {
   let authUser: { uid: string; email?: string } | null
   const authenticateUser: express.RequestHandler = (req, _res, next) => {
     if (authUser) {
-      ;(req as express.Request & { user?: { uid: string; email?: string } }).user = authUser
+      ;(req as express.Request & { user?: { uid: string; email?: string; emailVerified?: boolean } }).user =
+        authUser
     }
+    next()
+  }
+
+  const requireVerifiedEmail: express.RequestHandler = (_req, _res, next) => {
     next()
   }
 
@@ -55,6 +60,7 @@ describe('registerFlickrOAuthRoutes', () => {
     registerFlickrOAuthRoutes({
       expressApp: app,
       authenticateUser,
+      requireVerifiedEmail,
       documentStore,
       logger,
       isProductionEnvironment: opts?.isProductionEnvironment ?? false,
@@ -70,7 +76,7 @@ describe('registerFlickrOAuthRoutes', () => {
     process.env.FLICKR_API_SECRET = 'consumer-secret'
     process.env.FLICKR_OAUTH_CALLBACK_URL = 'https://app.test/api/oauth/flickr/callback'
     delete process.env.PUBLIC_APP_ORIGIN
-    authUser = { uid: 'user-1', email: 'owner@allowed.com' }
+    authUser = { uid: 'user-1', email: 'owner@allowed.com', emailVerified: true }
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),

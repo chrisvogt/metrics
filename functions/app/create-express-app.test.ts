@@ -449,6 +449,30 @@ describe('createExpressApp auth and session branches', () => {
     })
   })
 
+  it('returns 403 from session when email is not verified for an allowed-domain user', async () => {
+    const app = await buildApp()
+
+    authService.verifyIdToken.mockResolvedValue({
+      uid: 'unverified-uid',
+      email: 'new@chronogrove.com',
+      emailVerified: false,
+    })
+
+    const { agent, csrfToken, cookies } = await getCsrfHeaders(app)
+    const response = await agent
+      .post('/api/auth/session')
+      .set('Cookie', cookies)
+      .set('X-XSRF-TOKEN', csrfToken)
+      .set('Authorization', 'Bearer some-token')
+      .expect(403)
+
+    expect(response.body).toEqual({
+      ok: false,
+      error: 'email_not_verified',
+    })
+    expect(authService.createSessionCookie).not.toHaveBeenCalled()
+  })
+
   it('returns the client auth config from the provider-neutral endpoint', async () => {
     const app = await buildApp()
 

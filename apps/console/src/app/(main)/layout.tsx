@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/auth/AuthContext'
+import { mustVerifyEmailBeforeConsole } from '@/lib/emailVerificationGate'
 import { Layout, type SectionId } from '@/layout/Layout'
 
 function pathnameToSection(pathname: string): SectionId {
@@ -32,13 +33,17 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (loading) return
+    if (user && mustVerifyEmailBeforeConsole(user)) {
+      router.replace('/verify-email/')
+      return
+    }
     if (!user && (section === 'api' || section === 'sync')) {
       router.replace('/schema/')
     }
-    if (user && section === 'auth') {
+    if (user && section === 'auth' && !mustVerifyEmailBeforeConsole(user)) {
       router.replace('/schema/')
     }
-  }, [user, loading, section, router])
+  }, [user, loading, section, router, pathname])
 
   if (loading) {
     return (

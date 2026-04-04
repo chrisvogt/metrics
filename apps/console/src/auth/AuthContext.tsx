@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import type { User, Auth, ConfirmationResult } from 'firebase/auth'
 import {
   signInWithPopup,
@@ -11,6 +11,7 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
+  sendEmailVerification,
 } from 'firebase/auth'
 import { getFirebaseApp } from './firebase'
 import { apiClient } from './apiClient'
@@ -31,6 +32,7 @@ export interface AuthContextValue {
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
   signInWithPhone: (phoneNumber: string) => Promise<ConfirmationResult>
+  resendVerificationEmail: () => Promise<void>
   logout: () => Promise<void>
   auth: Auth | null
 }
@@ -47,6 +49,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
   const [auth, setAuth] = useState<Auth | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const lastEmailVerifiedRef = useRef<boolean | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -57,6 +60,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const unsub = onAuthStateChanged(a, async (u) => {
           if (cancelled) return
           if (!u) {
+            lastEmailVerifiedRef.current = null
             resetSessionEstablishmentTracking()
             apiClient.clearSession()
             setUser(null)
@@ -64,6 +68,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setLoading(false)
             return
           }
+
+          if (
+            lastEmailVerifiedRef.current !== null &&
+            lastEmailVerifiedRef.current === false &&
+            u.emailVerified === true
+          ) {
+            resetSessionEstablishmentTracking()
+          }
+          lastEmailVerifiedRef.current = u.emailVerified
 
           setUser(u)
           if (!isApiSessionEstablishedForUid(u.uid)) {
@@ -112,6 +125,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null)
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password)
+      await sendEmailVerification(cred.user)
       await establishApiSessionCoalesced(cred.user)
     } catch (e) {
       const err = e as { code?: string; message?: string }
@@ -161,6 +175,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  const resendVerificationEmail = async () => {
+    if (!auth?.currentUser) throw new Error('Not signed in')
+    await sendEmailVerification(auth.currentUser)
+  }
+
   const logout = async () => {
     setError(null)
     try {
@@ -182,6 +201,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       signInWithGoogle,
       signInWithEmail,
       signInWithPhone,
+      resendVerificationEmail,
       logout,
       auth,
     }),

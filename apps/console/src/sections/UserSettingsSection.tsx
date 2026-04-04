@@ -9,6 +9,7 @@ import type { ChronogroveThemeId } from '@/theme/chronogroveTheme'
 import { useChronogroveThemePersist } from '@/theme/useChronogroveThemePersist'
 import { SettingsProfileIdentity } from '@/components/user-settings/SettingsProfileIdentity'
 import { SettingsDeleteAccount } from '@/components/user-settings/SettingsDeleteAccount'
+import { mustVerifyEmailBeforeConsole } from '@/lib/emailVerificationGate'
 import styles from './UserSettingsSection.module.css'
 
 export function UserSettingsSection() {
@@ -21,6 +22,13 @@ export function UserSettingsSection() {
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/auth/')
+    }
+  }, [loading, user, router])
+
+  useEffect(() => {
+    if (loading || !user) return
+    if (mustVerifyEmailBeforeConsole(user)) {
+      router.replace('/verify-email/')
     }
   }, [loading, user, router])
 

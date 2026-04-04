@@ -1,0 +1,100 @@
+.section {
+  composes: sectionNarrow from '../components/authFlow/AuthFlowShell.module.css';
+}
+
+.siteLink {
+  composes: backLink from '../components/authFlow/AuthFlowShell.module.css';
+}
+
+.card {
+  composes: card from '../components/authFlow/AuthFlowShell.module.css';
+}
+
+.heading {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.lead {
+  margin: 0 0 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.email {
+  margin: 0 0 1.25rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9rem;
+  word-break: break-all;
+  background: rgba(4, 6, 10, 0.65);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  color: var(--text);
+}
+
+.messageError {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(251, 113, 133, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.24);
+  border-radius: 12px;
+  color: #fecdd3;
+  font-size: 0.9rem;
+}
+
+.messageOk {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-radius: 12px;
+  color: #a7f3d0;
+  font-size: 0.9rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--bg-deep);
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.button:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.link {
+  font-size: 0.9rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.linkMuted {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}

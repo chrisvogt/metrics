@@ -1,6 +1,21 @@
 /** Optional Firebase ID token for `Authorization: Bearer` (same as manual sync SSE). Prefer this when the HttpOnly session cookie is present but server-side `verifySessionCookie` fails through Hosting. */
 export type ApiClientAuth = { idToken: string }
 
+/** Matches `API_ERROR_EMAIL_NOT_VERIFIED` from the Functions API session route. */
+export const API_ERROR_EMAIL_NOT_VERIFIED = 'email_not_verified' as const
+
+export class SessionCreateError extends Error {
+  readonly status: number
+  readonly errorCode?: string
+
+  constructor(message: string, status: number, errorCode?: string) {
+    super(message)
+    this.name = 'SessionCreateError'
+    this.status = status
+    this.errorCode = errorCode
+  }
+}
+
 export class ApiClient {
   private baseUrl: string
 
@@ -74,8 +89,13 @@ export class ApiClient {
       credentials: 'include',
     })
     if (!res.ok) {
-      const text = await res.text()
-      throw new Error(`Session failed: ${res.status} - ${text}`)
+      const body = await res.json().catch(() => ({} as { error?: string }))
+      const code = typeof body.error === 'string' ? body.error : undefined
+      throw new SessionCreateError(
+        code ?? `Session failed: ${res.status}`,
+        res.status,
+        code
+      )
     }
     return res.json() as Promise<{ ok: boolean; message?: string }>
   }

@@ -34,8 +34,13 @@ describe('registerGitHubOAuthRoutes', () => {
   let authUser: { uid: string; email?: string } | null
   const authenticateUser: express.RequestHandler = (req, _res, next) => {
     if (authUser) {
-      ;(req as express.Request & { user?: { uid: string; email?: string } }).user = authUser
+      ;(req as express.Request & { user?: { uid: string; email?: string; emailVerified?: boolean } }).user =
+        authUser
     }
+    next()
+  }
+
+  const requireVerifiedEmail: express.RequestHandler = (_req, _res, next) => {
     next()
   }
 
@@ -49,6 +54,7 @@ describe('registerGitHubOAuthRoutes', () => {
     registerGitHubOAuthRoutes({
       expressApp: app,
       authenticateUser,
+      requireVerifiedEmail,
       documentStore,
       logger,
       isProductionEnvironment: opts?.isProductionEnvironment ?? false,
@@ -66,7 +72,7 @@ describe('registerGitHubOAuthRoutes', () => {
     process.env.GITHUB_APP_CLIENT_SECRET = 'gh-secret'
     process.env.GITHUB_OAUTH_CALLBACK_URL = 'https://app.test/api/oauth/github/callback'
     delete process.env.PUBLIC_APP_ORIGIN
-    authUser = { uid: 'user-1', email: 'owner@allowed.com' }
+    authUser = { uid: 'user-1', email: 'owner@allowed.com', emailVerified: true }
     documentStore = {
       getDocument: vi.fn(),
       setDocument: vi.fn().mockResolvedValue(undefined),

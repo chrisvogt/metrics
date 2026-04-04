@@ -142,6 +142,30 @@ function isAllowedEmail(email: string | undefined | null): boolean {
   return ALLOWED_EMAIL_DOMAINS.some((domain) => email.endsWith(domain))
 }
 
+/** Stable client-facing code when session/API is blocked until the user verifies their email. */
+export const API_ERROR_EMAIL_NOT_VERIFIED = 'email_not_verified' as const
+
+/** True when the account is allowed for this app but the email is explicitly unverified (password sign-ups). */
+export function needsEmailVerification(
+  email: string | undefined | null,
+  emailVerified: boolean | undefined
+): boolean {
+  return isAllowedEmail(email) && emailVerified === false
+}
+
+export const requireVerifiedEmail: express.RequestHandler = (req, res, next) => {
+  const u = req.user
+  if (!u) {
+    next()
+    return
+  }
+  if (needsEmailVerification(u.email, u.emailVerified)) {
+    res.status(403).json({ ok: false, error: API_ERROR_EMAIL_NOT_VERIFIED })
+    return
+  }
+  next()
+}
+
 export function getSessionAuthError(authHeader: string | undefined): string | null {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return 'No valid authorization token provided'
@@ -173,7 +197,11 @@ export function createExpressApp({
     if (sessionCookie) {
       try {
         const decoded = await authService.verifySessionCookie(sessionCookie)
-        if (decoded.uid && isAllowedEmail(decoded.email)) {
+        if (
+          decoded.uid &&
+          isAllowedEmail(decoded.email) &&
+          !needsEmailVerification(decoded.email, decoded.emailVerified)
+        ) {
           return decoded.uid
         }
       } catch {
@@ -184,7 +212,11 @@ export function createExpressApp({
     if (token) {
       try {
         const decoded = await authService.verifyIdToken(token)
-        if (decoded.uid && isAllowedEmail(decoded.email)) {
+        if (
+          decoded.uid &&
+          isAllowedEmail(decoded.email) &&
+          !needsEmailVerification(decoded.email, decoded.emailVerified)
+        ) {
           return decoded.uid
         }
       } catch {
@@ -361,6 +393,7 @@ export function createExpressApp({
   registerFlickrOAuthRoutes({
     expressApp,
     authenticateUser,
+    requireVerifiedEmail,
     documentStore,
     logger,
     isProductionEnvironment: isProductionEnvironment(),
@@ -370,6 +403,7 @@ export function createExpressApp({
   registerDiscogsOAuthRoutes({
     expressApp,
     authenticateUser,
+    requireVerifiedEmail,
     documentStore,
     logger,
     isProductionEnvironment: isProductionEnvironment(),
@@ -379,6 +413,7 @@ export function createExpressApp({
   registerGitHubOAuthRoutes({
     expressApp,
     authenticateUser,
+    requireVerifiedEmail,
     documentStore,
     logger,
     isProductionEnvironment: isProductionEnvironment(),
@@ -441,6 +476,7 @@ export function createExpressApp({
     '/api/widgets/sync/:provider/stream',
     rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 10 }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       const providerParam = req.params.provider
       const provider = typeof providerParam === 'string' ? providerParam : undefined
@@ -489,6 +525,7 @@ export function createExpressApp({
     '/api/widgets/sync/:provider',
     rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 10 }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       const providerParam = req.params.provider
       const provider = typeof providerParam === 'string' ? providerParam : undefined
@@ -566,6 +603,7 @@ export function createExpressApp({
     '/api/user/profile',
     rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 50 }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       if (!req.user) return
       try {
@@ -583,6 +621,7 @@ export function createExpressApp({
     '/api/user/settings',
     rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 80 }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid
@@ -610,6 +649,7 @@ export function createExpressApp({
     rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 40 }),
     express.json({ limit: '8kb' }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid
@@ -646,6 +686,7 @@ export function createExpressApp({
     '/api/user/account',
     rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 5 }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid
@@ -671,6 +712,7 @@ export function createExpressApp({
     '/api/onboarding/progress',
     rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 60 }),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid
@@ -695,6 +737,7 @@ export function createExpressApp({
     rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 40 }),
     express.json(),
     authenticateUser,
+    requireVerifiedEmail,
     async (req, res) => {
       if (!req.user) return
       const uid = req.user.uid
@@ -755,6 +798,14 @@ export function createExpressApp({
             ok: false,
             error:
               'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
+          })
+          return
+        }
+
+        if (needsEmailVerification(decodedToken.email, decodedToken.emailVerified)) {
+          res.status(403).json({
+            ok: false,
+            error: API_ERROR_EMAIL_NOT_VERIFIED,
           })
           return
         }

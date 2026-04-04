@@ -51,11 +51,12 @@ const findProtectedRouteMiddleware = (
       entry.route?.path === routePath && entry.route?.methods?.[method]
   )
 
-  if (!layer?.route?.stack || layer.route.stack.length < 2) {
+  if (!layer?.route?.stack || layer.route.stack.length < 3) {
     throw new Error(`Protected route middleware not found: ${method.toUpperCase()} ${routePath}`)
   }
 
-  return layer.route.stack[layer.route.stack.length - 2].handle
+  // rateLimit → authenticateUser → requireVerifiedEmail → route handler
+  return layer.route.stack[layer.route.stack.length - 3].handle
 }
 
 const createResponse = () => {
