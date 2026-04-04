@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { User } from 'firebase/auth'
 import { apiClient } from '@/auth/apiClient'
 import { getAppBaseUrl } from '@/lib/baseUrl'
+import { clearDnsVerificationTimers } from '@/lib/clearDnsVerificationTimers'
 import { ONBOARDING_USERNAME_PATTERN } from '@/lib/onboardingConstraints'
 import obStyles from '@/sections/OnboardingSection.module.css'
 import settingsStyles from '@/sections/UserSettingsSection.module.css'
@@ -247,6 +248,7 @@ function SettingsCustomDomainBlock({
   const dnsPollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
+    clearDnsVerificationTimers({ dnsTimerRef, dnsPollingRef })
     setDomainDraft(saved)
     setDnsStatus('idle')
     setMessage(null)
@@ -255,7 +257,7 @@ function SettingsCustomDomainBlock({
 
   useEffect(() => {
     return () => {
-      if (dnsPollingRef.current) clearInterval(dnsPollingRef.current)
+      clearDnsVerificationTimers({ dnsTimerRef, dnsPollingRef })
     }
   }, [])
 
@@ -284,14 +286,13 @@ function SettingsCustomDomainBlock({
     setDnsStatus('idle')
     setError(null)
     setMessage(null)
-    if (dnsTimerRef.current) clearTimeout(dnsTimerRef.current)
-    if (dnsPollingRef.current) clearInterval(dnsPollingRef.current)
+    clearDnsVerificationTimers({ dnsTimerRef, dnsPollingRef })
   }
 
   const startDnsCheck = () => {
     if (!domainDraft) return
     void checkDns(domainDraft)
-    if (dnsPollingRef.current) clearInterval(dnsPollingRef.current)
+    clearDnsVerificationTimers({ dnsTimerRef, dnsPollingRef })
     dnsPollingRef.current = setInterval(() => void checkDns(domainDraft), 15000)
   }
 
