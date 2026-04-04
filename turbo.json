@@ -2,13 +2,13 @@
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "build": {
-      "outputs": ["dist", "lib", "out"],
+      "outputs": ["dist", "lib", "out", ".next"],
       "dependsOn": []
     },
     /**
-     * `NEXT_PUBLIC_GIT_SHA` is baked into the static export in `hosting/next.config.ts`.
+     * `NEXT_PUBLIC_GIT_SHA` is baked into the Next bundle in `hosting/next.config.ts`.
      * Local builds set it from `git rev-parse --short HEAD`; CI may provide `GITHUB_SHA`.
-     * Without both here, Turbo can restore a cached `hosting/out` across commits and ship
+     * Without both here, Turbo can restore a stale hosting `.next` output across commits and ship
      * an older UI bundle that still shows an outdated sidebar SHA.
      */
     "chronogrove-hosting#build": {

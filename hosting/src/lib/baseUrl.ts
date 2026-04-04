@@ -3,11 +3,9 @@ export function isDevApiHost(hostname: string): boolean {
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === 'metrics.dev-chrisvogt.me'
 }
 
-/** Origin for API calls: same host in dev (Next rewrites /api to emulators); production HTTPS absolute URL. */
+/** Base URL for `/api` fetches: empty so requests stay same-origin; Next rewrites to the Cloud Function. */
 export function getAppBaseUrl(): string {
-  if (typeof window === 'undefined') return ''
-  const h = window.location.hostname
-  return isDevApiHost(h) ? '' : 'https://metrics.chrisvogt.me'
+  return ''
 }
 
 /**

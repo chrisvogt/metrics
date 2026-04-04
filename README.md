@@ -14,7 +14,7 @@
   </a>
 </p>
 
-**Chronogrove** is the engine behind provider-backed widgets on [www.chrisvogt.me](https://www.chrisvogt.me): it syncs third-party accounts (Discogs, Steam, Instagram, Spotify, Goodreads, Flickr, and more), stores normalized widget documents, and serves them over a stable JSON API. Firebase is the reference runtime (Hosting + Cloud Functions + Firestore); the design stays portable enough to consider other hosts later.
+**Chronogrove** is the engine behind provider-backed widgets on [www.chrisvogt.me](https://www.chrisvogt.me): it syncs third-party accounts (Discogs, Steam, Instagram, Spotify, Goodreads, Flickr, and more), stores normalized widget documents, and serves them over a stable JSON API. Firebase is the reference runtime (**App Hosting** for the operator console, **Cloud Functions** for **`/api`**, and **Firestore**); the design stays portable enough to consider other hosts later.
 
 Consumer experiences today include the open-source [**Gatsby theme Chronogrove**](https://github.com/chrisvogt/gatsby-theme-chronogrove). The goal is for the same API to power other site integrations (WordPress and similar) and, over time, shareable **Web Components** (and other HTML-native building blocks) that call the public routes directly.
 
@@ -124,8 +124,8 @@ flowchart TB
 
 This repository is a pnpm workspace with:
 
-- `hosting/`: Next.js dashboard (static export)
-- `functions/`: Firebase Cloud Functions backend
+- `hosting/`: Next.js operator console (SSR on Firebase App Hosting)
+- `functions/`: Firebase Cloud Functions backend (public **`/api`** and jobs)
 
 Turborepo runs workspace scripts from the root and caches work.
 
@@ -137,13 +137,13 @@ Turborepo runs workspace scripts from the root and caches work.
 |--------|----------------|
 | `pnpm install` | Install dependencies for root and both packages. |
 | `pnpm run dev` | Run Next.js dev server on `localhost:5173`. Expects Functions emulator to be running for `/api` calls. |
-| `pnpm run dev:full` | Run Firebase emulators + Next dev together (uses `firebase emulators:start` and `pnpm run dev`). |
-| `pnpm run build` | Run workspace builds via Turborepo (`hosting` export and `functions` TypeScript build). |
+| `pnpm run dev:full` | Run **Auth, Firestore + Functions** emulators and Next dev together (App Hosting emulator omitted so only one `next dev` uses port 5173). |
+| `pnpm run build` | Run workspace builds via Turborepo (Next **`.next`** output + `functions` TypeScript build). |
 | `pnpm run lint` | Run workspace lint tasks (currently functions ESLint). |
 | `pnpm run test` | Run workspace tests. |
 | `pnpm run test:coverage` | Run tests with coverage. |
-| `pnpm run deploy:all` | Guard env + build + deploy default Firebase targets. |
-| `pnpm run deploy:hosting` | Build and deploy only Firebase Hosting. |
+| `pnpm run deploy:all` | Guard env + build + deploy Firestore, Functions, and production App Hosting (`chronogrove-console`). |
+| `pnpm run deploy:hosting` | Build and deploy only production App Hosting (`chronogrove-console`). |
 | `pnpm run deploy:functions` | Guard env + deploy only Functions (Firebase predeploy still builds functions). |
 
 > Use `pnpm run deploy:all` (with `run`). `pnpm deploy` is a pnpm command, not this project's deploy flow.
@@ -170,21 +170,23 @@ pnpm run dev
 
 Open `http://localhost:5173`.
 
-### Option B: full Firebase-like local serving
+### Option B: App Hosting emulator (optional)
+
+For a runtime closer to production App Hosting (see `firebase.json` + `hosting/apphosting.yaml`):
 
 ```bash
 pnpm run build
-firebase emulators:start --only hosting,functions,auth
+firebase emulators:start --only apphosting,auth,functions,firestore
 ```
 
-Open the hosting URL (for example `http://metrics.dev-chrisvogt.me:8084`).
+Open **http://metrics.dev-chrisvogt.me:8084** if that host resolves to localhost (see `emulators.apphosting` in `firebase.json`).
 
 ### Emulator URLs
 
 | Service | URL |
 |---------|-----|
 | Emulator UI | `http://127.0.0.1:4000` |
-| Hosting | `http://127.0.0.1:8084` (or configured host) |
+| App Hosting (when started) | `http://metrics.dev-chrisvogt.me:8084` (or configured host in `firebase.json`) |
 | Functions | `http://127.0.0.1:5001` |
 | Auth | `http://127.0.0.1:9099` |
 | Firestore | `http://127.0.0.1:8080` |
@@ -238,10 +240,11 @@ Syncable `provider` values are:
 
 ## Hosting and backend notes
 
-### Hosting rewrites (`firebase.json`)
+### API routing
 
-1. `/api/**` rewrites to Cloud Function `app`.
-2. No SPA catch-all rewrite. Static exported routes are served directly; unmatched routes return exported `404.html`.
+1. **Production (App Hosting):** Next.js rewrites **`/api/:path*`** to the deployed **`app`** Cloud Functions URL (same-origin in the browser; see `hosting/next.config.ts`).
+2. **Local dev:** the same rewrites target the Functions emulator on **`127.0.0.1:5001`** (`beforeFiles` so the App Router does not handle `/api` first).
+3. **`firebase.json`** defines **App Hosting** backends (`chronogrove-console`, `chronogrove-console-pr`) with **`rootDir`: `hosting`**; classic static Hosting is not used for the console.
 
 ### Backend details (`functions/`)
 

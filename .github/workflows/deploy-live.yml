@@ -1,39 +1,44 @@
-# Deploys to live Hosting on push to main. Requires FIREBASE_SERVICE_ACCOUNT_PERSONAL_STATS_CHRISVOGT secret.
-# Set up via: firebase init hosting:github
+# Deploys the App Hosting production backend after CI succeeds on push to main.
+# Automatic Firebase GitHub rollouts should be OFF; this workflow is the only production deploy path.
+#
+# Requires: FIREBASE_SERVICE_ACCOUNT_PERSONAL_STATS_CHRISVOGT secret.
+# Backend ID must match firebase.json (chronogrove-console).
 name: Deploy to Live Channel
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
 
 permissions:
   contents: read
 
+concurrency:
+  group: apphosting-deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy_live_website:
+    name: Deploy App Hosting (production)
     runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push'
+      && github.event.workflow_run.head_branch == 'main'
     steps:
       - uses: actions/checkout@v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
         with:
-          version: 10.32.1
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: "pnpm"
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build (validate hosting assets)
-        run: pnpm run build
-
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PERSONAL_STATS_CHRISVOGT }}"
-          projectId: personal-stats-chrisvogt
-          channelId: live
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PERSONAL_STATS_CHRISVOGT }}
+
+      - name: Deploy App Hosting (chronogrove-console)
+        run: npx --yes firebase-tools@latest deploy --only apphosting:chronogrove-console --project personal-stats-chrisvogt --non-interactive

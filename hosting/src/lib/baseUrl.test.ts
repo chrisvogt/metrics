@@ -31,16 +31,16 @@ describe('getAppBaseUrl', () => {
     expect(getAppBaseUrl()).toBe('')
   })
 
-  it('returns empty string for dev hostnames', async () => {
+  it('returns empty string for dev hostnames (same-origin /api)', async () => {
     vi.stubGlobal('window', { location: { hostname: 'localhost' } })
     const { getAppBaseUrl } = await import('./baseUrl.js')
     expect(getAppBaseUrl()).toBe('')
   })
 
-  it('returns production origin for non-dev hostnames', async () => {
+  it('returns empty string for production hostnames (same-origin /api)', async () => {
     vi.stubGlobal('window', { location: { hostname: 'metrics.chrisvogt.me' } })
     const { getAppBaseUrl } = await import('./baseUrl.js')
-    expect(getAppBaseUrl()).toBe('https://metrics.chrisvogt.me')
+    expect(getAppBaseUrl()).toBe('')
   })
 })
 

@@ -35,9 +35,11 @@ function getGitShortSha(): string {
   }
 }
 
+const cloudFunctionsAppOrigin =
+  process.env.NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN ??
+  'https://us-central1-personal-stats-chrisvogt.cloudfunctions.net/app'
+
 const nextConfig: NextConfig = {
-  output: 'export',
-  trailingSlash: true,
   env: {
     NEXT_PUBLIC_GIT_SHA: getGitShortSha(),
     /** Public site hostname for this tenant (overview title, etc.). Override per deployment. */
@@ -45,41 +47,34 @@ const nextConfig: NextConfig = {
       process.env.NEXT_PUBLIC_TENANT_DISPLAY_HOST ?? 'www.chrisvogt.me',
     /**
      * Base URL for the deployed `app` HTTPS function (no trailing slash).
-     * SSE/manual sync streams must call this origin so responses are not buffered by Firebase Hosting rewrites.
+     * SSE/manual sync streams must call this origin so responses are not buffered by intermediaries.
+     * Non-SSE `/api/*` traffic uses same-origin URLs and is proxied via rewrites below.
      */
-    NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN:
-      process.env.NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN ??
-      'https://us-central1-personal-stats-chrisvogt.cloudfunctions.net/app',
+    NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN: cloudFunctionsAppOrigin,
   },
   /**
-   * This rewrite exists only to make `next dev` feel like production.
+   * Proxy `/api/*` to Cloud Function `app`: local dev hits the emulator; production SSR hits the deployed function.
+   * The browser keeps same-origin `/api/...` URLs (cookies, relative `getAppBaseUrl()`), while Next forwards server-side.
    *
-   * In local Next.js development, requests to `/api/*` would otherwise hit the
-   * Next dev server and 404 because the API actually lives in Firebase
-   * Functions. So we proxy those requests directly to the local Functions
-   * emulator.
-   *
-   * This is intentionally dev-only:
-   * - `output: 'export'` means Next does not ship its own runtime rewrites in
-   *   the static export.
-   * - Firebase Hosting handles `/api/**` in emulator/prod via `firebase.json`,
-   *   where those requests are rewritten to the `app` Cloud Function.
-   *
-   * So the split is:
-   * - local `next dev` -> this rewrite
-   * - Firebase Hosting emulator / deployed production -> `firebase.json` rewrite
+   * Use `beforeFiles` (not the default `afterFiles` array form) so `/api` is rewritten before the App Router
+   * tries to handle the path — otherwise dev can 404 even when the Functions emulator is healthy.
    */
   async rewrites() {
-    if (process.env.NODE_ENV !== 'development') {
-      return []
+    const apiRewrite =
+      process.env.NODE_ENV === 'development'
+        ? {
+            source: '/api/:path*',
+            destination:
+              'http://127.0.0.1:5001/personal-stats-chrisvogt/us-central1/app/api/:path*',
+          }
+        : {
+            source: '/api/:path*',
+            destination: `${cloudFunctionsAppOrigin}/api/:path*`,
+          }
+
+    return {
+      beforeFiles: [apiRewrite],
     }
-    return [
-      {
-        source: '/api/:path*',
-        destination:
-          'http://127.0.0.1:5001/personal-stats-chrisvogt/us-central1/app/api/:path*',
-      },
-    ]
   },
 }
 

@@ -2,12 +2,12 @@
   "name": "chronogrove-hosting",
   "private": true,
   "license": "Apache-2.0",
-  "description": "Chronogrove operator console: Next.js admin UI (static export) for schema, status, sync, and onboarding.",
-  "version": "0.6.15",
+  "description": "Chronogrove operator console: Next.js admin UI (SSR on Firebase App Hosting) for schema, status, sync, and onboarding.",
+  "version": "0.6.16",
   "scripts": {
     "dev": "next dev --port 5173",
     "build": "next build",
-    "preview": "next build && npx --yes serve@14 out -l 4173",
+    "preview": "next build && next start -p 4173",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
@@ -28,6 +28,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.183.1",
     "@vitest/coverage-v8": "^4.1.2",
+    "jsdom": "^29.0.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.2"
   }
