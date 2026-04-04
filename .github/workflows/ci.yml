@@ -91,7 +91,9 @@ jobs:
   deploy-live:
     name: Deploy App Hosting (production)
     needs: lint-and-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Temporarily disabled. Re-enable with:
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: ${{ false }}
     runs-on: ubuntu-latest
     concurrency:
       group: apphosting-deploy-production

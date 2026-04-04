@@ -26,7 +26,8 @@
         ".turbo",
         "**/node_modules",
         "**/.next/cache"
-      ]
+      ],
+      "alwaysDeployFromSource": true
     },
     {
       "backendId": "chronogrove-console-pr",
