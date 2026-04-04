@@ -35,12 +35,11 @@ const createUser = async (
     },
     entitlements: {
       cdn: false,
-      customDomain: false,
+      customDomain: true,
     },
     onboarding: {
       currentStep: 'username',
       completedSteps: [],
-      draftCustomDomain: null,
       updatedAt: now,
     },
     widgets: {},

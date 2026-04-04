@@ -7,12 +7,13 @@ import { useAuth } from '@/auth/AuthContext'
 import { ChronogroveThemeOptionList } from '@/components/ChronogroveThemeOptionList'
 import type { ChronogroveThemeId } from '@/theme/chronogroveTheme'
 import { useChronogroveThemePersist } from '@/theme/useChronogroveThemePersist'
+import { SettingsProfileIdentity } from '@/components/user-settings/SettingsProfileIdentity'
 import styles from './UserSettingsSection.module.css'
 
 export function UserSettingsSection() {
   const router = useRouter()
-  const { user, loading } = useAuth()
-  const { activeTheme, persist, apiSessionReady } = useChronogroveThemePersist()
+  const { user, loading, apiSessionReady } = useAuth()
+  const { activeTheme, persist } = useChronogroveThemePersist()
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -81,6 +82,17 @@ export function UserSettingsSection() {
 
         {saving ? <p className={styles.hint}>Saving…</p> : null}
         {message && !saving ? <p className={styles.feedback}>{message}</p> : null}
+
+        <div className={styles.profileRegion}>
+          <h2 className={styles.h2} id="profile-heading">
+            Profile &amp; API host
+          </h2>
+          <p className={styles.lede}>
+            Update your public username and the custom domain for your widget API after you&rsquo;ve
+            finished onboarding.
+          </p>
+          <SettingsProfileIdentity user={user} apiSessionReady={apiSessionReady} />
+        </div>
       </div>
     </section>
   )

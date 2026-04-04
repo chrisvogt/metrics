@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.29.0] - 2026-04-03
+
+### Added
+
+- **`tenant_hosts/{hostname}`** — On **`PUT /api/onboarding/progress`**, a non-empty **`customDomain`** claims **`tenant_hosts`** with **`{ uid, claimedAt }`** (transactional; **`hostname_taken`** → **409**). Changing or clearing the domain releases the prior doc when still owned by the same uid. **`users.{uid}.tenantHostname`** stores the canonical hostname for fast reads.
+- **`readStoredTenantHostnameFromUserDoc`** — **`utils/read-stored-tenant-hostname.ts`** (priority: **`tenantHostname`**, then legacy **`onboardingProgress.customDomain`**); used by onboarding persistence and account delete.
+- **`PUT /api/onboarding/progress`** — **`403`** when **`entitlements.customDomain === false`** and the body sets a domain (**`custom_domain_not_entitled`**).
+
+### Changed
+
+- **Onboarding Firestore shape** — Wizard **`onboarding`** map no longer stores **`draftCustomDomain`**; each save merges **`draftCustomDomain: FieldValue.delete()`** to drop legacy fields. API **`customDomain`** in **`GET`** payloads is derived from **`tenantHostname`** first (then legacy blob).
+- **`persistOnboardingWizardState`** — Hostname claims mirror username-claim patterns; **`create-user`** defaults **`entitlements.customDomain`** to **`true`** for new users.
+- **`delete-user`** — Removes **`tenant_hosts/{hostname}`** when the stored claim’s **`uid`** matches the deleted account (warns and continues on failure).
+
+### Tests
+
+- **`onboarding-wizard-persistence`**, **`delete-user`**, **`read-stored-tenant-hostname`**, **`create-express-app.onboarding`** — Hostname entitlement and conflict paths.
+
 ## [0.28.0] - 2026-04-03
 
 ### Added

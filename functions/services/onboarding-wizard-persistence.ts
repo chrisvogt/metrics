@@ -2,9 +2,11 @@ import { FieldValue } from 'firebase-admin/firestore'
 import admin from 'firebase-admin'
 
 import {
+  TENANT_HOSTS_COLLECTION,
   TENANT_USERNAMES_COLLECTION,
   USER_INTEGRATIONS_SEGMENT,
 } from '../config/future-tenant-collections.js'
+import { readStoredTenantHostnameFromUserDoc } from '../utils/read-stored-tenant-hostname.js'
 import {
   buildClientPayloadFromFirestore,
   type OnboardingProgressPayload,
@@ -86,14 +88,16 @@ function onboardingDocFromPayload(onboarding: UserOnboardingDoc): Record<string,
   return {
     currentStep: onboarding.currentStep,
     completedSteps: onboarding.completedSteps,
-    draftCustomDomain: onboarding.draftCustomDomain,
     updatedAt: onboarding.updatedAt,
+    /** Legacy key removed — hostname lives in `tenantHostname` + `tenant_hosts`. */
+    draftCustomDomain: FieldValue.delete(),
   }
 }
 
 /**
  * Persist parsed onboarding PUT into first-class Firestore fields:
- * `username`, `tenant_usernames/{slug}`, `onboarding`, `integrations/*`, clear legacy `onboardingProgress`.
+ * `username`, `tenantHostname`, `tenant_hosts/{hostname}`, `tenant_usernames/{slug}`, `onboarding`,
+ * `integrations/*`, clear legacy `onboardingProgress`.
  */
 export async function persistOnboardingWizardState(params: {
   usersCollection: string
@@ -108,7 +112,6 @@ export async function persistOnboardingWizardState(params: {
   const onboardingDoc: UserOnboardingDoc = {
     currentStep: params.parsed.currentStep,
     completedSteps: params.parsed.completedSteps,
-    draftCustomDomain: params.parsed.customDomain,
     updatedAt: t,
   }
 
@@ -147,6 +150,46 @@ export async function persistOnboardingWizardState(params: {
       }
     }
 
+    const domainNext = params.parsed.customDomain
+    const domainPrev = readStoredTenantHostnameFromUserDoc(existing)
+
+    const entitlementsRaw = existing.entitlements
+    const customDomainEntitled =
+      entitlementsRaw &&
+      typeof entitlementsRaw === 'object' &&
+      !Array.isArray(entitlementsRaw) &&
+      (entitlementsRaw as Record<string, unknown>).customDomain === false
+        ? false
+        : true
+
+    if (domainNext && !customDomainEntitled) {
+      throw new Error('custom_domain_not_entitled')
+    }
+
+    if (domainNext !== domainPrev) {
+      if (domainPrev) {
+        const oldHostRef = db.collection(TENANT_HOSTS_COLLECTION).doc(domainPrev)
+        const oldHostSnap = await tx.get(oldHostRef)
+        if (oldHostSnap.exists && oldHostSnap.get('uid') === params.uid) {
+          tx.delete(oldHostRef)
+        }
+      }
+      if (domainNext) {
+        const hostRef = db.collection(TENANT_HOSTS_COLLECTION).doc(domainNext)
+        const hostSnap = await tx.get(hostRef)
+        if (hostSnap.exists) {
+          const owner = hostSnap.get('uid')
+          if (owner !== params.uid) {
+            throw new Error('hostname_taken')
+          }
+        }
+        tx.set(hostRef, {
+          uid: params.uid,
+          claimedAt: FieldValue.serverTimestamp(),
+        })
+      }
+    }
+
     const userPatch: Record<string, unknown> = {
       onboarding: onboardingDocFromPayload(onboardingDoc),
       onboardingProgress: FieldValue.delete(),
@@ -156,6 +199,12 @@ export async function persistOnboardingWizardState(params: {
       userPatch.username = usernameNext
     } else if (usernamePrev && !usernameNext) {
       userPatch.username = FieldValue.delete()
+    }
+
+    if (domainNext) {
+      userPatch.tenantHostname = domainNext
+    } else if (domainPrev) {
+      userPatch.tenantHostname = FieldValue.delete()
     }
 
     tx.set(userRef, userPatch, { merge: true })

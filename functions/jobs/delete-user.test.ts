@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import deleteUser from './delete-user.js'
 import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
-import { TENANT_USERNAMES_COLLECTION } from '../config/future-tenant-collections.js'
+import {
+  TENANT_HOSTS_COLLECTION,
+  TENANT_USERNAMES_COLLECTION,
+} from '../config/future-tenant-collections.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import { configureLogger } from '../services/logger.js'
 
@@ -54,6 +57,39 @@ describe('deleteUser', () => {
     expect(result.result).toBe('SUCCESS')
     expect(documentStore.deleteDocument).toHaveBeenCalledWith(
       `${TENANT_USERNAMES_COLLECTION}/cooldev`
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
+  })
+
+  it('should remove tenant hostname claim when profile maps to uid', async () => {
+    vi.mocked(documentStore.getDocument!)
+      .mockResolvedValueOnce({
+        username: 'hosty',
+        tenantHostname: 'api.hosty.example.com',
+      })
+      .mockResolvedValueOnce({ uid: 'test-uid-host' })
+
+    const result = await deleteUser({ uid: 'test-uid-host' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(documentStore.deleteDocument).toHaveBeenCalledWith(
+      `${TENANT_HOSTS_COLLECTION}/api.hosty.example.com`
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
+  })
+
+  it('should not delete tenant hostname claim owned by another uid', async () => {
+    vi.mocked(documentStore.getDocument!)
+      .mockResolvedValueOnce({
+        tenantHostname: 'api.shared.example.com',
+      })
+      .mockResolvedValueOnce({ uid: 'other-user' })
+
+    const result = await deleteUser({ uid: 'test-uid-safe' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(documentStore.deleteDocument).not.toHaveBeenCalledWith(
+      `${TENANT_HOSTS_COLLECTION}/api.shared.example.com`
     )
     expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
   })

@@ -5,6 +5,7 @@ import { apiClient } from '../auth/apiClient'
 import { useAuth } from '../auth/AuthContext'
 import { getAppBaseUrl } from '../lib/baseUrl'
 import { ProviderConnectionGrid } from '@/components/onboarding/ProviderConnectionGrid'
+import { ONBOARDING_USERNAME_PATTERN } from '@/lib/onboardingConstraints'
 import styles from './OnboardingSection.module.css'
 
 const STEPS = [
@@ -34,8 +35,6 @@ type UsernameStatus =
   | 'invalid'
   | 'error'
 type DnsStatus = 'idle' | 'checking' | 'verified' | 'not-verified' | 'error'
-
-const USERNAME_REGEX = /^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$/
 
 function isStepId(v: string): v is StepId {
   return STEPS.some((s) => s.id === v)
@@ -71,7 +70,7 @@ export function OnboardingSection() {
   const baseUrl = getAppBaseUrl()
 
   const checkUsername = useCallback(async (value: string) => {
-    if (!value || !USERNAME_REGEX.test(value)) {
+    if (!value || !ONBOARDING_USERNAME_PATTERN.test(value)) {
       setUsernameStatus(value.length > 0 ? 'invalid' : 'idle')
       return
     }
@@ -510,8 +509,7 @@ export function OnboardingSection() {
               <div className={styles.stepContent}>
             <h2 className={styles.heading}>Choose your username</h2>
             <p className={styles.subheading}>
-              This will be your unique profile URL. Pick something memorable — you can&rsquo;t
-              change it later.
+              This will be your unique profile URL. You can change it later in Settings.
             </p>
 
             <div className={styles.usernameField}>

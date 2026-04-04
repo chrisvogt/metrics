@@ -1,7 +1,11 @@
 import type { DocumentStore } from '../ports/document-store.js'
 import { getLogger } from '../services/logger.js'
 import { DATABASE_COLLECTION_USERS } from '../config/constants.js'
-import { TENANT_USERNAMES_COLLECTION } from '../config/future-tenant-collections.js'
+import {
+  TENANT_HOSTS_COLLECTION,
+  TENANT_USERNAMES_COLLECTION,
+} from '../config/future-tenant-collections.js'
+import { readStoredTenantHostnameFromUserDoc } from '../utils/read-stored-tenant-hostname.js'
 
 interface UserRecord {
   uid: string
@@ -47,6 +51,25 @@ const deleteUser = async (
           uid,
           slug,
           error: (claimErr as { message?: string })?.message,
+        })
+      }
+    }
+
+    const hostname =
+      profile == null ? null : readStoredTenantHostnameFromUserDoc(profile)
+    if (hostname) {
+      try {
+        const hostClaim = await documentStore.getDocument<Record<string, unknown>>(
+          `${TENANT_HOSTS_COLLECTION}/${hostname}`
+        )
+        if (hostClaim && hostClaim.uid === uid) {
+          await documentStore.deleteDocument(`${TENANT_HOSTS_COLLECTION}/${hostname}`)
+        }
+      } catch (hostErr) {
+        logger.warn('Failed to delete tenant hostname claim during user delete', {
+          uid,
+          hostname,
+          error: (hostErr as { message?: string })?.message,
         })
       }
     }

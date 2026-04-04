@@ -91,7 +91,6 @@ describe('onboarding-wizard-persistence', () => {
         onboarding: {
           currentStep: 'done',
           completedSteps: ['username', 'connections', 'domain'],
-          draftCustomDomain: null,
           updatedAt: 't',
         },
       },
@@ -122,7 +121,6 @@ describe('onboarding-wizard-persistence', () => {
         onboarding: {
           currentStep: 'connections',
           completedSteps: ['username'],
-          draftCustomDomain: null,
           updatedAt: 't',
         },
       },
@@ -433,5 +431,168 @@ describe('onboarding-wizard-persistence', () => {
       (c) => c[1] && typeof c[1] === 'object' && 'onboarding' in (c[1] as object)
     )?.[1] as Record<string, unknown>
     expect(patchArg?.username).toEqual({ __sv: 'deleteField' })
+  })
+
+  it('persistOnboardingWizardState claims tenant_hosts and sets tenantHostname when domain is new', async () => {
+    const txSet = vi.fn()
+    const txDelete = vi.fn()
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/uid-new') {
+        return Promise.resolve({ exists: true, data: () => ({ username: 'sl' }) })
+      }
+      if (ref.path === 'tenant_hosts/api.new.example.com') {
+        return Promise.resolve({ exists: false })
+      }
+      return Promise.resolve({ exists: false })
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: txSet, delete: txDelete })
+    })
+    mockIntegrationGet.mockResolvedValueOnce({ docs: [] })
+
+    await persistOnboardingWizardState({
+      usersCollection: 'users',
+      uid: 'uid-new',
+      parsed: {
+        currentStep: 'domain',
+        completedSteps: ['username', 'connections'],
+        username: 'sl',
+        connectedProviderIds: [],
+        customDomain: 'api.new.example.com',
+        updatedAt: 't',
+      },
+    })
+
+    expect(txSet).toHaveBeenCalled()
+    const hostSet = txSet.mock.calls.find(
+      (c) =>
+        c[0]?.path === 'tenant_hosts/api.new.example.com' &&
+        c[1] &&
+        typeof c[1] === 'object' &&
+        (c[1] as Record<string, unknown>).uid === 'uid-new'
+    )
+    expect(hostSet).toBeDefined()
+    const userMerge = txSet.mock.calls.find(
+      (c) => c[0]?.path === 'users/uid-new' && c[1] && (c[1] as Record<string, unknown>).tenantHostname
+    )?.[1] as Record<string, unknown>
+    expect(userMerge?.tenantHostname).toBe('api.new.example.com')
+  })
+
+  it('persistOnboardingWizardState throws hostname_taken when another uid owns the host', async () => {
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/me') {
+        return Promise.resolve({ exists: true, data: () => ({}) })
+      }
+      if (ref.path === 'tenant_hosts/api.taken.example.com') {
+        return Promise.resolve({
+          exists: true,
+          get: (f: string) => (f === 'uid' ? 'someone-else' : undefined),
+        })
+      }
+      return Promise.resolve({ exists: false })
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: vi.fn(), delete: vi.fn() })
+    })
+
+    await expect(
+      persistOnboardingWizardState({
+        usersCollection: 'users',
+        uid: 'me',
+        parsed: {
+          currentStep: 'domain',
+          completedSteps: [],
+          username: null,
+          connectedProviderIds: [],
+          customDomain: 'api.taken.example.com',
+          updatedAt: 't',
+        },
+      })
+    ).rejects.toThrow('hostname_taken')
+  })
+
+  it('persistOnboardingWizardState releases prior tenant_hosts when domain changes', async () => {
+    const txDelete = vi.fn()
+    const txSet = vi.fn()
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u1') {
+        return Promise.resolve({
+          exists: true,
+          data: () => ({
+            username: 'a',
+            tenantHostname: 'old.example.com',
+          }),
+        })
+      }
+      if (ref.path === 'tenant_hosts/old.example.com') {
+        return Promise.resolve({
+          exists: true,
+          get: (f: string) => (f === 'uid' ? 'u1' : undefined),
+        })
+      }
+      if (ref.path === 'tenant_hosts/new.example.com') {
+        return Promise.resolve({ exists: false })
+      }
+      return Promise.resolve({ exists: false })
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: txSet, delete: txDelete })
+    })
+    mockIntegrationGet.mockResolvedValueOnce({ docs: [] })
+
+    await persistOnboardingWizardState({
+      usersCollection: 'users',
+      uid: 'u1',
+      parsed: {
+        currentStep: 'domain',
+        completedSteps: ['username', 'connections', 'domain'],
+        username: 'a',
+        connectedProviderIds: [],
+        customDomain: 'new.example.com',
+        updatedAt: 't',
+      },
+    })
+
+    expect(txDelete).toHaveBeenCalled()
+    const userMerge = txSet.mock.calls.find(
+      (c) => c[0]?.path === 'users/u1'
+    )?.[1] as Record<string, unknown>
+    expect(userMerge?.tenantHostname).toBe('new.example.com')
+  })
+
+  it('persistOnboardingWizardState throws custom_domain_not_entitled when entitlement is false', async () => {
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u1') {
+        return Promise.resolve({
+          exists: true,
+          data: () => ({
+            entitlements: { customDomain: false },
+          }),
+        })
+      }
+      return Promise.resolve({ exists: false })
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: vi.fn(), delete: vi.fn() })
+    })
+
+    await expect(
+      persistOnboardingWizardState({
+        usersCollection: 'users',
+        uid: 'u1',
+        parsed: {
+          currentStep: 'domain',
+          completedSteps: [],
+          username: null,
+          connectedProviderIds: [],
+          customDomain: 'api.x.com',
+          updatedAt: 't',
+        },
+      })
+    ).rejects.toThrow('custom_domain_not_entitled')
   })
 })

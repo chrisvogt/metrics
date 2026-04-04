@@ -11,6 +11,19 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.6.15] - 2026-04-03
+
+### Added
+
+- **Settings → Profile & API host** — Edit **username** and **custom API domain** after onboarding via **`SettingsProfileIdentity`** (**`components/user-settings/`**), same availability / DNS checks and **`PUT /api/onboarding/progress`** as the wizard. Layout uses **`profileRegion`** plus subsection spacing for parity with other settings blocks.
+
+### Changed
+
+- **`lib/onboardingConstraints.ts`** — Shared **`ONBOARDING_USERNAME_PATTERN`** for onboarding and settings.
+- **Onboarding (username step)** — Copy now states the slug can be changed later in **Settings**.
+
+**Deploy with Functions ≥ 0.29.0** for **`tenant_hosts`**, **`tenantHostname`**, and onboarding persistence behavior.
+
 ## [0.6.14] - 2026-04-04
 
 ### Fixed
