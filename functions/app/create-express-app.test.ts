@@ -563,6 +563,12 @@ describe('createExpressApp auth and session branches', () => {
     expect(response.headers['access-control-allow-credentials']).toBe('true')
   })
 
+  it('returns 404 for GET paths with no matching route (splat fallback)', async () => {
+    const app = await buildApp()
+
+    await request(app).get('/no-matching-route-for-coverage').expect(404)
+  })
+
   it('treats array sync provider params as unsupported', async () => {
     const app = await buildApp()
     const syncRouteLayer = app.router.stack.find(
