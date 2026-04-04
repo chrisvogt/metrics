@@ -37,7 +37,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      # Install dependencies for both functions and hosting so CodeQL can resolve imports.
+      # Install workspace dependencies so CodeQL can resolve imports.
       - name: Install pnpm
         if: matrix.language == 'javascript-typescript'
         uses: pnpm/action-setup@v4

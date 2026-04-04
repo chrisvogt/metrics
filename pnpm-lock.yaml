@@ -18,6 +18,61 @@ importers:
         specifier: ^2.9.3
         version: 2.9.3
 
+  apps/console:
+    dependencies:
+      firebase:
+        specifier: ^12.11.0
+        version: 12.11.0
+      hast-util-to-jsx-runtime:
+        specifier: ^2.3.6
+        version: 2.3.6
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
+      lowlight:
+        specifier: ^3.3.0
+        version: 3.3.0
+      next:
+        specifier: 15.5.14
+        version: 15.5.14(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      next-themes:
+        specifier: ^0.4.6
+        version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.4
+        version: 19.2.4(react@19.2.4)
+      three:
+        specifier: ^0.183.2
+        version: 0.183.2
+    devDependencies:
+      '@types/node':
+        specifier: ^24.12.0
+        version: 24.12.0
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      '@types/three':
+        specifier: ^0.183.1
+        version: 0.183.1
+      '@vitest/coverage-v8':
+        specifier: ^4.1.2
+        version: 4.1.2(vitest@4.1.2(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(jsdom@29.0.1(@noble/hashes@1.8.0))(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@24.12.0)(esbuild@0.27.3)))
+      jsdom:
+        specifier: ^29.0.1
+        version: 29.0.1(@noble/hashes@1.8.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.2
+        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(jsdom@29.0.1(@noble/hashes@1.8.0))(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@24.12.0)(esbuild@0.27.3))
+
   functions:
     dependencies:
       '@google-cloud/firestore':
@@ -108,61 +163,6 @@ importers:
       supertest:
         specifier: ^7.2.2
         version: 7.2.2
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.2
-        version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(jsdom@29.0.1(@noble/hashes@1.8.0))(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@24.12.0)(esbuild@0.27.3))
-
-  hosting:
-    dependencies:
-      firebase:
-        specifier: ^12.11.0
-        version: 12.11.0
-      hast-util-to-jsx-runtime:
-        specifier: ^2.3.6
-        version: 2.3.6
-      highlight.js:
-        specifier: ^11.11.1
-        version: 11.11.1
-      lowlight:
-        specifier: ^3.3.0
-        version: 3.3.0
-      next:
-        specifier: 15.5.14
-        version: 15.5.14(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      next-themes:
-        specifier: ^0.4.6
-        version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      react:
-        specifier: ^19.2.4
-        version: 19.2.4
-      react-dom:
-        specifier: ^19.2.4
-        version: 19.2.4(react@19.2.4)
-      three:
-        specifier: ^0.183.2
-        version: 0.183.2
-    devDependencies:
-      '@types/node':
-        specifier: ^24.12.0
-        version: 24.12.0
-      '@types/react':
-        specifier: ^19.2.14
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.14)
-      '@types/three':
-        specifier: ^0.183.1
-        version: 0.183.1
-      '@vitest/coverage-v8':
-        specifier: ^4.1.2
-        version: 4.1.2(vitest@4.1.2(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(jsdom@29.0.1(@noble/hashes@1.8.0))(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@24.12.0)(esbuild@0.27.3)))
-      jsdom:
-        specifier: ^29.0.1
-        version: 29.0.1(@noble/hashes@1.8.0)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

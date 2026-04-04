@@ -5,7 +5,7 @@
       "outputs": ["dist", "lib", "out", ".next"],
       "dependsOn": []
     },
-    "chronogrove-hosting#build": {
+    "chronogrove-console#build": {
       "env": ["NEXT_PUBLIC_GIT_SHA", "GITHUB_SHA", "COMMIT_SHA", "VERCEL_GIT_COMMIT_SHA", "CF_PAGES_COMMIT_SHA"]
     },
     "dev": {
