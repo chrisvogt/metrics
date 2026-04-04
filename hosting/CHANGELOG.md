@@ -11,6 +11,12 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.6.14] - 2026-04-04
+
+### Fixed
+
+- **Try API → Get widget data** — Each test now loads a **fresh Firebase ID token** via **`buildWidgetFetchHeaders`** instead of reusing async `idToken` state (which could still be empty on first click). Fixes production **cross-origin** console → **`metrics.chrisvogt.me`** requests that do not carry session cookies, so **GitHub** correctly reflects **OAuth** when linked instead of falling back to PAT and **`githubAuthMode: env`**.
+
 ## [0.6.13] - 2026-04-03
 
 ### Added
