@@ -83,3 +83,88 @@
 .domainSaveRow {
   margin-top: 1rem;
 }
+
+.dangerRegion {
+  margin-top: 2.25rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(251, 113, 133, 0.35);
+}
+
+.dangerTitle {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fecdd3;
+}
+
+.dangerLede {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.dangerPhrase {
+  color: #fecdd3;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.dangerLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.dangerInput {
+  max-width: 22rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.dangerInput:focus {
+  outline: 2px solid rgba(251, 113, 133, 0.45);
+  outline-offset: 1px;
+}
+
+.dangerInput:disabled {
+  opacity: 0.6;
+}
+
+.dangerHint {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.btnDanger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.25rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid rgba(251, 113, 133, 0.55);
+  background: rgba(251, 113, 133, 0.14);
+  color: #fecdd3;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: rgba(251, 113, 133, 0.26);
+}
+
+.btnDanger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

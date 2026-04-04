@@ -106,6 +106,45 @@ describe('deleteUser', () => {
     )
   })
 
+  it('should log and continue when tenant hostname claim lookup throws', async () => {
+    vi.mocked(documentStore.getDocument!)
+      .mockResolvedValueOnce({ tenantHostname: 'api.lookup-fail.example.com' })
+      .mockRejectedValueOnce(new Error('host lookup failed'))
+
+    const result = await deleteUser({ uid: 'test-uid-host-lookup-fail' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Failed to delete tenant hostname claim during user delete',
+      expect.objectContaining({
+        uid: 'test-uid-host-lookup-fail',
+        hostname: 'api.lookup-fail.example.com',
+        error: 'host lookup failed',
+      })
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
+  })
+
+  it('should log and continue when tenant hostname claim delete throws', async () => {
+    vi.mocked(documentStore.getDocument!)
+      .mockResolvedValueOnce({ tenantHostname: 'api.del-fail.example.com' })
+      .mockResolvedValueOnce({ uid: 'test-uid-host-del-fail' })
+    vi.mocked(documentStore.deleteDocument!).mockRejectedValueOnce(new Error('delete host failed'))
+
+    const result = await deleteUser({ uid: 'test-uid-host-del-fail' }, documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Failed to delete tenant hostname claim during user delete',
+      expect.objectContaining({
+        uid: 'test-uid-host-del-fail',
+        hostname: 'api.del-fail.example.com',
+        error: 'delete host failed',
+      })
+    )
+    expect(documentStore.recursiveDeleteDocument).toHaveBeenCalled()
+  })
+
   it('should log and continue when username claim delete fails', async () => {
     vi.mocked(documentStore.getDocument!).mockResolvedValue({ username: 'claimy' })
     vi.mocked(documentStore.deleteDocument!).mockRejectedValueOnce(new Error('claim gone'))

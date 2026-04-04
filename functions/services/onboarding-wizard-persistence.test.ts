@@ -563,6 +563,160 @@ describe('onboarding-wizard-persistence', () => {
     expect(userMerge?.tenantHostname).toBe('new.example.com')
   })
 
+  it('persistOnboardingWizardState clears tenantHostname when custom domain is removed', async () => {
+    const txSet = vi.fn()
+    const txDelete = vi.fn()
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u-clear') {
+        return Promise.resolve({
+          exists: true,
+          data: () => ({
+            username: 'sluggy',
+            tenantHostname: 'api.oldclear.example.com',
+          }),
+        })
+      }
+      if (ref.path === 'tenant_hosts/api.oldclear.example.com') {
+        return Promise.resolve({
+          exists: true,
+          get: (f: string) => (f === 'uid' ? 'u-clear' : undefined),
+        })
+      }
+      return Promise.resolve({ exists: false })
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: txSet, delete: txDelete })
+    })
+    mockIntegrationGet.mockResolvedValueOnce({ docs: [] })
+
+    await persistOnboardingWizardState({
+      usersCollection: 'users',
+      uid: 'u-clear',
+      parsed: {
+        currentStep: 'done',
+        completedSteps: ['username', 'connections', 'domain'],
+        username: 'sluggy',
+        connectedProviderIds: [],
+        customDomain: null,
+        updatedAt: 't',
+      },
+    })
+
+    expect(txDelete).toHaveBeenCalled()
+    const userMerge = txSet.mock.calls.find((c) => c[0]?.path === 'users/u-clear')?.[1] as Record<
+      string,
+      unknown
+    >
+    expect(userMerge?.tenantHostname).toEqual({ __sv: 'deleteField' })
+  })
+
+  it('persistOnboardingWizardState does not delete prior host when stored claim belongs to another uid', async () => {
+    const txDelete = vi.fn()
+    const txSet = vi.fn()
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u-conflict') {
+        return Promise.resolve({
+          exists: true,
+          data: () => ({
+            tenantHostname: 'api.stolen.example.com',
+          }),
+        })
+      }
+      if (ref.path === 'tenant_hosts/api.stolen.example.com') {
+        return Promise.resolve({
+          exists: true,
+          get: (f: string) => (f === 'uid' ? 'someone-else' : undefined),
+        })
+      }
+      if (ref.path === 'tenant_hosts/api.mine.example.com') {
+        return Promise.resolve({ exists: false })
+      }
+      return Promise.resolve({ exists: false })
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: txSet, delete: txDelete })
+    })
+    mockIntegrationGet.mockResolvedValueOnce({ docs: [] })
+
+    await persistOnboardingWizardState({
+      usersCollection: 'users',
+      uid: 'u-conflict',
+      parsed: {
+        currentStep: 'domain',
+        completedSteps: ['domain'],
+        username: null,
+        connectedProviderIds: [],
+        customDomain: 'api.mine.example.com',
+        updatedAt: 't',
+      },
+    })
+
+    expect(txDelete).not.toHaveBeenCalled()
+    const userMerge = txSet.mock.calls.find(
+      (c) => c[0]?.path === 'users/u-conflict'
+    )?.[1] as Record<string, unknown>
+    expect(userMerge?.tenantHostname).toBe('api.mine.example.com')
+  })
+
+  it('persistOnboardingWizardState sets host doc when new hostname already claimed by same uid', async () => {
+    const txSet = vi.fn()
+    const txDelete = vi.fn()
+    const txGet = vi.fn((ref: { path: string }) => {
+      if (ref.path === 'users/u-self') {
+        return Promise.resolve({
+          exists: true,
+          data: () => ({
+            tenantHostname: 'api.oldself.example.com',
+          }),
+        })
+      }
+      if (ref.path === 'tenant_hosts/api.oldself.example.com') {
+        return Promise.resolve({
+          exists: true,
+          get: (f: string) => (f === 'uid' ? 'u-self' : undefined),
+        })
+      }
+      if (ref.path === 'tenant_hosts/api.sharedself.example.com') {
+        return Promise.resolve({
+          exists: true,
+          get: (f: string) => (f === 'uid' ? 'u-self' : undefined),
+        })
+      }
+      return Promise.resolve({ exists: false })
+    })
+
+    mockRunTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+      await fn({ get: txGet, set: txSet, delete: txDelete })
+    })
+    mockIntegrationGet.mockResolvedValueOnce({ docs: [] })
+
+    await persistOnboardingWizardState({
+      usersCollection: 'users',
+      uid: 'u-self',
+      parsed: {
+        currentStep: 'domain',
+        completedSteps: ['domain'],
+        username: null,
+        connectedProviderIds: [],
+        customDomain: 'api.sharedself.example.com',
+        updatedAt: 't',
+      },
+    })
+
+    expect(txDelete).toHaveBeenCalled()
+    const hostSets = txSet.mock.calls.filter(
+      (c) => c[0]?.path === 'tenant_hosts/api.sharedself.example.com'
+    )
+    expect(hostSets.length).toBeGreaterThan(0)
+    const userMerge = txSet.mock.calls.find((c) => c[0]?.path === 'users/u-self')?.[1] as Record<
+      string,
+      unknown
+    >
+    expect(userMerge?.tenantHostname).toBe('api.sharedself.example.com')
+  })
+
   it('persistOnboardingWizardState throws custom_domain_not_entitled when entitlement is false', async () => {
     const txGet = vi.fn((ref: { path: string }) => {
       if (ref.path === 'users/u1') {

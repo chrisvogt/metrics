@@ -8,6 +8,7 @@ import { ChronogroveThemeOptionList } from '@/components/ChronogroveThemeOptionL
 import type { ChronogroveThemeId } from '@/theme/chronogroveTheme'
 import { useChronogroveThemePersist } from '@/theme/useChronogroveThemePersist'
 import { SettingsProfileIdentity } from '@/components/user-settings/SettingsProfileIdentity'
+import { SettingsDeleteAccount } from '@/components/user-settings/SettingsDeleteAccount'
 import styles from './UserSettingsSection.module.css'
 
 export function UserSettingsSection() {
@@ -93,6 +94,8 @@ export function UserSettingsSection() {
           </p>
           <SettingsProfileIdentity user={user} apiSessionReady={apiSessionReady} />
         </div>
+
+        <SettingsDeleteAccount apiSessionReady={apiSessionReady} />
       </div>
     </section>
   )

@@ -19,6 +19,22 @@ describe('readStoredTenantHostnameFromUserDoc', () => {
     ).toBe('legacy.example.com')
   })
 
+  it('ignores empty legacy onboardingProgress.customDomain', () => {
+    expect(
+      readStoredTenantHostnameFromUserDoc({
+        onboardingProgress: { customDomain: '' },
+      })
+    ).toBeNull()
+  })
+
+  it('ignores non-string legacy onboardingProgress.customDomain', () => {
+    expect(
+      readStoredTenantHostnameFromUserDoc({
+        onboardingProgress: { customDomain: 404 as unknown as string },
+      })
+    ).toBeNull()
+  })
+
   it('falls back to tenantHostname', () => {
     expect(
       readStoredTenantHostnameFromUserDoc({
