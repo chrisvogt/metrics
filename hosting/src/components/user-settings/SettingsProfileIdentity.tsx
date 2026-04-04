@@ -74,6 +74,11 @@ function SettingsUsernameBlock({
 
   const checkUsername = useCallback(
     async (value: string) => {
+      if (!value || !ONBOARDING_USERNAME_PATTERN.test(value)) {
+        setUsernameStatus(value.length > 0 ? 'invalid' : 'idle')
+        return
+      }
+
       setUsernameStatus('checking')
       try {
         const headers: Record<string, string> = {}
