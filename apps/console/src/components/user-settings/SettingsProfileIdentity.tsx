@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react'
 import type { User } from 'firebase/auth'
 import { apiClient } from '@/auth/apiClient'
 import { getAppBaseUrl } from '@/lib/baseUrl'
@@ -45,23 +45,29 @@ async function putOnboarding(
   return { ok: true, payload: data.payload }
 }
 
-function SettingsUsernameBlock({
+/** @internal Exported for unit tests. */
+export function SettingsUsernameBlock({
   user,
   progress,
+  progressRef,
   baseUrl,
   onProgressUpdated,
+  runIdentitySave,
+  isSaving,
   subsectionClassName,
 }: {
   user: User
   progress: OnboardingProgressPayload
+  progressRef: MutableRefObject<OnboardingProgressPayload | null>
   baseUrl: string
   onProgressUpdated: (p: OnboardingProgressPayload) => void
+  runIdentitySave: <T>(fn: () => Promise<T>) => Promise<T>
+  isSaving: boolean
   subsectionClassName: string
 }) {
   const saved = (progress.username ?? '').toLowerCase()
   const [usernameDraft, setUsernameDraft] = useState(saved)
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle')
-  const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -123,31 +129,33 @@ function SettingsUsernameBlock({
   const unchanged = normalizedDraft === saved
   const canSaveUsername =
     !unchanged &&
-    !saving &&
+    !isSaving &&
     (clearingUsername ||
       (ONBOARDING_USERNAME_PATTERN.test(usernameDraft) && usernameStatus === 'available'))
 
   const saveUsername = async () => {
-    setSaving(true)
-    setError(null)
-    setMessage(null)
-    const nextUsername = usernameDraft.length > 0 ? usernameDraft.toLowerCase() : null
-    const result = await putOnboarding(user, {
-      currentStep: progress.currentStep,
-      completedSteps: progress.completedSteps,
-      username: nextUsername,
-      connectedProviderIds: progress.connectedProviderIds,
-      customDomain: progress.customDomain,
+    await runIdentitySave(async () => {
+      setError(null)
+      setMessage(null)
+      const p = progressRef.current
+      if (!p) return
+      const nextUsername = usernameDraft.length > 0 ? usernameDraft.toLowerCase() : null
+      const result = await putOnboarding(user, {
+        currentStep: p.currentStep,
+        completedSteps: p.completedSteps,
+        username: nextUsername,
+        connectedProviderIds: p.connectedProviderIds,
+        customDomain: p.customDomain,
+      })
+      if (!result.ok) {
+        setError(result.error ?? 'Could not save username.')
+        return
+      }
+      if (result.payload) {
+        onProgressUpdated(result.payload)
+      }
+      setMessage(nextUsername ? 'Username updated.' : 'Username removed.')
     })
-    setSaving(false)
-    if (!result.ok) {
-      setError(result.error ?? 'Could not save username.')
-      return
-    }
-    if (result.payload) {
-      onProgressUpdated(result.payload)
-    }
-    setMessage(nextUsername ? 'Username updated.' : 'Username removed.')
   }
 
   return (
@@ -221,7 +229,7 @@ function SettingsUsernameBlock({
         disabled={!canSaveUsername}
         onClick={() => void saveUsername()}
       >
-        {saving ? 'Saving…' : 'Save username'}
+        {isSaving ? 'Saving…' : 'Save username'}
       </button>
       {error ? (
         <p className={settingsStyles.feedbackError} role="alert">
@@ -233,21 +241,27 @@ function SettingsUsernameBlock({
   )
 }
 
-function SettingsCustomDomainBlock({
+/** @internal Exported for unit tests. */
+export function SettingsCustomDomainBlock({
   user,
   progress,
+  progressRef,
   baseUrl,
   onProgressUpdated,
+  runIdentitySave,
+  isSaving,
 }: {
   user: User
   progress: OnboardingProgressPayload
+  progressRef: MutableRefObject<OnboardingProgressPayload | null>
   baseUrl: string
   onProgressUpdated: (p: OnboardingProgressPayload) => void
+  runIdentitySave: <T>(fn: () => Promise<T>) => Promise<T>
+  isSaving: boolean
 }) {
   const saved = progress.customDomain ?? ''
   const [domainDraft, setDomainDraft] = useState(saved)
   const [dnsStatus, setDnsStatus] = useState<DnsStatus>('idle')
-  const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const dnsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -303,29 +317,31 @@ function SettingsCustomDomainBlock({
   }
 
   const unchanged = domainDraft === saved
-  const canSaveDomain = !unchanged && !saving
+  const canSaveDomain = !unchanged && !isSaving
 
   const saveDomain = async () => {
-    setSaving(true)
-    setError(null)
-    setMessage(null)
-    const nextDomain = domainDraft.length > 0 ? domainDraft : null
-    const result = await putOnboarding(user, {
-      currentStep: progress.currentStep,
-      completedSteps: progress.completedSteps,
-      username: progress.username,
-      connectedProviderIds: progress.connectedProviderIds,
-      customDomain: nextDomain,
+    await runIdentitySave(async () => {
+      setError(null)
+      setMessage(null)
+      const p = progressRef.current
+      if (!p) return
+      const nextDomain = domainDraft.length > 0 ? domainDraft : null
+      const result = await putOnboarding(user, {
+        currentStep: p.currentStep,
+        completedSteps: p.completedSteps,
+        username: p.username,
+        connectedProviderIds: p.connectedProviderIds,
+        customDomain: nextDomain,
+      })
+      if (!result.ok) {
+        setError(result.error ?? 'Could not save domain.')
+        return
+      }
+      if (result.payload) {
+        onProgressUpdated(result.payload)
+      }
+      setMessage(nextDomain ? 'Custom domain updated.' : 'Custom domain removed.')
     })
-    setSaving(false)
-    if (!result.ok) {
-      setError(result.error ?? 'Could not save domain.')
-      return
-    }
-    if (result.payload) {
-      onProgressUpdated(result.payload)
-    }
-    setMessage(nextDomain ? 'Custom domain updated.' : 'Custom domain removed.')
   }
 
   return (
@@ -425,7 +441,7 @@ function SettingsCustomDomainBlock({
           disabled={!canSaveDomain}
           onClick={() => void saveDomain()}
         >
-          {saving ? 'Saving…' : 'Save domain'}
+          {isSaving ? 'Saving…' : 'Save domain'}
         </button>
       </div>
       {error ? (
@@ -449,6 +465,22 @@ export function SettingsProfileIdentity({
   const [loading, setLoading] = useState(true)
   const [progress, setProgress] = useState<OnboardingProgressPayload | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const progressRef = useRef<OnboardingProgressPayload | null>(null)
+  const [identitySaveInFlight, setIdentitySaveInFlight] = useState(false)
+
+  const handleProgressUpdated = useCallback((p: OnboardingProgressPayload) => {
+    progressRef.current = p
+    setProgress(p)
+  }, [])
+
+  const runIdentitySave = useCallback(async <T,>(fn: () => Promise<T>): Promise<T> => {
+    setIdentitySaveInFlight(true)
+    try {
+      return await fn()
+    } finally {
+      setIdentitySaveInFlight(false)
+    }
+  }, [])
 
   const load = useCallback(async () => {
     if (!user || !apiSessionReady) return
@@ -460,9 +492,11 @@ export function SettingsProfileIdentity({
       if (!res.ok) throw new Error('Could not load profile.')
       const data = (await res.json()) as { payload?: OnboardingProgressPayload }
       if (!data.payload) throw new Error('No profile data.')
+      progressRef.current = data.payload
       setProgress(data.payload)
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Load failed.')
+      progressRef.current = null
       setProgress(null)
     } finally {
       setLoading(false)
@@ -503,15 +537,21 @@ export function SettingsProfileIdentity({
       <SettingsUsernameBlock
         user={user}
         progress={progress}
+        progressRef={progressRef}
         baseUrl={baseUrl}
-        onProgressUpdated={setProgress}
+        onProgressUpdated={handleProgressUpdated}
+        runIdentitySave={runIdentitySave}
+        isSaving={identitySaveInFlight}
         subsectionClassName={settingsStyles.identitySubsectionFirst as string}
       />
       <SettingsCustomDomainBlock
         user={user}
         progress={progress}
+        progressRef={progressRef}
         baseUrl={baseUrl}
-        onProgressUpdated={setProgress}
+        onProgressUpdated={handleProgressUpdated}
+        runIdentitySave={runIdentitySave}
+        isSaving={identitySaveInFlight}
       />
     </>
   )

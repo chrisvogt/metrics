@@ -3,7 +3,7 @@
   "private": true,
   "license": "Apache-2.0",
   "description": "Chronogrove operator console: Next.js admin UI (SSR on Firebase App Hosting) for schema, status, sync, and onboarding.",
-  "version": "0.6.17",
+  "version": "0.6.18",
   "engines": {
     "node": ">=24"
   },
@@ -26,10 +26,14 @@
     "three": "^0.183.2"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.183.1",
+    "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.2",
     "jsdom": "^29.0.1",
     "typescript": "^5.9.3",

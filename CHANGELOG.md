@@ -15,6 +15,7 @@ Package-specific changes:
 
 ### Changed
 
+- **Workspace** — **Console 0.6.18**: **`SettingsProfileIdentity`** fixes a race where concurrent username/domain saves could revert the other field; adds Vitest coverage and test tooling for that screen. See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
 - **Workspace** — **Functions 0.29.2** and **Console 0.6.17**: onboarding **`GET /api/onboarding/check-domain`** verifies a **CNAME** to a configurable target (default App Hosting **`personal-stats-chrisvogt.web.app`**); operator UI DNS instructions and env **`NEXT_PUBLIC_ONBOARDING_CNAME_TARGET`** / **`ONBOARDING_REQUIRED_CNAME_TARGET`** align. See [functions/CHANGELOG.md](functions/CHANGELOG.md) and [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
 - **Workspace** — Operator console sources moved from **`hosting/`** to **`apps/console/`**; pnpm workspace package **`chronogrove-console`** (formerly **`chronogrove-hosting`**); **`firebase.json`** `apphosting.rootDir` is **`./apps/console`**; Turbo **`chronogrove-console#build`**. Deploy script name **`pnpm run deploy:hosting`** unchanged. See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
 - **Workspace** — **Functions 0.29.1**: **got** **15.x** (security); **graphql-got** removed in favor of inline GitHub GraphQL via **`got.post`**. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
