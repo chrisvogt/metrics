@@ -13,6 +13,17 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation** — [docs/APP_HOSTING.md](../docs/APP_HOSTING.md) and [README.md](README.md) document App Hosting backends (`chronogrove-console` / `chronogrove-console-pr`) and deploy (Firebase GitHub integration vs CLI); root [README.md](../README.md) adds production-edge diagram and backend tables.
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.6.18] - 2026-04-05
+
+### Fixed
+
+- **`SettingsProfileIdentity`** — Concurrent **Save username** / **Save domain** could each submit a full onboarding payload built from stale props, so one save could undo the other on the server. Saves now share a single in-flight guard and read companion fields from a synced **`progressRef`** updated on load and after each successful **`PUT`**.
+
+### Added
+
+- **Tests** — Vitest **`SettingsProfileIdentity.test.tsx`** (session/load/error paths, merged PUT bodies, cross-block save lock, username/DNS edge cases, **`progressRef`** guards). **`vitest.setup.ts`** (`@testing-library/jest-dom`, RTL cleanup, real timers after each test). **`@vitejs/plugin-react`** for JSX in **`*.test.tsx`**; **`@testing-library/jest-dom`** / **`@testing-library/user-event`** dev dependencies.
+- **Coverage** — **`SettingsProfileIdentity.tsx`** included in coverage; **`vitest.config.ts`** adds **`@`** → **`src`** alias, **`testTimeout`**, and per-file thresholds (**95%** lines/statements; **85%** branches / **92%** functions) so JSX-heavy settings UI can meet gates alongside library modules.
+
 ## [0.6.17] - 2026-04-04
 
 ### Changed
