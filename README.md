@@ -18,7 +18,7 @@
 
 Consumer experiences today include the open-source [**Gatsby theme Chronogrove**](https://github.com/chrisvogt/gatsby-theme-chronogrove). The goal is for the same API to power other site integrations (WordPress and similar) and, over time, shareable **Web Components** (and other HTML-native building blocks) that call the public routes directly.
 
-This repository holds the **backend and operator console** (schema browser, status checks, authenticated sync). The themed marketing site and MDX content live in the Gatsby theme and site repos above.
+This repository holds the **backend**, **operator console**, and a **static marketing site** (`apps/www/`, Firebase Hosting classic for chronogrove.com). Themed consumer sites and MDX content also live in the Gatsby theme and site repos.
 
 > [!NOTE]
 > **License:** This project is distributed under the [Apache License 2.0](LICENSE) (previously MIT). Details are in the root [CHANGELOG](CHANGELOG.md).
@@ -46,10 +46,13 @@ This repository holds the **backend and operator console** (schema browser, stat
    pnpm run dev:full
    ```
 5. **Open**
-   - App: `http://localhost:5173`
+   - Operator console: `http://localhost:5173`
+   - Marketing site (`pnpm dev:full` only): `http://localhost:5174`
    - Emulator UI: `http://127.0.0.1:4000`
 
 If `/api` calls fail in local dev, the Functions emulator is usually not reachable.
+
+**Optional — local hostnames:** To mirror production subdomains on your machine, add the entries in [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) to `/etc/hosts`, then use URLs like `http://dev-chronogrove.com:5174` and `http://console.dev-chronogrove.com:5173`. Add the same hostnames under **Firebase → Authentication → Settings → Authorized domains** so sign-in works.
 
 ## What this project does
 
@@ -141,6 +144,7 @@ flowchart TB
 This repository is a pnpm workspace with:
 
 - `apps/console/`: Next.js operator console (SSR on Firebase App Hosting)
+- `apps/www/`: Vite + React marketing site (static build on Firebase Hosting classic)
 - `functions/`: Firebase Cloud Functions backend (public **`/api`** and jobs)
 
 Turborepo runs workspace scripts from the root and caches work.
@@ -151,22 +155,27 @@ Turborepo runs workspace scripts from the root and caches work.
 
 | Command | What it does |
 |--------|----------------|
-| `pnpm install` | Install dependencies for root and both packages. |
-| `pnpm run dev` | Run Next.js dev server on `localhost:5173`. Expects Functions emulator to be running for `/api` calls. |
-| `pnpm run dev:full` | Run **Auth, Firestore + Functions** emulators and Next dev together (App Hosting emulator omitted so only one `next dev` uses port 5173). |
-| `pnpm run build` | Run workspace builds via Turborepo (Next **`.next`** output + `functions` TypeScript build). |
+| `pnpm install` | Install dependencies for all workspace packages. |
+| `pnpm run dev` | Run **all** packages that define `dev` (console + www via Turbo). For `/api`, use `dev:full` or run the Functions emulator separately. |
+| `pnpm run dev:console` | Next.js dev server only — `http://localhost:5173`. |
+| `pnpm run dev:www` | Vite dev server only — `http://localhost:5174`. |
+| `pnpm run dev:full` | **Auth, Firestore + Functions** emulators + **console** (`5173`) + **www** (`5174`) via `concurrently`. |
+| `pnpm run build` | Run workspace builds via Turborepo (Next **`.next`**, `apps/www/dist`, `functions` build). |
 | `pnpm run lint` | Run workspace lint tasks (currently functions ESLint). |
 | `pnpm run test` | Run workspace tests. |
 | `pnpm run test:coverage` | Run tests with coverage. |
-| `pnpm run deploy:all` | Guard env + build + deploy Firestore, Functions, and production App Hosting (`chronogrove-console`). |
-| `pnpm run deploy:hosting` | Build and deploy only production App Hosting (`chronogrove-console`). |
+| `pnpm run deploy:all` | Guard env + build + deploy Firestore, Functions, App Hosting (`chronogrove-console`), and classic Hosting (`www`). |
+| `pnpm run deploy:console` | Build and deploy only production App Hosting (`chronogrove-console`). |
+| `pnpm run deploy:www` | Build `apps/www` and deploy only the classic Hosting site (`www` target). |
 | `pnpm run deploy:functions` | Guard env + deploy only Functions (Firebase predeploy still builds functions). |
 
 > Use `pnpm run deploy:all` (with `run`). `pnpm deploy` is a pnpm command, not this project's deploy flow.
 
 ## Local development
 
-### Option A (recommended): hot reload dashboard + emulators
+See **[docs/LOCAL_DEV.md](docs/LOCAL_DEV.md)** for ports, optional `/etc/hosts` aliases, Firebase Auth **authorized domains**, and an optional Caddy reverse-proxy setup.
+
+### Option A (recommended): emulators + console + marketing site
 
 One terminal:
 
@@ -177,14 +186,17 @@ pnpm run dev:full
 Or split terminals:
 
 ```bash
-# Terminal 1
-firebase emulators:start --only functions,auth
+# Terminal 1 — Auth, Firestore, Functions
+firebase emulators:start --only auth,functions,firestore
 
-# Terminal 2
-pnpm run dev
+# Terminal 2 — operator console
+pnpm run dev:console
+
+# Terminal 3 — marketing site (optional)
+pnpm run dev:www
 ```
 
-Open `http://localhost:5173`.
+Open the **console** at `http://localhost:5173` and the **marketing site** at `http://localhost:5174` (when running `dev:www` or `dev:full`).
 
 ### Option B: App Hosting emulator (optional)
 
@@ -265,7 +277,7 @@ Syncable `provider` values are:
 | **`chronogrove-console`** | Production console; **`alwaysDeployFromSource`: true** in repo config. |
 | **`chronogrove-console-pr`** | Optional second backend (e.g. previews/staging); same app tree, separate deploy target. |
 
-Deploy scripts use **`chronogrove-console`** by default (`pnpm run deploy:hosting`). Classic **Firebase Hosting** (static CDN sites) is **not** used for this console.
+Deploy scripts use **`chronogrove-console`** for the console (`pnpm run deploy:console`). The marketing site uses **classic Firebase Hosting** (`hosting:www` target in `firebase.json`; `pnpm run deploy:www`).
 
 ### API routing
 
@@ -301,7 +313,8 @@ pnpm --filter chronogrove-functions run test:watch
 ```bash
 pnpm run build
 pnpm run deploy:all
-pnpm run deploy:hosting
+pnpm run deploy:console
+pnpm run deploy:www
 pnpm run deploy:functions
 ```
 
@@ -314,6 +327,7 @@ Reference docs under [`docs/`](docs/):
 | Document | What it covers |
 |----------|----------------|
 | [docs/APP_HOSTING.md](docs/APP_HOSTING.md) | Firebase App Hosting backends, `apphosting.yaml`, CI vs Firebase GitHub deploy / CLI, pointers to Next/`/api` routing. |
+| [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) | Ports for console + www + emulators, `dev:full`, optional `/etc/hosts` hostnames, Firebase Auth authorized domains, optional Caddy. |
 | [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md) | `sync_jobs` queue behavior (planner, worker, manual sync, states, summary metrics). |
 | [docs/SESSION_COOKIES.md](docs/SESSION_COOKIES.md) | Session cookie model, `/api/auth/session`, JWT fallback, security properties. |
 | [docs/MULTI_TENANT_ARCHITECTURE_PLAN.md](docs/MULTI_TENANT_ARCHITECTURE_PLAN.md) | Migration plan from single-tenant env config toward user-scoped storage and sync. |

@@ -59,6 +59,10 @@ functions/package-lock.json
 apps/console/out
 apps/console/.next
 
+# Marketing site (Vite) build output
+apps/www/dist
+apps/www/tsconfig.tsbuildinfo
+
 # Functions TypeScript build output (tsc → lib/); source lives in config/, widgets/, utils/, helpers/
 functions/lib/
 local-media/

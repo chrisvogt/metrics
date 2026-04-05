@@ -2,7 +2,7 @@
   "name": "chronogrove",
   "private": true,
   "license": "Apache-2.0",
-  "description": "Chronogrove workspace: widget JSON API, provider sync, and operator console on Firebase (App Hosting, Cloud Functions, Firestore).",
+  "description": "Chronogrove workspace: widget JSON API, provider sync, operator console (App Hosting), marketing site (classic Hosting), and Cloud Functions + Firestore.",
   "packageManager": "pnpm@10.32.1",
   "pnpm": {
     "overrides": {
@@ -17,14 +17,17 @@
   "scripts": {
     "build": "NEXT_PUBLIC_GIT_SHA=$(git rev-parse --short HEAD) turbo run build",
     "dev": "NEXT_PUBLIC_GIT_SHA=$(git rev-parse --short HEAD) turbo run dev",
-    "dev:full": "concurrently -n emulators,next -c blue,green \"firebase emulators:start --only auth,functions,firestore\" \"pnpm run dev\"",
+    "dev:www": "pnpm -C apps/www dev",
+    "dev:console": "NEXT_PUBLIC_GIT_SHA=$(git rev-parse --short HEAD) pnpm -C apps/console dev",
+    "dev:full": "concurrently -n emulators,console,www -c cyan,green,yellow \"firebase emulators:start --only auth,functions,firestore\" \"pnpm run dev:console\" \"pnpm run dev:www\"",
     "dev:full:fresh": "pnpm run build && pnpm run dev:full",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
     "typecheck": "pnpm -C functions typecheck:strict-core",
-    "deploy:all": "node scripts/guard-functions-env.cjs && pnpm run build && firebase deploy --only firestore,functions,apphosting:chronogrove-console",
-    "deploy:hosting": "pnpm run build && firebase deploy --only apphosting:chronogrove-console",
+    "deploy:all": "node scripts/guard-functions-env.cjs && pnpm run build && firebase deploy --only firestore,functions,apphosting:chronogrove-console,hosting:www",
+    "deploy:console": "pnpm run build && firebase deploy --only apphosting:chronogrove-console",
+    "deploy:www": "pnpm -C apps/www build && firebase deploy --only hosting:www",
     "deploy:functions": "node scripts/guard-functions-env.cjs && firebase deploy --only functions"
   },
   "devDependencies": {

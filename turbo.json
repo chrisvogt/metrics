@@ -8,6 +8,7 @@
     "chronogrove-console#build": {
       "env": ["NEXT_PUBLIC_GIT_SHA", "GITHUB_SHA", "COMMIT_SHA", "VERCEL_GIT_COMMIT_SHA", "CF_PAGES_COMMIT_SHA"]
     },
+    "chronogrove-www#build": {},
     "dev": {
       "cache": false,
       "persistent": true

@@ -8,16 +8,22 @@ Package-specific changes:
 
 - **Functions** – [functions/CHANGELOG.md](functions/CHANGELOG.md)
 - **Console** (operator UI) – [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md)
+- **WWW** (marketing site) – [apps/www/CHANGELOG.md](apps/www/CHANGELOG.md)
 
 ---
 
 ## [Unreleased]
 
+### Added
+
+- **Workspace** — **`apps/www/`** (`chronogrove-www`): static marketing site (Vite + React + Three.js) for chronogrove.com; classic Firebase Hosting target **`hosting:www`**; scripts **`pnpm run dev:www`**, **`pnpm run deploy:www`**; **`pnpm run dev:full`** runs emulators + console + www concurrently. See [apps/www/CHANGELOG.md](apps/www/CHANGELOG.md).
+
 ### Changed
 
+- **Documentation** — [README.md](README.md) monorepo layout, quick start, commands table (**`deploy:console`**, **`deploy:www`**), local development, and [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) (ports, optional `/etc/hosts`, Firebase Auth authorized domains).
 - **Workspace** — **Console 0.6.18**: **`SettingsProfileIdentity`** fixes a race where concurrent username/domain saves could revert the other field; adds Vitest coverage and test tooling for that screen. See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
 - **Workspace** — **Functions 0.29.2** and **Console 0.6.17**: onboarding **`GET /api/onboarding/check-domain`** verifies a **CNAME** to a configurable target (default App Hosting **`personal-stats-chrisvogt.web.app`**); operator UI DNS instructions and env **`NEXT_PUBLIC_ONBOARDING_CNAME_TARGET`** / **`ONBOARDING_REQUIRED_CNAME_TARGET`** align. See [functions/CHANGELOG.md](functions/CHANGELOG.md) and [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
-- **Workspace** — Operator console sources moved from **`hosting/`** to **`apps/console/`**; pnpm workspace package **`chronogrove-console`** (formerly **`chronogrove-hosting`**); **`firebase.json`** `apphosting.rootDir` is **`./apps/console`**; Turbo **`chronogrove-console#build`**. Deploy script name **`pnpm run deploy:hosting`** unchanged. See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
+- **Workspace** — Operator console sources moved from **`hosting/`** to **`apps/console/`**; pnpm workspace package **`chronogrove-console`** (formerly **`chronogrove-hosting`**); **`firebase.json`** `apphosting.rootDir` is **`./apps/console`**; Turbo **`chronogrove-console#build`**. Production console deploy is **`pnpm run deploy:console`** (formerly **`deploy:hosting`**). See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
 - **Workspace** — **Functions 0.29.1**: **got** **15.x** (security); **graphql-got** removed in favor of inline GitHub GraphQL via **`got.post`**. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 - **Documentation** — App Hosting operations guide [docs/APP_HOSTING.md](docs/APP_HOSTING.md); README architecture diagram 0 (production edge), **App Hosting backends** table, CI vs Firebase GitHub deploy, and **Additional docs** link; [apps/console/README.md](apps/console/README.md) backends subsection; [.agents/README.md](.agents/README.md) distinguishes **App Hosting** vs classic **Hosting** skills.
 - **Workspace** — **Hosting 0.6.16**: Firebase **App Hosting** for the operator console (`apphosting.yaml`, `firebase.json` backends **`chronogrove-console`** / **`chronogrove-console-pr`**); Next SSR + same-origin **`/api`** proxy; production deploy **`firebase deploy --only apphosting:…`** (manual from repo root); **`pnpm dev:full`** starts emulators **without** the App Hosting emulator to avoid a second **`next dev`** on port 5173; CI runs lint, tests, and **`pnpm run build`**. See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).

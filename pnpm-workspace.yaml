@@ -1,5 +1,6 @@
 packages:
   - apps/console
+  - apps/www
   - functions
 
 onlyBuiltDependencies:

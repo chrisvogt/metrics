@@ -1,0 +1,71 @@
+/*
+ * Design tokens for chronogrove-www.
+ * Mirrors the Sonoran Dusk theme from apps/console — warm sunset accent
+ * on a deep violet base. Single theme (no toggle on marketing site).
+ */
+
+:root {
+  /* Typography */
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Geometry */
+  --radius-sm: 10px;
+  --radius: 18px;
+  --radius-lg: 28px;
+  --radius-pill: 100px;
+  --max-width: 1180px;
+
+  /* Motion */
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+  --duration-slow: 420ms;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+  --stagger-step: 40ms;
+
+  /* Sonoran Dusk palette */
+  color-scheme: dark;
+
+  --bg: #0e0814;
+  --bg-elevated: #161022;
+  --surface: rgba(26, 20, 42, 0.9);
+  --surface-strong: #1c1428;
+  --surface-hover: rgba(42, 32, 58, 0.96);
+  --surface-soft: rgba(232, 136, 56, 0.09);
+
+  --border: rgba(176, 168, 208, 0.16);
+  --border-strong: rgba(232, 152, 100, 0.32);
+
+  --text: #eee8f0;
+  --text-muted: #9b90b0;
+  --text-soft: #6d6285;
+
+  --accent: #e88838;
+  --accent-hover: #f0a158;
+  --accent-soft: rgba(232, 136, 56, 0.18);
+  --accent-strong: #ffc078;
+
+  --success: #6eb8c4;
+  --error: #c75a52;
+
+  --shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.58);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.36);
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.28);
+
+  --glyph-glow: rgba(232, 136, 56, 0.48);
+  --scene-bg: #08061a;
+
+  --selection-bg: rgba(232, 136, 56, 0.38);
+  --on-accent-fg: #140818;
+
+  /* Derived / composite */
+  --glow-accent-mid: color-mix(in srgb, var(--accent) 22%, transparent);
+  --glow-accent-wide: color-mix(in srgb, var(--accent) 12%, transparent);
+  --header-bg: color-mix(in srgb, var(--surface-strong) 52%, transparent);
+}
+
+/* Parallax variable — set by scroll listener; unitless px value */
+:root {
+  --scroll-y: 0;
+}
