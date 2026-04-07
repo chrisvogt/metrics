@@ -43,7 +43,7 @@ const SCANNER_PATTERN = new RegExp(
 /** Root / nested PHP probes (e.g. /admin.php); real app has no .php routes. */
 const PHP_PROBE = /\.php$/i
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // TODO(hostname-routing): Registered tenant API hostnames should not serve the full console
   // (status-only + link to Chronogrove). Track as follow-up to onboarding DNS (#254).
   const path = request.nextUrl.pathname
