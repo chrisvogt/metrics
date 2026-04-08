@@ -1,5 +1,7 @@
 # Multi-Tenant Architecture Plan for Metrics Project
 
+> **Context (2026):** Chronogrove already runs **multi-user** Firestore-backed widgets, Firebase Auth, and a **sync job queue**. This note is an older sketch of moving from env-based single-tenant config toward fully user-scoped storage and scheduling. For **current** custom-domain and public-API behavior (hostname → user, **`/widgets`** / **`GET /api/widgets/:provider`**, public status **`/u/{username}`**), see [APP_HOSTING.md](./APP_HOSTING.md) and the root [README](../README.md).
+
 ## Current Architecture Analysis
 
 The current setup is single-tenant with:

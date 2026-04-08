@@ -67,7 +67,7 @@ This service backs widgets on [www.chrisvogt.me](https://www.chrisvogt.me) and a
 
 ### 0) Production edge (operator console)
 
-The dashboard is **SSR on Firebase App Hosting**. The browser calls **`/api/*` on the same origin**; Next.js **rewrites** those requests to the **`app`** Cloud Function (see `apps/console/next.config.mjs`). Public widget traffic from other sites still hits Functions directly (diagrams 1–2).
+The dashboard is **SSR on Firebase App Hosting**. The browser calls **`/api/*` and `/widgets/*` on the same origin**; Next.js **rewrites** both to the **`app`** Cloud Function (`/api/...` and `/api/widgets/...` respectively; see `apps/console/next.config.mjs`). That lets a tenant custom domain expose clean widget paths without a second hostname. Public widget traffic from other sites can still call the Functions URL directly (diagrams 1–2). Optional **public status** for a username lives at **`/u/{username}`** on the console app; hosts listed in **`NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`** can also serve that page at **`/`** (internal rewrite). Details: [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
 
 ```mermaid
 flowchart TB
@@ -76,18 +76,18 @@ flowchart TB
   cf[Cloud Functions · app<br/>/api/**]
   fs[(Firestore)]
   browser -->|pages, assets, SSR| ah
-  browser -->|same-origin /api/*| ah
+  browser -->|same-origin /api/* · /widgets/*| ah
   ah -->|rewrite / proxy| cf
   cf --> fs
 ```
 
 ### 1) Public widget reads
 
-Unauthenticated widget reads from Firestore-backed content.
+Unauthenticated widget reads from Firestore-backed content. On a **shared** API host, **`GET /api/widgets/:provider`** may take optional **`?uid=`** or **`?username=`** to choose the data owner; **per-tenant domains** can still map host → user via Functions runtime config (**`WIDGET_USER_ID_BY_HOSTNAME`**). Same-origin **`/widgets/:provider`** on App Hosting is rewritten to that endpoint (see diagram 0).
 
 ```mermaid
 flowchart LR
-  site[www.chrisvogt.me or theme] --> fn[Cloud Functions<br/>GET /api/widgets/:provider]
+  site[Site or theme] --> fn[Cloud Functions<br/>GET /api/widgets/:provider]
   fn --> fs[(Firestore<br/>users/.../widget-content)]
 ```
 
@@ -131,7 +131,8 @@ flowchart TB
 
 | Flow | Description |
 |------|-------------|
-| **Widget reads** | `GET /api/widgets/:provider` (public, cached). Reads provider widget document from Firestore and returns it. |
+| **Widget reads** | `GET /api/widgets/:provider` (public, cached). Reads provider widget document from Firestore and returns it. Optional **`?uid=`** / **`?username=`** on shared hosts; hostname map for dedicated API domains. Console same-origin **`/widgets/...`** rewrites to **`/api/widgets/...`**. |
+| **Public status** | `GET /u/{username}` on the console (SSR widget health table). Mapped tenant API hosts can show the same page at **`/`** via `src/proxy.ts`. |
 | **Scheduled sync** | `runSyncPlanner` enqueues queue jobs; `runSyncWorker` periodically claims and executes queued jobs. |
 | **Manual sync** | Authenticated `GET /api/widgets/sync/:provider` (JSON) or `GET /api/widgets/sync/:provider/stream` (SSE). Both use the same queue + inline processing path. |
 | **Auth** | Dashboard signs in with Firebase Auth and creates a session cookie through `POST /api/auth/session`. Protected routes accept session cookie or JWT. |
@@ -237,6 +238,8 @@ Optional examples:
 
 - `GET /api/widgets/:provider` where `provider` is one of:
   - `discogs`, `flickr`, `github`, `goodreads`, `instagram`, `spotify`, `steam`
+- Optional query params on shared API hosts: **`uid`** (Firebase uid) or **`username`** (public slug). Per-tenant API domains use hostname → user mapping on the Functions side instead.
+- Same-origin alias on the operator console (production or dev with rewrites): **`GET /widgets/:provider`** → Cloud Functions **`/api/widgets/:provider`**.
 
 ### Protected sync endpoints
 
@@ -270,8 +273,10 @@ Deploy scripts use **`chronogrove-console`** by default (`pnpm run deploy:hostin
 ### API routing
 
 1. **Production (App Hosting):** Next.js rewrites **`/api/:path*`** to the deployed **`app`** Cloud Functions URL (same-origin in the browser; see `apps/console/next.config.mjs`).
-2. **Local dev:** the same rewrites target the Functions emulator on **`127.0.0.1:5001`** (`beforeFiles` so the App Router does not handle `/api` first).
-3. **Environment for rewrites:** public origins and tenant display host for the Next build are set in **`apps/console/apphosting.yaml`** (`NEXT_PUBLIC_*`); see [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
+2. **Production (App Hosting):** Next.js also rewrites **`/widgets/:path*`** to **`{CLOUD_FUNCTIONS_APP_ORIGIN}/api/widgets/:path*`** so tenant-facing domains can use short widget URLs.
+3. **Local dev:** both rewrites target the Functions emulator on **`127.0.0.1:5001`** (`beforeFiles` so the App Router does not handle `/api` or `/widgets` first).
+4. **Tenant status home:** for hosts in **`NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`**, **`src/proxy.ts`** rewrites **`/`** internally to **`/u/{slug}`** (browser URL stays **`/`**). See [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
+5. **Environment for rewrites:** public origins, tenant display host, and optional tenant hostname map are set in **`apps/console/apphosting.yaml`** (`NEXT_PUBLIC_*`); see [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
 
 ### Backend details (`functions/`)
 
@@ -313,7 +318,7 @@ Reference docs under [`docs/`](docs/):
 
 | Document | What it covers |
 |----------|----------------|
-| [docs/APP_HOSTING.md](docs/APP_HOSTING.md) | Firebase App Hosting backends, `apphosting.yaml`, CI vs Firebase GitHub deploy / CLI, pointers to Next/`/api` routing. |
+| [docs/APP_HOSTING.md](docs/APP_HOSTING.md) | Firebase App Hosting backends, `apphosting.yaml`, CI vs Firebase GitHub deploy / CLI, Next **`/api`** and **`/widgets`** rewrites, tenant **`/`** → **`/u/{slug}`**, public status SSR. |
 | [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md) | `sync_jobs` queue behavior (planner, worker, manual sync, states, summary metrics). |
 | [docs/SESSION_COOKIES.md](docs/SESSION_COOKIES.md) | Session cookie model, `/api/auth/session`, JWT fallback, security properties. |
 | [docs/MULTI_TENANT_ARCHITECTURE_PLAN.md](docs/MULTI_TENANT_ARCHITECTURE_PLAN.md) | Migration plan from single-tenant env config toward user-scoped storage and sync. |

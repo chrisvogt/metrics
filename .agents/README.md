@@ -12,6 +12,8 @@ Then select the skills you need from the interactive prompt. This project uses: 
 
 **Hosting vs App Hosting:** The operator console is deployed with **Firebase App Hosting** (Next.js SSR under `apps/console/`), not classic **Firebase Hosting** (static CDN). Use **firebase-app-hosting-basics** when working on `apphosting.yaml`, App Hosting deploys, or the App Hosting emulator. **firebase-hosting-basics** covers classic Hosting only (SPAs, static sites).
 
+**This repo:** Tenant API routing (e.g. **`NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`**, **`/widgets`** rewrites, public **`/u/{username}`** status) is documented in **`docs/APP_HOSTING.md`** at the repository root.
+
 ## Upgrade
 
 To update all installed skills to their latest versions:

@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { tenantStatusSlugForHost } from '@/lib/tenant-api-root-map'
 
+/** Next.js proxy: scanner blocking + optional `/` → `/u/{slug}` for hosts in `NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`. See `docs/APP_HOSTING.md`. */
+
 const SCANNER_PREFIXES = [
   '/wp-admin',
   '/wp-includes',
