@@ -116,7 +116,7 @@ describe('fetchWidgetStatusRow', () => {
     expect(row.error).toBeNull()
   })
 
-  it('skips json body when content-type is not json', async () => {
+  it('parses JSON body when ok even if content-type is not application/json', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(() =>
@@ -124,13 +124,72 @@ describe('fetchWidgetStatusRow', () => {
           ok: true,
           status: 200,
           headers: new Headers({ 'content-type': 'text/plain' }),
-          json: () => Promise.reject(new Error('should not run')),
+          json: () => Promise.resolve({ payload: { meta: { synced: '2024-02-01T00:00:00.000Z' } } }),
         } as Response),
       ),
     )
     const row = await fetchWidgetStatusRow(origin, 'u', 'github', 'GitHub')
     expect(row.ok).toBe(true)
-    expect(row.lastSynced).toBeNull()
+    expect(row.lastSynced).toBe('2024-02-01T00:00:00.000Z')
+  })
+
+  it('omits username query when resolveUserLikePublicWidgets is true', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: () => Promise.resolve({ payload: { meta: {} } }),
+      } as Response),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    await fetchWidgetStatusRow(origin, 'alice', 'discogs', 'Discogs', {
+      tenantPublicHost: 'api.example.com',
+      resolveUserLikePublicWidgets: true,
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${origin}/api/widgets/discogs`,
+      expect.anything(),
+    )
+  })
+
+  it('includes debugDetail on non-OK when debug is true', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          headers: new Headers(),
+          text: () => Promise.resolve(JSON.stringify({ ok: false, error: 'No Spotify data' })),
+        } as Response),
+      ),
+    )
+    const row = await fetchWidgetStatusRow(origin, 'u', 'spotify', 'Spotify', { debug: true })
+    expect(row.debugDetail).toBe('No Spotify data')
+  })
+
+  it('sends x-chronogrove-public-host when tenantPublicHost is set', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: () => Promise.resolve({ payload: { meta: {} } }),
+      } as Response),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    await fetchWidgetStatusRow(origin, 'u', 'spotify', 'Spotify', {
+      tenantPublicHost: 'api.example.com:443',
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/widgets/spotify?username=u'),
+      expect.objectContaining({
+        headers: expect.any(Headers),
+      }),
+    )
+    const hdrs = fetchMock.mock.calls[0][1].headers as Headers
+    expect(hdrs.get('x-chronogrove-public-host')).toBe('api.example.com')
   })
 
   it('handles json parse failure', async () => {

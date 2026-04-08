@@ -74,12 +74,9 @@ export function StatusSection() {
           const ms = Math.round(performance.now() - start)
           let lastSynced: string | null = null
           if (res.ok) {
-            const ct = res.headers.get('content-type') ?? ''
-            if (ct.includes('application/json')) {
-              const data = await res.json().catch(() => null)
-              lastSynced =
-                r.id === 'client-auth-config' ? null : extractLastSyncedFromWidgetResponse(data)
-            }
+            const data = await res.json().catch(() => null)
+            lastSynced =
+              r.id === 'client-auth-config' ? null : extractLastSyncedFromWidgetResponse(data)
           }
           setRows((prev) => ({
             ...prev,

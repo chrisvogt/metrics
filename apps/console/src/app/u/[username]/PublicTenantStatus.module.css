@@ -25,6 +25,17 @@
   line-height: 1.55;
 }
 
+.debugBanner {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-md);
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .inlineCode {
   font-family: var(--font-mono);
   font-size: 0.88em;
@@ -81,6 +92,21 @@
 
 .syncedCell {
   font-variant-numeric: tabular-nums;
+}
+
+.debugCell {
+  max-width: 22rem;
+  vertical-align: top;
+}
+
+.debugPre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-muted);
 }
 
 .footer {

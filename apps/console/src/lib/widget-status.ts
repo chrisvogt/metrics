@@ -53,6 +53,24 @@ export type WidgetStatusRowResult = {
   ms: number
   lastSynced: string | null
   error: string | null
+  /** Populated when `debug: true` and the response failed or fetch threw. */
+  debugDetail?: string
+}
+
+export type FetchWidgetStatusRowOptions = {
+  /**
+   * Browser-visible hostname (e.g. `api.customer.example`). Sent as `x-chronogrove-public-host` so
+   * Functions can treat the request like a same-origin hit to that host (hostname map, etc.).
+   */
+  tenantPublicHost?: string
+  /**
+   * When true, omit `?username=` so Functions resolves the widget user like **`/widgets/:provider`**
+   * (hostname map only). Use only when this host’s tenant slug matches `username` (see
+   * `tenantStatusSlugForHost`); otherwise keep the query param for correct `/u/{other}` behavior.
+   */
+  resolveUserLikePublicWidgets?: boolean
+  /** If true, non-OK bodies (and fetch errors) are summarized in `debugDetail` for troubleshooting. */
+  debug?: boolean
 }
 
 /** One provider row for the public tenant status page (server-side `fetch`). */
@@ -60,19 +78,37 @@ export async function fetchWidgetStatusRow(
   origin: string,
   username: string,
   providerId: string,
-  label: string
+  label: string,
+  options?: FetchWidgetStatusRowOptions
 ): Promise<WidgetStatusRowResult> {
-  const path = `/api/widgets/${providerId}?username=${encodeURIComponent(username)}`
+  const useHostnameLikeWidgets =
+    options?.resolveUserLikePublicWidgets === true && options?.tenantPublicHost
+  const path = useHostnameLikeWidgets
+    ? `/api/widgets/${providerId}`
+    : `/api/widgets/${providerId}?username=${encodeURIComponent(username)}`
   const started = Date.now()
   try {
-    const res = await fetch(`${origin}${path}`, { cache: 'no-store' })
+    const headers = new Headers({ Accept: 'application/json' })
+    const hostOnly = options?.tenantPublicHost?.split(',')[0]?.trim().split(':')[0]?.toLowerCase()
+    if (hostOnly) {
+      headers.set('x-chronogrove-public-host', hostOnly)
+    }
+    const res = await fetch(`${origin}${path}`, { cache: 'no-store', headers })
     const ms = Date.now() - started
     let lastSynced: string | null = null
+    let debugDetail: string | undefined
     if (res.ok) {
-      const ct = res.headers.get('content-type') ?? ''
-      if (ct.includes('application/json')) {
-        const data = await res.json().catch(() => null)
-        lastSynced = extractLastSyncedFromWidgetResponse(data)
+      // Do not gate on Content-Type: CDNs / compression sometimes omit or vary the header while
+      // the body is still JSON.
+      const data = await res.json().catch(() => null)
+      lastSynced = extractLastSyncedFromWidgetResponse(data)
+    } else if (options?.debug) {
+      const text = await res.text().catch(() => '')
+      try {
+        const j = JSON.parse(text) as { error?: string; ok?: boolean }
+        debugDetail = j?.error ?? text.slice(0, 500)
+      } catch {
+        debugDetail = text.slice(0, 500) || `(HTTP ${res.status})`
       }
     }
     return {
@@ -83,9 +119,11 @@ export async function fetchWidgetStatusRow(
       ms,
       lastSynced,
       error: null,
+      ...(debugDetail !== undefined ? { debugDetail } : {}),
     }
   } catch (err) {
     const ms = Date.now() - started
+    const msg = err instanceof Error ? err.message : String(err)
     return {
       label,
       path,
@@ -93,7 +131,8 @@ export async function fetchWidgetStatusRow(
       ok: false,
       ms,
       lastSynced: null,
-      error: err instanceof Error ? err.message : String(err),
+      error: msg,
+      ...(options?.debug ? { debugDetail: msg } : {}),
     }
   }
 }

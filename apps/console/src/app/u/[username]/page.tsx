@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import { getServerWidgetFetchOrigin } from '@/lib/server-widget-fetch-origin'
+import { tenantStatusSlugForHost } from '@/lib/tenant-api-root-map'
 import {
   WIDGET_STATUS_PROVIDERS,
   fetchWidgetStatusRow,
@@ -10,6 +12,7 @@ import styles from './PublicTenantStatus.module.css'
 
 type PageProps = {
   params: Promise<{ username: string }>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -21,11 +24,32 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function PublicTenantStatusPage({ params }: PageProps) {
+export default async function PublicTenantStatusPage({ params, searchParams }: PageProps) {
   const { username } = await params
+  const sp = searchParams != null ? await searchParams : {}
+  const debugRaw = sp.status_debug
+  const statusDebug =
+    debugRaw === '1' ||
+    debugRaw === 'true' ||
+    (Array.isArray(debugRaw) && debugRaw.some((v) => v === '1' || v === 'true'))
+
   const origin = await getServerWidgetFetchOrigin()
+  const h = await headers()
+  const tenantPublicHost =
+    h.get('x-forwarded-host')?.split(',')[0]?.trim() || h.get('host')?.split(',')[0]?.trim() || undefined
+  const hostOnly = tenantPublicHost?.split(':')[0]?.toLowerCase()
+  const slugForHost = hostOnly ? tenantStatusSlugForHost(hostOnly) : undefined
+  /** Match `/widgets/:provider` (hostname user id), not `?username=` (claim slug → uid), when this host is single-tenant for this slug. */
+  const resolveUserLikePublicWidgets = Boolean(slugForHost && slugForHost === username)
+
   const rows = await Promise.all(
-    WIDGET_STATUS_PROVIDERS.map((p) => fetchWidgetStatusRow(origin, username, p.id, p.label))
+    WIDGET_STATUS_PROVIDERS.map((p) =>
+      fetchWidgetStatusRow(origin, username, p.id, p.label, {
+        tenantPublicHost,
+        resolveUserLikePublicWidgets,
+        debug: statusDebug,
+      }),
+    ),
   )
 
   return (
@@ -36,7 +60,21 @@ export default async function PublicTenantStatusPage({ params }: PageProps) {
           Public widget routes for this profile. Latency and{' '}
           <code className={styles.inlineCode}>meta.synced</code> come from each{' '}
           <code className={styles.inlineCode}>GET /api/widgets/:provider</code> response.
+          {resolveUserLikePublicWidgets ? (
+            <>
+              {' '}
+              On this host, checks use the same user resolution as{' '}
+              <code className={styles.inlineCode}>/widgets/:provider</code> (hostname map), not{' '}
+              <code className={styles.inlineCode}>?username=</code>.
+            </>
+          ) : null}
         </p>
+        {statusDebug ? (
+          <p className={styles.debugBanner} data-testid="status-debug-banner">
+            Debug mode (<code className={styles.inlineCode}>status_debug=1</code>): failed responses show
+            server error snippets below.
+          </p>
+        ) : null}
       </header>
 
       <div className={styles.tableWrap}>
@@ -46,7 +84,8 @@ export default async function PublicTenantStatusPage({ params }: PageProps) {
               <th>Route</th>
               <th>Status</th>
               <th>Latency</th>
-              <th>Last synced (payload)</th>
+              <th>Last synced</th>
+              {statusDebug ? <th>Debug</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -68,6 +107,11 @@ export default async function PublicTenantStatusPage({ params }: PageProps) {
                   </td>
                   <td>{r.ms > 0 ? `${r.ms}ms` : '—'}</td>
                   <td className={styles.syncedCell}>{formatSyncedDisplay(r.lastSynced)}</td>
+                  {statusDebug ? (
+                    <td className={styles.debugCell}>
+                      <pre className={styles.debugPre}>{r.debugDetail ?? '—'}</pre>
+                    </td>
+                  ) : null}
                 </tr>
               )
             })}

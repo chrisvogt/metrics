@@ -6,6 +6,12 @@ const { fetchWidgetStatusRowMock } = vi.hoisted(() => ({
   fetchWidgetStatusRowMock: vi.fn(),
 }))
 
+vi.mock('next/headers', () => ({
+  headers: vi.fn(() =>
+    Promise.resolve(new Headers({ host: 'api.example.com', 'x-forwarded-host': 'api.example.com' })),
+  ),
+}))
+
 vi.mock('@/lib/server-widget-fetch-origin', () => ({
   getServerWidgetFetchOrigin: vi.fn(() => Promise.resolve('https://api.example.com')),
 }))

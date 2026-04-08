@@ -703,6 +703,7 @@ describe('createExpressApp auth and session branches', () => {
     }
     const res = {
       send: vi.fn(),
+      json: vi.fn().mockReturnThis(),
       status: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
       end: vi.fn(),
@@ -712,6 +713,7 @@ describe('createExpressApp auth and session branches', () => {
 
     expect(vi.mocked(getWidgetContent)).toHaveBeenCalled()
     expect(res.status).toHaveBeenCalledWith(200)
+    expect(res.json).toHaveBeenCalled()
   })
 
   it('treats non-string non-array widget :provider as missing', async () => {
@@ -735,6 +737,7 @@ describe('createExpressApp auth and session branches', () => {
     }
     const res = {
       send: vi.fn(),
+      json: vi.fn().mockReturnThis(),
       status: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
       end: vi.fn(),

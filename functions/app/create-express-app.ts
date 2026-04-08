@@ -128,6 +128,24 @@ const CSRF_EXCLUDED_PATHS_WIDGET_READS = [
   /** Discogs redirects here without CSRF headers. */
   { path: '/api/oauth/discogs/callback', type: 'exact' as const },
 ]
+/**
+ * Hostname the browser used (or the tenant API host for SSR probes that call Cloud Functions directly).
+ * `x-chronogrove-public-host` is set by the console status page server fetch.
+ */
+function resolveOriginalRequestHostname(req: express.Request): string {
+  const probe = (req.headers['x-chronogrove-public-host'] as string | undefined)
+    ?.split(',')[0]
+    ?.trim()
+  if (probe) {
+    return probe.split(':')[0]?.toLowerCase() ?? probe.toLowerCase()
+  }
+  const xf = (req.headers['x-forwarded-host'] as string | undefined)?.split(',')[0]?.trim()
+  if (xf) {
+    return xf.split(':')[0]?.toLowerCase() ?? xf.toLowerCase()
+  }
+  return req.hostname
+}
+
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader?.startsWith('Bearer ')) {
     return null
@@ -549,7 +567,14 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/widgets/:provider',
-    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 100 }),
+    rateLimit({
+      ...rateLimitDefaults,
+      windowMs: 15 * 60 * 1000,
+      limit: 100,
+      // One bucket per path so parallel SSR status checks (one request per provider) do not share
+      // a single IP+route counter and trip 429/empty failures.
+      keyGenerator: (req) => `${getRateLimitKey(req)}:${req.path}`,
+    }),
     async (req, res) => {
       const providerParam = req.params.provider
       const provider =
@@ -568,7 +593,7 @@ export function createExpressApp({
         return
       }
 
-      const originalHostname = (req.headers['x-forwarded-host'] as string) || req.hostname
+      const originalHostname = resolveOriginalRequestHostname(req)
       const fromQuery = await resolveWidgetDataUserIdFromPublicQuery(req, documentStore)
       if (fromQuery === 'not_found') {
         const response = buildFailureResponse({ message: 'Unknown user.' })
@@ -593,7 +618,7 @@ export function createExpressApp({
           'Cache-Control',
           'public, max-age=0, s-maxage=300, must-revalidate, stale-while-revalidate=60',
         )
-        res.status(200).send(response)
+        res.status(200).json(response)
       } catch (err) {
         logger.error('Error loading widget content', {
           provider,
@@ -601,10 +626,8 @@ export function createExpressApp({
           error: err instanceof Error ? err.message : err,
         })
         const response = buildFailureResponse(err)
-        res.status(500).send(response)
+        res.status(500).json(response)
       }
-
-      res.end()
     }
   )
 
