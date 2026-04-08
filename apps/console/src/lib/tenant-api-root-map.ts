@@ -30,3 +30,25 @@ export function tenantStatusSlugForHost(hostname: string | undefined): string | 
   const map = parseTenantApiRootToUsernameMap(raw)
   return map[hostOnly]
 }
+
+/** True when `hostname` is listed as a tenant API root (same env as `tenantStatusSlugForHost`). Client-safe if `NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME` is set. */
+export function isTenantApiRootHostname(hostname: string | undefined): boolean {
+  return tenantStatusSlugForHost(hostname) !== undefined
+}
+
+/**
+ * Public status surfaces that do not use Firebase Auth in the browser (`/u/*` and tenant-root `/`
+ * after internal rewrite; browser URL may still show `/`).
+ */
+export function isAuthlessPublicStatusSurface(
+  pathname: string | null | undefined,
+  browserHostname: string | undefined
+): boolean {
+  if (pathname != null && pathname.startsWith('/u/')) {
+    return true
+  }
+  if (pathname === '/' || pathname === '') {
+    return isTenantApiRootHostname(browserHostname)
+  }
+  return false
+}

@@ -18,12 +18,24 @@ function hostLooksLocal(hostnameWithOptionalPort: string): boolean {
  * **Development:** uses **IPv4 loopback** to the Functions emulator so SSR does not call
  * `http(s)://{host}:5173` (avoids `*.local` IPv6-first stalls and TLS-on-HTTP-port mistakes).
  *
- * **Production:** same browser-visible origin from request headers so App Hosting rewrites apply.
+ * **Production:** prefers **`NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN`** (or **`SERVER_WIDGET_FETCH_ORIGIN`**)
+ * so SSR does not call the tenant’s public hostname (e.g. `https://api.customer.example`). Server-side
+ * self-requests through App Hosting often fail or return 5xx; browsers hitting the same URL still work.
+ * Falls back to the request Host when those env vars are unset (e.g. previews).
  */
 export async function getServerWidgetFetchOrigin(): Promise<string> {
   if (process.env.NODE_ENV === 'development') {
     const custom = process.env.INTERNAL_FUNCTIONS_EMULATOR_APP_ORIGIN?.trim()
     return (custom ?? DEFAULT_DEV_FUNCTIONS_APP_ORIGIN).replace(/\/$/, '')
+  }
+
+  const directApp = (
+    process.env.SERVER_WIDGET_FETCH_ORIGIN ?? process.env.NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN
+  )
+    ?.trim()
+    .replace(/\/$/, '')
+  if (directApp) {
+    return directApp
   }
 
   const h = await headers()

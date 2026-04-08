@@ -1,5 +1,10 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
-import { parseTenantApiRootToUsernameMap, tenantStatusSlugForHost } from './tenant-api-root-map'
+import {
+  isAuthlessPublicStatusSurface,
+  isTenantApiRootHostname,
+  parseTenantApiRootToUsernameMap,
+  tenantStatusSlugForHost,
+} from './tenant-api-root-map'
 
 describe('parseTenantApiRootToUsernameMap', () => {
   it('parses comma-separated host=slug pairs', () => {
@@ -55,5 +60,40 @@ describe('tenantStatusSlugForHost', () => {
     delete process.env.TENANT_API_ROOT_TO_USERNAME
     process.env.NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME = 'public.api.example=pubuser'
     expect(tenantStatusSlugForHost('public.api.example')).toBe('pubuser')
+  })
+})
+
+describe('isTenantApiRootHostname', () => {
+  const original = { ...process.env }
+
+  afterEach(() => {
+    process.env = { ...original }
+  })
+
+  it('is true only for mapped hosts', () => {
+    process.env.NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME = 'api.x.test=u'
+    delete process.env.TENANT_API_ROOT_TO_USERNAME
+    expect(isTenantApiRootHostname('api.x.test')).toBe(true)
+    expect(isTenantApiRootHostname('other.example')).toBe(false)
+  })
+})
+
+describe('isAuthlessPublicStatusSurface', () => {
+  const original = { ...process.env }
+
+  afterEach(() => {
+    process.env = { ...original }
+  })
+
+  it('is true for /u/* paths regardless of host', () => {
+    expect(isAuthlessPublicStatusSurface('/u/bob', undefined)).toBe(true)
+    expect(isAuthlessPublicStatusSurface('/u/bob/extra', 'any')).toBe(true)
+  })
+
+  it('is true for / only when hostname is a tenant API root', () => {
+    process.env.NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME = 'api.tenant.example=slug'
+    delete process.env.TENANT_API_ROOT_TO_USERNAME
+    expect(isAuthlessPublicStatusSurface('/', 'api.tenant.example')).toBe(true)
+    expect(isAuthlessPublicStatusSurface('/', 'metrics.example.com')).toBe(false)
   })
 })
