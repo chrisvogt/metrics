@@ -28,7 +28,7 @@ export default function AboutPage() {
             <p>
               Connects configured providers on a schedule or via manual sync, normalizes their data into cacheable widget
               responses, and documents those routes in the schema browser. The console adds coverage checks, sign-in, and
-              sync controls for whoever runs the instance.
+              sync controls for operators.
             </p>
           </section>
 
@@ -65,8 +65,8 @@ export default function AboutPage() {
           <section className={styles.section}>
             <h2>Maintainer</h2>
             <p>
-              Built and maintained by Chris Vogt. The code is intended to be self-hosted per tenant; this deployment is
-              the operator surface for one instance.
+              Built and maintained by Chris Vogt. The code is intended to be self-hosted, with support for custom
+              domains and public API/status surfaces per site.
             </p>
           </section>
 

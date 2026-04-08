@@ -74,7 +74,7 @@ export function SchemaSection() {
         <p className={styles.lead}>
           {user ? (
             <>
-              Explore the full surface of this deployment: public JSON feeds, authenticated sync controls, session
+              Explore the full Chronogrove surface here: public JSON feeds, authenticated sync controls, session
               helpers, and account routes. Every endpoint below is rooted at{' '}
               <code className={styles.inlineCode}>/api</code>.
             </>

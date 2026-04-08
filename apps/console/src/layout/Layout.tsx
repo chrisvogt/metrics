@@ -26,8 +26,19 @@ const navItems: Array<{
   requiresAuth?: boolean
 }> = [
   {
+    id: 'overview',
+    label: 'Dashboard',
+    requiresAuth: true,
+    icon: (
+      <svg viewBox="0 0 20 20" aria-hidden>
+        <path d="M4 10 10 5l6 5M6.5 9.5V15h7V9.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     id: 'schema',
     label: 'Schema',
+    requiresAuth: true,
     icon: (
       <svg viewBox="0 0 20 20" aria-hidden>
         <path d="M5 4.5h10m-10 5h10m-10 5h6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -37,6 +48,7 @@ const navItems: Array<{
   {
     id: 'status',
     label: 'Status',
+    requiresAuth: true,
     icon: (
       <svg viewBox="0 0 20 20" aria-hidden>
         <path d="M4 13.5 7.5 10l2.5 2.5L16 6.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -66,12 +78,12 @@ const navItems: Array<{
 ]
 
 const sectionCopy: Record<SectionId, { label: string; kicker: string }> = {
-  overview: { label: 'Overview', kicker: '' }, // kicker filled in Layout with tenant host
+  overview: { label: 'Dashboard', kicker: '' }, // kicker filled in Layout with tenant host
   schema: { label: 'Schema', kicker: 'Public routes, payloads, and authenticated helpers' },
   status: { label: 'Status', kicker: 'Fast checks for the public-facing API surface' },
   api: { label: 'Try API', kicker: 'Session helpers and endpoint testing for signed-in operators' },
   sync: { label: 'Sync', kicker: 'Manual provider runs with live progress and final payloads' },
-  auth: { label: 'Sign in', kicker: 'Access the protected console for this deployment' },
+  auth: { label: 'Sign in', kicker: 'Access the Chronogrove console' },
 }
 const buildSha = process.env.NEXT_PUBLIC_GIT_SHA
 const buildCommitUrl = buildSha
@@ -85,7 +97,7 @@ export function Layout({ children, user, activeSection, onSectionChange }: Layou
     activeSection === 'overview'
       ? {
           label: sectionCopy.overview.label,
-          kicker: `Live provider health, snapshot stats, and sync · ${tenantHost || 'this deployment'}`,
+          kicker: `Live provider health, snapshot stats, and sync · ${tenantHost || 'Chronogrove'}`,
         }
       : sectionCopy[activeSection]
 
