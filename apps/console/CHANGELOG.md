@@ -7,11 +7,22 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.20] - 2026-04-08
+
+### Added
+
+- **Public tenant status** — Route **`/u/[username]`** (SSR widget health table, Chronogrove footer). **`/widgets/:path*`** rewrites to Cloud Functions **`/api/widgets`** like **`/api`**. **`src/proxy.ts`** rewrites **`/`** → **`/u/{slug}`** when **`NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`** (or **`TENANT_API_ROOT_TO_USERNAME`**) maps the request host to a public username slug.
+- **`.env.template`** — Documented optional console env vars (copy to **`.env.local`**).
+- **Tests** — **`src/lib/tenant-api-root-map.test.ts`**, **`src/lib/server-widget-fetch-origin.test.ts`**.
+
 ### Changed
 
-- **Workspace** — Package directory **`hosting/`** → **`apps/console/`**; package name **`chronogrove-console`** (formerly **`chronogrove-hosting`**); Turbo **`chronogrove-console#build`**.
-- **Documentation** — [docs/APP_HOSTING.md](../docs/APP_HOSTING.md) and [README.md](README.md) document App Hosting backends (`chronogrove-console` / `chronogrove-console-pr`) and deploy (Firebase GitHub integration vs CLI); root [README.md](../README.md) adds production-edge diagram and backend tables.
-- **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
+- **Onboarding / settings** — Public profile prefix in copy is **`api.chronogrove.com/u/`** (was **`chronogrove.com/u/`**).
+- **Status section** — Shared provider list and **`meta.synced`** parsing live in **`src/lib/widget-status.ts`**.
+
+### Fixed
+
+- **`/u/[username]`** — In **`next dev`**, server-side widget checks call the **Functions emulator on `127.0.0.1:5001`** directly (optional **`INTERNAL_FUNCTIONS_EMULATOR_APP_ORIGIN`**) instead of looping back to **`http://{host}:5173`**, avoiding **`*.local` IPv6-first connection stalls** and mistaken **`https://`** defaults when **`x-forwarded-proto`** is absent.
 
 ## [0.6.19] - 2026-04-07
 

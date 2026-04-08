@@ -16,6 +16,13 @@ For product behavior and UI changes, see [apps/console/CHANGELOG.md](../apps/con
 
 In **Firebase Console → Authentication → Templates → Email address verification**, set the **custom action URL** to the console’s verify route (Firebase appends `mode` and `oobCode`). **Current production:** `https://metrics.chrisvogt.me/verify-email`. Ensure **metrics.chrisvogt.me** appears under **Authentication → Settings → Authorized domains**. When the operator console moves to **chronogrove.com**, update this URL and domains to match the new host.
 
+### Tenant API host: `/widgets` and `/` status rewrite
+
+- **`next.config.mjs`** rewrites **`/widgets/:path*`** to the same Cloud Functions origin as **`/api/widgets/:path*`**, so a custom domain (e.g. `api.customer.example`) can expose clean widget URLs.
+- **`GET /api/widgets/:provider`** on Functions accepts optional **`uid`** (Firebase user id) or **`username`** (public slug) query params to pick the data owner on shared hosts like **`api.chronogrove.com`**. Per-tenant domains still use **`WIDGET_USER_ID_BY_HOSTNAME`** on the Functions runtime.
+- **`src/proxy.ts`** (Next 16 “middleware”): set **`TENANT_API_ROOT_TO_USERNAME`** or **`NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`** to comma-separated **`hostname=publicUsername`** entries. For those hosts only, **`/`** is rewritten internally to **`/u/{username}`** (public status page) while the browser URL stays **`/`**.
+- Canonical public profile URL in product copy: **`https://api.chronogrove.com/u/{username}`** (after that custom domain is attached in Firebase).
+
 ## Backends (`firebase.json`)
 
 Two **App Hosting backends** share **`rootDir`: `./apps/console`** (see [`firebase.json`](../firebase.json) `apphosting`):

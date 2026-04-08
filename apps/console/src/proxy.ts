@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { tenantStatusSlugForHost } from '@/lib/tenant-api-root-map'
 
 const SCANNER_PREFIXES = [
   '/wp-admin',
@@ -44,11 +45,19 @@ const SCANNER_PATTERN = new RegExp(
 const PHP_PROBE = /\.php$/i
 
 export function proxy(request: NextRequest) {
-  // TODO(hostname-routing): Registered tenant API hostnames should not serve the full console
-  // (status-only + link to Chronogrove). Track as follow-up to onboarding DNS (#254).
   const path = request.nextUrl.pathname
   if (SCANNER_PATTERN.test(path) || PHP_PROBE.test(path)) {
     return new NextResponse(null, { status: 403 })
+  }
+
+  if (path === '/' || path === '') {
+    const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? ''
+    const slug = tenantStatusSlugForHost(host)
+    if (slug) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/u/${slug}`
+      return NextResponse.rewrite(url)
+    }
   }
 
   return NextResponse.next()

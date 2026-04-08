@@ -270,7 +270,8 @@ describe('index.js', () => {
         expect(response.body.error).toBe('[object Object]')
       })
 
-      it('should use chronogrove userId for api.chronogrove.com hostname', async () => {
+      it('should use default widget user for api.chronogrove.com when host is not mapped', async () => {
+        const { getWidgetContent } = await import('./widgets/get-widget-content.js')
         const response = await request(app)
           .get('/api/widgets/spotify')
           .set('x-forwarded-host', 'api.chronogrove.com')
@@ -278,6 +279,12 @@ describe('index.js', () => {
 
         expect(response.body.ok).toBe(true)
         expect(response.body.payload).toEqual({ mock: 'widget-content' })
+        expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+          'spotify',
+          'chrisvogt',
+          expect.anything(),
+          expect.anything()
+        )
       })
 
       it('should use chrisvogt userId for other hostnames', async () => {

@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-04-08
+
+### Added
+
+- **`GET /api/widgets/:provider`** — Optional query **`uid`** (Firebase user id) or **`username`** (public slug, `tenant_usernames` + legacy username lookup) selects the data owner before hostname resolution. Unknown slug / invalid **`uid`** → **404** (`Unknown user.`). Resolver in **`app/resolve-widget-data-user-id.ts`** with tests.
+
 ### Changed
 
-- **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
+- **Default widget hostname map** — Removed hard-coded **`api.chronogrove.com` → `chronogrove`** from **`DEFAULT_WIDGET_HOSTNAME_USER_MAP`** so the shared API host uses **`WIDGET_USER_ID_BY_HOSTNAME`** / query overrides / default user only.
 
 ## [0.29.2] - 2026-04-04
 

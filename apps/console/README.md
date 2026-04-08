@@ -31,6 +31,8 @@ firebase emulators:start --only functions,auth
 
 Then open **http://localhost:5173**.
 
+**Environment overrides** — Copy [`.env.template`](.env.template) to **`.env.local`** in this directory (`apps/console/`). Next.js loads `.env.local` automatically when you run `next dev` here (restart after edits). Use it for `NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`, custom `NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN`, etc.
+
 **Option B – `dev:full` from repo root**  
 Starts **Auth, Firestore, and Functions** emulators plus Next dev. App Hosting is **not** started here (it would try to run a second `next dev` on the same port). Use Option A split terminals if you omit Firestore during UI-only work.
 

@@ -41,7 +41,7 @@ describe('backend paths', () => {
 
   it('resolves the widget user from hostname', async () => {
     const { getWidgetUserIdForHostname } = await importBackendPaths()
-    expect(getWidgetUserIdForHostname('api.chronogrove.com')).toBe('chronogrove')
+    expect(getWidgetUserIdForHostname('api.chronogrove.com')).toBe('chrisvogt')
     expect(getWidgetUserIdForHostname('api.chrisvogt.me')).toBe('chrisvogt')
     expect(getWidgetUserIdForHostname(undefined)).toBe('chrisvogt')
   })

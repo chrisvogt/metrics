@@ -3,9 +3,8 @@ import path from 'path'
 
 const FUNCTIONS_CONFIG_APPLIED_ENV = '__FUNCTIONS_CONFIG_APPLIED__'
 const DEFAULT_WIDGET_USER_ID = 'chrisvogt'
-const DEFAULT_WIDGET_HOSTNAME_USER_MAP = {
-  'api.chronogrove.com': 'chronogrove',
-} as const
+/** Empty: shared API hosts (e.g. api.chronogrove.com) must not map to a single user. Use `WIDGET_USER_ID_BY_HOSTNAME` for tenant domains. */
+const DEFAULT_WIDGET_HOSTNAME_USER_MAP = {} as const
 
 export const isProductionEnvironment = () => process.env.NODE_ENV === 'production'
 

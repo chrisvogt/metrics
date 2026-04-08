@@ -16,7 +16,7 @@ vi.mock('../jobs/delete-user.js', () => ({
 }))
 
 vi.mock('../widgets/get-widget-content.js', () => ({
-  getWidgetContent: vi.fn(() => Promise.resolve({ mock: 'widget-content' })),
+  getWidgetContent: vi.fn(() => Promise.resolve({ payload: { mock: 'widget-content' } })),
   validWidgetIds: ['spotify'],
 }))
 
@@ -48,6 +48,7 @@ describe('createExpressApp media route', () => {
   const documentStore = {
     getDocument: vi.fn(),
     setDocument: vi.fn(),
+    legacyUsernameOwnerUid: vi.fn(),
   }
 
   const syncJobQueue = {
@@ -253,6 +254,7 @@ describe('createExpressApp auth and session branches', () => {
   const documentStore = {
     getDocument: vi.fn(),
     setDocument: vi.fn(),
+    legacyUsernameOwnerUid: vi.fn(),
   }
 
   const syncJobQueue = {
@@ -567,6 +569,117 @@ describe('createExpressApp auth and session branches', () => {
     const app = await buildApp()
 
     await request(app).get('/no-matching-route-for-coverage').expect(404)
+  })
+
+  describe('GET /api/widgets/:provider query user overrides', () => {
+    it('uses uid query param when valid', async () => {
+      const app = await buildApp()
+      const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+
+      await request(app)
+        .get('/api/widgets/spotify')
+        .query({ uid: 'override-uid-abc' })
+        .set('x-forwarded-host', 'api.chronogrove.com')
+        .expect(200)
+
+      expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+        'spotify',
+        'override-uid-abc',
+        documentStore,
+        expect.anything()
+      )
+    })
+
+    it('returns 404 when uid query is invalid', async () => {
+      const app = await buildApp()
+
+      const response = await request(app)
+        .get('/api/widgets/spotify')
+        .query({ uid: 'bad!uid' })
+        .expect(404)
+
+      expect(response.body).toEqual({ ok: false, error: 'Unknown user.' })
+    })
+
+    it('resolves username via tenant_usernames claim', async () => {
+      vi.mocked(documentStore.getDocument).mockResolvedValueOnce({ uid: 'claimed-uid' })
+      const app = await buildApp()
+      const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+
+      await request(app)
+        .get('/api/widgets/spotify')
+        .query({ username: 'valid-user' })
+        .set('x-forwarded-host', 'api.chronogrove.com')
+        .expect(200)
+
+      expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+        'spotify',
+        'claimed-uid',
+        documentStore,
+        expect.anything()
+      )
+    })
+
+    it('falls back to legacyUsernameOwnerUid when claim is missing', async () => {
+      vi.mocked(documentStore.getDocument).mockResolvedValueOnce(null)
+      vi.mocked(documentStore.legacyUsernameOwnerUid).mockResolvedValueOnce('legacy-owner-uid')
+      const app = await buildApp()
+      const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+
+      await request(app)
+        .get('/api/widgets/spotify')
+        .query({ username: 'valid-user' })
+        .expect(200)
+
+      expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+        'spotify',
+        'legacy-owner-uid',
+        documentStore,
+        expect.anything()
+      )
+    })
+
+    it('returns 404 for unknown username slug', async () => {
+      vi.mocked(documentStore.getDocument).mockResolvedValueOnce(null)
+      vi.mocked(documentStore.legacyUsernameOwnerUid).mockResolvedValueOnce(null)
+      const app = await buildApp()
+
+      const response = await request(app)
+        .get('/api/widgets/spotify')
+        .query({ username: 'valid-user' })
+        .expect(404)
+
+      expect(response.body).toEqual({ ok: false, error: 'Unknown user.' })
+    })
+
+    it('returns 404 for malformed username query', async () => {
+      const app = await buildApp()
+
+      const response = await request(app)
+        .get('/api/widgets/spotify')
+        .query({ username: 'A' })
+        .expect(404)
+
+      expect(response.body).toEqual({ ok: false, error: 'Unknown user.' })
+    })
+
+    it('prefers uid over username when both are present', async () => {
+      vi.mocked(documentStore.getDocument).mockResolvedValueOnce({ uid: 'from-claim' })
+      const app = await buildApp()
+      const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+
+      await request(app)
+        .get('/api/widgets/spotify')
+        .query({ uid: 'explicit-uid', username: 'valid-user' })
+        .expect(200)
+
+      expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+        'spotify',
+        'explicit-uid',
+        documentStore,
+        expect.anything()
+      )
+    })
   })
 
   it('treats array sync provider params as unsupported', async () => {

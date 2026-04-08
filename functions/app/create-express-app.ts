@@ -34,6 +34,7 @@ import { registerFlickrOAuthRoutes } from './oauth-flickr.js'
 import { registerGitHubOAuthRoutes } from './oauth-github.js'
 import { toStoredDateTime } from '../utils/time.js'
 import { hostnameCnameChainsTo } from '../utils/dns-cname-verify.js'
+import { resolveWidgetDataUserIdFromPublicQuery } from './resolve-widget-data-user-id.js'
 
 interface LoggerLike {
   error: (message: string, ...args: unknown[]) => void
@@ -568,7 +569,15 @@ export function createExpressApp({
       }
 
       const originalHostname = (req.headers['x-forwarded-host'] as string) || req.hostname
-      const userId = getWidgetUserIdForHostname(originalHostname)
+      const fromQuery = await resolveWidgetDataUserIdFromPublicQuery(req, documentStore)
+      if (fromQuery === 'not_found') {
+        const response = buildFailureResponse({ message: 'Unknown user.' })
+        res.status(404).send(response)
+        res.end()
+        return
+      }
+      const userId =
+        fromQuery === 'skip' ? getWidgetUserIdForHostname(originalHostname) : fromQuery.userId
       const viewerUid = await resolveViewerUidForPublicOnboarding(req)
 
       try {
