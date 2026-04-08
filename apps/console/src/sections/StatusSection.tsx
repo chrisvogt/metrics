@@ -118,7 +118,7 @@ export function StatusSection() {
         <h1 className={styles.title}>Status</h1>
         <p className={styles.lead}>
           Lightweight <code className={styles.inlineCode}>GET</code> checks for the public data routes exposed by this
-          deployment. When a payload includes <code className={styles.inlineCode}>meta.synced</code>, the table shows it
+          console. When a payload includes <code className={styles.inlineCode}>meta.synced</code>, the table shows it
           so you can tell the difference between a healthy route and recently refreshed content. GitHub is fetched live
           and does not carry a stored sync timestamp.
           {user ? (

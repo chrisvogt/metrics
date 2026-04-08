@@ -79,12 +79,12 @@ export function AuthSection() {
 
   return (
     <section className={styles.section}>
-      <a href="https://www.chrisvogt.me" className={styles.siteLink} rel="noopener noreferrer">
-        ← Visit chrisvogt.me
+      <a href="https://chronogrove.com" className={styles.siteLink} rel="noopener noreferrer">
+        ← Visit chronogrove.com
       </a>
       <div className={styles.card}>
         <h2 className={styles.heading}>Sign in</h2>
-        <p className={styles.adminNote}>Protected console for this Chronogrove deployment.</p>
+        <p className={styles.adminNote}>Chronogrove console access.</p>
         <p className={styles.subheading}>Sign in to access session helpers, endpoint testing, and manual sync tools.</p>
 
         <div className={styles.tabs} role="tablist" aria-label="Sign-in methods">

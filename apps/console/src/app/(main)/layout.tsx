@@ -37,11 +37,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       router.replace('/verify-email/')
       return
     }
-    if (!user && (section === 'api' || section === 'sync')) {
-      router.replace('/schema/')
+    if (!user && section !== 'auth') {
+      router.replace('/auth/')
     }
     if (user && section === 'auth' && !mustVerifyEmailBeforeConsole(user)) {
-      router.replace('/schema/')
+      router.replace('/')
     }
   }, [user, loading, section, router, pathname])
 

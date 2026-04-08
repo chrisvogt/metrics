@@ -7,6 +7,18 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.21] - 2026-04-08
+
+### Changed
+
+- **Console entry flow** — Signed-out visitors now land on **`/auth/`** instead of the old overview dashboard. The overview is now a signed-in **Dashboard** route in the left navigation alongside **Schema**, **Status**, **Try API**, and **Sync**.
+- **Copy** — General console wording now refers to the **Chronogrove console** instead of a specific deployment or tenant, while leaving the real tenant/custom-domain public status surfaces unchanged.
+- **Auth page** — The top link now points to **`https://chronogrove.com`**.
+
+### Added
+
+- **Tests** — Coverage for the protected main layout redirect flow, signed-in dashboard shell/navigation, and the updated page metadata/copy touched by this change set.
+
 ### Changed
 
 - **`src/lib/request-host-headers.ts`** — Shared **`primaryHostLineFromHeaders`** / **`hostLabelFromHostLine`** for comma-safe **`Host`** / **`X-Forwarded-Host`** parsing used by **`src/proxy.ts`**, **`/u/[username]`**, **`getServerWidgetFetchOrigin`**, and **`fetchWidgetStatusRow`** (avoids drift vs Functions’ `resolveOriginalRequestHostname` pattern).

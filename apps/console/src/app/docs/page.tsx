@@ -6,7 +6,7 @@ import styles from '../public-page.module.css'
 export const metadata: Metadata = {
   title: 'Docs',
   description:
-    'Where to find API routes in this Chronogrove deployment, repository docs, and local development notes.',
+    'Where to find Chronogrove API routes, repository docs, and local development notes.',
 }
 
 export default function DocsPage() {
@@ -22,7 +22,7 @@ export default function DocsPage() {
           </p>
 
           <section className={styles.section}>
-            <h2>In this deployment</h2>
+            <h2>In this console</h2>
             <ul>
               <li>
                 <strong>/schema/</strong> — route list, sample shapes, and what requires sign-in.
