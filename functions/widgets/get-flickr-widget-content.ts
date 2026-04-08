@@ -23,9 +23,8 @@ const getFlickrWidgetContent = async (
 
     const meta = widgetContent.meta as Record<string, unknown> | null | undefined
     if (meta != null && typeof meta === 'object' && meta.synced != null) {
-      const { meta: _m, ...rest } = widgetContent
       return {
-        ...rest,
+        ...widgetContent,
         meta: {
           ...meta,
           synced: toDateOrDefault(meta.synced),
