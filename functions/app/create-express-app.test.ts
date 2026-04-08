@@ -682,6 +682,70 @@ describe('createExpressApp auth and session branches', () => {
     })
   })
 
+  it('uses first element when GET /api/widgets/:provider param is an array', async () => {
+    const app = await buildApp()
+    const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+    vi.mocked(getWidgetContent).mockClear()
+
+    const widgetRouteLayer = app.router.stack.find(
+      (layer) => layer.route?.path === '/api/widgets/:provider'
+    )
+    const widgetHandler = widgetRouteLayer?.route?.stack.at(-1)?.handle
+
+    expect(widgetHandler).toBeTypeOf('function')
+
+    const req = {
+      params: { provider: ['spotify'] },
+      query: {},
+      headers: { 'x-forwarded-host': 'api.chronogrove.com' },
+      hostname: '127.0.0.1',
+      cookies: {},
+    }
+    const res = {
+      send: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      end: vi.fn(),
+    }
+
+    await widgetHandler?.(req, res)
+
+    expect(vi.mocked(getWidgetContent)).toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(200)
+  })
+
+  it('treats non-string non-array widget :provider as missing', async () => {
+    const app = await buildApp()
+    const widgetRouteLayer = app.router.stack.find(
+      (layer) => layer.route?.path === '/api/widgets/:provider'
+    )
+    const widgetHandler = widgetRouteLayer?.route?.stack.at(-1)?.handle
+
+    expect(widgetHandler).toBeTypeOf('function')
+
+    const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+    vi.mocked(getWidgetContent).mockClear()
+
+    const req = {
+      params: { provider: {} },
+      query: {},
+      headers: { 'x-forwarded-host': 'api.chronogrove.com' },
+      hostname: '127.0.0.1',
+      cookies: {},
+    }
+    const res = {
+      send: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      end: vi.fn(),
+    }
+
+    await widgetHandler?.(req, res)
+
+    expect(vi.mocked(getWidgetContent)).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(404)
+  })
+
   it('treats array sync provider params as unsupported', async () => {
     const app = await buildApp()
     const syncRouteLayer = app.router.stack.find(

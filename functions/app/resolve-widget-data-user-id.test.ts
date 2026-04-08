@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Request } from 'express'
+import type { DocumentStore } from '../ports/document-store.js'
 import {
   firstQueryString,
   resolveWidgetDataUserIdFromPublicQuery,
@@ -65,6 +66,14 @@ describe('resolveWidgetDataUserIdFromPublicQuery', () => {
     expect(result).toBe('not_found')
   })
 
+  it('returns not_found when claim missing and store has no legacy username resolver', async () => {
+    const bareStore = {
+      getDocument: vi.fn().mockResolvedValue(null),
+    } as unknown as DocumentStore
+    const result = await resolveWidgetDataUserIdFromPublicQuery(req({ username: 'cool-user' }), bareStore)
+    expect(result).toBe('not_found')
+  })
+
   it('prefers uid over username', async () => {
     const result = await resolveWidgetDataUserIdFromPublicQuery(
       req({ uid: 'win-uid', username: 'cool-user' }),
@@ -77,5 +86,11 @@ describe('resolveWidgetDataUserIdFromPublicQuery', () => {
 describe('firstQueryString', () => {
   it('reads first array element', () => {
     expect(firstQueryString(['a', 'b'])).toBe('a')
+  })
+
+  it('returns undefined when first array element is not a usable string', () => {
+    expect(firstQueryString(['   ', 'b'])).toBeUndefined()
+    expect(firstQueryString([1])).toBeUndefined()
+    expect(firstQueryString([])).toBeUndefined()
   })
 })
