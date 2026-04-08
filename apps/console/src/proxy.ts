@@ -1,4 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { primaryHostLineFromHeaders } from '@/lib/request-host-headers'
+import { tenantStatusSlugForHost } from '@/lib/tenant-api-root-map'
+
+/** Next.js proxy: scanner blocking + optional `/` → `/u/{slug}` for hosts in `NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`. See `docs/APP_HOSTING.md`. */
 
 const SCANNER_PREFIXES = [
   '/wp-admin',
@@ -44,11 +48,18 @@ const SCANNER_PATTERN = new RegExp(
 const PHP_PROBE = /\.php$/i
 
 export function proxy(request: NextRequest) {
-  // TODO(hostname-routing): Registered tenant API hostnames should not serve the full console
-  // (status-only + link to Chronogrove). Track as follow-up to onboarding DNS (#254).
   const path = request.nextUrl.pathname
   if (SCANNER_PATTERN.test(path) || PHP_PROBE.test(path)) {
     return new NextResponse(null, { status: 403 })
+  }
+
+  if (path === '/' || path === '') {
+    const slug = tenantStatusSlugForHost(primaryHostLineFromHeaders(request.headers))
+    if (slug) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/u/${slug}`
+      return NextResponse.rewrite(url)
+    }
   }
 
   return NextResponse.next()

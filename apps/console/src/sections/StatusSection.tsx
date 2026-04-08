@@ -3,17 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { getAppBaseUrl } from '../lib/baseUrl'
+import {
+  WIDGET_STATUS_PROVIDERS,
+  extractLastSyncedFromWidgetResponse,
+  formatSyncedDisplay,
+} from '../lib/widget-status'
 import styles from './StatusSection.module.css'
 
-const WIDGET_ROUTES = [
-  { id: 'discogs', label: 'Discogs widget' },
-  { id: 'flickr', label: 'Flickr widget' },
-  { id: 'github', label: 'GitHub widget' },
-  { id: 'goodreads', label: 'Goodreads widget' },
-  { id: 'instagram', label: 'Instagram widget' },
-  { id: 'spotify', label: 'Spotify widget' },
-  { id: 'steam', label: 'Steam widget' },
-] as const
+const WIDGET_ROUTES = WIDGET_STATUS_PROVIDERS
 
 const CLIENT_AUTH_ROUTE = {
   id: 'client-auth-config',
@@ -34,28 +31,6 @@ export interface RowState {
 
 function pathForRow(row: StatusRoute): string {
   return 'path' in row ? row.path : `/api/widgets/${row.id}`
-}
-
-function extractLastSynced(json: unknown): string | null {
-  if (!json || typeof json !== 'object') return null
-  const root = json as Record<string, unknown>
-  const payload = root.payload
-  if (!payload || typeof payload !== 'object') return null
-  const meta = (payload as Record<string, unknown>).meta
-  if (!meta || typeof meta !== 'object') return null
-  const synced = (meta as Record<string, unknown>).synced
-  if (synced == null) return null
-  if (typeof synced === 'string') {
-    const d = new Date(synced)
-    return Number.isNaN(d.getTime()) ? synced : d.toISOString()
-  }
-  if (typeof synced === 'object' && synced !== null && '_seconds' in synced) {
-    const sec = Number((synced as { _seconds?: unknown })._seconds)
-    if (!Number.isFinite(sec)) return null
-    const ns = Number((synced as { _nanoseconds?: unknown })._nanoseconds ?? 0)
-    return new Date(sec * 1000 + ns / 1e6).toISOString()
-  }
-  return null
 }
 
 const initialRow = (): RowState => ({
@@ -99,11 +74,9 @@ export function StatusSection() {
           const ms = Math.round(performance.now() - start)
           let lastSynced: string | null = null
           if (res.ok) {
-            const ct = res.headers.get('content-type') ?? ''
-            if (ct.includes('application/json')) {
-              const data = await res.json().catch(() => null)
-              lastSynced = r.id === 'client-auth-config' ? null : extractLastSynced(data)
-            }
+            const data = await res.json().catch(() => null)
+            lastSynced =
+              r.id === 'client-auth-config' ? null : extractLastSyncedFromWidgetResponse(data)
           }
           setRows((prev) => ({
             ...prev,
@@ -138,17 +111,6 @@ export function StatusSection() {
   useEffect(() => {
     void runChecks()
   }, [runChecks])
-
-  const formatSynced = (iso: string | null) => {
-    if (!iso) return '—'
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return iso
-    if (d.getTime() === 0) return '—'
-    return d.toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    })
-  }
 
   return (
     <>
@@ -211,7 +173,9 @@ export function StatusSection() {
                     )}
                   </td>
                   <td>{s.loading ? '…' : s.ms != null ? `${s.ms}ms` : '—'}</td>
-                  <td className={styles.syncedCell}>{s.loading ? '…' : formatSynced(s.lastSynced)}</td>
+                  <td className={styles.syncedCell}>
+                    {s.loading ? '…' : formatSyncedDisplay(s.lastSynced)}
+                  </td>
                 </tr>
               )
             })}

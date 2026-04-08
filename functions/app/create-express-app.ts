@@ -34,6 +34,7 @@ import { registerFlickrOAuthRoutes } from './oauth-flickr.js'
 import { registerGitHubOAuthRoutes } from './oauth-github.js'
 import { toStoredDateTime } from '../utils/time.js'
 import { hostnameCnameChainsTo } from '../utils/dns-cname-verify.js'
+import { resolveWidgetDataUserIdFromPublicQuery } from './resolve-widget-data-user-id.js'
 
 interface LoggerLike {
   error: (message: string, ...args: unknown[]) => void
@@ -127,6 +128,69 @@ const CSRF_EXCLUDED_PATHS_WIDGET_READS = [
   /** Discogs redirects here without CSRF headers. */
   { path: '/api/oauth/discogs/callback', type: 'exact' as const },
 ]
+/** Host or left label before the first `:port` segment (IPv6-in-headers stays consistent with prior `split(':')[0]` usage). */
+function hostPortFirst(hostOrHostPort: string): string {
+  const colon = hostOrHostPort.indexOf(':')
+  const host = colon === -1 ? hostOrHostPort : hostOrHostPort.slice(0, colon)
+  return host.toLowerCase()
+}
+
+/**
+ * When the request's own Host / X-Forwarded-Host already name a tenant-facing entrypoint,
+ * `x-chronogrove-public-host` must not override them (any client could set that header).
+ * SSR status probes call the Functions URL directly; there the Host is infrastructure-only,
+ * so the console-sent probe header is applied.
+ */
+function isInfrastructurePublicWidgetHostname(hostname: string): boolean {
+  const h = hostname.toLowerCase()
+  if (!h) {
+    return true
+  }
+  if (
+    h === 'localhost' ||
+    h === '127.0.0.1' ||
+    h === '::1' ||
+    h === '[::1]' ||
+    h === '::ffff:127.0.0.1' ||
+    h === '[::ffff:127.0.0.1]'
+  ) {
+    return true
+  }
+  if (h.endsWith('.cloudfunctions.net')) {
+    return true
+  }
+  if (h.endsWith('.run.app')) {
+    return true
+  }
+  return false
+}
+
+/**
+ * Hostname for widget user resolution: `X-Forwarded-Host` (first hop), then `Host` / `req.hostname`.
+ * `x-chronogrove-public-host` is honored only when that primary hostname looks like an internal
+ * Functions / Cloud Run / loopback target (set by the console SSR widget status fetch).
+ */
+function resolveOriginalRequestHostname(req: express.Request): string {
+  const probeRaw = (req.headers['x-chronogrove-public-host'] as string | undefined)
+    ?.split(',')[0]
+    ?.trim()
+  const probeParsed = probeRaw ? hostPortFirst(probeRaw) : ''
+
+  const xfRaw = (req.headers['x-forwarded-host'] as string | undefined)?.split(',')[0]?.trim()
+  const fromForwarded = xfRaw ? hostPortFirst(xfRaw) : ''
+  const fromHost = (req.hostname || '').toLowerCase()
+
+  const primary = fromForwarded || fromHost
+
+  if (probeParsed && isInfrastructurePublicWidgetHostname(primary)) {
+    return probeParsed
+  }
+  if (fromForwarded) {
+    return fromForwarded
+  }
+  return fromHost
+}
+
 function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader?.startsWith('Bearer ')) {
     return null
@@ -548,7 +612,14 @@ export function createExpressApp({
 
   expressApp.get(
     '/api/widgets/:provider',
-    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 100 }),
+    rateLimit({
+      ...rateLimitDefaults,
+      windowMs: 15 * 60 * 1000,
+      limit: 100,
+      // One bucket per path so parallel SSR status checks (one request per provider) do not share
+      // a single IP+route counter and trip 429/empty failures.
+      keyGenerator: (req) => `${getRateLimitKey(req)}:${req.path}`,
+    }),
     async (req, res) => {
       const providerParam = req.params.provider
       const provider =
@@ -559,16 +630,34 @@ export function createExpressApp({
             : undefined
 
       if (!provider || !isWidgetId(provider)) {
-        const response = buildFailureResponse({
-          message: 'A valid provider type is required.',
-        })
-        res.status(404).send(response)
-        res.end()
+        res.status(404).json(
+          buildFailureResponse({
+            message: 'A valid provider type is required.',
+          }),
+        )
         return
       }
 
-      const originalHostname = (req.headers['x-forwarded-host'] as string) || req.hostname
-      const userId = getWidgetUserIdForHostname(originalHostname)
+      let originalHostname: string
+      let fromQuery: Awaited<ReturnType<typeof resolveWidgetDataUserIdFromPublicQuery>>
+      try {
+        originalHostname = resolveOriginalRequestHostname(req)
+        fromQuery = await resolveWidgetDataUserIdFromPublicQuery(req, documentStore)
+      } catch (err) {
+        logger.error('Error resolving public widget user', {
+          provider,
+          error: err instanceof Error ? err.message : err,
+        })
+        res.status(500).json(buildFailureResponse(err))
+        return
+      }
+
+      if (fromQuery === 'not_found') {
+        res.status(404).json(buildFailureResponse({ message: 'Unknown user.' }))
+        return
+      }
+      const userId =
+        fromQuery === 'skip' ? getWidgetUserIdForHostname(originalHostname) : fromQuery.userId
       const viewerUid = await resolveViewerUidForPublicOnboarding(req)
 
       try {
@@ -584,7 +673,7 @@ export function createExpressApp({
           'Cache-Control',
           'public, max-age=0, s-maxage=300, must-revalidate, stale-while-revalidate=60',
         )
-        res.status(200).send(response)
+        res.status(200).json(response)
       } catch (err) {
         logger.error('Error loading widget content', {
           provider,
@@ -592,10 +681,8 @@ export function createExpressApp({
           error: err instanceof Error ? err.message : err,
         })
         const response = buildFailureResponse(err)
-        res.status(500).send(response)
+        res.status(500).json(response)
       }
-
-      res.end()
     }
   )
 

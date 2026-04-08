@@ -18,6 +18,8 @@ Provider-neutral backend for Chronogrove: an Express app that serves widget and 
 
 Entry point is **`index.js`**: it composes the backend through the bootstrap layer, then registers the HTTP function, scheduled functions, and auth triggers on the selected runtime platform.
 
+**Public widgets:** `GET /api/widgets/:provider` is unauthenticated and cache-friendly. Callers on a **shared** API host may pass **`?uid=`** or **`?username=`** to select the Firestore user; **dedicated** tenant API hostnames can map to a user via runtime config (**`WIDGET_USER_ID_BY_HOSTNAME`**). SSR status checks may send **`x-chronogrove-public-host`**. See the root [README](../README.md#api-surface-high-level) and [docs/APP_HOSTING.md](../docs/APP_HOSTING.md).
+
 ## Setup, run, deploy
 
 - **Environment:** See [ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md) for `.env` (local) and production secret (`FUNCTIONS_CONFIG_EXPORT`).

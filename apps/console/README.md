@@ -1,6 +1,6 @@
 # Chronogrove console (Next.js app)
 
-Next.js operator console for the Chronogrove API: sign-in (Google / email / phone), schema, status, and sync testing. Production builds are deployed with **Firebase App Hosting** (SSR); the Cloud Function `app` still serves **`/api/**`** (rewritten in `next.config.mjs` in prod, and via the dev proxy locally).
+Next.js operator console for the Chronogrove API: sign-in (Google / email / phone), schema, status, sync testing, and **public tenant status** pages. Production builds are deployed with **Firebase App Hosting** (SSR); the Cloud Function `app` still serves **`/api/**`** (rewritten in `next.config.mjs` in prod, and via the dev emulator URL locally). **`/widgets/**`** is rewritten the same way to **`/api/widgets/**`** on Functions.
 
 The repo is a **pnpm + Turborepo** monorepo. Run all commands from the **repo root** with `pnpm run …` (see root [README](../README.md#monorepo) for the full command list).
 
@@ -15,14 +15,14 @@ pnpm install
 ## Develop locally
 
 **Option A – Next.js dev server (hot reload)**  
-Run the app and proxy `/api` to the Cloud Functions emulator (`next.config.mjs` `beforeFiles` rewrites; dev only):
+Run the app and proxy **`/api`** and **`/widgets`** to the Cloud Functions emulator (`next.config.mjs` `beforeFiles` rewrites; dev only):
 
 ```bash
 # from repo root
 pnpm run dev
 ```
 
-Start the Functions (and Auth) emulators in another terminal so `/api` works:
+Start the Functions (and Auth) emulators in another terminal so **`/api`** and **`/widgets`** rewrites work:
 
 ```bash
 # from repo root
@@ -30,6 +30,8 @@ firebase emulators:start --only functions,auth
 ```
 
 Then open **http://localhost:5173**.
+
+**Environment overrides** — Copy [`.env.template`](.env.template) to **`.env.local`** in this directory (`apps/console/`). Next.js loads `.env.local` automatically when you run `next dev` here (restart after edits). Use it for `NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`, custom `NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN`, etc.
 
 **Option B – `dev:full` from repo root**  
 Starts **Auth, Firestore, and Functions** emulators plus Next dev. App Hosting is **not** started here (it would try to run a second `next dev` on the same port). Use Option A split terminals if you omit Firestore during UI-only work.
@@ -84,3 +86,6 @@ Both use **`rootDir`** `apps/console/` in [`firebase.json`](../firebase.json). S
 | `/auth/` | Sign-in UI |
 | `/endpoints/` | Authenticated API testing (not `/api/…` — that prefix is reserved for the Cloud Function) |
 | `/sync/` | Sync testing (manual sync via JSON or **SSE** `/api/widgets/sync/:provider/stream`) |
+| `/u/[username]` | Public widget API status (SSR). Append **`?status_debug=1`** for a one-off debug column on failed probes. |
+| `/` | On hosts listed in **`NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`** (or **`TENANT_API_ROOT_TO_USERNAME`**), internally the same as **`/u/{slug}`**; URL bar stays **`/`** (`src/proxy.ts`). |
+| `/widgets/...` | Browser-facing alias: rewritten to **`/api/widgets/...`** on Cloud Functions (same origin). |

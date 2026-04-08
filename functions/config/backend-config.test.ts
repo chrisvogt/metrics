@@ -222,14 +222,12 @@ describe('backend config', () => {
     })
   })
 
-  it('returns the default hostname mapping when no overrides are provided', async () => {
+  it('returns an empty default hostname mapping when no overrides are provided', async () => {
     const { getBackendPathConfig } = await import('./backend-config.js')
 
     expect(getBackendPathConfig()).toEqual({
       defaultWidgetUserId: 'chrisvogt',
-      widgetUserIdByHostname: {
-        'api.chronogrove.com': 'chronogrove',
-      },
+      widgetUserIdByHostname: {},
       firestoreTenantRoutingEnabled: false,
     })
   })

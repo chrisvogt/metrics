@@ -5,7 +5,7 @@ import type {
   FlickrWidgetContent,
   FlickrWidgetDocument,
 } from '../types/widget-content.js'
-import { toUserWidgetContentPath } from './widget-document-store.js'
+import { toDateOrDefault, toUserWidgetContentPath } from './widget-document-store.js'
 
 const getFlickrWidgetContent = async (
   userId: string = getDefaultWidgetUserId(),
@@ -19,6 +19,17 @@ const getFlickrWidgetContent = async (
 
     if (!widgetContent) {
       throw new Error('No Flickr data found in DocumentStore')
+    }
+
+    const meta = widgetContent.meta as Record<string, unknown> | null | undefined
+    if (meta != null && typeof meta === 'object' && meta.synced != null) {
+      return {
+        ...widgetContent,
+        meta: {
+          ...meta,
+          synced: toDateOrDefault(meta.synced),
+        },
+      } as typeof widgetContent
     }
 
     return widgetContent

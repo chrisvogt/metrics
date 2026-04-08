@@ -22,6 +22,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       include: [
+        'src/app/u/[username]/page.tsx',
         'src/auth/establishApiSession.ts',
         'src/components/user-settings/SettingsProfileIdentity.tsx',
         'src/lib/baseUrl.ts',
@@ -32,6 +33,10 @@ export default defineConfig({
         'src/lib/overviewMetrics.ts',
         'src/lib/readDiscogsAuthModeFromSyncPayload.ts',
         'src/lib/readFlickrAuthModeFromSyncPayload.ts',
+        'src/lib/server-widget-fetch-origin.ts',
+        'src/lib/tenant-api-root-map.ts',
+        'src/lib/widget-status.ts',
+        'src/proxy.ts',
       ],
       all: true,
       // JSX-heavy components (e.g. settings identity) have many presentational branches;

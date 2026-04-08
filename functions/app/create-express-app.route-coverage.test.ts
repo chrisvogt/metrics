@@ -203,9 +203,10 @@ describe('createExpressApp route coverage', () => {
     })
 
     const handler = findRouteHandler(app, 'get', '/api/widgets/:provider')
+    const json = vi.fn()
     const send = vi.fn()
     const set = vi.fn()
-    const status = vi.fn().mockReturnValue({ send })
+    const status = vi.fn().mockReturnValue({ send, json })
     const end = vi.fn()
 
     await handler(
@@ -214,7 +215,7 @@ describe('createExpressApp route coverage', () => {
         headers: {},
         hostname: 'api.chrisvogt.me',
       },
-      { set, status, send, end },
+      { set, status, send, json, end },
     )
 
     expect(getWidgetContent).toHaveBeenCalledWith(
@@ -224,8 +225,8 @@ describe('createExpressApp route coverage', () => {
       { integrationLookupUserId: undefined },
     )
     expect(status).toHaveBeenCalledWith(200)
-    expect(send).toHaveBeenCalled()
-    expect(end).toHaveBeenCalled()
+    expect(json).toHaveBeenCalled()
+    expect(end).not.toHaveBeenCalled()
   })
 
   it('returns 401 when session auth reaches the defensive no-token branch', async () => {

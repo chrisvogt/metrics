@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 import type { User, Auth, ConfirmationResult } from 'firebase/auth'
 import {
   signInWithPopup,
@@ -13,6 +14,7 @@ import {
   onAuthStateChanged,
   sendEmailVerification,
 } from 'firebase/auth'
+import { isAuthlessPublicStatusSurface } from '@/lib/tenant-api-root-map'
 import { getFirebaseApp } from './firebase'
 import { apiClient } from './apiClient'
 import {
@@ -44,6 +46,12 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const pathname = usePathname()
+  /** Hostname is stable for same-origin SPA navigations; omit from deps to avoid extra effect runs. */
+  const authlessPublicSurface = useMemo(() => {
+    const host = typeof window !== 'undefined' ? window.location.hostname : undefined
+    return isAuthlessPublicStatusSurface(pathname, host)
+  }, [pathname])
   const [user, setUser] = useState<User | null>(null)
   const [apiSessionReady, setApiSessionReady] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -53,11 +61,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     let cancelled = false
-    getFirebaseApp()
-      .then(({ auth: a }) => {
+    let unsubscribeAuth: (() => void) | undefined
+
+    if (authlessPublicSurface) {
+      setAuth(null)
+      setUser(null)
+      setApiSessionReady(true)
+      setLoading(false)
+      setError(null)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    setLoading(true)
+    void (async () => {
+      try {
+        const { auth: a } = await getFirebaseApp()
         if (cancelled) return
         setAuth(a)
-        const unsub = onAuthStateChanged(a, async (u) => {
+        unsubscribeAuth = onAuthStateChanged(a, async (u) => {
           if (cancelled) return
           if (!u) {
             lastEmailVerifiedRef.current = null
@@ -88,18 +111,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setLoading(false)
           }
         })
-        return () => unsub()
-      })
-      .catch((e) => {
+      } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : String(e))
           setLoading(false)
         }
-      })
+      }
+    })()
+
     return () => {
       cancelled = true
+      unsubscribeAuth?.()
     }
-  }, [])
+  }, [authlessPublicSurface])
 
   const googleProvider = useMemo(() => {
     const p = new GoogleAuthProvider()

@@ -67,8 +67,20 @@ const nextConfig = {
             destination: `${cloudFunctionsAppOrigin}/api/:path*`,
           }
 
+    const widgetsRewrite =
+      process.env.NODE_ENV === 'development'
+        ? {
+            source: '/widgets/:path*',
+            destination:
+              'http://127.0.0.1:5001/personal-stats-chrisvogt/us-central1/app/api/widgets/:path*',
+          }
+        : {
+            source: '/widgets/:path*',
+            destination: `${cloudFunctionsAppOrigin}/api/widgets/:path*`,
+          }
+
     return {
-      beforeFiles: [apiRewrite],
+      beforeFiles: [apiRewrite, widgetsRewrite],
     }
   },
 }

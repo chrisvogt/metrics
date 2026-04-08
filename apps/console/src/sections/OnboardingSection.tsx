@@ -529,7 +529,7 @@ export function OnboardingSection() {
 
             <div className={styles.usernameField}>
               <div className={styles.usernameInputWrap}>
-                <span className={styles.usernamePrefix}>chronogrove.com/u/</span>
+                <span className={styles.usernamePrefix}>api.chronogrove.com/u/</span>
                 <input
                   type="text"
                   value={username}

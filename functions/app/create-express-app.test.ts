@@ -5,10 +5,19 @@ import os from 'os'
 import path from 'path'
 
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
+import { getRateLimitKey } from '../middleware/rate-limit-key.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
+import type { Request } from 'express'
+
+const { capturedRateLimitOptions } = vi.hoisted(() => ({
+  capturedRateLimitOptions: [] as Array<Record<string, unknown>>,
+}))
 
 vi.mock('express-rate-limit', () => ({
-  rateLimit: vi.fn(() => (_req, _res, next) => next()),
+  rateLimit: vi.fn((opts: Record<string, unknown>) => {
+    capturedRateLimitOptions.push(opts)
+    return (_req: unknown, _res: unknown, next?: () => void) => next?.()
+  }),
 }))
 
 vi.mock('../jobs/delete-user.js', () => ({
@@ -16,7 +25,7 @@ vi.mock('../jobs/delete-user.js', () => ({
 }))
 
 vi.mock('../widgets/get-widget-content.js', () => ({
-  getWidgetContent: vi.fn(() => Promise.resolve({ mock: 'widget-content' })),
+  getWidgetContent: vi.fn(() => Promise.resolve({ payload: { mock: 'widget-content' } })),
   validWidgetIds: ['spotify'],
 }))
 
@@ -48,6 +57,7 @@ describe('createExpressApp media route', () => {
   const documentStore = {
     getDocument: vi.fn(),
     setDocument: vi.fn(),
+    legacyUsernameOwnerUid: vi.fn(),
   }
 
   const syncJobQueue = {
@@ -76,6 +86,7 @@ describe('createExpressApp media route', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    capturedRateLimitOptions.length = 0
   })
 
   afterEach(() => {
@@ -253,6 +264,7 @@ describe('createExpressApp auth and session branches', () => {
   const documentStore = {
     getDocument: vi.fn(),
     setDocument: vi.fn(),
+    legacyUsernameOwnerUid: vi.fn(),
   }
 
   const syncJobQueue = {
@@ -569,6 +581,263 @@ describe('createExpressApp auth and session branches', () => {
     await request(app).get('/no-matching-route-for-coverage').expect(404)
   })
 
+  describe('GET /api/widgets/:provider query user overrides', () => {
+    it('uses uid query param when valid', async () => {
+      const app = await buildApp()
+      const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+
+      await request(app)
+        .get('/api/widgets/spotify')
+        .query({ uid: 'override-uid-abc' })
+        .set('x-forwarded-host', 'api.chronogrove.com')
+        .expect(200)
+
+      expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+        'spotify',
+        'override-uid-abc',
+        documentStore,
+        expect.anything()
+      )
+    })
+
+    it('ignores x-chronogrove-public-host when x-forwarded-host is a non-infrastructure hostname', async () => {
+      const prev = process.env.WIDGET_USER_ID_BY_HOSTNAME
+      process.env.WIDGET_USER_ID_BY_HOSTNAME = JSON.stringify({
+        'api.legitimate.example': 'user-from-forwarded',
+        'probe-only.example': 'user-from-probe',
+      })
+      try {
+        const app = await buildApp()
+        const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+        vi.mocked(getWidgetContent).mockClear()
+
+        await request(app)
+          .get('/api/widgets/spotify')
+          .set('x-forwarded-host', 'api.legitimate.example')
+          .set('x-chronogrove-public-host', 'probe-only.example')
+          .expect(200)
+
+        expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+          'spotify',
+          'user-from-forwarded',
+          documentStore,
+          expect.anything(),
+        )
+      } finally {
+        if (prev === undefined) {
+          delete process.env.WIDGET_USER_ID_BY_HOSTNAME
+        } else {
+          process.env.WIDGET_USER_ID_BY_HOSTNAME = prev
+        }
+      }
+    })
+
+    it('honors x-chronogrove-public-host when Host is a Cloud Functions hostname (SSR probe)', async () => {
+      const prev = process.env.WIDGET_USER_ID_BY_HOSTNAME
+      process.env.WIDGET_USER_ID_BY_HOSTNAME = JSON.stringify({
+        'api.tenant.example': 'ssr-tenant-user',
+      })
+      try {
+        const app = await buildApp()
+        const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+        vi.mocked(getWidgetContent).mockClear()
+
+        await request(app)
+          .get('/api/widgets/spotify')
+          .set('Host', 'us-central1-demo.cloudfunctions.net')
+          .set('x-chronogrove-public-host', 'api.tenant.example')
+          .expect(200)
+
+        expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+          'spotify',
+          'ssr-tenant-user',
+          documentStore,
+          expect.anything(),
+        )
+      } finally {
+        if (prev === undefined) {
+          delete process.env.WIDGET_USER_ID_BY_HOSTNAME
+        } else {
+          process.env.WIDGET_USER_ID_BY_HOSTNAME = prev
+        }
+      }
+    })
+
+    it('returns 404 when uid query is invalid', async () => {
+      const app = await buildApp()
+
+      const response = await request(app)
+        .get('/api/widgets/spotify')
+        .query({ uid: 'bad!uid' })
+        .expect(404)
+
+      expect(response.body).toEqual({ ok: false, error: 'Unknown user.' })
+    })
+
+    it('resolves username via tenant_usernames claim', async () => {
+      vi.mocked(documentStore.getDocument).mockResolvedValueOnce({ uid: 'claimed-uid' })
+      const app = await buildApp()
+      const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+
+      await request(app)
+        .get('/api/widgets/spotify')
+        .query({ username: 'valid-user' })
+        .set('x-forwarded-host', 'api.chronogrove.com')
+        .expect(200)
+
+      expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+        'spotify',
+        'claimed-uid',
+        documentStore,
+        expect.anything()
+      )
+    })
+
+    it('falls back to legacyUsernameOwnerUid when claim is missing', async () => {
+      vi.mocked(documentStore.getDocument).mockResolvedValueOnce(null)
+      vi.mocked(documentStore.legacyUsernameOwnerUid).mockResolvedValueOnce('legacy-owner-uid')
+      const app = await buildApp()
+      const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+
+      await request(app)
+        .get('/api/widgets/spotify')
+        .query({ username: 'valid-user' })
+        .expect(200)
+
+      expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+        'spotify',
+        'legacy-owner-uid',
+        documentStore,
+        expect.anything()
+      )
+    })
+
+    it('returns 404 for unknown username slug', async () => {
+      vi.mocked(documentStore.getDocument).mockResolvedValueOnce(null)
+      vi.mocked(documentStore.legacyUsernameOwnerUid).mockResolvedValueOnce(null)
+      const app = await buildApp()
+
+      const response = await request(app)
+        .get('/api/widgets/spotify')
+        .query({ username: 'valid-user' })
+        .expect(404)
+
+      expect(response.body).toEqual({ ok: false, error: 'Unknown user.' })
+    })
+
+    it('returns JSON 500 when username resolution fails (e.g. Firestore error)', async () => {
+      vi.mocked(documentStore.getDocument).mockRejectedValueOnce(new Error('firestore unavailable'))
+      const app = await buildApp()
+
+      const response = await request(app)
+        .get('/api/widgets/spotify')
+        .query({ username: 'valid-user' })
+        .expect(500)
+
+      expect(response.body).toEqual({ ok: false, error: 'firestore unavailable' })
+      expect(response.headers['content-type']).toMatch(/json/)
+    })
+
+    it('returns 404 for malformed username query', async () => {
+      const app = await buildApp()
+
+      const response = await request(app)
+        .get('/api/widgets/spotify')
+        .query({ username: 'A' })
+        .expect(404)
+
+      expect(response.body).toEqual({ ok: false, error: 'Unknown user.' })
+    })
+
+    it('prefers uid over username when both are present', async () => {
+      vi.mocked(documentStore.getDocument).mockResolvedValueOnce({ uid: 'from-claim' })
+      const app = await buildApp()
+      const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+
+      await request(app)
+        .get('/api/widgets/spotify')
+        .query({ uid: 'explicit-uid', username: 'valid-user' })
+        .expect(200)
+
+      expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+        'spotify',
+        'explicit-uid',
+        documentStore,
+        expect.anything()
+      )
+    })
+  })
+
+  it('uses first element when GET /api/widgets/:provider param is an array', async () => {
+    const app = await buildApp()
+    const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+    vi.mocked(getWidgetContent).mockClear()
+
+    const widgetRouteLayer = app.router.stack.find(
+      (layer) => layer.route?.path === '/api/widgets/:provider'
+    )
+    const widgetHandler = widgetRouteLayer?.route?.stack.at(-1)?.handle
+
+    expect(widgetHandler).toBeTypeOf('function')
+
+    const req = {
+      params: { provider: ['spotify'] },
+      query: {},
+      headers: { 'x-forwarded-host': 'api.chronogrove.com' },
+      hostname: '127.0.0.1',
+      cookies: {},
+    }
+    const res = {
+      send: vi.fn(),
+      json: vi.fn().mockReturnThis(),
+      status: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      end: vi.fn(),
+    }
+
+    await widgetHandler?.(req, res)
+
+    expect(vi.mocked(getWidgetContent)).toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(200)
+    expect(res.json).toHaveBeenCalled()
+  })
+
+  it('treats non-string non-array widget :provider as missing', async () => {
+    const app = await buildApp()
+    const widgetRouteLayer = app.router.stack.find(
+      (layer) => layer.route?.path === '/api/widgets/:provider'
+    )
+    const widgetHandler = widgetRouteLayer?.route?.stack.at(-1)?.handle
+
+    expect(widgetHandler).toBeTypeOf('function')
+
+    const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+    vi.mocked(getWidgetContent).mockClear()
+
+    const req = {
+      params: { provider: {} },
+      query: {},
+      headers: { 'x-forwarded-host': 'api.chronogrove.com' },
+      hostname: '127.0.0.1',
+      cookies: {},
+    }
+    const res = {
+      send: vi.fn(),
+      json: vi.fn().mockReturnThis(),
+      status: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      end: vi.fn(),
+    }
+
+    await widgetHandler?.(req, res)
+
+    expect(vi.mocked(getWidgetContent)).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(404)
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ ok: false, error: 'A valid provider type is required.' }),
+    )
+  })
+
   it('treats array sync provider params as unsupported', async () => {
     const app = await buildApp()
     const syncRouteLayer = app.router.stack.find(
@@ -595,5 +864,21 @@ describe('createExpressApp auth and session branches', () => {
     )
     expect(res.status).toHaveBeenCalledWith(400)
     expect(res.send).toHaveBeenCalledWith('Unrecognized or unsupported provider.')
+  })
+
+  it('widget GET rateLimit keyGenerator includes request path', async () => {
+    await buildApp()
+    const withKeyGen = capturedRateLimitOptions.find(
+      (o) => typeof o.keyGenerator === 'function' && o.keyGenerator !== getRateLimitKey
+    )
+    expect(withKeyGen).toBeDefined()
+    const keyGen = withKeyGen!.keyGenerator as (req: Request) => string
+    // No ip / x-forwarded-for / socket so getRateLimitKey uses its local-dev fallback (avoids ipKeyGenerator on the mocked package).
+    const req = {
+      method: 'GET',
+      path: '/api/widgets/spotify',
+      headers: {},
+    } as Request
+    expect(keyGen(req)).toBe('GET:/api/widgets/spotify:local-dev:/api/widgets/spotify')
   })
 })

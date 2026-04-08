@@ -14,7 +14,9 @@
   </a>
 </p>
 
-**Chronogrove** is the engine behind provider-backed widgets on [www.chrisvogt.me](https://www.chrisvogt.me): it syncs third-party accounts (Discogs, Steam, Instagram, Spotify, Goodreads, Flickr, and more), stores normalized widget documents, and serves them over a stable JSON API. Firebase is the reference runtime (**App Hosting** for the operator console, **Cloud Functions** for **`/api`**, and **Firestore**); the design stays portable enough to consider other hosts later.
+**Chronogrove** is the engine behind provider-backed widgets on [www.chrisvogt.me](https://www.chrisvogt.me): it syncs third-party accounts (Discogs, Steam, Instagram, Spotify, Goodreads, Flickr, and more), stores normalized widget documents, and serves them over a stable JSON API. Firebase is the reference runtime (**App Hosting** for the operator console and tenant-facing API domains, **Cloud Functions** for **`/api`**, and **Firestore**); the design stays portable enough to consider other hosts later.
+
+**Production hostnames (target):** **`console.chronogrove.com`** is the main operator UI (sign-in, schema, sync, settings). **`api.chronogrove.com`** is the shared public API surface: **`/u/{username}`** (status), **`/widgets/:provider`**, and **`GET /api/widgets/:provider`** with optional **`?username=`** / **`?uid=`** where the host does not map a single tenant. **`chronogrove.com`** will eventually be a marketing site (separate from the console). Today you may still use **`metrics.chrisvogt.me`** and per-user domains such as **`api.chrisvogt.me`** while custom domains are wired in Firebase; see [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
 
 Consumer experiences today include the open-source [**Gatsby theme Chronogrove**](https://github.com/chrisvogt/gatsby-theme-chronogrove). The goal is for the same API to power other site integrations (WordPress and similar) and, over time, shareable **Web Components** (and other HTML-native building blocks) that call the public routes directly.
 
@@ -57,7 +59,7 @@ If `/api` calls fail in local dev, the Functions emulator is usually not reachab
 - Supports scheduled sync jobs plus manual admin-triggered sync.
 - Uses Firebase Auth (Google, email/password, phone) with HTTP-only session cookies and JWT fallback.
 - Runs locally with Firebase emulators.
-- Serves the Next.js operator dashboard at [metrics.chrisvogt.me](https://metrics.chrisvogt.me).
+- Serves the Next.js operator console on Firebase App Hosting ([metrics.chrisvogt.me](https://metrics.chrisvogt.me) today; **`console.chronogrove.com`** as the primary Chronogrove UI).
 
 > Note: `github` is a readable widget provider, but **not** part of the scheduled/manual sync queue.
 
@@ -65,29 +67,53 @@ If `/api` calls fail in local dev, the Functions emulator is usually not reachab
 
 This service backs widgets on [www.chrisvogt.me](https://www.chrisvogt.me) and any client using the same API contract (for example the [Gatsby theme](https://github.com/chrisvogt/gatsby-theme-chronogrove)). Each diagram is intentionally focused on one path. For queue semantics and job document fields, see [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md).
 
-### 0) Production edge (operator console)
+### Hostname roles (Chronogrove)
 
-The dashboard is **SSR on Firebase App Hosting**. The browser calls **`/api/*` on the same origin**; Next.js **rewrites** those requests to the **`app`** Cloud Function (see `apps/console/next.config.mjs`). Public widget traffic from other sites still hits Functions directly (diagrams 1–2).
+Custom domains attach to the **same** App Hosting backend (`apps/console`) unless you split marketing later. **`console.chronogrove.com`** is the operator experience; **`api.chronogrove.com`** (and tenant **`api.$user`**) expose JSON/widgets/status without a second stack.
+
+```mermaid
+flowchart TB
+  ah[Firebase App Hosting<br/>Next.js · apps/console]
+  cf[Cloud Functions · app]
+  fs[(Firestore)]
+  subgraph dns[Target hostnames]
+    con[console.chronogrove.com<br/>Operator UI]
+    api[api.chronogrove.com<br/>Public API · /u · /widgets · ?params]
+    mkt[chronogrove.com<br/>Marketing · future]
+  end
+  con --> ah
+  api --> ah
+  mkt -.->|future| mktNote[Separate site or route]
+  ah -->|rewrites /api · /widgets| cf
+  cf --> fs
+```
+
+### 0) Production edge (App Hosting + Cloud Functions)
+
+The app is **SSR on Firebase App Hosting**. On whatever host the user opens (**`console.*`**, **`metrics.chrisvogt.me`**, **`api.chronogrove.com`**, **`api.tenant.example`**, …), the browser calls **`/api/*` and `/widgets/*` on that same origin**; Next.js **rewrites** both to the **`app`** Cloud Function (`/api/...` and `/api/widgets/...` respectively; see `apps/console/next.config.mjs`). That gives short widget URLs on tenant API domains without a second hostname. Third-party sites can still call the **Functions** URL or your **api.*** host from their own pages (diagram 1). **CORS** for credentialed cross-origin **`/api`** traffic uses a **fixed regex allowlist** in `functions/app/create-express-app.ts`, not tenant hostname settings—see [GitHub #289](https://github.com/chrisvogt/chronogrove/issues/289) (under epic [#252](https://github.com/chrisvogt/chronogrove/issues/252)). Optional **public status** lives at **`/u/{username}`**; hosts in **`NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`** can serve it at **`/`** (internal rewrite in `src/proxy.ts`). Details: [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
 
 ```mermaid
 flowchart TB
   browser[Browser]
-  ah[Firebase App Hosting<br/>Next.js · metrics.chrisvogt.me]
+  ah[Firebase App Hosting<br/>Next.js · console or api.* host]
   cf[Cloud Functions · app<br/>/api/**]
   fs[(Firestore)]
   browser -->|pages, assets, SSR| ah
-  browser -->|same-origin /api/*| ah
+  browser -->|same-origin /api/* · /widgets/*| ah
   ah -->|rewrite / proxy| cf
   cf --> fs
 ```
 
 ### 1) Public widget reads
 
-Unauthenticated widget reads from Firestore-backed content.
+Unauthenticated widget reads from Firestore-backed content. On a **shared** API host (**`api.chronogrove.com`**), **`GET /api/widgets/:provider`** may take optional **`?uid=`** or **`?username=`** to choose the data owner; **per-tenant domains** map **host → user** via Functions runtime config (**`WIDGET_USER_ID_BY_HOSTNAME`**) and can use same-origin **`/widgets/:provider`** (rewritten like diagram 0). Cross-origin **`fetch`** from arbitrary customer sites may require **CORS** to allow their origin; today the allowlist is regex-based in code, not user-configurable ([#289](https://github.com/chrisvogt/chronogrove/issues/289)).
 
 ```mermaid
 flowchart LR
-  site[www.chrisvogt.me or theme] --> fn[Cloud Functions<br/>GET /api/widgets/:provider]
+  site[Third-party site<br/>or Gatsby theme]
+  apiHost[api.* host<br/>same-origin /widgets]
+  site -->|GET + Origin| fn[Cloud Functions<br/>GET /api/widgets/:provider]
+  apiHost -->|rewrite| fn
   fn --> fs[(Firestore<br/>users/.../widget-content)]
 ```
 
@@ -112,11 +138,11 @@ flowchart TB
 
 ### 3) Operator console manual sync
 
-[metrics.chrisvogt.me](https://metrics.chrisvogt.me) (App Hosting) uses Firebase Auth + session cookie. **`/api/*`** reaches Functions via the rewrite shown in diagram 0. Manual sync runs inline (enqueue → claim → process) instead of waiting for worker cadence.
+The signed-in operator UI (**`console.chronogrove.com`** target, [metrics.chrisvogt.me](https://metrics.chrisvogt.me) today) uses Firebase Auth + session cookie. **`/api/*`** reaches Functions via the rewrite in diagram 0. Manual sync runs inline (enqueue → claim → process) instead of waiting for worker cadence.
 
 ```mermaid
 flowchart TB
-  admin[Operator console<br/>App Hosting · Next.js] --> auth[Firebase Auth]
+  admin[Operator console<br/>App Hosting · console.* / metrics.*] --> auth[Firebase Auth]
   admin --> sess[POST /api/auth/session]
   admin --> sync[GET /api/widgets/sync/:provider]
   admin --> stream[GET .../sync/:provider/stream SSE]
@@ -131,7 +157,8 @@ flowchart TB
 
 | Flow | Description |
 |------|-------------|
-| **Widget reads** | `GET /api/widgets/:provider` (public, cached). Reads provider widget document from Firestore and returns it. |
+| **Widget reads** | `GET /api/widgets/:provider` (public, cached). Reads provider widget document from Firestore and returns it. Optional **`?uid=`** / **`?username=`** on shared hosts; hostname map for dedicated API domains. Console same-origin **`/widgets/...`** rewrites to **`/api/widgets/...`**. |
+| **Public status** | `GET /u/{username}` on App Hosting (SSR widget health table), e.g. **`api.chronogrove.com/u/{username}`**. Mapped tenant API hosts can show the same page at **`/`** via `src/proxy.ts`. |
 | **Scheduled sync** | `runSyncPlanner` enqueues queue jobs; `runSyncWorker` periodically claims and executes queued jobs. |
 | **Manual sync** | Authenticated `GET /api/widgets/sync/:provider` (JSON) or `GET /api/widgets/sync/:provider/stream` (SSE). Both use the same queue + inline processing path. |
 | **Auth** | Dashboard signs in with Firebase Auth and creates a session cookie through `POST /api/auth/session`. Protected routes accept session cookie or JWT. |
@@ -237,6 +264,8 @@ Optional examples:
 
 - `GET /api/widgets/:provider` where `provider` is one of:
   - `discogs`, `flickr`, `github`, `goodreads`, `instagram`, `spotify`, `steam`
+- Optional query params on shared API hosts: **`uid`** (Firebase uid) or **`username`** (public slug). Per-tenant API domains use hostname → user mapping on the Functions side instead.
+- Same-origin alias on the operator console (production or dev with rewrites): **`GET /widgets/:provider`** → Cloud Functions **`/api/widgets/:provider`**.
 
 ### Protected sync endpoints
 
@@ -270,8 +299,10 @@ Deploy scripts use **`chronogrove-console`** by default (`pnpm run deploy:hostin
 ### API routing
 
 1. **Production (App Hosting):** Next.js rewrites **`/api/:path*`** to the deployed **`app`** Cloud Functions URL (same-origin in the browser; see `apps/console/next.config.mjs`).
-2. **Local dev:** the same rewrites target the Functions emulator on **`127.0.0.1:5001`** (`beforeFiles` so the App Router does not handle `/api` first).
-3. **Environment for rewrites:** public origins and tenant display host for the Next build are set in **`apps/console/apphosting.yaml`** (`NEXT_PUBLIC_*`); see [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
+2. **Production (App Hosting):** Next.js also rewrites **`/widgets/:path*`** to **`{CLOUD_FUNCTIONS_APP_ORIGIN}/api/widgets/:path*`** so tenant-facing domains can use short widget URLs.
+3. **Local dev:** both rewrites target the Functions emulator on **`127.0.0.1:5001`** (`beforeFiles` so the App Router does not handle `/api` or `/widgets` first).
+4. **Tenant status home:** for hosts in **`NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`**, **`src/proxy.ts`** rewrites **`/`** internally to **`/u/{slug}`** (browser URL stays **`/`**). See [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
+5. **Environment for rewrites:** public origins, tenant display host, and optional tenant hostname map are set in **`apps/console/apphosting.yaml`** (`NEXT_PUBLIC_*`); see [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
 
 ### Backend details (`functions/`)
 
@@ -313,7 +344,7 @@ Reference docs under [`docs/`](docs/):
 
 | Document | What it covers |
 |----------|----------------|
-| [docs/APP_HOSTING.md](docs/APP_HOSTING.md) | Firebase App Hosting backends, `apphosting.yaml`, CI vs Firebase GitHub deploy / CLI, pointers to Next/`/api` routing. |
+| [docs/APP_HOSTING.md](docs/APP_HOSTING.md) | Firebase App Hosting backends, `apphosting.yaml`, CI vs Firebase GitHub deploy / CLI, Next **`/api`** and **`/widgets`** rewrites, tenant **`/`** → **`/u/{slug}`**, public status SSR. |
 | [docs/SYNC_JOB_QUEUE.md](docs/SYNC_JOB_QUEUE.md) | `sync_jobs` queue behavior (planner, worker, manual sync, states, summary metrics). |
 | [docs/SESSION_COOKIES.md](docs/SESSION_COOKIES.md) | Session cookie model, `/api/auth/session`, JWT fallback, security properties. |
 | [docs/MULTI_TENANT_ARCHITECTURE_PLAN.md](docs/MULTI_TENANT_ARCHITECTURE_PLAN.md) | Migration plan from single-tenant env config toward user-scoped storage and sync. |

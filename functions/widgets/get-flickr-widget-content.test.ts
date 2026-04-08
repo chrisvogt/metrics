@@ -45,7 +45,10 @@ describe('getFlickrWidgetContent', () => {
     const result = await getFlickrWidgetContent('user123', documentStore)
 
     expect(documentStore.getDocument).toHaveBeenCalledWith('users/user123/flickr/widget-content')
-    expect(result).toEqual(mockData)
+    expect(result.collections).toEqual(mockData.collections)
+    expect(result.metrics).toEqual(mockData.metrics)
+    expect(result.meta?.synced).toBeInstanceOf(Date)
+    expect((result.meta?.synced as Date).toISOString()).toBe('2023-01-01T00:00:00.000Z')
   })
 
   it('should throw error when document does not exist', async () => {

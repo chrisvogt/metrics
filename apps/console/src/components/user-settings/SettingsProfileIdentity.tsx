@@ -169,7 +169,7 @@ export function SettingsUsernameBlock({
 
       <div className={obStyles.usernameField}>
         <div className={obStyles.usernameInputWrap}>
-          <span className={obStyles.usernamePrefix}>chronogrove.com/u/</span>
+          <span className={obStyles.usernamePrefix}>api.chronogrove.com/u/</span>
           <input
             type="text"
             value={usernameDraft}
