@@ -67,7 +67,7 @@ This service backs widgets on [www.chrisvogt.me](https://www.chrisvogt.me) and a
 
 ### 0) Production edge (operator console)
 
-The dashboard is **SSR on Firebase App Hosting**. The browser calls **`/api/*` on the same origin**; Next.js **rewrites** those requests to the **`app`** Cloud Function (see `apps/console/next.config.ts`). Public widget traffic from other sites still hits Functions directly (diagrams 1–2).
+The dashboard is **SSR on Firebase App Hosting**. The browser calls **`/api/*` on the same origin**; Next.js **rewrites** those requests to the **`app`** Cloud Function (see `apps/console/next.config.mjs`). Public widget traffic from other sites still hits Functions directly (diagrams 1–2).
 
 ```mermaid
 flowchart TB
@@ -269,7 +269,7 @@ Deploy scripts use **`chronogrove-console`** by default (`pnpm run deploy:hostin
 
 ### API routing
 
-1. **Production (App Hosting):** Next.js rewrites **`/api/:path*`** to the deployed **`app`** Cloud Functions URL (same-origin in the browser; see `apps/console/next.config.ts`).
+1. **Production (App Hosting):** Next.js rewrites **`/api/:path*`** to the deployed **`app`** Cloud Functions URL (same-origin in the browser; see `apps/console/next.config.mjs`).
 2. **Local dev:** the same rewrites target the Functions emulator on **`127.0.0.1:5001`** (`beforeFiles` so the App Router does not handle `/api` first).
 3. **Environment for rewrites:** public origins and tenant display host for the Next build are set in **`apps/console/apphosting.yaml`** (`NEXT_PUBLIC_*`); see [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
 

@@ -1,6 +1,6 @@
 # Chronogrove console (Next.js app)
 
-Next.js operator console for the Chronogrove API: sign-in (Google / email / phone), schema, status, and sync testing. Production builds are deployed with **Firebase App Hosting** (SSR); the Cloud Function `app` still serves **`/api/**`** (rewritten in `next.config.ts` in prod, and via the dev proxy locally).
+Next.js operator console for the Chronogrove API: sign-in (Google / email / phone), schema, status, and sync testing. Production builds are deployed with **Firebase App Hosting** (SSR); the Cloud Function `app` still serves **`/api/**`** (rewritten in `next.config.mjs` in prod, and via the dev proxy locally).
 
 The repo is a **pnpm + Turborepo** monorepo. Run all commands from the **repo root** with `pnpm run …` (see root [README](../README.md#monorepo) for the full command list).
 
@@ -15,7 +15,7 @@ pnpm install
 ## Develop locally
 
 **Option A – Next.js dev server (hot reload)**  
-Run the app and proxy `/api` to the Cloud Functions emulator (`next.config.ts` `beforeFiles` rewrites; dev only):
+Run the app and proxy `/api` to the Cloud Functions emulator (`next.config.mjs` `beforeFiles` rewrites; dev only):
 
 ```bash
 # from repo root

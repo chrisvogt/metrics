@@ -371,6 +371,8 @@ describe('SettingsProfileIdentity', () => {
     const userNoToken = {
       getIdToken: vi
         .fn()
+        // Strict Mode runs the progress load effect twice; both need a token before we simulate failure on the username check.
+        .mockResolvedValueOnce('mock-id-token')
         .mockResolvedValueOnce('mock-id-token')
         .mockRejectedValue(new Error('no token')),
     } as unknown as User

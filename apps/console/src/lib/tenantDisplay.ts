@@ -4,7 +4,7 @@
  * Set at build time: `NEXT_PUBLIC_TENANT_DISPLAY_HOST` — e.g. `www.example.com`
  * or `https://www.example.com` (scheme is stripped).
  *
- * This repo defaults the value in `next.config.ts` so the console host (e.g.
+ * This repo defaults the value in `next.config.mjs` so the console host (e.g.
  * metrics…) is not mistaken for the site visitors care about. Other tenants
  * override via env in CI or `.env.local`.
  */

@@ -15,6 +15,7 @@ Package-specific changes:
 
 ### Changed
 
+- **Workspace** — **Console 0.6.19**: **Next.js 16.2.x** (from 15.5.x), **`next.config.mjs`**, **`src/proxy.ts`** (replaces deprecated middleware convention), **`tsconfig`** updates from Next; Vitest mock fix for Strict Mode in settings username check. See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
 - **Workspace** — **Console 0.6.18**: **`SettingsProfileIdentity`** fixes a race where concurrent username/domain saves could revert the other field; adds Vitest coverage and test tooling for that screen. See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
 - **Workspace** — **Functions 0.29.2** and **Console 0.6.17**: onboarding **`GET /api/onboarding/check-domain`** verifies a **CNAME** to a configurable target (default App Hosting **`personal-stats-chrisvogt.web.app`**); operator UI DNS instructions and env **`NEXT_PUBLIC_ONBOARDING_CNAME_TARGET`** / **`ONBOARDING_REQUIRED_CNAME_TARGET`** align. See [functions/CHANGELOG.md](functions/CHANGELOG.md) and [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
 - **Workspace** — Operator console sources moved from **`hosting/`** to **`apps/console/`**; pnpm workspace package **`chronogrove-console`** (formerly **`chronogrove-hosting`**); **`firebase.json`** `apphosting.rootDir` is **`./apps/console`**; Turbo **`chronogrove-console#build`**. Deploy script name **`pnpm run deploy:hosting`** unchanged. See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
