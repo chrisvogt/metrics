@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { primaryHostLineFromHeaders } from '@/lib/request-host-headers'
 import { tenantStatusSlugForHost } from '@/lib/tenant-api-root-map'
 
 /** Next.js proxy: scanner blocking + optional `/` → `/u/{slug}` for hosts in `NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`. See `docs/APP_HOSTING.md`. */
@@ -53,8 +54,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (path === '/' || path === '') {
-    const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? ''
-    const slug = tenantStatusSlugForHost(host)
+    const slug = tenantStatusSlugForHost(primaryHostLineFromHeaders(request.headers))
     if (slug) {
       const url = request.nextUrl.clone()
       url.pathname = `/u/${slug}`

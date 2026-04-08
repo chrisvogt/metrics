@@ -7,6 +7,10 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`src/lib/request-host-headers.ts`** — Shared **`primaryHostLineFromHeaders`** / **`hostLabelFromHostLine`** for comma-safe **`Host`** / **`X-Forwarded-Host`** parsing used by **`src/proxy.ts`**, **`/u/[username]`**, **`getServerWidgetFetchOrigin`**, and **`fetchWidgetStatusRow`** (avoids drift vs Functions’ `resolveOriginalRequestHostname` pattern).
+
 ### Fixed
 
 - **Vitest / RTL** — `configure({ asyncUtilTimeout: 8000 })` in **`vitest.setup.ts`** and **800ms** post-debounce wait in **`SettingsProfileIdentity.test.tsx`** so username availability assertions stay reliable under **`test:coverage`** on slower CI runners.

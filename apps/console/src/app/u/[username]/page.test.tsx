@@ -29,6 +29,7 @@ vi.mock('@/lib/widget-status', async (importOriginal) => {
     WIDGET_STATUS_PROVIDERS: [
       { id: 'okrow', label: 'OK row' },
       { id: 'errrow', label: 'Error row' },
+      { id: 'zerorow', label: 'Zero status code' },
       { id: 'failrow', label: 'HTTP fail' },
     ],
     fetchWidgetStatusRow: fetchWidgetStatusRowMock,
@@ -84,6 +85,17 @@ describe('PublicTenantStatusPage', () => {
             error: 'network failed',
           }
         }
+        if (providerId === 'zerorow') {
+          return {
+            label,
+            path,
+            httpStatus: 0,
+            ok: false,
+            ms: 0,
+            lastSynced: null,
+            error: null,
+          }
+        }
         if (opts?.debug) {
           return {
             label,
@@ -121,6 +133,7 @@ describe('PublicTenantStatusPage', () => {
     expect(html).toContain('@bob')
     expect(html).toContain('OK row')
     expect(html).toContain('Error row')
+    expect(html).toContain('Zero status code')
     expect(html).toContain('HTTP fail')
     expect(html).toContain('12ms')
     expect(html).toContain('503')
@@ -178,6 +191,24 @@ describe('PublicTenantStatusPage', () => {
     })
     const html = renderToStaticMarkup(el)
     expect(html).toContain('/widgets/:provider')
+    expect(fetchWidgetStatusRowMock).toHaveBeenCalledWith(
+      expect.any(String),
+      'bob',
+      expect.any(String),
+      expect.any(String),
+      expect.objectContaining({ resolveUserLikePublicWidgets: true }),
+    )
+  })
+
+  it('uses first x-forwarded-host label for tenant map when Host is absent', async () => {
+    vi.stubEnv('NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME', 'api.example.com=bob')
+    vi.mocked(headers).mockResolvedValue(
+      new Headers({ 'x-forwarded-host': 'api.example.com, edge.internal' }),
+    )
+    const el = await PublicTenantStatusPage({
+      params: Promise.resolve({ username: 'bob' }),
+    })
+    expect(renderToStaticMarkup(el)).toContain('/widgets/:provider')
     expect(fetchWidgetStatusRowMock).toHaveBeenCalledWith(
       expect.any(String),
       'bob',

@@ -1,4 +1,5 @@
 import { headers } from 'next/headers'
+import { primaryHostLineFromHeaders } from '@/lib/request-host-headers'
 
 /**
  * Default matches `next.config.mjs` dev rewrites (`beforeFiles` → Functions emulator).
@@ -39,7 +40,7 @@ export async function getServerWidgetFetchOrigin(): Promise<string> {
   }
 
   const h = await headers()
-  const host = h.get('x-forwarded-host') ?? h.get('host')
+  const host = primaryHostLineFromHeaders(h)
   const forwardedProto = h.get('x-forwarded-proto')?.split(',')[0]?.trim()
   const proto =
     forwardedProto ?? (host && hostLooksLocal(host) ? 'http' : 'https')

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { getServerWidgetFetchOrigin } from '@/lib/server-widget-fetch-origin'
+import { primaryHostLineFromHeaders } from '@/lib/request-host-headers'
 import { tenantStatusSlugForHost } from '@/lib/tenant-api-root-map'
 import {
   WIDGET_STATUS_PROVIDERS,
@@ -35,10 +36,8 @@ export default async function PublicTenantStatusPage({ params, searchParams }: P
 
   const origin = await getServerWidgetFetchOrigin()
   const h = await headers()
-  const tenantPublicHost =
-    h.get('x-forwarded-host')?.split(',')[0]?.trim() || h.get('host')?.split(',')[0]?.trim() || undefined
-  const hostOnly = tenantPublicHost?.split(':')[0]?.toLowerCase()
-  const slugForHost = hostOnly ? tenantStatusSlugForHost(hostOnly) : undefined
+  const tenantPublicHost = primaryHostLineFromHeaders(h)
+  const slugForHost = tenantStatusSlugForHost(tenantPublicHost)
   /** Match `/widgets/:provider` (hostname user id), not `?username=` (claim slug → uid), when this host is single-tenant for this slug. */
   const resolveUserLikePublicWidgets = Boolean(slugForHost && slugForHost === username)
 
@@ -91,7 +90,7 @@ export default async function PublicTenantStatusPage({ params, searchParams }: P
           <tbody>
             {rows.map((r) => {
               const statusLabel = r.error ? 'Error' : String(r.httpStatus || '—')
-              const okClass = r.ok ? styles.cellOk : r.error || !r.ok ? styles.cellBad : ''
+              const okClass = r.ok ? styles.cellOk : styles.cellBad
               return (
                 <tr key={r.path}>
                   <td>

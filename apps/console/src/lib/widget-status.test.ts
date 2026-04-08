@@ -49,10 +49,22 @@ describe('extractLastSyncedFromWidgetResponse', () => {
     ).toBe(new Date(1700000000 * 1000).toISOString())
   })
 
+  it('includes Firestore _nanoseconds in ISO', () => {
+    const iso = extractLastSyncedFromWidgetResponse({
+      payload: { meta: { synced: { _seconds: 1, _nanoseconds: 500_000_000 } } },
+    })
+    expect(iso).toBe(new Date(1000 + 500).toISOString())
+  })
+
   it('returns null when _seconds is not finite', () => {
     expect(
       extractLastSyncedFromWidgetResponse({
         payload: { meta: { synced: { _seconds: NaN } } },
+      }),
+    ).toBeNull()
+    expect(
+      extractLastSyncedFromWidgetResponse({
+        payload: { meta: { synced: { _seconds: Number.POSITIVE_INFINITY } } },
       }),
     ).toBeNull()
   })
@@ -169,6 +181,23 @@ describe('fetchWidgetStatusRow', () => {
     expect(row.debugDetail).toBe('No Spotify data')
   })
 
+  it('debug non-OK uses body slice when JSON parses but has no error field', async () => {
+    const body = JSON.stringify({ ok: false, message: 'nope' })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: false,
+          status: 422,
+          headers: new Headers(),
+          text: () => Promise.resolve(body),
+        } as Response),
+      ),
+    )
+    const row = await fetchWidgetStatusRow(origin, 'u', 'spotify', 'Spotify', { debug: true })
+    expect(row.debugDetail).toBe(body)
+  })
+
   it('debug non-OK uses body slice when JSON.parse fails', async () => {
     vi.stubGlobal(
       'fetch',
@@ -261,6 +290,23 @@ describe('fetchWidgetStatusRow', () => {
         headers: expect.any(Headers),
       }),
     )
+    const hdrs = fetchMock.mock.calls[0][1].headers as Headers
+    expect(hdrs.get('x-chronogrove-public-host')).toBe('api.example.com')
+  })
+
+  it('sends first host label when tenantPublicHost lists multiple comma-separated hosts', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: () => Promise.resolve({ payload: { meta: {} } }),
+      } as Response),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    await fetchWidgetStatusRow(origin, 'u', 'spotify', 'Spotify', {
+      tenantPublicHost: 'api.example.com, proxy.internal',
+    })
     const hdrs = fetchMock.mock.calls[0][1].headers as Headers
     expect(hdrs.get('x-chronogrove-public-host')).toBe('api.example.com')
   })

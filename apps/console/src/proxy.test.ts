@@ -73,6 +73,19 @@ describe('proxy', () => {
     expect(tenantStatusSlugForHost).toHaveBeenCalledWith('api.tenant.example')
   })
 
+  it('uses first x-forwarded-host only when multiple hosts are comma-separated', () => {
+    tenantStatusSlugForHost.mockReturnValue('alice')
+    proxy(
+      new NextRequest(new URL('http://127.0.0.1:5173/'), {
+        headers: {
+          host: '127.0.0.1:5173',
+          'x-forwarded-host': 'api.tenant.example, proxy.internal',
+        },
+      }),
+    )
+    expect(tenantStatusSlugForHost).toHaveBeenCalledWith('api.tenant.example')
+  })
+
   it('does not rewrite non-root paths even when slug exists', () => {
     tenantStatusSlugForHost.mockReturnValue('bob')
     const res = proxy(new NextRequest(new URL('http://localhost/widgets/spotify')))

@@ -1,6 +1,6 @@
 /**
  * Hostname → public username slug for tenant API domains.
- * When a browser opens `https://api.customer.example/`, middleware rewrites to `/u/{slug}`.
+ * When a browser opens `https://api.customer.example/`, `src/proxy.ts` rewrites `/` to `/u/{slug}`.
  *
  * Env: comma-separated `host=slug` (same shape as Functions `WIDGET_USER_ID_BY_HOSTNAME` keys;
  * values here are **slugs** for `/u/[username]`, not necessarily Firebase uids).

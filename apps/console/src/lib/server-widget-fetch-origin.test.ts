@@ -88,6 +88,33 @@ describe('getServerWidgetFetchOrigin', () => {
     await expect(getServerWidgetFetchOrigin()).resolves.toBe('http://api.chrisvogt.local:5173')
   })
 
+  it('uses http for localhost when proto is missing in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN', '')
+    const { headers } = await import('next/headers')
+    vi.mocked(headers).mockResolvedValue(
+      new Headers({
+        host: 'localhost:3000',
+      }) as Headers
+    )
+    const { getServerWidgetFetchOrigin } = await import('./server-widget-fetch-origin.js')
+    await expect(getServerWidgetFetchOrigin()).resolves.toBe('http://localhost:3000')
+  })
+
+  it('uses first x-forwarded-host segment when multiple hosts are listed', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN', '')
+    const { headers } = await import('next/headers')
+    vi.mocked(headers).mockResolvedValue(
+      new Headers({
+        'x-forwarded-host': 'api.customer.example, proxy.internal',
+        'x-forwarded-proto': 'https',
+      }) as Headers
+    )
+    const { getServerWidgetFetchOrigin } = await import('./server-widget-fetch-origin.js')
+    await expect(getServerWidgetFetchOrigin()).resolves.toBe('https://api.customer.example')
+  })
+
   it('falls back to localhost:5173 when host headers are missing in production', async () => {
     vi.stubEnv('NODE_ENV', 'production')
     vi.stubEnv('NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN', '')

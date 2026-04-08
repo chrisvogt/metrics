@@ -1,3 +1,5 @@
+import { hostLabelFromHostLine } from '@/lib/request-host-headers'
+
 /** Providers checked on the public tenant status page and in the signed-in Status section. */
 export const WIDGET_STATUS_PROVIDERS = [
   { id: 'discogs', label: 'Discogs widget' },
@@ -89,7 +91,7 @@ export async function fetchWidgetStatusRow(
   const started = Date.now()
   try {
     const headers = new Headers({ Accept: 'application/json' })
-    const hostOnly = options?.tenantPublicHost?.split(',')[0]?.trim().split(':')[0]?.toLowerCase()
+    const hostOnly = hostLabelFromHostLine(options?.tenantPublicHost)
     if (hostOnly) {
       headers.set('x-chronogrove-public-host', hostOnly)
     }
