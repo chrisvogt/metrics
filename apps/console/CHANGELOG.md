@@ -13,6 +13,18 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation** — [docs/APP_HOSTING.md](../docs/APP_HOSTING.md) and [README.md](README.md) document App Hosting backends (`chronogrove-console` / `chronogrove-console-pr`) and deploy (Firebase GitHub integration vs CLI); root [README.md](../README.md) adds production-edge diagram and backend tables.
 - **License** — Repository relicensed from MIT to **Apache License 2.0**; this package follows the workspace [LICENSE](../LICENSE). See root [CHANGELOG.md](../CHANGELOG.md).
 
+## [0.6.19] - 2026-04-07
+
+### Changed
+
+- **Next.js** — Upgraded **15.5.14 → 16.2.2** (Turbopack default for production build). Config is **`next.config.mjs`** (ESM) so `import.meta.url` works with Next 16’s config loader; same env defaults and **`beforeFiles`** `/api` rewrites as before.
+- **Proxy** — **`src/middleware.ts`** renamed to **`src/proxy.ts`** with **`export function proxy`** per Next 16 ([middleware → proxy](https://nextjs.org/docs/messages/middleware-to-proxy)); scanner blocklist behavior unchanged.
+- **TypeScript** — Next aligned **`tsconfig.json`** (**`jsx`: `react-jsx`**, include **`.next/dev/types/**/*.ts`** for typed routes in dev).
+
+### Fixed
+
+- **Vitest** — **`SettingsProfileIdentity`** username test mock allows two successful **`getIdToken`** resolutions so **React Strict Mode** double-invocation of the progress **`useEffect`** does not leave the screen in a load error before the debounced username check runs.
+
 ## [0.6.18] - 2026-04-05
 
 ### Fixed
