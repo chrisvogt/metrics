@@ -47,6 +47,11 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const pathname = usePathname()
+  /** Hostname is stable for same-origin SPA navigations; omit from deps to avoid extra effect runs. */
+  const authlessPublicSurface = useMemo(() => {
+    const host = typeof window !== 'undefined' ? window.location.hostname : undefined
+    return isAuthlessPublicStatusSurface(pathname, host)
+  }, [pathname])
   const [user, setUser] = useState<User | null>(null)
   const [apiSessionReady, setApiSessionReady] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -56,8 +61,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     let cancelled = false
-    const host = typeof window !== 'undefined' ? window.location.hostname : undefined
-    if (isAuthlessPublicStatusSurface(pathname, host)) {
+    let unsubscribeAuth: (() => void) | undefined
+
+    if (authlessPublicSurface) {
       setAuth(null)
       setUser(null)
       setApiSessionReady(true)
@@ -69,11 +75,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     setLoading(true)
-    getFirebaseApp()
-      .then(({ auth: a }) => {
+    void (async () => {
+      try {
+        const { auth: a } = await getFirebaseApp()
         if (cancelled) return
         setAuth(a)
-        const unsub = onAuthStateChanged(a, async (u) => {
+        unsubscribeAuth = onAuthStateChanged(a, async (u) => {
           if (cancelled) return
           if (!u) {
             lastEmailVerifiedRef.current = null
@@ -104,18 +111,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setLoading(false)
           }
         })
-        return () => unsub()
-      })
-      .catch((e) => {
+      } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : String(e))
           setLoading(false)
         }
-      })
+      }
+    })()
+
     return () => {
       cancelled = true
+      unsubscribeAuth?.()
     }
-  }, [pathname])
+  }, [authlessPublicSurface])
 
   const googleProvider = useMemo(() => {
     const p = new GoogleAuthProvider()
