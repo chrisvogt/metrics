@@ -4,7 +4,7 @@ import { cleanup, configure } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 
 // Default 1000ms is tight for debounced username checks + async fetch under `test:coverage` on CI.
-configure({ asyncUtilTimeout: 5000 })
+configure({ asyncUtilTimeout: 8000 })
 
 afterEach(() => {
   cleanup()

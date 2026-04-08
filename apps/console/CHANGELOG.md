@@ -9,7 +9,8 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Vitest / RTL** — `configure({ asyncUtilTimeout: 5000 })` in **`vitest.setup.ts`** and a slightly longer post-debounce wait in **`SettingsProfileIdentity.test.tsx`** so username availability assertions stay reliable under **`test:coverage`** on slower CI runners (default **`waitFor`** 1s was too tight after the 500ms debounce + async check).
+- **Vitest / RTL** — `configure({ asyncUtilTimeout: 8000 })` in **`vitest.setup.ts`** and **800ms** post-debounce wait in **`SettingsProfileIdentity.test.tsx`** so username availability assertions stay reliable under **`test:coverage`** on slower CI runners.
+- **Coverage** — Tests for **`/u/[username]`** (`status_debug`, hostname-map copy, `x-forwarded-host`), **`fetchWidgetStatusRow`** debug / error branches, and **`isAuthlessPublicStatusSurface`** non-public paths so **`test:coverage`** per-file thresholds pass in CI.
 
 ## [0.6.20] - 2026-04-08
 

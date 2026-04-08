@@ -169,6 +169,79 @@ describe('fetchWidgetStatusRow', () => {
     expect(row.debugDetail).toBe('No Spotify data')
   })
 
+  it('debug non-OK uses body slice when JSON.parse fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: false,
+          status: 502,
+          headers: new Headers(),
+          text: () => Promise.resolve('not-json{'),
+        } as Response),
+      ),
+    )
+    const row = await fetchWidgetStatusRow(origin, 'u', 'spotify', 'Spotify', { debug: true })
+    expect(row.debugDetail).toBe('not-json{')
+  })
+
+  it('debug non-OK falls back to HTTP status when body is empty', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: false,
+          status: 418,
+          headers: new Headers(),
+          text: () => Promise.resolve(''),
+        } as Response),
+      ),
+    )
+    const row = await fetchWidgetStatusRow(origin, 'u', 'spotify', 'Spotify', { debug: true })
+    expect(row.debugDetail).toBe('(HTTP 418)')
+  })
+
+  it('debug non-OK when text() rejects still yields debugDetail', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: false,
+          status: 503,
+          headers: new Headers(),
+          text: () => Promise.reject(new Error('read fail')),
+        } as Response),
+      ),
+    )
+    const row = await fetchWidgetStatusRow(origin, 'u', 'spotify', 'Spotify', { debug: true })
+    expect(row.debugDetail).toBe('(HTTP 503)')
+  })
+
+  it('includes debugDetail on fetch rejection when debug is true', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('boom'))))
+    const row = await fetchWidgetStatusRow(origin, 'u', 'spotify', 'Spotify', { debug: true })
+    expect(row.debugDetail).toBe('boom')
+  })
+
+  it('keeps username query when resolveUserLikePublicWidgets without tenantPublicHost', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: () => Promise.resolve({ payload: { meta: {} } }),
+      } as Response),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    await fetchWidgetStatusRow(origin, 'alice', 'discogs', 'Discogs', {
+      resolveUserLikePublicWidgets: true,
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${origin}/api/widgets/discogs?username=alice`,
+      expect.anything(),
+    )
+  })
+
   it('sends x-chronogrove-public-host when tenantPublicHost is set', async () => {
     const fetchMock = vi.fn(() =>
       Promise.resolve({

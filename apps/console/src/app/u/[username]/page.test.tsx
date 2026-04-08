@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { headers } from 'next/headers'
 
 const { fetchWidgetStatusRowMock } = vi.hoisted(() => ({
   fetchWidgetStatusRowMock: vi.fn(),
@@ -49,8 +50,17 @@ describe('PublicTenantStatusPage generateMetadata', () => {
 
 describe('PublicTenantStatusPage', () => {
   beforeEach(() => {
+    vi.mocked(headers).mockResolvedValue(
+      new Headers({ host: 'api.example.com', 'x-forwarded-host': 'api.example.com' }),
+    )
     fetchWidgetStatusRowMock.mockImplementation(
-      async (_origin: string, username: string, providerId: string, label: string) => {
+      async (
+        _origin: string,
+        username: string,
+        providerId: string,
+        label: string,
+        opts?: { debug?: boolean },
+      ) => {
         const path = `/api/widgets/${providerId}?username=${encodeURIComponent(username)}`
         if (providerId === 'okrow') {
           return {
@@ -74,6 +84,18 @@ describe('PublicTenantStatusPage', () => {
             error: 'network failed',
           }
         }
+        if (opts?.debug) {
+          return {
+            label,
+            path,
+            httpStatus: 503,
+            ok: false,
+            ms: 0,
+            lastSynced: null,
+            error: null,
+            debugDetail: 'debug-fragment',
+          }
+        }
         return {
           label,
           path,
@@ -85,6 +107,10 @@ describe('PublicTenantStatusPage', () => {
         }
       },
     )
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('renders table rows for ok, error, and failed HTTP states', async () => {
@@ -101,5 +127,63 @@ describe('PublicTenantStatusPage', () => {
     expect(html).toContain('Chronogrove')
     expect(html).toContain('href="https://chronogrove.com"')
     expect(fetchWidgetStatusRowMock).toHaveBeenCalled()
+  })
+
+  it('shows debug banner, Debug column, and debugDetail when status_debug=1', async () => {
+    const el = await PublicTenantStatusPage({
+      params: Promise.resolve({ username: 'bob' }),
+      searchParams: Promise.resolve({ status_debug: '1' }),
+    })
+    const html = renderToStaticMarkup(el)
+    expect(html).toContain('data-testid="status-debug-banner"')
+    expect(html).toContain('>Debug</th>')
+    expect(html).toContain('debug-fragment')
+    expect(fetchWidgetStatusRowMock).toHaveBeenCalledWith(
+      expect.any(String),
+      'bob',
+      expect.any(String),
+      expect.any(String),
+      expect.objectContaining({ debug: true }),
+    )
+  })
+
+  it('enables debug for status_debug=true', async () => {
+    const el = await PublicTenantStatusPage({
+      params: Promise.resolve({ username: 'bob' }),
+      searchParams: Promise.resolve({ status_debug: 'true' }),
+    })
+    expect(renderToStaticMarkup(el)).toContain('status-debug-banner')
+  })
+
+  it('enables debug when status_debug is an array containing 1', async () => {
+    const el = await PublicTenantStatusPage({
+      params: Promise.resolve({ username: 'bob' }),
+      searchParams: Promise.resolve({ status_debug: ['0', '1'] }),
+    })
+    expect(renderToStaticMarkup(el)).toContain('status-debug-banner')
+  })
+
+  it('uses x-forwarded-host when host header is absent', async () => {
+    vi.mocked(headers).mockResolvedValue(new Headers({ 'x-forwarded-host': 'api.example.com' }))
+    await PublicTenantStatusPage({
+      params: Promise.resolve({ username: 'bob' }),
+    })
+    expect(fetchWidgetStatusRowMock).toHaveBeenCalled()
+  })
+
+  it('shows hostname-map copy when tenant host slug matches username', async () => {
+    vi.stubEnv('NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME', 'api.example.com=bob')
+    const el = await PublicTenantStatusPage({
+      params: Promise.resolve({ username: 'bob' }),
+    })
+    const html = renderToStaticMarkup(el)
+    expect(html).toContain('/widgets/:provider')
+    expect(fetchWidgetStatusRowMock).toHaveBeenCalledWith(
+      expect.any(String),
+      'bob',
+      expect.any(String),
+      expect.any(String),
+      expect.objectContaining({ resolveUserLikePublicWidgets: true }),
+    )
   })
 })

@@ -96,4 +96,11 @@ describe('isAuthlessPublicStatusSurface', () => {
     expect(isAuthlessPublicStatusSurface('/', 'api.tenant.example')).toBe(true)
     expect(isAuthlessPublicStatusSurface('/', 'metrics.example.com')).toBe(false)
   })
+
+  it('is false for non-public paths (e.g. signed-in app routes)', () => {
+    process.env.NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME = 'api.tenant.example=slug'
+    delete process.env.TENANT_API_ROOT_TO_USERNAME
+    expect(isAuthlessPublicStatusSurface('/settings', 'api.tenant.example')).toBe(false)
+    expect(isAuthlessPublicStatusSurface(null, 'api.tenant.example')).toBe(false)
+  })
 })
