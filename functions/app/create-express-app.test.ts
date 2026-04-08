@@ -600,23 +600,67 @@ describe('createExpressApp auth and session branches', () => {
       )
     })
 
-    it('prefers x-chronogrove-public-host (with port stripped) for original hostname', async () => {
-      const app = await buildApp()
-      const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+    it('ignores x-chronogrove-public-host when x-forwarded-host is a non-infrastructure hostname', async () => {
+      const prev = process.env.WIDGET_USER_ID_BY_HOSTNAME
+      process.env.WIDGET_USER_ID_BY_HOSTNAME = JSON.stringify({
+        'api.legitimate.example': 'user-from-forwarded',
+        'probe-only.example': 'user-from-probe',
+      })
+      try {
+        const app = await buildApp()
+        const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+        vi.mocked(getWidgetContent).mockClear()
 
-      await request(app)
-        .get('/api/widgets/spotify')
-        .query({ uid: 'probe-uid' })
-        .set('x-chronogrove-public-host', 'Tenant.Api.EXAMPLE.com:8443')
-        .set('x-forwarded-host', 'ignored.example.com')
-        .expect(200)
+        await request(app)
+          .get('/api/widgets/spotify')
+          .set('x-forwarded-host', 'api.legitimate.example')
+          .set('x-chronogrove-public-host', 'probe-only.example')
+          .expect(200)
 
-      expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
-        'spotify',
-        'probe-uid',
-        documentStore,
-        expect.anything()
-      )
+        expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+          'spotify',
+          'user-from-forwarded',
+          documentStore,
+          expect.anything(),
+        )
+      } finally {
+        if (prev === undefined) {
+          delete process.env.WIDGET_USER_ID_BY_HOSTNAME
+        } else {
+          process.env.WIDGET_USER_ID_BY_HOSTNAME = prev
+        }
+      }
+    })
+
+    it('honors x-chronogrove-public-host when Host is a Cloud Functions hostname (SSR probe)', async () => {
+      const prev = process.env.WIDGET_USER_ID_BY_HOSTNAME
+      process.env.WIDGET_USER_ID_BY_HOSTNAME = JSON.stringify({
+        'api.tenant.example': 'ssr-tenant-user',
+      })
+      try {
+        const app = await buildApp()
+        const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+        vi.mocked(getWidgetContent).mockClear()
+
+        await request(app)
+          .get('/api/widgets/spotify')
+          .set('Host', 'us-central1-demo.cloudfunctions.net')
+          .set('x-chronogrove-public-host', 'api.tenant.example')
+          .expect(200)
+
+        expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+          'spotify',
+          'ssr-tenant-user',
+          documentStore,
+          expect.anything(),
+        )
+      } finally {
+        if (prev === undefined) {
+          delete process.env.WIDGET_USER_ID_BY_HOSTNAME
+        } else {
+          process.env.WIDGET_USER_ID_BY_HOSTNAME = prev
+        }
+      }
     })
 
     it('returns 404 when uid query is invalid', async () => {
@@ -679,6 +723,19 @@ describe('createExpressApp auth and session branches', () => {
         .expect(404)
 
       expect(response.body).toEqual({ ok: false, error: 'Unknown user.' })
+    })
+
+    it('returns JSON 500 when username resolution fails (e.g. Firestore error)', async () => {
+      vi.mocked(documentStore.getDocument).mockRejectedValueOnce(new Error('firestore unavailable'))
+      const app = await buildApp()
+
+      const response = await request(app)
+        .get('/api/widgets/spotify')
+        .query({ username: 'valid-user' })
+        .expect(500)
+
+      expect(response.body).toEqual({ ok: false, error: 'firestore unavailable' })
+      expect(response.headers['content-type']).toMatch(/json/)
     })
 
     it('returns 404 for malformed username query', async () => {
@@ -776,6 +833,9 @@ describe('createExpressApp auth and session branches', () => {
 
     expect(vi.mocked(getWidgetContent)).not.toHaveBeenCalled()
     expect(res.status).toHaveBeenCalledWith(404)
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ ok: false, error: 'A valid provider type is required.' }),
+    )
   })
 
   it('treats array sync provider params as unsupported', async () => {

@@ -136,21 +136,59 @@ function hostPortFirst(hostOrHostPort: string): string {
 }
 
 /**
- * Hostname the browser used (or the tenant API host for SSR probes that call Cloud Functions directly).
- * `x-chronogrove-public-host` is set by the console status page server fetch.
+ * When the request's own Host / X-Forwarded-Host already name a tenant-facing entrypoint,
+ * `x-chronogrove-public-host` must not override them (any client could set that header).
+ * SSR status probes call the Functions URL directly; there the Host is infrastructure-only,
+ * so the console-sent probe header is applied.
+ */
+function isInfrastructurePublicWidgetHostname(hostname: string): boolean {
+  const h = hostname.toLowerCase()
+  if (!h) {
+    return true
+  }
+  if (
+    h === 'localhost' ||
+    h === '127.0.0.1' ||
+    h === '::1' ||
+    h === '[::1]' ||
+    h === '::ffff:127.0.0.1' ||
+    h === '[::ffff:127.0.0.1]'
+  ) {
+    return true
+  }
+  if (h.endsWith('.cloudfunctions.net')) {
+    return true
+  }
+  if (h.endsWith('.run.app')) {
+    return true
+  }
+  return false
+}
+
+/**
+ * Hostname for widget user resolution: `X-Forwarded-Host` (first hop), then `Host` / `req.hostname`.
+ * `x-chronogrove-public-host` is honored only when that primary hostname looks like an internal
+ * Functions / Cloud Run / loopback target (set by the console SSR widget status fetch).
  */
 function resolveOriginalRequestHostname(req: express.Request): string {
-  const probe = (req.headers['x-chronogrove-public-host'] as string | undefined)
+  const probeRaw = (req.headers['x-chronogrove-public-host'] as string | undefined)
     ?.split(',')[0]
     ?.trim()
-  if (probe) {
-    return hostPortFirst(probe)
+  const probeParsed = probeRaw ? hostPortFirst(probeRaw) : ''
+
+  const xfRaw = (req.headers['x-forwarded-host'] as string | undefined)?.split(',')[0]?.trim()
+  const fromForwarded = xfRaw ? hostPortFirst(xfRaw) : ''
+  const fromHost = (req.hostname || '').toLowerCase()
+
+  const primary = fromForwarded || fromHost
+
+  if (probeParsed && isInfrastructurePublicWidgetHostname(primary)) {
+    return probeParsed
   }
-  const xf = (req.headers['x-forwarded-host'] as string | undefined)?.split(',')[0]?.trim()
-  if (xf) {
-    return hostPortFirst(xf)
+  if (fromForwarded) {
+    return fromForwarded
   }
-  return req.hostname
+  return fromHost
 }
 
 function extractBearerToken(authHeader: string | undefined): string | null {
@@ -592,20 +630,30 @@ export function createExpressApp({
             : undefined
 
       if (!provider || !isWidgetId(provider)) {
-        const response = buildFailureResponse({
-          message: 'A valid provider type is required.',
-        })
-        res.status(404).send(response)
-        res.end()
+        res.status(404).json(
+          buildFailureResponse({
+            message: 'A valid provider type is required.',
+          }),
+        )
         return
       }
 
-      const originalHostname = resolveOriginalRequestHostname(req)
-      const fromQuery = await resolveWidgetDataUserIdFromPublicQuery(req, documentStore)
+      let originalHostname: string
+      let fromQuery: Awaited<ReturnType<typeof resolveWidgetDataUserIdFromPublicQuery>>
+      try {
+        originalHostname = resolveOriginalRequestHostname(req)
+        fromQuery = await resolveWidgetDataUserIdFromPublicQuery(req, documentStore)
+      } catch (err) {
+        logger.error('Error resolving public widget user', {
+          provider,
+          error: err instanceof Error ? err.message : err,
+        })
+        res.status(500).json(buildFailureResponse(err))
+        return
+      }
+
       if (fromQuery === 'not_found') {
-        const response = buildFailureResponse({ message: 'Unknown user.' })
-        res.status(404).send(response)
-        res.end()
+        res.status(404).json(buildFailureResponse({ message: 'Unknown user.' }))
         return
       }
       const userId =
