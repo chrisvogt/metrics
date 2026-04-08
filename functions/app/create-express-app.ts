@@ -128,6 +128,13 @@ const CSRF_EXCLUDED_PATHS_WIDGET_READS = [
   /** Discogs redirects here without CSRF headers. */
   { path: '/api/oauth/discogs/callback', type: 'exact' as const },
 ]
+/** Host or left label before the first `:port` segment (IPv6-in-headers stays consistent with prior `split(':')[0]` usage). */
+function hostPortFirst(hostOrHostPort: string): string {
+  const colon = hostOrHostPort.indexOf(':')
+  const host = colon === -1 ? hostOrHostPort : hostOrHostPort.slice(0, colon)
+  return host.toLowerCase()
+}
+
 /**
  * Hostname the browser used (or the tenant API host for SSR probes that call Cloud Functions directly).
  * `x-chronogrove-public-host` is set by the console status page server fetch.
@@ -137,11 +144,11 @@ function resolveOriginalRequestHostname(req: express.Request): string {
     ?.split(',')[0]
     ?.trim()
   if (probe) {
-    return probe.split(':')[0]?.toLowerCase() ?? probe.toLowerCase()
+    return hostPortFirst(probe)
   }
   const xf = (req.headers['x-forwarded-host'] as string | undefined)?.split(',')[0]?.trim()
   if (xf) {
-    return xf.split(':')[0]?.toLowerCase() ?? xf.toLowerCase()
+    return hostPortFirst(xf)
   }
   return req.hostname
 }

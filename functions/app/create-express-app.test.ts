@@ -5,10 +5,19 @@ import os from 'os'
 import path from 'path'
 
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
+import { getRateLimitKey } from '../middleware/rate-limit-key.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
+import type { Request } from 'express'
+
+const { capturedRateLimitOptions } = vi.hoisted(() => ({
+  capturedRateLimitOptions: [] as Array<Record<string, unknown>>,
+}))
 
 vi.mock('express-rate-limit', () => ({
-  rateLimit: vi.fn(() => (_req, _res, next) => next()),
+  rateLimit: vi.fn((opts: Record<string, unknown>) => {
+    capturedRateLimitOptions.push(opts)
+    return (_req: unknown, _res: unknown, next?: () => void) => next?.()
+  }),
 }))
 
 vi.mock('../jobs/delete-user.js', () => ({
@@ -77,6 +86,7 @@ describe('createExpressApp media route', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    capturedRateLimitOptions.length = 0
   })
 
   afterEach(() => {
@@ -590,6 +600,25 @@ describe('createExpressApp auth and session branches', () => {
       )
     })
 
+    it('prefers x-chronogrove-public-host (with port stripped) for original hostname', async () => {
+      const app = await buildApp()
+      const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+
+      await request(app)
+        .get('/api/widgets/spotify')
+        .query({ uid: 'probe-uid' })
+        .set('x-chronogrove-public-host', 'Tenant.Api.EXAMPLE.com:8443')
+        .set('x-forwarded-host', 'ignored.example.com')
+        .expect(200)
+
+      expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+        'spotify',
+        'probe-uid',
+        documentStore,
+        expect.anything()
+      )
+    })
+
     it('returns 404 when uid query is invalid', async () => {
       const app = await buildApp()
 
@@ -775,5 +804,21 @@ describe('createExpressApp auth and session branches', () => {
     )
     expect(res.status).toHaveBeenCalledWith(400)
     expect(res.send).toHaveBeenCalledWith('Unrecognized or unsupported provider.')
+  })
+
+  it('widget GET rateLimit keyGenerator includes request path', async () => {
+    await buildApp()
+    const withKeyGen = capturedRateLimitOptions.find(
+      (o) => typeof o.keyGenerator === 'function' && o.keyGenerator !== getRateLimitKey
+    )
+    expect(withKeyGen).toBeDefined()
+    const keyGen = withKeyGen!.keyGenerator as (req: Request) => string
+    // No ip / x-forwarded-for / socket so getRateLimitKey uses its local-dev fallback (avoids ipKeyGenerator on the mocked package).
+    const req = {
+      method: 'GET',
+      path: '/api/widgets/spotify',
+      headers: {},
+    } as Request
+    expect(keyGen(req)).toBe('GET:/api/widgets/spotify:local-dev:/api/widgets/spotify')
   })
 })
