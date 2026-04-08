@@ -7,6 +7,10 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Vitest / RTL** — `configure({ asyncUtilTimeout: 5000 })` in **`vitest.setup.ts`** and a slightly longer post-debounce wait in **`SettingsProfileIdentity.test.tsx`** so username availability assertions stay reliable under **`test:coverage`** on slower CI runners (default **`waitFor`** 1s was too tight after the 500ms debounce + async check).
+
 ## [0.6.20] - 2026-04-08
 
 ### Added

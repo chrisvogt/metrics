@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { getAppBaseUrl } from '../lib/baseUrl'
-import { WIDGET_STATUS_PROVIDERS, extractLastSyncedFromWidgetResponse } from '../lib/widget-status'
+import {
+  WIDGET_STATUS_PROVIDERS,
+  extractLastSyncedFromWidgetResponse,
+  formatSyncedDisplay,
+} from '../lib/widget-status'
 import styles from './StatusSection.module.css'
 
 const WIDGET_ROUTES = WIDGET_STATUS_PROVIDERS
@@ -111,17 +115,6 @@ export function StatusSection() {
     void runChecks()
   }, [runChecks])
 
-  const formatSynced = (iso: string | null) => {
-    if (!iso) return '—'
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return iso
-    if (d.getTime() === 0) return '—'
-    return d.toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    })
-  }
-
   return (
     <>
       <div className={styles.hero}>
@@ -183,7 +176,9 @@ export function StatusSection() {
                     )}
                   </td>
                   <td>{s.loading ? '…' : s.ms != null ? `${s.ms}ms` : '—'}</td>
-                  <td className={styles.syncedCell}>{s.loading ? '…' : formatSynced(s.lastSynced)}</td>
+                  <td className={styles.syncedCell}>
+                    {s.loading ? '…' : formatSyncedDisplay(s.lastSynced)}
+                  </td>
                 </tr>
               )
             })}

@@ -87,7 +87,7 @@ function setupLoad(progress: OnboardingProgressPayload) {
 /** Matches the 500ms debounce in `handleUsernameChange` without stubbing `setTimeout` (stubs break React scheduling). */
 async function afterUsernameDebounce() {
   await new Promise<void>((resolve) => {
-    setTimeout(resolve, 550)
+    setTimeout(resolve, 650)
   })
 }
 

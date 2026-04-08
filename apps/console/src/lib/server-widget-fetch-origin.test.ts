@@ -58,4 +58,12 @@ describe('getServerWidgetFetchOrigin', () => {
     const { getServerWidgetFetchOrigin } = await import('./server-widget-fetch-origin.js')
     await expect(getServerWidgetFetchOrigin()).resolves.toBe('http://api.chrisvogt.local:5173')
   })
+
+  it('falls back to localhost:5173 when host headers are missing in production', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    const { headers } = await import('next/headers')
+    vi.mocked(headers).mockResolvedValue(new Headers() as Headers)
+    const { getServerWidgetFetchOrigin } = await import('./server-widget-fetch-origin.js')
+    await expect(getServerWidgetFetchOrigin()).resolves.toBe('http://localhost:5173')
+  })
 })

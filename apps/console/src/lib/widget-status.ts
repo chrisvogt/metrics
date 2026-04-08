@@ -32,3 +32,68 @@ export function extractLastSyncedFromWidgetResponse(json: unknown): string | nul
   }
   return null
 }
+
+/** Table cell display for `meta.synced` ISO strings (public status page + console status). */
+export function formatSyncedDisplay(iso: string | null): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  if (d.getTime() === 0) return '—'
+  return d.toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+}
+
+export type WidgetStatusRowResult = {
+  label: string
+  path: string
+  httpStatus: number
+  ok: boolean
+  ms: number
+  lastSynced: string | null
+  error: string | null
+}
+
+/** One provider row for the public tenant status page (server-side `fetch`). */
+export async function fetchWidgetStatusRow(
+  origin: string,
+  username: string,
+  providerId: string,
+  label: string
+): Promise<WidgetStatusRowResult> {
+  const path = `/api/widgets/${providerId}?username=${encodeURIComponent(username)}`
+  const started = Date.now()
+  try {
+    const res = await fetch(`${origin}${path}`, { cache: 'no-store' })
+    const ms = Date.now() - started
+    let lastSynced: string | null = null
+    if (res.ok) {
+      const ct = res.headers.get('content-type') ?? ''
+      if (ct.includes('application/json')) {
+        const data = await res.json().catch(() => null)
+        lastSynced = extractLastSyncedFromWidgetResponse(data)
+      }
+    }
+    return {
+      label,
+      path,
+      httpStatus: res.status,
+      ok: res.ok,
+      ms,
+      lastSynced,
+      error: null,
+    }
+  } catch (err) {
+    const ms = Date.now() - started
+    return {
+      label,
+      path,
+      httpStatus: 0,
+      ok: false,
+      ms,
+      lastSynced: null,
+      error: err instanceof Error ? err.message : String(err),
+    }
+  }
+}
