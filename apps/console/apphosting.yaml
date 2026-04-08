@@ -24,3 +24,10 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  # Hostname → public username slug for `src/proxy.ts`: `/` rewrites to `/u/{slug}` (browser URL stays `/`).
+  # Comma-separated `host=slug` if you add more tenant API domains later.
+  - variable: NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME
+    value: api.chrisvogt.me=chrisvogt
+    availability:
+      - BUILD
+      - RUNTIME
