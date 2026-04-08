@@ -14,7 +14,7 @@ For product behavior and UI changes, see [apps/console/CHANGELOG.md](../apps/con
 
 ### Email verification action URL
 
-In **Firebase Console → Authentication → Templates → Email address verification**, set the **custom action URL** to the console’s verify route (Firebase appends `mode` and `oobCode`). **Current production:** `https://metrics.chrisvogt.me/verify-email`. Ensure **metrics.chrisvogt.me** appears under **Authentication → Settings → Authorized domains**. When the operator console moves to **chronogrove.com**, update this URL and domains to match the new host.
+In **Firebase Console → Authentication → Templates → Email address verification**, set the **custom action URL** to the console’s verify route (Firebase appends `mode` and `oobCode`). **Current production:** `https://metrics.chrisvogt.me/verify-email`. Ensure **metrics.chrisvogt.me** appears under **Authentication → Settings → Authorized domains**. When the operator console’s primary host is **`console.chronogrove.com`**, update this URL and authorized domains to match (keep **`api.chronogrove.com`** and any tenant **`api.*`** domains in the list if those surfaces use Auth flows).
 
 ### Tenant API host: `/widgets` and `/` status rewrite
 
@@ -30,7 +30,7 @@ Two **App Hosting backends** share **`rootDir`: `./apps/console`** (see [`fireba
 
 | Backend ID | Purpose |
 |------------|---------|
-| **`chronogrove-console`** | **Production** operator console ([metrics.chrisvogt.me](https://metrics.chrisvogt.me)). Has **`alwaysDeployFromSource`: true** so deploys always build from the checked-out tree. |
+| **`chronogrove-console`** | **Production** App Hosting backend for the Next app ([metrics.chrisvogt.me](https://metrics.chrisvogt.me) today; target operator host **`console.chronogrove.com`**, plus **`api.chronogrove.com`** and other custom domains on the same backend). Has **`alwaysDeployFromSource`: true** so deploys always build from the checked-out tree. |
 | **`chronogrove-console-pr`** | **Secondary** backend for **preview or staging**-style deploys (same codebase and `apphosting.yaml`; no `alwaysDeployFromSource` in repo config). Create and use this backend when you want a separate URL or lifecycle from production. Deploy with `firebase deploy --only apphosting:chronogrove-console-pr` when that backend is wired in your Firebase project. |
 
 Backend IDs must exist in the Firebase project (Console or CLI, e.g. `firebase apphosting:backends:create`).
