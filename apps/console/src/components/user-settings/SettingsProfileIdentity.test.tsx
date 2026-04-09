@@ -393,21 +393,6 @@ describe('SettingsProfileIdentity', () => {
     })
   })
 
-  it('marks username invalid when the pattern fails after debounce', async () => {
-    setupLoad(sampleProgress({ username: null, customDomain: null }))
-    render(<SettingsProfileIdentity user={mockUser()} apiSessionReady />)
-    await waitFor(() => screen.getByPlaceholderText('your-username'))
-
-    fireEvent.change(screen.getByPlaceholderText('your-username'), {
-      target: { value: '_bad' },
-    })
-    await afterUsernameDebounce()
-
-    await waitFor(() => {
-      expect(screen.getByText(/must start and end/i)).toBeInTheDocument()
-    })
-  })
-
   it('shows taken when check-username reports unavailable', async () => {
     setupLoad(sampleProgress({ username: null, customDomain: null }))
     vi.mocked(globalThis.fetch).mockResolvedValue(
@@ -510,6 +495,32 @@ describe('SettingsUsernameBlock (progressRef guard)', () => {
     putJson.mockClear()
     putJson.mockResolvedValue(jsonResponse({ payload: sampleProgress() }))
     globalThis.fetch = vi.fn()
+  })
+
+  it('marks username invalid when the pattern fails after debounce', async () => {
+    const progress = sampleProgress({ username: null, customDomain: null })
+    const progressRef: MutableRefObject<OnboardingProgressPayload | null> = { current: progress }
+    render(
+      <SettingsUsernameBlock
+        user={mockUser()}
+        progress={progress}
+        progressRef={progressRef}
+        baseUrl="http://localhost"
+        onProgressUpdated={vi.fn()}
+        runIdentitySave={async <T,>(fn: () => Promise<T>) => fn()}
+        isSaving={false}
+        subsectionClassName="sub"
+      />,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('your-username'), {
+      target: { value: '_bad' },
+    })
+    await afterUsernameDebounce()
+
+    await waitFor(() => {
+      expect(screen.getByText(/must start and end/i)).toBeInTheDocument()
+    })
   })
 
   it('does not call PUT when progressRef.current is null', async () => {
