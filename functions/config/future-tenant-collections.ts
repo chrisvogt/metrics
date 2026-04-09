@@ -5,10 +5,9 @@
  * where new data will live so we can migrate without moving existing documents.
  *
  * Rollout (do not skip steps):
- * 1. Keep serving widgets via `getWidgetUserIdForHostname` (env map + default).
- * 2. Add Admin-only writers for `tenant_usernames` / `tenant_hosts` / `integrations`.
- * 3. Set `ENABLE_FIRESTORE_TENANT_ROUTING=true` only after Firestore lookups are
- *    implemented and tested; until then the flag has no runtime effect.
+ * 1. Keep serving widgets via env map + default; optional Firestore via `tenant-host-routing.ts`.
+ * 2. Admin-only writers for `tenant_usernames` / `tenant_hosts` / `integrations` (onboarding).
+ * 3. Set `ENABLE_FIRESTORE_TENANT_ROUTING=true` after deploying resolver + console/App Hosting env.
  * 4. Firestore rules deny all client access; integrations stay server-only — expose only
  *    non-secret fields via HTTPS APIs when OAuth goes live.
  *

@@ -5,6 +5,7 @@ import os from 'os'
 import path from 'path'
 
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
+import { resetTenantHostRoutingCacheForTests } from '../services/tenant-host-routing.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 import type { Request } from 'express'
@@ -864,6 +865,61 @@ describe('createExpressApp auth and session branches', () => {
     )
     expect(res.status).toHaveBeenCalledWith(400)
     expect(res.send).toHaveBeenCalledWith('Unrecognized or unsupported provider.')
+  })
+
+  describe('GET /api/internal/resolve-tenant', () => {
+    beforeEach(() => {
+      resetTenantHostRoutingCacheForTests()
+      vi.mocked(documentStore.getDocument).mockReset()
+    })
+
+    it('returns 200 with nulls when Firestore routing is off', async () => {
+      const app = await buildApp()
+      const response = await request(app)
+        .get('/api/internal/resolve-tenant')
+        .query({ host: 'api.dynamic.example' })
+        .expect(200)
+
+      expect(response.body).toEqual({ uid: null, username: null })
+    })
+
+    it('returns 403 when internal API key is set and header is missing', async () => {
+      const prev = process.env.CHRONOGROVE_INTERNAL_API_KEY
+      process.env.CHRONOGROVE_INTERNAL_API_KEY = 'test-internal-key'
+      try {
+        const app = await buildApp()
+        await request(app).get('/api/internal/resolve-tenant').query({ host: 'a.com' }).expect(403)
+      } finally {
+        if (prev === undefined) {
+          delete process.env.CHRONOGROVE_INTERNAL_API_KEY
+        } else {
+          process.env.CHRONOGROVE_INTERNAL_API_KEY = prev
+        }
+      }
+    })
+
+    it('returns uid and username when Firestore routing resolves a claim', async () => {
+      const prevFlag = process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+      process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+      vi.mocked(documentStore.getDocument)
+        .mockResolvedValueOnce({ uid: 'uid-z' })
+        .mockResolvedValueOnce({ username: 'Zed' })
+      try {
+        const app = await buildApp()
+        const response = await request(app)
+          .get('/api/internal/resolve-tenant')
+          .query({ host: 'api.zed.example' })
+          .expect(200)
+
+        expect(response.body).toEqual({ uid: 'uid-z', username: 'zed' })
+      } finally {
+        if (prevFlag === undefined) {
+          delete process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+        } else {
+          process.env.ENABLE_FIRESTORE_TENANT_ROUTING = prevFlag
+        }
+      }
+    })
   })
 
   it('widget GET rateLimit keyGenerator includes request path', async () => {

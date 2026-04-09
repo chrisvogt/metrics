@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-04-08
+
+### Added
+
+- **Firestore tenant host routing** — When **`ENABLE_FIRESTORE_TENANT_ROUTING=true`**, **`GET /api/widgets/:provider`** resolves the data owner from **`tenant_hosts/{hostname}`** (after **`WIDGET_USER_ID_BY_HOSTNAME`**) with an in-process TTL cache (**`TENANT_HOST_ROUTING_CACHE_MS`**, optional **`TENANT_HOST_ROUTING_CACHE_MAX_ENTRIES`**). **`GET /api/internal/resolve-tenant?host=`** returns **`{ uid, username }`** (always 200 on lookup path; optional **`CHRONOGROVE_INTERNAL_API_KEY`** + header **`x-chronogrove-internal-key`**). Implementation in **`services/tenant-host-routing.ts`** with tests.
+
+### Changed
+
+- **`WIDGET_USER_ID_BY_HOSTNAME`** — Hostname keys are normalized to lowercase when parsed.
+
 ## [0.30.0] - 2026-04-08
 
 ### Added

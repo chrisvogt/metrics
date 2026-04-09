@@ -31,12 +31,9 @@ export const toProviderMediaPrefix = (
 ) => toMediaPrefix(userId, provider, suffix)
 
 /**
- * Resolves which Firestore user id owns widget data for this HTTP `Host`.
- *
- * Today this is **only** `WIDGET_USER_ID_BY_HOSTNAME` + `DEFAULT_WIDGET_USER_ID`.
- * Firestore-backed custom domains (`tenant_hosts`) stay **off** until implemented
- * and `ENABLE_FIRESTORE_TENANT_ROUTING=true` in config. Onboarding UX can add data
- * on the side without changing this behavior.
+ * Sync slice: env map (`WIDGET_USER_ID_BY_HOSTNAME`) + default only.
+ * When `ENABLE_FIRESTORE_TENANT_ROUTING=true`, use `resolveWidgetUserIdForHostname`
+ * from `../services/tenant-host-routing.js` for full resolution (cached Firestore).
  */
 export const getWidgetUserIdForHostname = (hostname: string | undefined) => {
   const { defaultWidgetUserId, widgetUserIdByHostname } = getBackendPathConfig()
@@ -44,5 +41,5 @@ export const getWidgetUserIdForHostname = (hostname: string | undefined) => {
     return defaultWidgetUserId
   }
 
-  return widgetUserIdByHostname[hostname] ?? defaultWidgetUserId
+  return widgetUserIdByHostname[hostname.toLowerCase()] ?? defaultWidgetUserId
 }

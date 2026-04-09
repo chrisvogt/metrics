@@ -14,7 +14,8 @@ import {
   onAuthStateChanged,
   sendEmailVerification,
 } from 'firebase/auth'
-import { isAuthlessPublicStatusSurface } from '@/lib/tenant-api-root-map'
+import { isPublicStatusSurfaceWithOptionalFirestoreTenant } from '@/lib/authless-tenant-surface'
+import { readEnableFirestorePublicRoot, useFirestoreTenantRootSlug } from '@/lib/useFirestoreTenantRootSlug'
 import { getFirebaseApp } from './firebase'
 import { apiClient } from './apiClient'
 import {
@@ -47,11 +48,18 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const pathname = usePathname()
+  const firestoreTenantSlug = useFirestoreTenantRootSlug(pathname)
+
   /** Hostname is stable for same-origin SPA navigations; omit from deps to avoid extra effect runs. */
   const authlessPublicSurface = useMemo(() => {
     const host = typeof window !== 'undefined' ? window.location.hostname : undefined
-    return isAuthlessPublicStatusSurface(pathname, host)
-  }, [pathname])
+    return isPublicStatusSurfaceWithOptionalFirestoreTenant(
+      pathname,
+      host,
+      firestoreTenantSlug,
+      readEnableFirestorePublicRoot()
+    )
+  }, [pathname, firestoreTenantSlug])
   const [user, setUser] = useState<User | null>(null)
   const [apiSessionReady, setApiSessionReady] = useState(false)
   const [loading, setLoading] = useState(true)

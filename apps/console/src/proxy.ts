@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { primaryHostLineFromHeaders } from '@/lib/request-host-headers'
-import { tenantStatusSlugForHost } from '@/lib/tenant-api-root-map'
+import { tenantStatusSlugForHostAsync } from '@/lib/tenant-api-root-map'
 
 /** Next.js proxy: scanner blocking + optional `/` → `/u/{slug}` for hosts in `NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`. See `docs/APP_HOSTING.md`. */
 
@@ -47,14 +47,14 @@ const SCANNER_PATTERN = new RegExp(
 /** Root / nested PHP probes (e.g. /admin.php); real app has no .php routes. */
 const PHP_PROBE = /\.php$/i
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
   if (SCANNER_PATTERN.test(path) || PHP_PROBE.test(path)) {
     return new NextResponse(null, { status: 403 })
   }
 
   if (path === '/' || path === '') {
-    const slug = tenantStatusSlugForHost(primaryHostLineFromHeaders(request.headers))
+    const slug = await tenantStatusSlugForHostAsync(primaryHostLineFromHeaders(request.headers))
     if (slug) {
       const url = request.nextUrl.clone()
       url.pathname = `/u/${slug}`

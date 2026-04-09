@@ -31,3 +31,13 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  # Firestore `tenant_hosts` after env map (see functions `ENABLE_FIRESTORE_TENANT_ROUTING`). Default off.
+  - variable: ENABLE_FIRESTORE_TENANT_ROUTING
+    value: "false"
+    availability:
+      - RUNTIME
+  - variable: NEXT_PUBLIC_ENABLE_FIRESTORE_TENANT_ROUTING
+    value: "false"
+    availability:
+      - BUILD
+      - RUNTIME
