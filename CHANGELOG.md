@@ -15,6 +15,8 @@ Package-specific changes:
 
 ### Changed
 
+- **Workspace** — **Console 0.6.22** and **Functions 0.31.0**: optional Firestore **`tenant_hosts`** routing behind **`ENABLE_FIRESTORE_TENANT_ROUTING`** (Functions + App Hosting) and **`NEXT_PUBLIC_ENABLE_FIRESTORE_TENANT_ROUTING`** (console client); internal resolve API, cached widget hostname resolution, async proxy + **`/internal/tenant-resolve`**, **`CHRONOGROVE_INTERNAL_API_KEY`** support. See [functions/CHANGELOG.md](functions/CHANGELOG.md), [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md), [GitHub #257](https://github.com/chrisvogt/chronogrove/issues/257).
+
 - **Workspace** — **Console 0.6.20** and **Functions 0.30.0**: public tenant API and status routing ([GitHub #256](https://github.com/chrisvogt/chronogrove/issues/256)): optional widget **`uid`** / **`username`** query params; removed default **`api.chronogrove.com → chronogrove`** hostname map; console **`/u/[username]`**, **`/widgets/*`** rewrite, **`src/proxy.ts`** **`/`** → **`/u/{slug}`**, **`apps/console/.env.template`**, dev SSR widget fetches via **`127.0.0.1:5001`** emulator. See [functions/CHANGELOG.md](functions/CHANGELOG.md), [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md), [docs/APP_HOSTING.md](docs/APP_HOSTING.md).
 
 - **Workspace** — **Console 0.6.19**: **Next.js 16.2.x** (from 15.5.x), **`next.config.mjs`**, **`src/proxy.ts`** (replaces deprecated middleware convention), **`tsconfig`** updates from Next; Vitest mock fix for Strict Mode in settings username check. See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).

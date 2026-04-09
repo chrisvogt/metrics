@@ -200,7 +200,10 @@ const parseStringMap = (
 const parseWidgetUserMap = (
   rawValue: string | undefined
 ): Record<string, string> => {
-  return parseStringMap(rawValue, DEFAULT_WIDGET_HOSTNAME_USER_MAP)
+  const raw = parseStringMap(rawValue, DEFAULT_WIDGET_HOSTNAME_USER_MAP)
+  return Object.fromEntries(
+    Object.entries(raw).map(([k, v]) => [k.toLowerCase(), v])
+  )
 }
 
 export const getBackendPathConfig = () => ({
