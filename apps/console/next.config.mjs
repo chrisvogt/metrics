@@ -53,6 +53,8 @@ const nextConfig = {
     NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN: cloudFunctionsAppOrigin,
     NEXT_PUBLIC_ONBOARDING_CNAME_TARGET:
       process.env.NEXT_PUBLIC_ONBOARDING_CNAME_TARGET ?? 'personal-stats-chrisvogt.web.app',
+    NEXT_PUBLIC_DEFAULT_PUBLIC_API_HOST:
+      process.env.NEXT_PUBLIC_DEFAULT_PUBLIC_API_HOST ?? '',
   },
   async rewrites() {
     const apiRewrite =

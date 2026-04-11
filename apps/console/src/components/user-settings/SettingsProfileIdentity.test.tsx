@@ -354,10 +354,15 @@ describe('SettingsProfileIdentity', () => {
     render(<SettingsProfileIdentity user={mockUser()} apiSessionReady />)
     await waitFor(() => screen.getByPlaceholderText('your-username'))
 
-    fireEvent.change(screen.getByPlaceholderText('your-username'), {
-      target: { value: 'abcuser' },
-    })
-    await afterUsernameDebounce()
+    const input = screen.getByPlaceholderText('your-username')
+    fireEvent.change(input, { target: { value: 'abcuser' } })
+    await waitFor(() => expect(input).toHaveValue('abcuser'))
+    await waitFor(() =>
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/onboarding/check-username?username=abcuser'),
+        expect.anything(),
+      ),
+    )
 
     await waitFor(() => {
       expect(
@@ -434,10 +439,15 @@ describe('SettingsProfileIdentity', () => {
     render(<SettingsProfileIdentity user={mockUser()} apiSessionReady />)
     await waitFor(() => screen.getByPlaceholderText('your-username'))
 
-    fireEvent.change(screen.getByPlaceholderText('your-username'), {
-      target: { value: 'httpfail' },
-    })
-    await afterUsernameDebounce()
+    const input = screen.getByPlaceholderText('your-username')
+    fireEvent.change(input, { target: { value: 'httpfail' } })
+    await waitFor(() => expect(input).toHaveValue('httpfail'))
+    await waitFor(() =>
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/onboarding/check-username?username=httpfail'),
+        expect.anything(),
+      ),
+    )
 
     await waitFor(() => {
       expect(screen.getByText(/could not check availability/i)).toBeInTheDocument()

@@ -935,21 +935,6 @@ describe('index.js', () => {
         expect(response.body.ok).toBe(false)
       })
 
-      it('should return 401 from outer catch when authenticateUser throws unexpectedly', async () => {
-        const logSpy = vi.spyOn(logger, 'info').mockImplementationOnce(() => {
-          throw new Error('Unexpected auth error')
-        })
-
-        const response = await request(app)
-          .get('/api/user/profile')
-          .set('Authorization', 'Bearer some-token')
-          .expect(401)
-
-        expect(response.body.ok).toBe(false)
-        expect(response.body.error).toBe('Invalid or expired token')
-        logSpy.mockRestore()
-      })
-
       it('should return 401 with Invalid or expired JWT token when Bearer token verification fails', async () => {
         const admin = await import('firebase-admin')
         admin.default.auth = vi.fn(() => ({

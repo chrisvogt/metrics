@@ -7,6 +7,23 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.22] - 2026-04-10
+
+### Added
+
+- **Onboarding username gate** — Verified users who have not chosen a public slug (no persisted **`username`** and **`username`** not in **`completedSteps`**) are redirected to **`/onboarding/`** after the API session is ready. Marketing and auth routes are excluded (**`/about`**, **`/docs`**, **`/privacy`**, **`/verify-email`**, **`/signup`**, **`/auth`**, public **`/u/*`**).
+- **Tests** — **`src/lib/overviewQuickLinks.test.ts`** (dashboard quick-link URLs for signed-in vs signed-out); **`src/lib/tenantDisplay.test.ts`** (**`resolveDashboardTenantHostname`**); **`src/lib/onboardingUsernameCompletion.test.ts`** (**`hasCompletedUsernameSelection`**).
+
+### Changed
+
+- **Auth / session** — Clear stale HttpOnly **`session`** cookies when switching Firebase accounts (**`POST /api/auth/clear-session-cookie`**, **`apiClient.clearStaleSessionCookie`**, **`AuthContext`** on uid change and before email sign-up). Session creation uses a **force-refreshed** ID token (**`getIdToken(true)`**) so **`email_verified`** matches the server after verification links.
+- **Dashboard quick links** — Overview card links are **Settings**, **Docs**, **Public status page** (when a public **username** exists) or **Account setup**, and **GitHub**; signed-out visitors see **Docs**, **About**, and **Sign in**. Implemented as **`buildOverviewQuickLinks`** in **`src/lib/overviewQuickLinks.ts`** (used by **`OverviewSection`**).
+
+### Fixed
+
+- **Dashboard hero** — Headline uses **`GET /api/onboarding/progress`**: configured **`customDomain`** (tenant API host) when set, else **`NEXT_PUBLIC_DEFAULT_PUBLIC_API_HOST`** (default **`api.chronogrove.com`**) when a public **username** exists, else **`NEXT_PUBLIC_TENANT_DISPLAY_HOST`**. **`resolveDashboardTenantHostname`** in **`src/lib/tenantDisplay.ts`**.
+- **Dashboard hero typography** — Relaxed **`line-height`**, added slight **`padding-bottom`**, and set the hero to **`overflow: visible`** so gradient headline text does not clip descenders (e.g. “g”).
+
 ## [0.6.21] - 2026-04-08
 
 ### Changed

@@ -77,6 +77,25 @@ export class ApiClient {
     return this.getCookieValue('XSRF-TOKEN') ?? payload.csrfToken ?? null
   }
 
+  /**
+   * Server-side clear of the HttpOnly `session` cookie (client JS cannot remove it).
+   * Call when switching Firebase accounts so API requests match the current user.
+   */
+  async clearStaleSessionCookie(): Promise<void> {
+    try {
+      const csrfToken = await this.getCsrfToken(true)
+      await fetch(`${this.baseUrl}/api/auth/clear-session-cookie`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
+        },
+      })
+    } catch {
+      /* best-effort */
+    }
+  }
+
   async createSession(token: string): Promise<{ ok: boolean; message?: string }> {
     const csrfToken = await this.getCsrfToken()
     const res = await fetch(`${this.baseUrl}/api/auth/session`, {
