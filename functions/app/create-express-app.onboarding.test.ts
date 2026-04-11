@@ -586,12 +586,12 @@ describe('createExpressApp onboarding routes', () => {
     authService.verifySessionCookie.mockResolvedValue({
       uid: 'session-uid',
       email: 'a@chrisvogt.me',
-      email_verified: true,
+      emailVerified: true,
     } as never)
     authService.verifyIdToken.mockResolvedValue({
       uid: 'bearer-uid',
       email: 'b@chrisvogt.me',
-      email_verified: false,
+      emailVerified: false,
     } as never)
 
     const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
@@ -614,6 +614,36 @@ describe('createExpressApp onboarding routes', () => {
         bearerUid: 'bearer-uid',
       }),
     )
+    expect(json).toHaveBeenCalledWith({ ok: true, available: false })
+  })
+
+  it('GET check-username clears session on uid mismatch but uses verified bearer uid when allowlist passes (mismatch bearer branch)', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue({ uid: 'other' })
+    authService.verifySessionCookie.mockResolvedValue({
+      uid: 'session-uid',
+      email: 'a@chrisvogt.me',
+      emailVerified: true,
+    } as never)
+    authService.verifyIdToken.mockResolvedValue({
+      uid: 'bearer-uid',
+      email: 'b@chrisvogt.me',
+      emailVerified: true,
+    } as never)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    const clearCookie = vi.fn()
+    await handler(
+      {
+        query: { username: 'valid_user' },
+        cookies: { session: 'sess' },
+        headers: { authorization: 'Bearer tok' },
+      },
+      { json, clearCookie }
+    )
+
+    expect(clearCookie).toHaveBeenCalledWith('session', expect.objectContaining({ path: '/' }))
     expect(json).toHaveBeenCalledWith({ ok: true, available: false })
   })
 

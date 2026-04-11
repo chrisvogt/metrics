@@ -258,15 +258,19 @@ export function createExpressApp({
   }
 
   /**
-   * Resolves the signed-in user from the HttpOnly session cookie and/or `Authorization: Bearer`
-   * (Firebase ID token). When both are present but refer to **different** accounts (e.g. user
-   * signed up or switched accounts without clearing the old session cookie), prefer the Bearer
-   * identity and clear the stale cookie so subsequent requests match Firebase Auth.
+   * Verifies the HttpOnly session cookie and/or `Authorization: Bearer` (Firebase ID token),
+   * detects uid mismatch when both are present, and on mismatch logs, clears the stale session
+   * cookie, and returns `{ mismatch: true }` with both claim sets for callers to interpret.
    */
-  const resolveChosenAuthClaims = async (
+  const resolveSessionAndBearerClaims = async (
     req: express.Request,
-    res: express.Response
-  ): Promise<AuthClaims | null> => {
+    res: express.Response,
+    logVerificationDetails: boolean
+  ): Promise<{
+    sessionClaims: AuthClaims | null
+    bearerClaims: AuthClaims | null
+    mismatch: boolean
+  }> => {
     const sessionCookie = req.cookies?.session
     const bearerToken = extractBearerToken(req.headers.authorization)
 
@@ -274,17 +278,21 @@ export function createExpressApp({
     if (sessionCookie) {
       try {
         sessionClaims = await authService.verifySessionCookie(sessionCookie)
-        logger.info('Session cookie verified successfully', {
-          uid: sessionClaims.uid,
-          email: sessionClaims.email,
-          emailVerified: sessionClaims.emailVerified,
-        })
+        if (logVerificationDetails) {
+          logger.info('Session cookie verified successfully', {
+            uid: sessionClaims.uid,
+            email: sessionClaims.email,
+            emailVerified: sessionClaims.emailVerified,
+          })
+        }
       } catch (error) {
-        logger.error('Session cookie verification failed', {
-          error: error instanceof Error ? error.message : '',
-          code: (error as { code?: string }).code,
-          stack: error instanceof Error ? error.stack : undefined,
-        })
+        if (logVerificationDetails) {
+          logger.error('Session cookie verification failed', {
+            error: error instanceof Error ? error.message : '',
+            code: (error as { code?: string }).code,
+            stack: error instanceof Error ? error.stack : undefined,
+          })
+        }
       }
     }
 
@@ -292,17 +300,21 @@ export function createExpressApp({
     if (bearerToken) {
       try {
         bearerClaims = await authService.verifyIdToken(bearerToken)
-        logger.info('auth: bearer token', {
-          path: req.path,
-          uid: bearerClaims.uid,
-          email: bearerClaims.email,
-          emailVerified: bearerClaims.emailVerified,
-        })
+        if (logVerificationDetails) {
+          logger.info('auth: bearer token', {
+            path: req.path,
+            uid: bearerClaims.uid,
+            email: bearerClaims.email,
+            emailVerified: bearerClaims.emailVerified,
+          })
+        }
       } catch (error) {
-        logger.error('JWT token verification failed', {
-          error: error instanceof Error ? error.message : '',
-          code: (error as { code?: string }).code,
-        })
+        if (logVerificationDetails) {
+          logger.error('JWT token verification failed', {
+            error: error instanceof Error ? error.message : '',
+            code: (error as { code?: string }).code,
+          })
+        }
       }
     }
 
@@ -320,6 +332,25 @@ export function createExpressApp({
         }
       )
       res.clearCookie('session', sessionCookieBaseOptions)
+    }
+
+    return { sessionClaims, bearerClaims, mismatch }
+  }
+
+  /**
+   * Resolves the signed-in user from the HttpOnly session cookie and/or `Authorization: Bearer`
+   * (Firebase ID token). When both are present but refer to **different** accounts (e.g. user
+   * signed up or switched accounts without clearing the old session cookie), prefer the Bearer
+   * identity and clear the stale cookie so subsequent requests match Firebase Auth.
+   */
+  const resolveChosenAuthClaims = async (
+    req: express.Request,
+    res: express.Response
+  ): Promise<AuthClaims | null> => {
+    const { sessionClaims, bearerClaims, mismatch } =
+      await resolveSessionAndBearerClaims(req, res, true)
+
+    if (mismatch) {
       return bearerClaims
     }
 
@@ -336,48 +367,16 @@ export function createExpressApp({
     req: express.Request,
     res: express.Response
   ): Promise<string | null> => {
-    const sessionCookie = req.cookies?.session
-    const bearerToken = extractBearerToken(req.headers.authorization)
-
-    let sessionClaims: AuthClaims | null = null
-    if (sessionCookie) {
-      try {
-        sessionClaims = await authService.verifySessionCookie(sessionCookie)
-      } catch {
-        /* treat as missing */
-      }
-    }
-
-    let bearerClaims: AuthClaims | null = null
-    if (bearerToken) {
-      try {
-        bearerClaims = await authService.verifyIdToken(bearerToken)
-      } catch {
-        /* treat as missing */
-      }
-    }
-
-    const mismatch =
-      sessionClaims !== null &&
-      bearerClaims !== null &&
-      sessionClaims.uid !== bearerClaims.uid
+    const { sessionClaims, bearerClaims, mismatch } =
+      await resolveSessionAndBearerClaims(req, res, false)
 
     if (mismatch) {
-      logger.warn(
-        'Session uid does not match Bearer uid; preferring Bearer and clearing session cookie',
-        {
-          sessionUid: sessionClaims.uid,
-          bearerUid: bearerClaims.uid,
-        }
-      )
-      res.clearCookie('session', sessionCookieBaseOptions)
-      const b = bearerClaims
       if (
-        b.uid &&
-        isAllowedEmail(b.email) &&
-        !needsEmailVerification(b.email, b.emailVerified)
+        bearerClaims?.uid &&
+        isAllowedEmail(bearerClaims.email) &&
+        !needsEmailVerification(bearerClaims.email, bearerClaims.emailVerified)
       ) {
-        return b.uid
+        return bearerClaims.uid
       }
       return null
     }
