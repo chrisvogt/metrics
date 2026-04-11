@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Tests
 
-- **`create-express-app`** — Coverage for mismatch branches (verified vs unverified Bearer after uid mismatch), **`authenticateUser`** outer **`catch`**, and onboarding **`check-username`** mocks now use **`emailVerified`** (Firebase **`AuthClaims`** shape).
+- **`create-express-app`** — Coverage for mismatch branches (verified vs unverified Bearer after uid mismatch), **`authenticateUser`** outer **`catch`** ( **`email`** getter throws only after verbose logging reads it once), silent session-cookie verification failure on **`check-username`**, and onboarding mocks use **`emailVerified`** (Firebase **`AuthClaims`** shape).
 
 ## [0.30.1] - 2026-04-10
 

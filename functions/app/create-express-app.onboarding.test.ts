@@ -368,6 +368,34 @@ describe('createExpressApp onboarding routes', () => {
     expect(json).toHaveBeenCalledWith({ ok: true, available: false })
   })
 
+  it('GET check-username ignores invalid session cookie without logging verify errors (silent path)', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue({ uid: 'other' })
+    authService.verifySessionCookie.mockRejectedValue(new Error('revoked session'))
+    authService.verifyIdToken.mockResolvedValue({
+      uid: 'viewer',
+      email: 'v@chrisvogt.me',
+      emailVerified: true,
+    } as never)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    await handler(
+      {
+        query: { username: 'valid_user' },
+        headers: { authorization: 'Bearer tok' },
+        cookies: { session: 'stale' },
+      },
+      { json }
+    )
+
+    expect(logger.error).not.toHaveBeenCalledWith(
+      'Session cookie verification failed',
+      expect.anything()
+    )
+    expect(json).toHaveBeenCalledWith({ ok: true, available: false })
+  })
+
   it('GET check-username ignores invalid bearer when claim exists', async () => {
     const { app } = await buildApp()
     documentStore.getDocument.mockResolvedValue({ uid: 'owner' })

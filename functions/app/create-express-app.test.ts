@@ -435,10 +435,13 @@ describe('createExpressApp auth and session branches', () => {
   it('returns 401 from authenticateUser when reading chosen.email throws (outer catch)', async () => {
     const app = await buildApp()
 
+    let emailReads = 0
     authService.verifyIdToken.mockResolvedValue({
       uid: 'test-uid',
       emailVerified: true,
       get email() {
+        emailReads += 1
+        if (emailReads < 2) return 'test@chrisvogt.me'
         throw new Error('boom')
       },
     } as never)
@@ -452,9 +455,9 @@ describe('createExpressApp auth and session branches', () => {
       ok: false,
       error: 'Invalid or expired token',
     })
-    expect(logger.error).toHaveBeenCalledWith(
-      'Authentication error:',
-      expect.objectContaining({ error: 'boom' }),
+    const authErr = vi.mocked(logger.error).mock.calls.find((c) => c[0] === 'Authentication error:')
+    expect(authErr?.[1]).toEqual(
+      expect.objectContaining({ error: 'boom', uid: 'unknown' }),
     )
   })
 
