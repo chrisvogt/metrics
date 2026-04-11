@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.2] - 2026-04-10
+
+### Changed
+
+- **Authentication** — **`resolveSessionAndBearerClaims`** centralizes session-cookie and Bearer verification, uid-mismatch detection, warning log, and **`session`** cookie clearing; **`resolveChosenAuthClaims`** and **`resolveViewerUidForPublicOnboarding`** only apply their distinct post-processing (full **`AuthClaims`** vs allowlist-gated **`uid`**). Optional verbose verify logging remains for the authenticated API path only.
+
+### Tests
+
+- **`create-express-app`** — Coverage for mismatch branches (verified vs unverified Bearer after uid mismatch), **`authenticateUser`** outer **`catch`** ( **`email`** getter throws only after verbose logging reads it once), silent session-cookie verification failure on **`check-username`**, and onboarding mocks use **`emailVerified`** (Firebase **`AuthClaims`** shape).
+
 ## [0.30.1] - 2026-04-10
 
 ### Added

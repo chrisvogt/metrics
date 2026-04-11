@@ -432,6 +432,35 @@ describe('createExpressApp auth and session branches', () => {
     expect(response.body.error).toBe('Invalid or expired JWT token')
   })
 
+  it('returns 401 from authenticateUser when reading chosen.email throws (outer catch)', async () => {
+    const app = await buildApp()
+
+    let emailReads = 0
+    authService.verifyIdToken.mockResolvedValue({
+      uid: 'test-uid',
+      emailVerified: true,
+      get email() {
+        emailReads += 1
+        if (emailReads < 2) return 'test@chrisvogt.me'
+        throw new Error('boom')
+      },
+    } as never)
+
+    const response = await request(app)
+      .get('/api/user/profile')
+      .set('Authorization', 'Bearer valid-token')
+      .expect(401)
+
+    expect(response.body).toEqual({
+      ok: false,
+      error: 'Invalid or expired token',
+    })
+    const authErr = vi.mocked(logger.error).mock.calls.find((c) => c[0] === 'Authentication error:')
+    expect(authErr?.[1]).toEqual(
+      expect.objectContaining({ error: 'boom', uid: 'unknown' }),
+    )
+  })
+
   it('rejects state-changing requests when the CSRF token is missing', async () => {
     const app = await buildApp()
 
