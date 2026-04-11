@@ -580,6 +580,43 @@ describe('createExpressApp onboarding routes', () => {
     expect(json).toHaveBeenCalledWith({ ok: true, available: true })
   })
 
+  it('GET check-username clears session and treats viewer as absent when session and bearer uids mismatch and bearer is unverified', async () => {
+    const { app } = await buildApp()
+    documentStore.getDocument.mockResolvedValue({ uid: 'other' })
+    authService.verifySessionCookie.mockResolvedValue({
+      uid: 'session-uid',
+      email: 'a@chrisvogt.me',
+      email_verified: true,
+    } as never)
+    authService.verifyIdToken.mockResolvedValue({
+      uid: 'bearer-uid',
+      email: 'b@chrisvogt.me',
+      email_verified: false,
+    } as never)
+
+    const handler = findRouteHandler(app, 'get', '/api/onboarding/check-username')
+    const json = vi.fn()
+    const clearCookie = vi.fn()
+    await handler(
+      {
+        query: { username: 'valid_user' },
+        cookies: { session: 'sess' },
+        headers: { authorization: 'Bearer tok' },
+      },
+      { json, clearCookie }
+    )
+
+    expect(clearCookie).toHaveBeenCalledWith('session', expect.objectContaining({ path: '/' }))
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Session uid does not match Bearer uid; preferring Bearer and clearing session cookie',
+      expect.objectContaining({
+        sessionUid: 'session-uid',
+        bearerUid: 'bearer-uid',
+      }),
+    )
+    expect(json).toHaveBeenCalledWith({ ok: true, available: false })
+  })
+
   it('GET check-username uses bearer when production session email is not allowlisted', async () => {
     const prevEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'production'
