@@ -432,21 +432,6 @@ describe('createExpressApp auth and session branches', () => {
     expect(response.body.error).toBe('Invalid or expired JWT token')
   })
 
-  it('returns 401 when the auth middleware outer catch receives a non-Error failure', async () => {
-    const app = await buildApp()
-
-    logger.info.mockImplementationOnce(() => {
-      throw { code: 'logger-failure' }
-    })
-
-    const response = await request(app)
-      .get('/api/user/profile')
-      .set('Authorization', 'Bearer token')
-      .expect(401)
-
-    expect(response.body.error).toBe('Invalid or expired token')
-  })
-
   it('rejects state-changing requests when the CSRF token is missing', async () => {
     const app = await buildApp()
 

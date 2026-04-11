@@ -47,7 +47,8 @@
     radial-gradient(circle at 72% 35%, var(--surface-soft), transparent 55%);
   box-shadow: var(--shadow-lg);
   position: relative;
-  overflow: hidden;
+  /* Allow descenders on the headline (e.g. g, y); inner gradient still fits border-radius. */
+  overflow: visible;
   animation: slideUp 0.4s ease both;
 }
 
@@ -81,7 +82,8 @@
   font-size: clamp(2.1rem, 4.5vw, 3.2rem);
   font-weight: 800;
   letter-spacing: -0.05em;
-  line-height: 1;
+  line-height: 1.18;
+  padding-bottom: 0.06em;
   background: linear-gradient(130deg, var(--text) 25%, var(--accent-strong) 100%);
   -webkit-background-clip: text;
   background-clip: text;

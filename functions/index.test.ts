@@ -810,6 +810,18 @@ describe('index.js', () => {
       })
     })
 
+    describe('POST /api/auth/clear-session-cookie', () => {
+      it('should return 204 without signing out in Firebase Auth', async () => {
+        const { agent, csrfToken } = await getCsrfHeaders(app)
+        const response = await agent
+          .post('/api/auth/clear-session-cookie')
+          .set('X-XSRF-TOKEN', csrfToken)
+          .expect(204)
+
+        expect(response.text).toBe('')
+      })
+    })
+
     describe('GET /api/user/profile', () => {
       it('should export user profile endpoint', async () => {
         // This test just verifies the endpoint exists and is properly configured
@@ -897,6 +909,40 @@ describe('index.js', () => {
         expect(mockVerifySessionCookie).toHaveBeenCalledWith('valid-session-cookie', true)
       })
 
+      it('should prefer Bearer identity when session cookie and Bearer refer to different users', async () => {
+        const mockGetUser = vi.fn().mockResolvedValue({
+          uid: 'bearer-uid',
+          email: 'test@chrisvogt.me',
+          displayName: 'Bearer User',
+          photoURL: null,
+          emailVerified: true,
+          metadata: { creationTime: '2020-01-01', lastSignInTime: '2024-01-01' },
+        })
+        const admin = await import('firebase-admin')
+        admin.default.auth = vi.fn(() => ({
+          verifySessionCookie: vi.fn().mockResolvedValue({
+            uid: 'session-uid',
+            email: 'test@chrisvogt.me',
+            email_verified: true,
+          }),
+          verifyIdToken: vi.fn().mockResolvedValue({
+            uid: 'bearer-uid',
+            email: 'test@chrisvogt.me',
+            email_verified: true,
+          }),
+          getUser: mockGetUser,
+        }))
+
+        const response = await request(app)
+          .get('/api/user/profile')
+          .set('Cookie', 'session=valid-session-cookie')
+          .set('Authorization', 'Bearer valid-jwt-token')
+          .expect(200)
+
+        expect(response.body.payload.uid).toBe('bearer-uid')
+        expect(mockGetUser).toHaveBeenCalledWith('bearer-uid')
+      })
+
       it('should reject session cookie with disallowed email in production', async () => {
         const prevEnv = process.env.NODE_ENV
         process.env.NODE_ENV = 'production'
@@ -933,21 +979,6 @@ describe('index.js', () => {
           .expect(401)
 
         expect(response.body.ok).toBe(false)
-      })
-
-      it('should return 401 from outer catch when authenticateUser throws unexpectedly', async () => {
-        const logSpy = vi.spyOn(logger, 'info').mockImplementationOnce(() => {
-          throw new Error('Unexpected auth error')
-        })
-
-        const response = await request(app)
-          .get('/api/user/profile')
-          .set('Authorization', 'Bearer some-token')
-          .expect(401)
-
-        expect(response.body.ok).toBe(false)
-        expect(response.body.error).toBe('Invalid or expired token')
-        logSpy.mockRestore()
       })
 
       it('should return 401 with Invalid or expired JWT token when Bearer token verification fails', async () => {

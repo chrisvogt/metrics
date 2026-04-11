@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.1] - 2026-04-10
+
+### Added
+
+- **`POST /api/auth/clear-session-cookie`** — Clears the HttpOnly **`session`** cookie without Firebase sign-out (CSRF-protected; rate limited). Used when switching accounts so a previous login’s cookie cannot override the current Firebase user.
+
+### Changed
+
+- **Authentication** — **`authenticateUser`** resolves identity from both the **`session`** cookie and **`Authorization: Bearer`** (Firebase ID token). When both verify but refer to **different** users, the **Bearer** identity wins and the stale **`session`** cookie is cleared. **401** responses distinguish a present-but-invalid Bearer (**`Invalid or expired JWT token`**) from missing credentials (**`No valid authorization header found`**).
+- **Public onboarding / widgets** — **`resolveViewerUidForPublicOnboarding`** again applies the allowlisted-email + verification gate to the session identity before the Bearer fallback (same-uid / different-claim edge cases), while still clearing the session cookie on uid mismatch.
+
+### Removed
+
+- **Tests** — Removed two brittle **`authenticateUser` “outer catch”** cases superseded by the refactored session/Bearer resolution.
+
 ## [0.30.0] - 2026-04-08
 
 ### Added

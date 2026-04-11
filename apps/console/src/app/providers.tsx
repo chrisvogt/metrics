@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import { ThemeProvider } from 'next-themes'
 import { AuthProvider } from '@/auth/AuthContext'
+import { OnboardingUsernameGate } from '@/components/OnboardingUsernameGate'
 import { ThemeSync } from '@/theme/ThemeSync'
 import {
   CHRONOGROVE_THEME_STORAGE_KEY,
@@ -21,6 +22,7 @@ export function Providers({ children }: { children: ReactNode }) {
       disableTransitionOnChange
     >
       <AuthProvider>
+        <OnboardingUsernameGate />
         <ThemeSync>{children}</ThemeSync>
       </AuthProvider>
     </ThemeProvider>
