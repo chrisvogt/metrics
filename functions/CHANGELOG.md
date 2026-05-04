@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.31.0] - 2026-04-08
+### Security
+
+- **CORS (`/api`)** — **`*.chrisvogt.me`** origins are still allowed for personal-site and tenant API hosts, but the **`metrics`** label on **`chrisvogt.me`** is excluded (sunset operator hostname). Allowlist logic lives in **`app/api-cors-allowlist.ts`** with unit tests; integration tests use **`https://console.chronogrove.com`** as a sample allowed Origin.
+
+## [0.31.0] - 2026-05-03
 
 ### Added
 
@@ -16,6 +20,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **`WIDGET_USER_ID_BY_HOSTNAME`** — Hostname keys are normalized to lowercase when parsed.
+
+## [0.30.4] - 2026-05-03
+
+### Security
+
+- **Dependencies** — **@google-cloud/firestore** `^8.5.0`, **firebase** `^12.12.1`, **firebase-admin** `^13.8.0`, **firebase-functions** `^7.2.5`, **got** `^15.0.3`, **dotenv** `^17.4.2`, **express-rate-limit** `^8.4.1`, **Vitest** / **`@vitest/coverage-v8`** `^4.1.5`, **ESLint** `^10.3.0`, **typescript-eslint** `^8.59.1`, **globals** `^17.6.0`, **@types/node** `^24.12.2`; workspace **`vite`** override (root `pnpm.overrides`) for patched **8.0.5** used by Vitest.
+
+## [0.30.3] - 2026-05-03
+
+### Added
+
+- **Goodreads widget** — Each **`collections.recentlyReadBooks`** entry now includes **`readAt`** (Goodreads shelf **`read_at`** text) for ordering and client display.
+
+### Changed
+
+- **Goodreads sync** — **`fetch-recently-read-books`** carries **`readAt`** through **`transformBookData`**; **`sortGoodreadsRecentlyReadBooksByReadAtDesc`** (**`utils/sort-goodreads-recently-read-books.ts`**) orders by parsed date so the **most recently read** titles appear first before **`GOODREADS_BOOKS_TO_DISPLAY`** is applied. The same sort runs when assembling widget **`collections`** in **`sync-goodreads-data`**.
+
+### Tests
+
+- **`sort-goodreads-recently-read-books`** — Sort key, descending order, missing **`readAt`** at end, non-mutating copy.
+- **`fetch-recently-read-books`** — Assertions for **`readAt`** on shelf rows and newest-first order when two reviews resolve.
+- **`sync-goodreads-data`** — Persisted **`recentlyReadBooks`** order matches **`readAt`** descending when the fetch mock returns rows out of chronological order.
+
+## [0.30.2] - 2026-04-10
+
+### Changed
+
+- **Authentication** — **`resolveSessionAndBearerClaims`** centralizes session-cookie and Bearer verification, uid-mismatch detection, warning log, and **`session`** cookie clearing; **`resolveChosenAuthClaims`** and **`resolveViewerUidForPublicOnboarding`** only apply their distinct post-processing (full **`AuthClaims`** vs allowlist-gated **`uid`**). Optional verbose verify logging remains for the authenticated API path only.
+
+### Tests
+
+- **`create-express-app`** — Coverage for mismatch branches (verified vs unverified Bearer after uid mismatch), **`authenticateUser`** outer **`catch`** ( **`email`** getter throws only after verbose logging reads it once), silent session-cookie verification failure on **`check-username`**, and onboarding mocks use **`emailVerified`** (Firebase **`AuthClaims`** shape).
+
+## [0.30.1] - 2026-04-10
+
+### Added
+
+- **`POST /api/auth/clear-session-cookie`** — Clears the HttpOnly **`session`** cookie without Firebase sign-out (CSRF-protected; rate limited). Used when switching accounts so a previous login’s cookie cannot override the current Firebase user.
+
+### Changed
+
+- **Authentication** — **`authenticateUser`** resolves identity from both the **`session`** cookie and **`Authorization: Bearer`** (Firebase ID token). When both verify but refer to **different** users, the **Bearer** identity wins and the stale **`session`** cookie is cleared. **401** responses distinguish a present-but-invalid Bearer (**`Invalid or expired JWT token`**) from missing credentials (**`No valid authorization header found`**).
+- **Public onboarding / widgets** — **`resolveViewerUidForPublicOnboarding`** again applies the allowlisted-email + verification gate to the session identity before the Bearer fallback (same-uid / different-claim edge cases), while still clearing the session cookie on uid mismatch.
+
+### Removed
+
+- **Tests** — Removed two brittle **`authenticateUser` “outer catch”** cases superseded by the refactored session/Bearer resolution.
 
 ## [0.30.0] - 2026-04-08
 
@@ -474,7 +525,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Hosting (sign-in page)** – Clarified that the app is a personal admin, not a general login service:
-  - Added line under “Sign in”: “Personal admin for metrics.chrisvogt.me / chrisvogt.me only.”
+  - Added line under “Sign in”: “Personal admin for the operator console / chrisvogt.me only.”
   - Added “← Part of chrisvogt.me” link to chrisvogt.me above the sign-in card.
   - Added meta description and Open Graph tags in `index.html`: “Personal Metrics API admin for chrisvogt.me. Not a general login service.”
 
@@ -725,6 +776,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _This changelog was started with v0.8.0._
 
+[0.30.3]: https://github.com/chrisvogt/chronogrove/compare/v0.30.2...v0.30.3
+[0.30.2]: https://github.com/chrisvogt/chronogrove/compare/v0.30.1...v0.30.2
+[0.30.1]: https://github.com/chrisvogt/chronogrove/compare/v0.30.0...v0.30.1
+[0.30.0]: https://github.com/chrisvogt/chronogrove/compare/v0.29.2...v0.30.0
 [0.25.5]: https://github.com/chrisvogt/chronogrove/compare/v0.25.4...v0.25.5
 [0.25.4]: https://github.com/chrisvogt/chronogrove/compare/v0.25.3...v0.25.4
 [0.25.3]: https://github.com/chrisvogt/chronogrove/compare/v0.25.2...v0.25.3

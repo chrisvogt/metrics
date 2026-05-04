@@ -59,6 +59,8 @@ pnpm run build
 
 Next.js output is under **`apps/console/.next`** (SSR bundle for App Hosting). The root scripts run this build before App Hosting deploys.
 
+**App Hosting:** keep the **`next`** dependency in **`package.json`** as an **exact** semver (e.g. **`"16.2.4"`**, not **`^16.2.4`**). Firebase’s **`@apphosting/adapter-nextjs`** CVE gate passes that string to **`semver.satisfies`**; range strings are rejected and the remote build fails. See [docs/APP_HOSTING.md](../docs/APP_HOSTING.md#nextjs-version-string-appsconsolepackagejson).
+
 ## Deploy
 
 From the **repo root**:

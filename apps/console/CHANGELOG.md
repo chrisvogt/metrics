@@ -7,7 +7,16 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.22] - 2026-04-08
+### Fixed
+
+- **`SettingsProfileIdentity`** — Onboarding **`load()`** no longer forces the full-page loading state when **`progressRef`** already holds a payload, so overlapping or Strict Mode effect runs do not unmount the username block and wipe in-flight edits (flaky **`/is available`** assertions under **`test:coverage`**).
+
+### Tests
+
+- **`baseUrl`** / **`tenant-api-root-map`** — Production-like hostname stubs use **`console.chronogrove.com`** and **`operator.unmapped.example`** instead of a private deploy host.
+- **`SettingsProfileIdentity`** — **`mockUser()`** includes a stable **`uid`**; username-save flows wait for **`Save username`** to become enabled instead of matching availability hint text.
+
+## [0.6.26] - 2026-05-03
 
 ### Added
 
@@ -16,6 +25,45 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Tests
 
 - Coverage for async tenant slug resolution, internal route, Functions origin helper, Firestore tenant hook, and **`test:coverage`** include list updates for new sources.
+
+## [0.6.25] - 2026-05-04
+
+### Fixed
+
+- **Firebase App Hosting** — Pin **Next.js** to exact **`16.2.4`** in **`package.json`** (not a **`^`** range). The **`@apphosting/adapter-nextjs`** CVE gate passes that string to **`semver.satisfies(version, …)`**, which treats **`^16.2.4`** as an invalid version and blocks deploy with a false “vulnerable Next” error even though **16.2.4** satisfies the patched **`>=16.1.0`** allowlist.
+
+### Documentation
+
+- **`docs/APP_HOSTING.md`** — “Next.js version string” note for the App Hosting buildpack; **`README.md`** (this app) links to it from the build section.
+
+## [0.6.24] - 2026-05-03
+
+### Security
+
+- **Dependencies** — **Next.js** `^16.2.4` (replaces exact **16.2.2**; includes **≥16.2.3** Server Components DoS fix), **React** `^19.2.5`, **Firebase** client `^12.12.1`, **Vitest** / **`@vitest/coverage-v8`** `^4.1.5`, **jsdom** `^29.1.1`, **@types/node** `^24.12.2`; workspace **`vite`** override (via root `pnpm.overrides`) clears **Vitest 8.0.x** dev-server advisories for local `vitest` / `next dev` tooling.
+
+## [0.6.23] - 2026-05-03
+
+### Changed
+
+- **Schema / docs** — Goodreads widget example **`collections.recentlyReadBooks`** entries include **`readAt`** to match the Functions sync payload.
+
+## [0.6.22] - 2026-04-10
+
+### Added
+
+- **Onboarding username gate** — Verified users who have not chosen a public slug (no persisted **`username`** and **`username`** not in **`completedSteps`**) are redirected to **`/onboarding/`** after the API session is ready. Marketing and auth routes are excluded (**`/about`**, **`/docs`**, **`/privacy`**, **`/verify-email`**, **`/signup`**, **`/auth`**, public **`/u/*`**).
+- **Tests** — **`src/lib/overviewQuickLinks.test.ts`** (dashboard quick-link URLs for signed-in vs signed-out); **`src/lib/tenantDisplay.test.ts`** (**`resolveDashboardTenantHostname`**); **`src/lib/onboardingUsernameCompletion.test.ts`** (**`hasCompletedUsernameSelection`**).
+
+### Changed
+
+- **Auth / session** — Clear stale HttpOnly **`session`** cookies when switching Firebase accounts (**`POST /api/auth/clear-session-cookie`**, **`apiClient.clearStaleSessionCookie`**, **`AuthContext`** on uid change and before email sign-up). Session creation uses a **force-refreshed** ID token (**`getIdToken(true)`**) so **`email_verified`** matches the server after verification links.
+- **Dashboard quick links** — Overview card links are **Settings**, **Docs**, **Public status page** (when a public **username** exists) or **Account setup**, and **GitHub**; signed-out visitors see **Docs**, **About**, and **Sign in**. Implemented as **`buildOverviewQuickLinks`** in **`src/lib/overviewQuickLinks.ts`** (used by **`OverviewSection`**).
+
+### Fixed
+
+- **Dashboard hero** — Headline uses **`GET /api/onboarding/progress`**: configured **`customDomain`** (tenant API host) when set, else **`NEXT_PUBLIC_DEFAULT_PUBLIC_API_HOST`** (default **`api.chronogrove.com`**) when a public **username** exists, else **`NEXT_PUBLIC_TENANT_DISPLAY_HOST`**. **`resolveDashboardTenantHostname`** in **`src/lib/tenantDisplay.ts`**.
+- **Dashboard hero typography** — Relaxed **`line-height`**, added slight **`padding-bottom`**, and set the hero to **`overflow: visible`** so gradient headline text does not clip descenders (e.g. “g”).
 
 ## [0.6.21] - 2026-04-08
 
@@ -126,7 +174,7 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Try API → Get widget data** — Each test now loads a **fresh Firebase ID token** via **`buildWidgetFetchHeaders`** instead of reusing async `idToken` state (which could still be empty on first click). Fixes production **cross-origin** console → **`metrics.chrisvogt.me`** requests that do not carry session cookies, so **GitHub** correctly reflects **OAuth** when linked instead of falling back to PAT and **`githubAuthMode: env`**.
+- **Try API → Get widget data** — Each test now loads a **fresh Firebase ID token** via **`buildWidgetFetchHeaders`** instead of reusing async `idToken` state (which could still be empty on first click). Fixes production **cross-origin** console → operator-host requests that do not carry session cookies, so **GitHub** correctly reflects **OAuth** when linked instead of falling back to PAT and **`githubAuthMode: env`**.
 
 ## [0.6.13] - 2026-04-03
 

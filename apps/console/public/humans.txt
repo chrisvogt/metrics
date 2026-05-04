@@ -2,7 +2,7 @@
 Chris Vogt: https://www.chrisvogt.me
 
 /* SITE */
-Chronogrove operator console (metrics.chrisvogt.me)
+Chronogrove operator console
 Last update: 2026
 Language: English
 Do not index: yes (admin/dashboard)

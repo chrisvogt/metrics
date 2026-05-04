@@ -27,3 +27,34 @@ export function getTenantDisplayHost(): string {
   const raw = process.env.NEXT_PUBLIC_TENANT_DISPLAY_HOST ?? ''
   return normalizeTenantDisplayHost(raw)
 }
+
+/** Default shared widget API host when the operator has a username but no custom domain (product default). */
+const DEFAULT_PUBLIC_API_HOST = 'api.chronogrove.com'
+
+/**
+ * Dashboard hero: prefer the tenant’s configured API hostname (`customDomain` / Firestore
+ * `tenantHostname`), then the shared public API host when a username exists, else the build-time
+ * display host for single-tenant / signed-out copy.
+ */
+export function resolveDashboardTenantHostname(input: {
+  customDomain: string | null
+  username: string | null
+}): string {
+  const fromCustom = input.customDomain ? normalizeTenantDisplayHost(input.customDomain) : ''
+  if (fromCustom) return fromCustom
+
+  const slug =
+    input.username != null && input.username.trim().length > 0
+      ? input.username.trim().toLowerCase()
+      : ''
+  if (slug) {
+    const raw =
+      typeof process !== 'undefined'
+        ? process.env.NEXT_PUBLIC_DEFAULT_PUBLIC_API_HOST?.trim()
+        : ''
+    const host = normalizeTenantDisplayHost(raw || DEFAULT_PUBLIC_API_HOST)
+    return host || DEFAULT_PUBLIC_API_HOST
+  }
+
+  return getTenantDisplayHost()
+}

@@ -66,6 +66,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [auth, setAuth] = useState<Auth | null>(null)
   const [error, setError] = useState<string | null>(null)
   const lastEmailVerifiedRef = useRef<boolean | null>(null)
+  const previousAuthUidRef = useRef<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -92,6 +93,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (cancelled) return
           if (!u) {
             lastEmailVerifiedRef.current = null
+            previousAuthUidRef.current = null
             resetSessionEstablishmentTracking()
             apiClient.clearSession()
             setUser(null)
@@ -99,6 +101,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setLoading(false)
             return
           }
+
+          if (
+            previousAuthUidRef.current !== null &&
+            previousAuthUidRef.current !== u.uid
+          ) {
+            await apiClient.clearStaleSessionCookie()
+            resetSessionEstablishmentTracking()
+          }
+          previousAuthUidRef.current = u.uid
 
           if (
             lastEmailVerifiedRef.current !== null &&
@@ -156,6 +167,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!auth) return
     setError(null)
     try {
+      await apiClient.clearStaleSessionCookie()
       const cred = await createUserWithEmailAndPassword(auth, email, password)
       await sendEmailVerification(cred.user)
       await establishApiSessionCoalesced(cred.user)

@@ -39,6 +39,9 @@ vi.mock('../services/sync-manual.js', () => ({
   })),
 }))
 
+/** Example Origin that matches `/api` CORS allowlist (`api-cors-allowlist.ts`). */
+const TEST_CORS_ALLOWED_ORIGIN = 'https://console.chronogrove.com' as const
+
 describe('createExpressApp media route', () => {
   const logger = {
     error: vi.fn(),
@@ -433,19 +436,33 @@ describe('createExpressApp auth and session branches', () => {
     expect(response.body.error).toBe('Invalid or expired JWT token')
   })
 
-  it('returns 401 when the auth middleware outer catch receives a non-Error failure', async () => {
+  it('returns 401 from authenticateUser when reading chosen.email throws (outer catch)', async () => {
     const app = await buildApp()
 
-    logger.info.mockImplementationOnce(() => {
-      throw { code: 'logger-failure' }
-    })
+    let emailReads = 0
+    authService.verifyIdToken.mockResolvedValue({
+      uid: 'test-uid',
+      emailVerified: true,
+      get email() {
+        emailReads += 1
+        if (emailReads < 2) return 'test@chrisvogt.me'
+        throw new Error('boom')
+      },
+    } as never)
 
     const response = await request(app)
       .get('/api/user/profile')
-      .set('Authorization', 'Bearer token')
+      .set('Authorization', 'Bearer valid-token')
       .expect(401)
 
-    expect(response.body.error).toBe('Invalid or expired token')
+    expect(response.body).toEqual({
+      ok: false,
+      error: 'Invalid or expired token',
+    })
+    const authErr = vi.mocked(logger.error).mock.calls.find((c) => c[0] === 'Authentication error:')
+    expect(authErr?.[1]).toEqual(
+      expect.objectContaining({ error: 'boom', uid: 'unknown' }),
+    )
   })
 
   it('rejects state-changing requests when the CSRF token is missing', async () => {
@@ -567,12 +584,12 @@ describe('createExpressApp auth and session branches', () => {
 
     const response = await request(app)
       .options('/api/widgets/sync/spotify/stream')
-      .set('Origin', 'https://metrics.chrisvogt.me')
+      .set('Origin', TEST_CORS_ALLOWED_ORIGIN)
       .set('Access-Control-Request-Method', 'GET')
       .set('Access-Control-Request-Headers', 'authorization')
 
     expect(response.status).toBe(204)
-    expect(response.headers['access-control-allow-origin']).toBe('https://metrics.chrisvogt.me')
+    expect(response.headers['access-control-allow-origin']).toBe(TEST_CORS_ALLOWED_ORIGIN)
     expect(response.headers['access-control-allow-credentials']).toBe('true')
   })
 

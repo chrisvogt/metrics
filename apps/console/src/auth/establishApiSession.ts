@@ -23,7 +23,7 @@ export function isApiSessionEstablishedForUid(uid: string): boolean {
  */
 export async function establishApiSession(u: User): Promise<boolean> {
   try {
-    const token = await u.getIdToken()
+    const token = await u.getIdToken(true)
     await apiClient.createSession(token)
     return true
   } catch (e) {

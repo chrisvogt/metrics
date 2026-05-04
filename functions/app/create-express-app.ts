@@ -5,7 +5,7 @@ import express from 'express'
 import lusca from 'lusca'
 import path from 'path'
 import { rateLimit } from 'express-rate-limit'
-import type { AuthService } from '../ports/auth-service.js'
+import type { AuthClaims, AuthService } from '../ports/auth-service.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { MediaStore } from '../ports/media-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
@@ -23,6 +23,7 @@ import deleteUserJob from '../jobs/delete-user.js'
 import { runSyncForProvider } from '../services/sync-manual.js'
 import type { ManualSyncResult } from '../services/sync-manual.js'
 import { getWidgetContent } from '../widgets/get-widget-content.js'
+import { getApiCorsOriginRegexList } from './api-cors-allowlist.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 import { TENANT_USERNAMES_COLLECTION } from '../config/future-tenant-collections.js'
 import {
@@ -256,44 +257,149 @@ export function createExpressApp({
 }: CreateExpressAppOptions): express.Express {
   const expressApp = express()
 
+  const sessionCookieBaseOptions = {
+    httpOnly: true,
+    secure: isProductionEnvironment(),
+    sameSite: (isProductionEnvironment() ? 'strict' : 'lax') as 'strict' | 'lax',
+    path: '/',
+  }
+
   /**
-   * Same identity as authenticated API routes: session cookie first, then Bearer ID token.
-   * Used by public onboarding endpoints to recognize the signed-in user without requiring auth.
+   * Verifies the HttpOnly session cookie and/or `Authorization: Bearer` (Firebase ID token),
+   * detects uid mismatch when both are present, and on mismatch logs, clears the stale session
+   * cookie, and returns `{ mismatch: true }` with both claim sets for callers to interpret.
    */
-  const resolveViewerUidForPublicOnboarding = async (
-    req: express.Request
-  ): Promise<string | null> => {
+  const resolveSessionAndBearerClaims = async (
+    req: express.Request,
+    res: express.Response,
+    logVerificationDetails: boolean
+  ): Promise<{
+    sessionClaims: AuthClaims | null
+    bearerClaims: AuthClaims | null
+    mismatch: boolean
+  }> => {
     const sessionCookie = req.cookies?.session
+    const bearerToken = extractBearerToken(req.headers.authorization)
+
+    let sessionClaims: AuthClaims | null = null
     if (sessionCookie) {
       try {
-        const decoded = await authService.verifySessionCookie(sessionCookie)
-        if (
-          decoded.uid &&
-          isAllowedEmail(decoded.email) &&
-          !needsEmailVerification(decoded.email, decoded.emailVerified)
-        ) {
-          return decoded.uid
+        sessionClaims = await authService.verifySessionCookie(sessionCookie)
+        if (logVerificationDetails) {
+          logger.info('Session cookie verified successfully', {
+            uid: sessionClaims.uid,
+            email: sessionClaims.email,
+            emailVerified: sessionClaims.emailVerified,
+          })
         }
-      } catch {
-        /* treat as anonymous */
+      } catch (error) {
+        if (logVerificationDetails) {
+          logger.error('Session cookie verification failed', {
+            error: error instanceof Error ? error.message : '',
+            code: (error as { code?: string }).code,
+            stack: error instanceof Error ? error.stack : undefined,
+          })
+        }
       }
     }
-    const token = extractBearerToken(req.headers.authorization)
-    if (token) {
+
+    let bearerClaims: AuthClaims | null = null
+    if (bearerToken) {
       try {
-        const decoded = await authService.verifyIdToken(token)
-        if (
-          decoded.uid &&
-          isAllowedEmail(decoded.email) &&
-          !needsEmailVerification(decoded.email, decoded.emailVerified)
-        ) {
-          return decoded.uid
+        bearerClaims = await authService.verifyIdToken(bearerToken)
+        if (logVerificationDetails) {
+          logger.info('auth: bearer token', {
+            path: req.path,
+            uid: bearerClaims.uid,
+            email: bearerClaims.email,
+            emailVerified: bearerClaims.emailVerified,
+          })
         }
-      } catch {
-        /* treat as anonymous */
+      } catch (error) {
+        if (logVerificationDetails) {
+          logger.error('JWT token verification failed', {
+            error: error instanceof Error ? error.message : '',
+            code: (error as { code?: string }).code,
+          })
+        }
       }
     }
-    return null
+
+    const mismatch =
+      sessionClaims !== null &&
+      bearerClaims !== null &&
+      sessionClaims.uid !== bearerClaims.uid
+
+    if (mismatch) {
+      logger.warn(
+        'Session uid does not match Bearer uid; preferring Bearer and clearing session cookie',
+        {
+          sessionUid: sessionClaims.uid,
+          bearerUid: bearerClaims.uid,
+        }
+      )
+      res.clearCookie('session', sessionCookieBaseOptions)
+    }
+
+    return { sessionClaims, bearerClaims, mismatch }
+  }
+
+  /**
+   * Resolves the signed-in user from the HttpOnly session cookie and/or `Authorization: Bearer`
+   * (Firebase ID token). When both are present but refer to **different** accounts (e.g. user
+   * signed up or switched accounts without clearing the old session cookie), prefer the Bearer
+   * identity and clear the stale cookie so subsequent requests match Firebase Auth.
+   */
+  const resolveChosenAuthClaims = async (
+    req: express.Request,
+    res: express.Response
+  ): Promise<AuthClaims | null> => {
+    const { sessionClaims, bearerClaims, mismatch } =
+      await resolveSessionAndBearerClaims(req, res, true)
+
+    if (mismatch) {
+      return bearerClaims
+    }
+
+    return sessionClaims ?? bearerClaims
+  }
+
+  /**
+   * Public widget / onboarding helpers: session first **only if** it passes the same allowlist +
+   * verification gate as before; then Bearer. Uid mismatch still clears a stale session cookie.
+   * (Same uid can still swap claims when the session encodes a non-allowlisted email and the
+   * Bearer token does — e.g. production email allowlist.)
+   */
+  const resolveViewerUidForPublicOnboarding = async (
+    req: express.Request,
+    res: express.Response
+  ): Promise<string | null> => {
+    const { sessionClaims, bearerClaims, mismatch } =
+      await resolveSessionAndBearerClaims(req, res, false)
+
+    if (mismatch) {
+      if (
+        bearerClaims?.uid &&
+        isAllowedEmail(bearerClaims.email) &&
+        !needsEmailVerification(bearerClaims.email, bearerClaims.emailVerified)
+      ) {
+        return bearerClaims.uid
+      }
+      return null
+    }
+
+    const viewerFrom = (c: AuthClaims | null): string | null => {
+      if (
+        c?.uid &&
+        isAllowedEmail(c.email) &&
+        !needsEmailVerification(c.email, c.emailVerified)
+      ) {
+        return c.uid
+      }
+      return null
+    }
+
+    return viewerFrom(sessionClaims) ?? viewerFrom(bearerClaims)
   }
 
   const authenticateUser = async (
@@ -302,100 +408,38 @@ export function createExpressApp({
     next: express.NextFunction
   ): Promise<void> => {
     try {
-      const sessionCookie = req.cookies?.session
-      if (sessionCookie) {
-        try {
-          const decodedClaims = await authService.verifySessionCookie(sessionCookie)
-
-          logger.info('Session cookie verified successfully', {
-            uid: decodedClaims.uid,
-            email: decodedClaims.email,
-            emailVerified: decodedClaims.emailVerified,
-          })
-
-          if (!isAllowedEmail(decodedClaims.email)) {
-            logger.warn('Email domain rejected', {
-              email: decodedClaims.email,
-              uid: decodedClaims.uid,
-            })
-            res.status(403).json({
-              ok: false,
-              error:
-                'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
-            })
-            return
-          }
-
-          req.user = {
-            uid: decodedClaims.uid,
-            email: decodedClaims.email,
-            emailVerified: decodedClaims.emailVerified,
-          }
-          next()
-          return
-        } catch (error) {
-          logger.error('Session cookie verification failed', {
-            error: error instanceof Error ? error.message : '',
-            code: (error as { code?: string }).code,
-            stack: error instanceof Error ? error.stack : undefined,
-          })
-        }
-      }
-
-      const authHeader = req.headers.authorization
-      const token = extractBearerToken(authHeader)
-      if (!token) {
-        logger.warn('No valid authorization header found', {
+      const chosen = await resolveChosenAuthClaims(req, res)
+      if (!chosen) {
+        const hasBearer = Boolean(extractBearerToken(req.headers.authorization))
+        logger.warn('No valid authorization', {
           path: req.path,
           hasAuthHeader: Boolean(req.headers.authorization),
         })
         res.status(401).json({
           ok: false,
-          error: 'No valid authorization header found',
+          error: hasBearer ? 'Invalid or expired JWT token' : 'No valid authorization header found',
         })
         return
       }
 
-      logger.info('auth: bearer token', { path: req.path })
-
-      try {
-        const decodedToken = await authService.verifyIdToken(token)
-
-        logger.info('JWT token verified successfully', {
-          uid: decodedToken.uid,
-          email: decodedToken.email,
-          emailVerified: decodedToken.emailVerified,
+      if (!isAllowedEmail(chosen.email)) {
+        logger.warn('Email domain rejected', {
+          email: chosen.email,
+          uid: chosen.uid,
         })
-
-        if (!isAllowedEmail(decodedToken.email)) {
-          logger.warn('JWT email domain rejected', {
-            email: decodedToken.email,
-            uid: decodedToken.uid,
-          })
-          res.status(403).json({
-            ok: false,
-            error:
-              'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
-          })
-          return
-        }
-
-        req.user = {
-          uid: decodedToken.uid,
-          email: decodedToken.email,
-          emailVerified: decodedToken.emailVerified,
-        }
-        next()
-      } catch (error) {
-        logger.error('JWT token verification failed', {
-          error: error instanceof Error ? error.message : '',
-          code: (error as { code?: string }).code,
-        })
-        res.status(401).json({
+        res.status(403).json({
           ok: false,
-          error: 'Invalid or expired JWT token',
+          error: 'Access denied. Only chrisvogt.me or chronogrove.com domain users are allowed.',
         })
+        return
       }
+
+      req.user = {
+        uid: chosen.uid,
+        email: chosen.email,
+        emailVerified: chosen.emailVerified,
+      }
+      next()
     } catch (error) {
       logger.error('Authentication error:', {
         error: error instanceof Error ? error.message : '',
@@ -416,17 +460,7 @@ export function createExpressApp({
   )
   expressApp.use(cookieParser())
 
-  const corsAllowList: RegExp[] = [
-    /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
-    /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
-    /^https?:\/\/([a-z0-9-]+--)?chrisvogt\.netlify\.app$/,
-    /https?:\/\/([a-z0-9]+[.])*chronogrove[.]com$/,
-    /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
-  ]
-
-  if (!isProductionEnvironment()) {
-    corsAllowList.push(/localhost:?(\d+)?$/)
-  }
+  const corsAllowList = getApiCorsOriginRegexList(isProductionEnvironment())
 
   const corsOptions = {
     origin: corsAllowList,
@@ -702,7 +736,7 @@ export function createExpressApp({
         fromQuery === 'skip'
           ? await resolveWidgetUserIdForHostname(documentStore, originalHostname)
           : fromQuery.userId
-      const viewerUid = await resolveViewerUidForPublicOnboarding(req)
+      const viewerUid = await resolveViewerUidForPublicOnboarding(req, res)
 
       try {
         const { payload: widgetContent, meta } = await getWidgetContent(provider, userId, documentStore, {
@@ -950,11 +984,8 @@ export function createExpressApp({
         const sessionCookie = await authService.createSessionCookie(token, { expiresIn })
 
         const options = {
+          ...sessionCookieBaseOptions,
           maxAge: expiresIn,
-          httpOnly: true,
-          secure: isProductionEnvironment(),
-          sameSite: (isProductionEnvironment() ? 'strict' : 'lax') as 'strict' | 'lax',
-          path: '/',
         }
 
         res.cookie('session', sessionCookie, options)
@@ -970,6 +1001,19 @@ export function createExpressApp({
           error: 'Failed to create session cookie',
         })
       }
+    }
+  )
+
+  /**
+   * Clears the HttpOnly session cookie without signing the user out in Firebase Auth. Used when
+   * switching accounts in the same browser so a stale cookie cannot override the current ID token.
+   */
+  expressApp.post(
+    '/api/auth/clear-session-cookie',
+    rateLimit({ ...rateLimitDefaults, windowMs: 15 * 60 * 1000, limit: 40 }),
+    (_req, res) => {
+      res.clearCookie('session', sessionCookieBaseOptions)
+      res.status(204).send()
     }
   )
 
@@ -1012,12 +1056,7 @@ export function createExpressApp({
       if (!req.user) return
       try {
         await authService.revokeRefreshTokens(req.user.uid)
-        res.clearCookie('session', {
-          httpOnly: true,
-          secure: isProductionEnvironment(),
-          sameSite: isProductionEnvironment() ? 'strict' : 'lax',
-          path: '/',
-        })
+        res.clearCookie('session', sessionCookieBaseOptions)
         res.status(200).send({
           ok: true,
           message: 'User logged out successfully',
@@ -1071,7 +1110,7 @@ export function createExpressApp({
         const claim = await documentStore.getDocument<{ uid?: unknown }>(claimPath)
 
         if (claim && typeof claim.uid === 'string') {
-          const viewerUid = await resolveViewerUidForPublicOnboarding(req)
+          const viewerUid = await resolveViewerUidForPublicOnboarding(req, res)
           const ownedByCaller = viewerUid !== null && claim.uid === viewerUid
           if (!ownedByCaller) {
             res.json({ ok: true, available: false })
@@ -1093,7 +1132,7 @@ export function createExpressApp({
             res.json({ ok: true, available: true })
             return
           }
-          const viewerUid = await resolveViewerUidForPublicOnboarding(req)
+          const viewerUid = await resolveViewerUidForPublicOnboarding(req, res)
           if (viewerUid !== null && ownerUid === viewerUid) {
             res.json({ ok: true, available: true })
             return

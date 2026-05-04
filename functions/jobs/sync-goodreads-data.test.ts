@@ -155,6 +155,57 @@ describe('syncGoodreadsData', () => {
     )
   })
 
+  it('should sort recentlyReadBooks by readAt descending before persisting widget content', async () => {
+    fetchUser.mockResolvedValue({
+      profile: { displayName: 'Reader', readCount: 2 },
+      updates: [],
+      jsonResponse: {},
+    })
+    fetchRecentlyReadBooks.mockResolvedValue({
+      books: [
+        {
+          id: 'older',
+          title: 'Older read',
+          readAt: '2020-06-01',
+          categories: [],
+          cdnMediaURL: 'https://cdn.example/o.jpg',
+          mediaDestinationPath: 'books/older.jpg',
+          smallThumbnail: '',
+          thumbnail: '',
+          infoLink: '',
+        },
+        {
+          id: 'newer',
+          title: 'Newer read',
+          readAt: '2025-03-15',
+          categories: [],
+          cdnMediaURL: 'https://cdn.example/n.jpg',
+          mediaDestinationPath: 'books/newer.jpg',
+          smallThumbnail: '',
+          thumbnail: '',
+          infoLink: '',
+        },
+      ],
+      rawReviewsResponse: [],
+    })
+    generateGoodreadsSummary.mockResolvedValue('<p>Summary.</p>')
+
+    const result = await syncGoodreadsData(documentStore)
+
+    expect(result.result).toBe('SUCCESS')
+    const sorted = result.data.collections?.recentlyReadBooks ?? []
+    expect(sorted).toHaveLength(2)
+    expect(sorted[0]?.id).toBe('newer')
+    expect(sorted[0]?.readAt).toBe('2025-03-15')
+    expect(sorted[1]?.id).toBe('older')
+
+    const widgetCall = vi.mocked(documentStore.setDocument).mock.calls.find(
+      (call) => call[0] === 'users/chrisvogt/goodreads/widget-content',
+    )
+    const persisted = widgetCall?.[1] as { collections?: { recentlyReadBooks?: { id?: string }[] } }
+    expect(persisted?.collections?.recentlyReadBooks?.[0]?.id).toBe('newer')
+  })
+
   it('should handle API errors gracefully', async () => {
     fetchUser.mockRejectedValue(new Error('API Error'))
     fetchRecentlyReadBooks.mockResolvedValue({ books: [], rawReviewsResponse: {} })

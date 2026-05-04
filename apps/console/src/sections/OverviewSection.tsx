@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/auth/AuthContext'
+import { apiClient } from '@/auth/apiClient'
 import { getAppBaseUrl } from '../lib/baseUrl'
 import { AddProvidersFlyout } from '@/components/onboarding/AddProvidersFlyout'
 import {
@@ -10,7 +11,8 @@ import {
   extractOverviewMetrics,
   type MetricItem,
 } from '../lib/overviewMetrics'
-import { getTenantDisplayHost } from '../lib/tenantDisplay'
+import { buildOverviewQuickLinks } from '@/lib/overviewQuickLinks'
+import { getTenantDisplayHost, resolveDashboardTenantHostname } from '../lib/tenantDisplay'
 import styles from './OverviewSection.module.css'
 
 interface ProviderConfig {
@@ -27,13 +29,6 @@ const PROVIDERS: ProviderConfig[] = [
   { id: 'steam', label: 'Steam', accent: '#67d9ff' },
   { id: 'discogs', label: 'Discogs', accent: '#c5ceff' },
   { id: 'flickr', label: 'Flickr', accent: '#ff0084' },
-]
-
-const QUICK_LINKS = [
-  { href: '/schema/', label: 'Schema' },
-  { href: '/status/', label: 'Status' },
-  { href: '/sync/', label: 'Sync' },
-  { href: '/auth/', label: 'Sign in' },
 ]
 
 interface ProviderState {
@@ -72,10 +67,49 @@ export function OverviewSection() {
   const baseUrl = getAppBaseUrl()
   const [states, setStates] = useState<Record<string, ProviderState>>({})
   const [addProvidersOpen, setAddProvidersOpen] = useState(false)
+  const [headlineHost, setHeadlineHost] = useState(() => getTenantDisplayHost())
+  const [publicUsername, setPublicUsername] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) setAddProvidersOpen(false)
   }, [user])
+
+  useEffect(() => {
+    if (!user || !apiSessionReady) {
+      setHeadlineHost(getTenantDisplayHost())
+      setPublicUsername(null)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      try {
+        const idToken = await user.getIdToken()
+        const res = await apiClient.getJson('/api/onboarding/progress', { idToken })
+        if (cancelled || !res.ok) return
+        const data = (await res.json()) as {
+          payload?: { customDomain: string | null; username: string | null }
+        }
+        const p = data.payload
+        if (cancelled || !p) return
+        setHeadlineHost(resolveDashboardTenantHostname(p))
+        const slug = p.username?.trim()
+        setPublicUsername(slug ? slug.toLowerCase() : null)
+      } catch {
+        if (!cancelled) {
+          setHeadlineHost(getTenantDisplayHost())
+          setPublicUsername(null)
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user, apiSessionReady])
+
+  const quickLinks = useMemo(
+    () => buildOverviewQuickLinks({ user, publicUsername }),
+    [user, publicUsername]
+  )
 
   const fetchAll = useCallback(async () => {
     setStates(Object.fromEntries(PROVIDERS.map((p) => [p.id, initialState()])))
@@ -144,25 +178,35 @@ export function OverviewSection() {
   const total = PROVIDERS.length
   const allDone = resolved.length === total && resolved.every((s) => !s.loading)
 
-  const tenantHost = getTenantDisplayHost()
-
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
         <div className={styles.heroContent}>
           <p className={styles.label}>chronogrove · core</p>
-          <h1 className={styles.title}>{tenantHost || 'This site'}</h1>
+          <h1 className={styles.title}>{headlineHost || 'This site'}</h1>
           <p className={styles.meta}>
             {!allDone
               ? `${total} providers`
               : `${healthy} of ${total} providers healthy`}
           </p>
-          <nav className={styles.quickLinks} aria-label="Quick navigation">
-            {QUICK_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className={styles.quickLink}>
-                {link.label}
-              </Link>
-            ))}
+          <nav className={styles.quickLinks} aria-label="Quick links">
+            {quickLinks.map((link) =>
+              link.external === true ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={styles.quickLink}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link key={link.href} href={link.href} className={styles.quickLink}>
+                  {link.label}
+                </Link>
+              )
+            )}
           </nav>
         </div>
         {user ? (

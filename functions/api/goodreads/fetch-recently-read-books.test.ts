@@ -164,7 +164,8 @@ describe('fetchRecentlyReadBooks', () => {
       expect.arrayContaining([
         expect.objectContaining({
           isbn: '1234567890123',
-          rating: '4'
+          rating: '4',
+          readAt: '2023-01-01',
         })
       ]),
       expect.any(Function),
@@ -175,10 +176,13 @@ describe('fetchRecentlyReadBooks', () => {
     )
 
     // Verify Google Books API was called
-    expect(mockFetchBookFromGoogle).toHaveBeenCalledWith({
-      isbn: '1234567890123',
-      rating: '4'
-    })
+    expect(mockFetchBookFromGoogle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isbn: '1234567890123',
+        rating: '4',
+        readAt: '2023-01-01',
+      }),
+    )
 
     // Verify stored media was checked
     expect(mockListStoredMedia).toHaveBeenCalled()
@@ -211,6 +215,7 @@ describe('fetchRecentlyReadBooks', () => {
         pageCount: 300,
         previewLink: 'http://example.com/preview',
         rating: '4',
+        readAt: '2023-01-01',
         smallThumbnail: 'https://example.com/small.jpg',
         subtitle: 'Test Subtitle',
         thumbnail: 'https://example.com/thumb.jpg',
@@ -545,10 +550,13 @@ describe('fetchRecentlyReadBooks', () => {
 
     // Should only process the book with valid date (the second one should be filtered out)
     expect(mockFetchBookFromGoogle).toHaveBeenCalledTimes(1)
-    expect(mockFetchBookFromGoogle).toHaveBeenCalledWith({
-      isbn: '1234567890',
-      rating: '4'
-    })
+    expect(mockFetchBookFromGoogle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isbn: '1234567890',
+        rating: '4',
+        readAt: '2023-01-01',
+      }),
+    )
   })
 
   it('should filter out books with missing rating', async () => {
@@ -1032,6 +1040,10 @@ describe('fetchRecentlyReadBooks', () => {
     const result = await fetchRecentlyReadBooks()
 
     expect(result.books).toHaveLength(2)
+    expect(result.books[0].id).toBe('id2')
+    expect(result.books[0].readAt).toBe('2023-01-02')
+    expect(result.books[1].id).toBe('id1')
+    expect(result.books[1].readAt).toBe('2023-01-01')
     expect(mockFetchBookFromGoogle).toHaveBeenCalledTimes(2)
   })
 

@@ -286,7 +286,7 @@ describe('createExpressApp route coverage', () => {
       next
     )
 
-    expect(logger.warn).toHaveBeenCalledWith('No valid authorization header found', {
+    expect(logger.warn).toHaveBeenCalledWith('No valid authorization', {
       path: '/api/user/profile',
       hasAuthHeader: true,
     })

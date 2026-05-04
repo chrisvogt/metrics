@@ -14,7 +14,7 @@ For product behavior and UI changes, see [apps/console/CHANGELOG.md](../apps/con
 
 ### Email verification action URL
 
-In **Firebase Console → Authentication → Templates → Email address verification**, set the **custom action URL** to the console’s verify route (Firebase appends `mode` and `oobCode`). **Current production:** `https://metrics.chrisvogt.me/verify-email`. Ensure **metrics.chrisvogt.me** appears under **Authentication → Settings → Authorized domains**. When the operator console’s primary host is **`console.chronogrove.com`**, update this URL and authorized domains to match (keep **`api.chronogrove.com`** and any tenant **`api.*`** domains in the list if those surfaces use Auth flows).
+In **Firebase Console → Authentication → Templates → Email address verification**, set the **custom action URL** to the console’s verify route on **your** App Hosting operator hostname (Firebase appends `mode` and `oobCode`), for example `https://<your-operator-host>/verify-email`. Add that hostname under **Authentication → Settings → Authorized domains**. When the operator console’s primary host is **`console.chronogrove.com`**, point the template and authorized domains at that origin (keep **`api.chronogrove.com`** and any tenant **`api.*`** domains in the list if those surfaces use Auth flows).
 
 ### Tenant API host: `/widgets` and `/` status rewrite
 
@@ -30,7 +30,7 @@ Two **App Hosting backends** share **`rootDir`: `./apps/console`** (see [`fireba
 
 | Backend ID | Purpose |
 |------------|---------|
-| **`chronogrove-console`** | **Production** App Hosting backend for the Next app ([metrics.chrisvogt.me](https://metrics.chrisvogt.me) today; target operator host **`console.chronogrove.com`**, plus **`api.chronogrove.com`** and other custom domains on the same backend). Has **`alwaysDeployFromSource`: true** so deploys always build from the checked-out tree. |
+| **`chronogrove-console`** | **Production** App Hosting backend for the Next app (target operator host **`console.chronogrove.com`**, plus **`api.chronogrove.com`** and other custom domains on the same backend). Has **`alwaysDeployFromSource`: true** so deploys always build from the checked-out tree. |
 | **`chronogrove-console-pr`** | **Secondary** backend for **preview or staging**-style deploys (same codebase and `apphosting.yaml`; no `alwaysDeployFromSource` in repo config). Create and use this backend when you want a separate URL or lifecycle from production. Deploy with `firebase deploy --only apphosting:chronogrove-console-pr` when that backend is wired in your Firebase project. |
 
 Backend IDs must exist in the Firebase project (Console or CLI, e.g. `firebase apphosting:backends:create`).
@@ -41,6 +41,10 @@ Backend IDs must exist in the Firebase project (Console or CLI, e.g. `firebase a
 - **`env`** — Non-secret **`NEXT_PUBLIC_*`** variables available at **BUILD** and **RUNTIME** (e.g. Cloud Functions origin for `/api` rewrites, tenant display host). Values are committed for this repo’s production URLs; fork/adjust for other projects.
 
 Do not put private API keys in `apphosting.yaml`; use Firebase-managed secrets or your team’s secret store for sensitive values and wire them through the console or CLI as required by App Hosting.
+
+### Next.js version string (`apps/console/package.json`)
+
+The App Hosting build runs **`@apphosting/adapter-nextjs`**, which validates the **`next`** field from **`package.json`** against a patched-version allowlist (React2Shell / [CVE-2025-55182](https://www.cve.org/CVERecord?id=CVE-2025-55182)). The check uses **`semver.satisfies(version, range)`** and expects **`version`** to be a **single concrete semver** (e.g. **`16.2.4`**). A **caret or other range** (e.g. **`^16.2.4`**) is not a valid “version” argument to that API, so the build fails with a misleading “vulnerable Next” error even when the resolved install is patched. **Keep `next` as an exact version** in this app until the adapter reads the resolved package version instead; after bumps, run **`pnpm install`** and commit the lockfile as usual.
 
 ## Deploy
 

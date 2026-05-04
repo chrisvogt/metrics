@@ -20,6 +20,7 @@ import { GOODREADS_BOOKS_TO_DISPLAY } from '../config/goodreads-config.js'
 import { getLogger } from '../services/logger.js'
 import { toStoredDateTime } from '../utils/time.js'
 import { getXmlTextOrNull } from '../utils/goodreads-xml.js'
+import { sortGoodreadsRecentlyReadBooksByReadAtDesc } from '../utils/sort-goodreads-recently-read-books.js'
 
 import type {
   GoogleBooksFetchByIsbnResult,
@@ -63,6 +64,7 @@ const transformBookData = (
     rating,
     goodreadsDescription,
     isbn,
+    readAt,
   } = book
 
   const mediaDestinationPath = toBookMediaDestinationPath(id)
@@ -79,6 +81,7 @@ const transformBookData = (
     pageCount,
     previewLink,
     rating,
+    ...(readAt != null && readAt !== '' ? { readAt } : {}),
     smallThumbnail: smallThumbnail ? convertToHttps(smallThumbnail) : '',
     subtitle,
     thumbnail: thumbnail ? convertToHttps(thumbnail) : '',
@@ -515,7 +518,9 @@ const fetchAllGoodreadsPromises = async (
 
     return {
       collections: {
-        recentlyReadBooks: (recentlyRead.books ?? []).slice(0, GOODREADS_BOOKS_TO_DISPLAY),
+        recentlyReadBooks: sortGoodreadsRecentlyReadBooksByReadAtDesc(
+          recentlyRead.books ?? [],
+        ).slice(0, GOODREADS_BOOKS_TO_DISPLAY),
         updates: processedUpdates,
       },
       fullReadShelf,

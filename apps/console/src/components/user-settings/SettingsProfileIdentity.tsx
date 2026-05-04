@@ -467,6 +467,9 @@ export function SettingsProfileIdentity({
   const [loadError, setLoadError] = useState<string | null>(null)
   const progressRef = useRef<OnboardingProgressPayload | null>(null)
   const [identitySaveInFlight, setIdentitySaveInFlight] = useState(false)
+  /** Avoid re-fetch loops when parents pass a new `user` object each render (e.g. tests). */
+  const userRef = useRef(user)
+  userRef.current = user
 
   const handleProgressUpdated = useCallback((p: OnboardingProgressPayload) => {
     progressRef.current = p
@@ -482,12 +485,22 @@ export function SettingsProfileIdentity({
     }
   }, [])
 
+  const authIdentityKey = user?.uid ?? ''
+
   const load = useCallback(async () => {
-    if (!user || !apiSessionReady) return
-    setLoading(true)
+    if (!apiSessionReady) return
+    const currentUser = userRef.current
+    if (!currentUser) return
+    // Only swap to the full-page spinner when we have nothing to show yet. A second
+    // `load()` (e.g. React Strict Mode re-invoke or overlapping effects) would otherwise
+    // set `loading` true again, unmount the identity form, and clear in-flight username edits.
+    const showFullPageLoader = progressRef.current === null
+    if (showFullPageLoader) {
+      setLoading(true)
+    }
     setLoadError(null)
     try {
-      const idToken = await user.getIdToken()
+      const idToken = await currentUser.getIdToken()
       const res = await apiClient.getJson('/api/onboarding/progress', { idToken })
       if (!res.ok) throw new Error('Could not load profile.')
       const data = (await res.json()) as { payload?: OnboardingProgressPayload }
@@ -501,12 +514,13 @@ export function SettingsProfileIdentity({
     } finally {
       setLoading(false)
     }
-  }, [user, apiSessionReady])
+  }, [apiSessionReady])
 
   useEffect(() => {
-    if (!user || !apiSessionReady) return
+    if (!apiSessionReady) return
+    if (!userRef.current) return
     void load()
-  }, [user, apiSessionReady, load])
+  }, [apiSessionReady, authIdentityKey, load])
 
   if (!apiSessionReady) {
     return (

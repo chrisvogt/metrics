@@ -65,6 +65,7 @@ function jsonResponse(data: unknown, ok = true, status = ok ? 200 : 400): Respon
 
 function mockUser(): User {
   return {
+    uid: 'test-settings-profile-uid',
     getIdToken: vi.fn().mockResolvedValue('mock-id-token'),
   } as unknown as User
 }
@@ -88,6 +89,13 @@ function setupLoad(progress: OnboardingProgressPayload) {
 async function afterUsernameDebounce() {
   await new Promise<void>((resolve) => {
     setTimeout(resolve, 800)
+  })
+}
+
+/** Waits until username check succeeded (`canSaveUsername`); avoids brittle copy matchers. */
+async function waitUntilSaveUsernameEnabled() {
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: /save username/i })).toBeEnabled()
   })
 }
 
@@ -189,9 +197,7 @@ describe('SettingsProfileIdentity', () => {
     await waitFor(() => {
       expect(globalThis.fetch).toHaveBeenCalled()
     })
-    await waitFor(() => {
-      expect(screen.getByText(/is available/i)).toBeInTheDocument()
-    })
+    await waitUntilSaveUsernameEnabled()
 
     await user.click(screen.getByRole('button', { name: /save username/i }))
 
@@ -228,7 +234,7 @@ describe('SettingsProfileIdentity', () => {
     })
     await afterUsernameDebounce()
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled())
-    await waitFor(() => expect(screen.getByText(/is available/i)).toBeInTheDocument())
+    await waitUntilSaveUsernameEnabled()
 
     fireEvent.click(screen.getByRole('button', { name: /save username/i }))
 
@@ -285,7 +291,7 @@ describe('SettingsProfileIdentity', () => {
     })
     await afterUsernameDebounce()
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled())
-    await waitFor(() => expect(screen.getByText(/is available/i)).toBeInTheDocument())
+    await waitUntilSaveUsernameEnabled()
 
     await user.click(screen.getByRole('button', { name: /save username/i }))
 
@@ -354,10 +360,15 @@ describe('SettingsProfileIdentity', () => {
     render(<SettingsProfileIdentity user={mockUser()} apiSessionReady />)
     await waitFor(() => screen.getByPlaceholderText('your-username'))
 
-    fireEvent.change(screen.getByPlaceholderText('your-username'), {
-      target: { value: 'abcuser' },
-    })
-    await afterUsernameDebounce()
+    const input = screen.getByPlaceholderText('your-username')
+    fireEvent.change(input, { target: { value: 'abcuser' } })
+    await waitFor(() => expect(input).toHaveValue('abcuser'))
+    await waitFor(() =>
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/onboarding/check-username?username=abcuser'),
+        expect.anything(),
+      ),
+    )
 
     await waitFor(() => {
       expect(
@@ -419,10 +430,15 @@ describe('SettingsProfileIdentity', () => {
     render(<SettingsProfileIdentity user={mockUser()} apiSessionReady />)
     await waitFor(() => screen.getByPlaceholderText('your-username'))
 
-    fireEvent.change(screen.getByPlaceholderText('your-username'), {
-      target: { value: 'httpfail' },
-    })
-    await afterUsernameDebounce()
+    const input = screen.getByPlaceholderText('your-username')
+    fireEvent.change(input, { target: { value: 'httpfail' } })
+    await waitFor(() => expect(input).toHaveValue('httpfail'))
+    await waitFor(() =>
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/onboarding/check-username?username=httpfail'),
+        expect.anything(),
+      ),
+    )
 
     await waitFor(() => {
       expect(screen.getByText(/could not check availability/i)).toBeInTheDocument()
@@ -547,7 +563,7 @@ describe('SettingsUsernameBlock (progressRef guard)', () => {
     })
     await afterUsernameDebounce()
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled())
-    await waitFor(() => expect(screen.getByText(/is available/i)).toBeInTheDocument())
+    await waitUntilSaveUsernameEnabled()
 
     await userEvent.click(screen.getByRole('button', { name: /save username/i }))
 
