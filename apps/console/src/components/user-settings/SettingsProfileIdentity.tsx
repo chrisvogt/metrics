@@ -491,7 +491,13 @@ export function SettingsProfileIdentity({
     if (!apiSessionReady) return
     const currentUser = userRef.current
     if (!currentUser) return
-    setLoading(true)
+    // Only swap to the full-page spinner when we have nothing to show yet. A second
+    // `load()` (e.g. React Strict Mode re-invoke or overlapping effects) would otherwise
+    // set `loading` true again, unmount the identity form, and clear in-flight username edits.
+    const showFullPageLoader = progressRef.current === null
+    if (showFullPageLoader) {
+      setLoading(true)
+    }
     setLoadError(null)
     try {
       const idToken = await currentUser.getIdToken()
