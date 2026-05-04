@@ -28,6 +28,7 @@ import type {
 } from '../../types/goodreads.js'
 
 import { getXmlTextOrUndefined } from '../../utils/goodreads-xml.js'
+import { sortGoodreadsRecentlyReadBooksByReadAtDesc } from '../../utils/sort-goodreads-recently-read-books.js'
 
 const toBookMediaDestinationPath = id => `books/${id}-thumbnail.jpg`
 
@@ -52,6 +53,7 @@ const transformBookData = (book: TransformBookDataInput): GoodreadsRecentlyReadB
     rating,
     goodreadsDescription,
     isbn,
+    readAt,
   } = book
 
   const mediaDestinationPath = toBookMediaDestinationPath(id)
@@ -68,6 +70,7 @@ const transformBookData = (book: TransformBookDataInput): GoodreadsRecentlyReadB
     pageCount,
     previewLink,
     rating,
+    ...(readAt != null && readAt !== '' ? { readAt } : {}),
     smallThumbnail: smallThumbnail ? convertToHttps(smallThumbnail) : '',
     subtitle,
     thumbnail: thumbnail ? convertToHttps(thumbnail) : '',
@@ -143,6 +146,7 @@ export default async () => {
           books.push({
             isbn,
             rating,
+            readAt: readDate,
             goodreadsDescription,
             ...(typeof title === 'string' && { title }),
             ...(typeof authorName === 'string' && { authorName }),
@@ -259,24 +263,27 @@ export default async () => {
     }
   )
 
-  const books: GoodreadsRecentlyReadBook[] = bookResults
-    .filter(
-      (bookResult): bookResult is {
-        googleBookResult: GoogleBooksFetchByIsbnResult & { book: GoogleBooksVolumeSubset }
-        goodreadsData: GoodreadsReviewListBookSource
-        originalIndex: number
-      } => Boolean(bookResult.googleBookResult?.book),
-    )
-    .map((bookResult) => {
-      const { googleBookResult, goodreadsData } = bookResult
+  const books = sortGoodreadsRecentlyReadBooksByReadAtDesc(
+    bookResults
+      .filter(
+        (bookResult): bookResult is {
+          googleBookResult: GoogleBooksFetchByIsbnResult & { book: GoogleBooksVolumeSubset }
+          goodreadsData: GoodreadsReviewListBookSource
+          originalIndex: number
+        } => Boolean(bookResult.googleBookResult?.book),
+      )
+      .map((bookResult) => {
+        const { googleBookResult, goodreadsData } = bookResult
 
-      return transformBookData({
-        book: googleBookResult.book,
-        rating: googleBookResult.rating ?? null,
-        goodreadsDescription: goodreadsData.goodreadsDescription,
-        isbn: goodreadsData.isbn,
-      })
-    })
+        return transformBookData({
+          book: googleBookResult.book,
+          rating: googleBookResult.rating ?? null,
+          goodreadsDescription: goodreadsData.goodreadsDescription,
+          isbn: goodreadsData.isbn,
+          readAt: goodreadsData.readAt,
+        })
+      }),
+  )
 
   const storedMediaFileNames = await listStoredMedia()
 
