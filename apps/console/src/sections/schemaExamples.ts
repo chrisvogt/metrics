@@ -74,6 +74,7 @@ const goodreadsBookItem = {
   isbn: '9780593135204',
   pageCount: 496,
   rating: '5',
+  readAt: '2025-03-15',
   smallThumbnail: 'http://books.google.com/books/content?id=example&printsec=frontcover&img=1&zoom=5',
   thumbnail: 'http://books.google.com/books/content?id=example&printsec=frontcover&img=1&zoom=1',
 }
@@ -226,7 +227,15 @@ export const widgetResponseExamples = {
       aiSummary:
         'Mostly science fiction and literary fiction; finishes series quickly when hooked; rates generously on debut novels.',
       collections: {
-        recentlyReadBooks: [goodreadsBookItem, { ...goodreadsBookItem, id: 'gr-book-2', title: 'Sea of Tranquility' }],
+        recentlyReadBooks: [
+          goodreadsBookItem,
+          {
+            ...goodreadsBookItem,
+            id: 'gr-book-2',
+            title: 'Sea of Tranquility',
+            readAt: '2025-02-01',
+          },
+        ],
         updates: [
           {
             type: 'review',

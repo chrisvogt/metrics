@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.3] - 2026-05-03
+
+### Added
+
+- **Goodreads widget** — Each **`collections.recentlyReadBooks`** entry now includes **`readAt`** (Goodreads shelf **`read_at`** text) for ordering and client display.
+
+### Changed
+
+- **Goodreads sync** — **`fetch-recently-read-books`** carries **`readAt`** through **`transformBookData`**; **`sortGoodreadsRecentlyReadBooksByReadAtDesc`** (**`utils/sort-goodreads-recently-read-books.ts`**) orders by parsed date so the **most recently read** titles appear first before **`GOODREADS_BOOKS_TO_DISPLAY`** is applied. The same sort runs when assembling widget **`collections`** in **`sync-goodreads-data`**.
+
+### Tests
+
+- **`sort-goodreads-recently-read-books`** — Sort key, descending order, missing **`readAt`** at end, non-mutating copy.
+- **`fetch-recently-read-books`** — Assertions for **`readAt`** on shelf rows and newest-first order when two reviews resolve.
+- **`sync-goodreads-data`** — Persisted **`recentlyReadBooks`** order matches **`readAt`** descending when the fetch mock returns rows out of chronological order.
+
 ## [0.30.2] - 2026-04-10
 
 ### Changed
@@ -740,6 +756,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _This changelog was started with v0.8.0._
 
+[0.30.3]: https://github.com/chrisvogt/chronogrove/compare/v0.30.2...v0.30.3
+[0.30.2]: https://github.com/chrisvogt/chronogrove/compare/v0.30.1...v0.30.2
+[0.30.1]: https://github.com/chrisvogt/chronogrove/compare/v0.30.0...v0.30.1
+[0.30.0]: https://github.com/chrisvogt/chronogrove/compare/v0.29.2...v0.30.0
 [0.25.5]: https://github.com/chrisvogt/chronogrove/compare/v0.25.4...v0.25.5
 [0.25.4]: https://github.com/chrisvogt/chronogrove/compare/v0.25.3...v0.25.4
 [0.25.3]: https://github.com/chrisvogt/chronogrove/compare/v0.25.2...v0.25.3

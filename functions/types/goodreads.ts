@@ -99,6 +99,8 @@ export interface GoodreadsRecentlyReadBookFromGoogle {
   rating?: string | null
   goodreadsDescription?: string | undefined
   isbn?: string | null | undefined
+  /** Goodreads `read_at` text from the read shelf review list (for ordering). */
+  readAt?: string | null
 }
 
 export interface GoodreadsRecentlyReadBook {
@@ -113,6 +115,8 @@ export interface GoodreadsRecentlyReadBook {
   pageCount?: number
   previewLink?: string
   rating?: string | null
+  /** Goodreads `read_at` from the shelf review; used for most-recent-first ordering. */
+  readAt?: string
   smallThumbnail: string
   subtitle?: string
   thumbnail: string
@@ -129,6 +133,8 @@ export interface GoodreadsReviewListRawReview {
 export interface GoodreadsReviewListBookSource {
   isbn: string
   rating: string
+  /** Goodreads `read_at` for this review (required for rows we keep). */
+  readAt: string
   goodreadsDescription?: string
   title?: string
   authorName?: string

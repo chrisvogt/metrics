@@ -7,6 +7,12 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.23] - 2026-05-03
+
+### Changed
+
+- **Schema / docs** — Goodreads widget example **`collections.recentlyReadBooks`** entries include **`readAt`** to match the Functions sync payload.
+
 ## [0.6.22] - 2026-04-10
 
 ### Added

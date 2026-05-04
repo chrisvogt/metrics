@@ -15,6 +15,8 @@ Package-specific changes:
 
 ### Changed
 
+- **Workspace** — **Functions 0.30.3** and **Console 0.6.23**: Goodreads **`readAt`** on each **`recentlyReadBooks`** row and stable **most-recent-first** ordering when saving widget content; **`utils/sort-goodreads-recently-read-books`**, expanded Vitest coverage, and schema examples updated. See [functions/CHANGELOG.md](functions/CHANGELOG.md) and [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
+
 - **Workspace** — **Functions 0.30.2**: refactors dual session/Bearer verification into **`resolveSessionAndBearerClaims`** (shared mismatch handling and cookie clear); expanded Vitest coverage for mismatch and auth middleware paths. See [functions/CHANGELOG.md](functions/CHANGELOG.md).
 
 - **Workspace** — **Console 0.6.22** and **Functions 0.30.1**: account-switching session handling (stale HttpOnly **`session`** vs Firebase ID token), **`POST /api/auth/clear-session-cookie`**, onboarding redirect until a public **username** is chosen, **`getIdToken(true)`** for session cookie minting, dashboard hero hostname resolution (**`resolveDashboardTenantHostname`**), and overview **quick links** (**`buildOverviewQuickLinks`**) with Vitest coverage for the new helpers. See [functions/CHANGELOG.md](functions/CHANGELOG.md) and [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
