@@ -34,7 +34,7 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0
       next:
-        specifier: ^16.2.4
+        specifier: 16.2.4
         version: 16.2.4(@opentelemetry/api@1.9.1)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       next-themes:
         specifier: ^0.4.6

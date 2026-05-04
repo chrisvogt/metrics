@@ -42,6 +42,10 @@ Backend IDs must exist in the Firebase project (Console or CLI, e.g. `firebase a
 
 Do not put private API keys in `apphosting.yaml`; use Firebase-managed secrets or your team’s secret store for sensitive values and wire them through the console or CLI as required by App Hosting.
 
+### Next.js version string (`apps/console/package.json`)
+
+The App Hosting build runs **`@apphosting/adapter-nextjs`**, which validates the **`next`** field from **`package.json`** against a patched-version allowlist (React2Shell / [CVE-2025-55182](https://www.cve.org/CVERecord?id=CVE-2025-55182)). The check uses **`semver.satisfies(version, range)`** and expects **`version`** to be a **single concrete semver** (e.g. **`16.2.4`**). A **caret or other range** (e.g. **`^16.2.4`**) is not a valid “version” argument to that API, so the build fails with a misleading “vulnerable Next” error even when the resolved install is patched. **Keep `next` as an exact version** in this app until the adapter reads the resolved package version instead; after bumps, run **`pnpm install`** and commit the lockfile as usual.
+
 ## Deploy
 
 **CI** runs lint, tests, and a workspace build; it does not deploy. **App Hosting** and **Functions** releases typically go through the **Firebase** GitHub app / project integration when that is connected; you can also deploy from the **repository root** with the CLI:

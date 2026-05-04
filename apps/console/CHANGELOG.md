@@ -7,6 +7,16 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.25] - 2026-05-04
+
+### Fixed
+
+- **Firebase App Hosting** — Pin **Next.js** to exact **`16.2.4`** in **`package.json`** (not a **`^`** range). The **`@apphosting/adapter-nextjs`** CVE gate passes that string to **`semver.satisfies(version, …)`**, which treats **`^16.2.4`** as an invalid version and blocks deploy with a false “vulnerable Next” error even though **16.2.4** satisfies the patched **`>=16.1.0`** allowlist.
+
+### Documentation
+
+- **`docs/APP_HOSTING.md`** — “Next.js version string” note for the App Hosting buildpack; **`README.md`** (this app) links to it from the build section.
+
 ## [0.6.24] - 2026-05-03
 
 ### Security
