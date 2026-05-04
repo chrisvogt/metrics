@@ -38,6 +38,9 @@ vi.mock('../services/sync-manual.js', () => ({
   })),
 }))
 
+/** Example Origin that matches `/api` CORS allowlist (`api-cors-allowlist.ts`). */
+const TEST_CORS_ALLOWED_ORIGIN = 'https://console.chronogrove.com' as const
+
 describe('createExpressApp media route', () => {
   const logger = {
     error: vi.fn(),
@@ -580,12 +583,12 @@ describe('createExpressApp auth and session branches', () => {
 
     const response = await request(app)
       .options('/api/widgets/sync/spotify/stream')
-      .set('Origin', 'https://metrics.chrisvogt.me')
+      .set('Origin', TEST_CORS_ALLOWED_ORIGIN)
       .set('Access-Control-Request-Method', 'GET')
       .set('Access-Control-Request-Headers', 'authorization')
 
     expect(response.status).toBe(204)
-    expect(response.headers['access-control-allow-origin']).toBe('https://metrics.chrisvogt.me')
+    expect(response.headers['access-control-allow-origin']).toBe(TEST_CORS_ALLOWED_ORIGIN)
     expect(response.headers['access-control-allow-credentials']).toBe('true')
   })
 

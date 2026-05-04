@@ -7,6 +7,10 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Tests
+
+- **`baseUrl`** / **`tenant-api-root-map`** — Production-like hostname stubs use **`console.chronogrove.com`** and **`operator.unmapped.example`** instead of a private deploy host.
+
 ## [0.6.25] - 2026-05-04
 
 ### Fixed
@@ -155,7 +159,7 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Try API → Get widget data** — Each test now loads a **fresh Firebase ID token** via **`buildWidgetFetchHeaders`** instead of reusing async `idToken` state (which could still be empty on first click). Fixes production **cross-origin** console → **`metrics.chrisvogt.me`** requests that do not carry session cookies, so **GitHub** correctly reflects **OAuth** when linked instead of falling back to PAT and **`githubAuthMode: env`**.
+- **Try API → Get widget data** — Each test now loads a **fresh Firebase ID token** via **`buildWidgetFetchHeaders`** instead of reusing async `idToken` state (which could still be empty on first click). Fixes production **cross-origin** console → operator-host requests that do not carry session cookies, so **GitHub** correctly reflects **OAuth** when linked instead of falling back to PAT and **`githubAuthMode: env`**.
 
 ## [0.6.13] - 2026-04-03
 

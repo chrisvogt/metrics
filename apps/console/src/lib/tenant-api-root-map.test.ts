@@ -47,7 +47,7 @@ describe('tenantStatusSlugForHost', () => {
   it('returns undefined when host not mapped', () => {
     delete process.env.TENANT_API_ROOT_TO_USERNAME
     delete process.env.NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME
-    expect(tenantStatusSlugForHost('metrics.chrisvogt.me')).toBeUndefined()
+    expect(tenantStatusSlugForHost('operator.unmapped.example')).toBeUndefined()
   })
 
   it('returns undefined for empty hostname', () => {

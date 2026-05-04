@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { isDevApiHost } from './baseUrl.js'
 
+/** Stand-in for a deployed operator hostname (not localhost / App Hosting emulator). */
+const TEST_PRODUCTION_LIKE_APP_HOSTNAME = 'console.chronogrove.com' as const
+
 describe('isDevApiHost', () => {
   it('returns true for local and dev hostnames', () => {
     expect(isDevApiHost('localhost')).toBe(true)
@@ -10,7 +13,7 @@ describe('isDevApiHost', () => {
   })
 
   it('returns false for production-like hostnames', () => {
-    expect(isDevApiHost('metrics.chrisvogt.me')).toBe(false)
+    expect(isDevApiHost(TEST_PRODUCTION_LIKE_APP_HOSTNAME)).toBe(false)
     expect(isDevApiHost('example.com')).toBe(false)
   })
 })
@@ -38,7 +41,7 @@ describe('getAppBaseUrl', () => {
   })
 
   it('returns empty string for production hostnames (same-origin /api)', async () => {
-    vi.stubGlobal('window', { location: { hostname: 'metrics.chrisvogt.me' } })
+    vi.stubGlobal('window', { location: { hostname: TEST_PRODUCTION_LIKE_APP_HOSTNAME } })
     const { getAppBaseUrl } = await import('./baseUrl.js')
     expect(getAppBaseUrl()).toBe('')
   })
@@ -68,14 +71,14 @@ describe('getSyncStreamBaseUrl', () => {
 
   it('returns Cloud Functions origin in production when env is set', async () => {
     vi.stubEnv('NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN', 'https://us-central1-x.cloudfunctions.net/app')
-    vi.stubGlobal('window', { location: { hostname: 'metrics.chrisvogt.me' } })
+    vi.stubGlobal('window', { location: { hostname: TEST_PRODUCTION_LIKE_APP_HOSTNAME } })
     const { getSyncStreamBaseUrl } = await import('./baseUrl.js')
     expect(getSyncStreamBaseUrl()).toBe('https://us-central1-x.cloudfunctions.net/app')
   })
 
   it('returns empty string when env is unset in production (nullish coalescing)', async () => {
     vi.stubEnv('NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN', undefined as unknown as string)
-    vi.stubGlobal('window', { location: { hostname: 'metrics.chrisvogt.me' } })
+    vi.stubGlobal('window', { location: { hostname: TEST_PRODUCTION_LIKE_APP_HOSTNAME } })
     const { getSyncStreamBaseUrl } = await import('./baseUrl.js')
     expect(getSyncStreamBaseUrl()).toBe('')
   })
@@ -102,7 +105,7 @@ describe('getManualSyncStreamUrl', () => {
       'NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN',
       'https://us-central1-personal-stats-chrisvogt.cloudfunctions.net/app',
     )
-    vi.stubGlobal('window', { location: { hostname: 'metrics.chrisvogt.me' } })
+    vi.stubGlobal('window', { location: { hostname: TEST_PRODUCTION_LIKE_APP_HOSTNAME } })
     const { getManualSyncStreamUrl } = await import('./baseUrl.js')
     expect(getManualSyncStreamUrl('discogs')).toBe(
       'https://us-central1-personal-stats-chrisvogt.cloudfunctions.net/app/api/widgets/sync/discogs/stream',
