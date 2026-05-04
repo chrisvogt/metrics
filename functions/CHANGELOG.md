@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.4] - 2026-05-03
+
+### Security
+
+- **Dependencies** — **@google-cloud/firestore** `^8.5.0`, **firebase** `^12.12.1`, **firebase-admin** `^13.8.0`, **firebase-functions** `^7.2.5`, **got** `^15.0.3`, **dotenv** `^17.4.2`, **express-rate-limit** `^8.4.1`, **Vitest** / **`@vitest/coverage-v8`** `^4.1.5`, **ESLint** `^10.3.0`, **typescript-eslint** `^8.59.1`, **globals** `^17.6.0`, **@types/node** `^24.12.2`; workspace **`vite`** override (root `pnpm.overrides`) for patched **8.0.5** used by Vitest.
+
 ## [0.30.3] - 2026-05-03
 
 ### Added
