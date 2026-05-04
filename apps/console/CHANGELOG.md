@@ -7,6 +7,12 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.24] - 2026-05-03
+
+### Security
+
+- **Dependencies** — **Next.js** `^16.2.4` (replaces exact **16.2.2**; includes **≥16.2.3** Server Components DoS fix), **React** `^19.2.5`, **Firebase** client `^12.12.1`, **Vitest** / **`@vitest/coverage-v8`** `^4.1.5`, **jsdom** `^29.1.1`, **@types/node** `^24.12.2`; workspace **`vite`** override (via root `pnpm.overrides`) clears **Vitest 8.0.x** dev-server advisories for local `vitest` / `next dev` tooling.
+
 ## [0.6.23] - 2026-05-03
 
 ### Changed
