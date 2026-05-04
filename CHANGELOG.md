@@ -15,6 +15,8 @@ Package-specific changes:
 
 ### Changed
 
+- **Workspace** — **Console 0.6.26** and **Functions 0.31.0**: optional Firestore **`tenant_hosts`** routing behind **`ENABLE_FIRESTORE_TENANT_ROUTING`** (Functions + App Hosting) and **`NEXT_PUBLIC_ENABLE_FIRESTORE_TENANT_ROUTING`** (console client); internal resolve API, cached widget hostname resolution, async proxy + **`/internal/tenant-resolve`**, **`CHRONOGROVE_INTERNAL_API_KEY`** support. See [functions/CHANGELOG.md](functions/CHANGELOG.md), [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md), [GitHub #257](https://github.com/chrisvogt/chronogrove/issues/257).
+
 - **Workspace** — **Console 0.6.25**: **Next.js** pinned to exact **`16.2.4`** so Firebase App Hosting’s **`@apphosting/adapter-nextjs`** CVE version check receives a valid semver (ranges like **`^16.2.4`** were mis-rejected and blocked deploy). Documented in **[docs/APP_HOSTING.md](docs/APP_HOSTING.md)** and **[apps/console/README.md](apps/console/README.md)**. See [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).
 
 - **Workspace** — **Functions 0.30.4** and **Console 0.6.24**: dependency refresh (security-motivated **Next.js** `^16.2.4`, shared **Firebase** `^12.12.1`, **Vitest** `^4.1.5`, **Turbo** `^2.9.8`, and related bumps in `apps/console` and `functions`); root **`pnpm.overrides`** pins transitive **`vite@8.0.5`** so Vitest / `@vitejs/plugin-react` no longer pull the **8.0.0–8.0.4** dev-server advisories. See [functions/CHANGELOG.md](functions/CHANGELOG.md) and [apps/console/CHANGELOG.md](apps/console/CHANGELOG.md).

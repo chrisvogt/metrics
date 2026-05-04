@@ -56,7 +56,7 @@
     },
     "apphosting": {
       "port": 8084,
-      "host": "metrics.dev-chrisvogt.me"
+      "host": "console.dev-chronogrove.com"
     },
     "ui": {
       "enabled": true,

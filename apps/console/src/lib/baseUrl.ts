@@ -1,6 +1,6 @@
 /** True for local Next dev and Firebase dev hostnames (relative `/api` URLs). */
 export function isDevApiHost(hostname: string): boolean {
-  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === 'metrics.dev-chrisvogt.me'
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === 'console.dev-chronogrove.com'
 }
 
 /** Base URL for `/api` fetches: empty so requests stay same-origin; Next rewrites to the Cloud Function. */

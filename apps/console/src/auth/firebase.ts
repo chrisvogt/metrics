@@ -22,7 +22,7 @@ export async function getFirebaseApp(): Promise<{ app: FirebaseApp; auth: Auth }
   const auth = getAuth(app)
 
   const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
-  if (hostname === 'metrics.dev-chrisvogt.me' || hostname === 'localhost' || hostname === '127.0.0.1') {
+  if (hostname === 'console.dev-chronogrove.com' || hostname === 'localhost' || hostname === '127.0.0.1') {
     try {
       connectAuthEmulator(auth, 'http://127.0.0.1:9099')
     } catch {

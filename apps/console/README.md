@@ -14,40 +14,37 @@ pnpm install
 
 ## Develop locally
 
-**Option A – Next.js dev server (hot reload)**  
-Run the app and proxy **`/api`** and **`/widgets`** to the Cloud Functions emulator (`next.config.mjs` `beforeFiles` rewrites; dev only):
+Run commands from the **repo root** so you use the workspace **`package.json`** scripts (see root [README § Commands](../README.md#commands-repo-root)).
 
-```bash
-# from repo root
-pnpm run dev
-```
-
-Start the Functions (and Auth) emulators in another terminal so **`/api`** and **`/widgets`** rewrites work:
-
-```bash
-# from repo root
-firebase emulators:start --only functions,auth
-```
-
-Then open **http://localhost:5173**.
-
-**Environment overrides** — Copy [`.env.template`](.env.template) to **`.env.local`** in this directory (`apps/console/`). Next.js loads `.env.local` automatically when you run `next dev` here (restart after edits). Use it for `NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`, custom `NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN`, etc.
-
-**Option B – `dev:full` from repo root**  
-Starts **Auth, Firestore, and Functions** emulators plus Next dev. App Hosting is **not** started here (it would try to run a second `next dev` on the same port). Use Option A split terminals if you omit Firestore during UI-only work.
+**Recommended — one terminal**
 
 ```bash
 pnpm run dev:full
 ```
 
-**Option C – App Hosting emulator (optional)**  
-Closer to the App Hosting runtime; use when you need to validate `apphosting.yaml` or emulator-only behavior (separate from day-to-day `localhost:5173`).
+Starts **Auth, Firestore, and Functions** emulators plus **`pnpm run dev`** (Next.js on **http://localhost:5173**). Same emulator set as **`pnpm run emulators`**; the App Hosting emulator is **not** used (avoids a second Next dev on the same port).
+
+**After changing generated assets or wanting a clean build first**
 
 ```bash
-firebase emulators:start --only apphosting,auth,functions,firestore
+pnpm run dev:full:fresh
 ```
 
-Open **http://metrics.dev-chrisvogt.me:8084** (map that host to `127.0.0.1` in `/etc/hosts` if needed).
+**Split terminals (same behavior as `dev:full`)**
+
+```bash
+# terminal 1
+pnpm run emulators
+
+# terminal 2
+pnpm run dev
+```
+
+Then open **http://localhost:5173**.
+
+**Environment overrides** — Copy [`.env.template`](.env.template) to **`.env.local`** in this directory (`apps/console/`). Next.js loads `.env.local` when Turbo runs **`chronogrove-console#dev`** from the root (restart after edits). Use it for `NEXT_PUBLIC_TENANT_API_ROOT_TO_USERNAME`, custom `NEXT_PUBLIC_CLOUD_FUNCTIONS_APP_ORIGIN`, etc.
+
+**App Hosting emulator** (optional, not part of day-to-day local dev): see [docs/APP_HOSTING.md](../docs/APP_HOSTING.md#optional-app-hosting-emulator).
 
 ## Build
 
@@ -65,19 +62,19 @@ Next.js output is under **`apps/console/.next`** (SSR bundle for App Hosting). T
 
 From the **repo root**:
 
-- **App Hosting (production backend `chronogrove-console`):** `pnpm run deploy:hosting` — runs a workspace build, then `firebase deploy --only apphosting:chronogrove-console`.
-- **Rules + Functions + App Hosting:** `pnpm run deploy:all` — deploys Firestore, Functions, and the production App Hosting backend (see root `package.json` for exact `--only` list).
+- **`pnpm run deploy:hosting`** — workspace build, then production App Hosting backend **`chronogrove-console`**.
+- **`pnpm run deploy:all`** — guard, workspace build, then Firestore rules, Functions, and **`chronogrove-console`** (see root `package.json`).
 
-Backends and **`apps/console/apphosting.yaml`** must exist in the Firebase project. **CI** runs lint, tests, and build only. Releases usually go through the **Firebase** GitHub integration; the commands above are for CLI deploy from the repo root (see root [README](../README.md#deployment)).
+Backends and **`apps/console/apphosting.yaml`** must exist in the Firebase project. **CI** runs lint, tests, and build only. Releases usually go through the **Firebase** GitHub integration; the scripts above are for CLI deploy from the repo root (see root [README](../README.md#deployment)).
 
 ### App Hosting backends
 
 | Backend ID | Role |
 |------------|------|
 | **`chronogrove-console`** | Production console (`pnpm run deploy:hosting`). |
-| **`chronogrove-console-pr`** | Optional second backend (e.g. staging/previews); deploy with `firebase deploy --only apphosting:chronogrove-console-pr` when configured in the Firebase project. |
+| **`chronogrove-console-pr`** | Optional second backend (e.g. staging/previews); CLI deploy is documented in **[docs/APP_HOSTING.md](../docs/APP_HOSTING.md)** (no separate root script today). |
 
-Both use **`rootDir`** `apps/console/` in [`firebase.json`](../firebase.json). See **[docs/APP_HOSTING.md](../docs/APP_HOSTING.md)** for run config, env vars, and operations detail.
+Both use **`rootDir`** `apps/console/` in [`firebase.json`](../firebase.json). See **[docs/APP_HOSTING.md](../docs/APP_HOSTING.md)** for run config, env vars, deploy flags, and optional emulator use.
 
 ## Routes
 

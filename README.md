@@ -179,12 +179,15 @@ Turborepo runs workspace scripts from the root and caches work.
 | Command | What it does |
 |--------|----------------|
 | `pnpm install` | Install dependencies for root and both packages. |
-| `pnpm run dev` | Run Next.js dev server on `localhost:5173`. Expects Functions emulator to be running for `/api` calls. |
-| `pnpm run dev:full` | Run **Auth, Firestore + Functions** emulators and Next dev together (App Hosting emulator omitted so only one `next dev` uses port 5173). |
+| `pnpm run dev` | Run Next.js dev server on `localhost:5173`. Use with **`pnpm run emulators`** in another terminal so `/api` and `/widgets` resolve, or use **`pnpm run dev:full`**. |
+| `pnpm run emulators` | Start **Auth, Firestore, and Functions** emulators (same set as **`dev:full`**). |
+| `pnpm run dev:full` | Run **`pnpm run emulators`** and **`pnpm run dev`** together via `concurrently` (one `next dev` on port 5173). |
+| `pnpm run dev:full:fresh` | **`pnpm run build`**, then **`pnpm run dev:full`**. |
 | `pnpm run build` | Run workspace builds via Turborepo (Next **`.next`** output + `functions` TypeScript build). |
 | `pnpm run lint` | Run workspace lint tasks (currently functions ESLint). |
 | `pnpm run test` | Run workspace tests. |
 | `pnpm run test:coverage` | Run tests with coverage. |
+| `pnpm run typecheck` | Strict TypeScript check for `functions/`. |
 | `pnpm run deploy:all` | Guard env + build + deploy Firestore, Functions, and production App Hosting (`chronogrove-console`). |
 | `pnpm run deploy:hosting` | Build and deploy only production App Hosting (`chronogrove-console`). |
 | `pnpm run deploy:functions` | Guard env + deploy only Functions (Firebase predeploy still builds functions). |
@@ -193,43 +196,31 @@ Turborepo runs workspace scripts from the root and caches work.
 
 ## Local development
 
-### Option A (recommended): hot reload dashboard + emulators
+Default local flow uses **Next.js dev** plus the **Auth, Firestore, and Functions** emulators only (no App Hosting emulator). For an optional App Hosting emulator (different URL and port), see [docs/APP_HOSTING.md](docs/APP_HOSTING.md#optional-app-hosting-emulator).
 
-One terminal:
+### Recommended: one terminal
 
 ```bash
 pnpm run dev:full
 ```
 
-Or split terminals:
+### Split terminals (same as above)
 
 ```bash
 # Terminal 1
-firebase emulators:start --only functions,auth
+pnpm run emulators
 
 # Terminal 2
 pnpm run dev
 ```
 
-Open `http://localhost:5173`.
+Open **http://localhost:5173**. If `/api` calls fail, ensure **`pnpm run emulators`** (or **`pnpm run dev:full`**) is running.
 
-### Option B: App Hosting emulator (optional)
-
-For a runtime closer to production App Hosting (see `firebase.json` + `apps/console/apphosting.yaml`):
-
-```bash
-pnpm run build
-firebase emulators:start --only apphosting,auth,functions,firestore
-```
-
-Open **http://metrics.dev-chrisvogt.me:8084** if that host resolves to localhost (see `emulators.apphosting` in `firebase.json`).
-
-### Emulator URLs
+### Emulator URLs (when using `pnpm run emulators` or `pnpm run dev:full`)
 
 | Service | URL |
 |---------|-----|
 | Emulator UI | `http://127.0.0.1:4000` |
-| App Hosting (when started) | `http://metrics.dev-chrisvogt.me:8084` (or configured host in `firebase.json`) |
 | Functions | `http://127.0.0.1:5001` |
 | Auth | `http://127.0.0.1:9099` |
 | Firestore | `http://127.0.0.1:8080` |

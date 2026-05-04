@@ -9,7 +9,11 @@ import type { AuthClaims, AuthService } from '../ports/auth-service.js'
 import type { DocumentStore } from '../ports/document-store.js'
 import type { MediaStore } from '../ports/media-store.js'
 import type { SyncJobQueue } from '../ports/sync-job-queue.js'
-import { getWidgetUserIdForHostname, getUsersCollectionPath } from '../config/backend-paths.js'
+import { getUsersCollectionPath } from '../config/backend-paths.js'
+import {
+  resolveTenantHostForInternalApi,
+  resolveWidgetUserIdForHostname,
+} from '../services/tenant-host-routing.js'
 import { isProductionEnvironment } from '../config/backend-config.js'
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
@@ -128,6 +132,8 @@ const CSRF_EXCLUDED_PATHS_WIDGET_READS = [
   { path: '/api/oauth/flickr/callback', type: 'exact' as const },
   /** Discogs redirects here without CSRF headers. */
   { path: '/api/oauth/discogs/callback', type: 'exact' as const },
+  /** Server-to-server tenant host lookup (optional shared secret). */
+  { path: '/api/internal/resolve-tenant', type: 'exact' as const },
 ]
 /** Host or left label before the first `:port` segment (IPv6-in-headers stays consistent with prior `split(':')[0]` usage). */
 function hostPortFirst(hostOrHostPort: string): string {
@@ -645,6 +651,42 @@ export function createExpressApp({
   )
 
   expressApp.get(
+    '/api/internal/resolve-tenant',
+    rateLimit({ ...rateLimitDefaults, windowMs: 60 * 1000, limit: 200 }),
+    async (req, res) => {
+      const configured = process.env.CHRONOGROVE_INTERNAL_API_KEY?.trim()
+      if (configured) {
+        const got = (req.headers['x-chronogrove-internal-key'] as string | undefined)?.trim()
+        if (got !== configured) {
+          res.status(403).json({ ok: false, error: 'Forbidden' })
+          return
+        }
+      }
+
+      const hostRaw = req.query.host
+      const hostParam =
+        typeof hostRaw === 'string'
+          ? hostRaw
+          : Array.isArray(hostRaw) && typeof hostRaw[0] === 'string'
+            ? hostRaw[0]
+            : ''
+
+      try {
+        const { uid, username } = await resolveTenantHostForInternalApi(
+          documentStore,
+          hostParam || undefined
+        )
+        res.status(200).json({ uid, username })
+      } catch (err) {
+        logger.error('resolve-tenant failed', {
+          error: err instanceof Error ? err.message : err,
+        })
+        res.status(200).json({ uid: null, username: null })
+      }
+    }
+  )
+
+  expressApp.get(
     '/api/widgets/:provider',
     rateLimit({
       ...rateLimitDefaults,
@@ -691,7 +733,9 @@ export function createExpressApp({
         return
       }
       const userId =
-        fromQuery === 'skip' ? getWidgetUserIdForHostname(originalHostname) : fromQuery.userId
+        fromQuery === 'skip'
+          ? await resolveWidgetUserIdForHostname(documentStore, originalHostname)
+          : fromQuery.userId
       const viewerUid = await resolveViewerUidForPublicOnboarding(req, res)
 
       try {

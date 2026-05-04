@@ -16,6 +16,16 @@ and this package adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`baseUrl`** / **`tenant-api-root-map`** — Production-like hostname stubs use **`console.chronogrove.com`** and **`operator.unmapped.example`** instead of a private deploy host.
 - **`SettingsProfileIdentity`** — **`mockUser()`** includes a stable **`uid`**; username-save flows wait for **`Save username`** to become enabled instead of matching availability hint text.
 
+## [0.6.26] - 2026-05-03
+
+### Added
+
+- **Firestore-backed tenant API root** — When **`ENABLE_FIRESTORE_TENANT_ROUTING`** and **`NEXT_PUBLIC_ENABLE_FIRESTORE_TENANT_ROUTING`** are **true**, **`src/proxy.ts`** resolves **`/`** → **`/u/{slug}`** via Cloud Functions **`/api/internal/resolve-tenant`** after the env map misses; same-origin **`GET /internal/tenant-resolve`** for the auth shell; **`src/lib/useFirestoreTenantRootSlug.ts`**, **`src/lib/authless-tenant-surface.ts`**, **`src/lib/functions-app-origin.ts`**. Optional **`CHRONOGROVE_INTERNAL_API_KEY`**, **`TENANT_RESOLVE_FUNCTIONS_ORIGIN`**; **`apphosting.yaml`** defaults keep routing off.
+
+### Tests
+
+- Coverage for async tenant slug resolution, internal route, Functions origin helper, Firestore tenant hook, and **`test:coverage`** include list updates for new sources.
+
 ## [0.6.25] - 2026-05-04
 
 ### Fixed

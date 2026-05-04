@@ -5,6 +5,7 @@ import os from 'os'
 import path from 'path'
 
 import { LocalDiskMediaStore } from '../adapters/storage/local-disk-media-store.js'
+import * as tenantHostRouting from '../services/tenant-host-routing.js'
 import { getRateLimitKey } from '../middleware/rate-limit-key.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 import type { Request } from 'express'
@@ -742,6 +743,45 @@ describe('createExpressApp auth and session branches', () => {
       expect(response.body).toEqual({ ok: false, error: 'Unknown user.' })
     })
 
+    it('resolves widget user from Firestore tenant_hosts when query is absent and routing is on', async () => {
+      const prevFlag = process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+      const prevMap = process.env.WIDGET_USER_ID_BY_HOSTNAME
+      process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+      delete process.env.WIDGET_USER_ID_BY_HOSTNAME
+      tenantHostRouting.resetTenantHostRoutingCacheForTests()
+      vi.mocked(documentStore.getDocument)
+        .mockResolvedValueOnce({ uid: 'fs-widget-uid' })
+        .mockResolvedValueOnce({ username: 'widget-slug' })
+      try {
+        const app = await buildApp()
+        const { getWidgetContent } = await import('../widgets/get-widget-content.js')
+        vi.mocked(getWidgetContent).mockClear()
+
+        await request(app)
+          .get('/api/widgets/spotify')
+          .set('x-forwarded-host', 'api.widget-fs-host.example')
+          .expect(200)
+
+        expect(vi.mocked(getWidgetContent)).toHaveBeenCalledWith(
+          'spotify',
+          'fs-widget-uid',
+          documentStore,
+          expect.anything(),
+        )
+      } finally {
+        if (prevFlag === undefined) {
+          delete process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+        } else {
+          process.env.ENABLE_FIRESTORE_TENANT_ROUTING = prevFlag
+        }
+        if (prevMap === undefined) {
+          delete process.env.WIDGET_USER_ID_BY_HOSTNAME
+        } else {
+          process.env.WIDGET_USER_ID_BY_HOSTNAME = prevMap
+        }
+      }
+    })
+
     it('returns JSON 500 when username resolution fails (e.g. Firestore error)', async () => {
       vi.mocked(documentStore.getDocument).mockRejectedValueOnce(new Error('firestore unavailable'))
       const app = await buildApp()
@@ -881,6 +921,155 @@ describe('createExpressApp auth and session branches', () => {
     )
     expect(res.status).toHaveBeenCalledWith(400)
     expect(res.send).toHaveBeenCalledWith('Unrecognized or unsupported provider.')
+  })
+
+  describe('GET /api/internal/resolve-tenant', () => {
+    beforeEach(() => {
+      tenantHostRouting.resetTenantHostRoutingCacheForTests()
+      vi.mocked(documentStore.getDocument).mockReset()
+    })
+
+    it('returns 200 with nulls when Firestore routing is off', async () => {
+      const app = await buildApp()
+      const response = await request(app)
+        .get('/api/internal/resolve-tenant')
+        .query({ host: 'api.dynamic.example' })
+        .expect(200)
+
+      expect(response.body).toEqual({ uid: null, username: null })
+    })
+
+    it('returns 403 when internal API key is set and header is missing', async () => {
+      const prev = process.env.CHRONOGROVE_INTERNAL_API_KEY
+      process.env.CHRONOGROVE_INTERNAL_API_KEY = 'test-internal-key'
+      try {
+        const app = await buildApp()
+        await request(app).get('/api/internal/resolve-tenant').query({ host: 'a.com' }).expect(403)
+      } finally {
+        if (prev === undefined) {
+          delete process.env.CHRONOGROVE_INTERNAL_API_KEY
+        } else {
+          process.env.CHRONOGROVE_INTERNAL_API_KEY = prev
+        }
+      }
+    })
+
+    it('returns 403 when internal API key is set and header does not match', async () => {
+      const prev = process.env.CHRONOGROVE_INTERNAL_API_KEY
+      process.env.CHRONOGROVE_INTERNAL_API_KEY = 'expected-secret'
+      try {
+        const app = await buildApp()
+        await request(app)
+          .get('/api/internal/resolve-tenant')
+          .query({ host: 'a.com' })
+          .set('x-chronogrove-internal-key', 'wrong-secret')
+          .expect(403)
+      } finally {
+        if (prev === undefined) {
+          delete process.env.CHRONOGROVE_INTERNAL_API_KEY
+        } else {
+          process.env.CHRONOGROVE_INTERNAL_API_KEY = prev
+        }
+      }
+    })
+
+    it('allows resolve-tenant when internal API key matches header', async () => {
+      const prevKey = process.env.CHRONOGROVE_INTERNAL_API_KEY
+      const prevFlag = process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+      process.env.CHRONOGROVE_INTERNAL_API_KEY = 'matching-key'
+      process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+      vi.mocked(documentStore.getDocument)
+        .mockResolvedValueOnce({ uid: 'k-uid' })
+        .mockResolvedValueOnce({ username: 'Kay' })
+      try {
+        const app = await buildApp()
+        const response = await request(app)
+          .get('/api/internal/resolve-tenant')
+          .query({ host: 'api.keyed.example' })
+          .set('x-chronogrove-internal-key', 'matching-key')
+          .expect(200)
+
+        expect(response.body).toEqual({ uid: 'k-uid', username: 'kay' })
+      } finally {
+        if (prevKey === undefined) {
+          delete process.env.CHRONOGROVE_INTERNAL_API_KEY
+        } else {
+          process.env.CHRONOGROVE_INTERNAL_API_KEY = prevKey
+        }
+        if (prevFlag === undefined) {
+          delete process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+        } else {
+          process.env.ENABLE_FIRESTORE_TENANT_ROUTING = prevFlag
+        }
+      }
+    })
+
+    it('uses first host query value when host is repeated', async () => {
+      const prevFlag = process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+      process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+      vi.mocked(documentStore.getDocument)
+        .mockResolvedValueOnce({ uid: 'first-host' })
+        .mockResolvedValueOnce({ username: 'u' })
+      try {
+        const app = await buildApp()
+        const response = await request(app)
+          .get('/api/internal/resolve-tenant?host=api.one.example&host=api.ignored.example')
+          .expect(200)
+
+        expect(response.body).toEqual({ uid: 'first-host', username: 'u' })
+      } finally {
+        if (prevFlag === undefined) {
+          delete process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+        } else {
+          process.env.ENABLE_FIRESTORE_TENANT_ROUTING = prevFlag
+        }
+      }
+    })
+
+    it('returns 200 with nulls when resolve-tenant handler catches unexpected errors', async () => {
+      const spy = vi
+        .spyOn(tenantHostRouting, 'resolveTenantHostForInternalApi')
+        .mockRejectedValueOnce(new Error('unexpected-resolve'))
+
+      try {
+        const app = await buildApp()
+        const response = await request(app)
+          .get('/api/internal/resolve-tenant')
+          .query({ host: 'api.boom.example' })
+          .expect(200)
+
+        expect(response.body).toEqual({ uid: null, username: null })
+        expect(logger.error).toHaveBeenCalledWith(
+          'resolve-tenant failed',
+          expect.objectContaining({ error: 'unexpected-resolve' }),
+        )
+      } finally {
+        spy.mockRestore()
+      }
+    })
+
+    it('returns uid and username when Firestore routing resolves a claim', async () => {
+      const prevFlag = process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+      process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+      vi.mocked(documentStore.getDocument)
+        .mockResolvedValueOnce({ uid: 'uid-z' })
+        .mockResolvedValueOnce({ username: 'Zed' })
+      try {
+        const app = await buildApp()
+        const response = await request(app)
+          .get('/api/internal/resolve-tenant')
+          .query({ host: 'api.zed.example' })
+          .expect(200)
+
+        expect(response.body).toEqual({ uid: 'uid-z', username: 'zed' })
+      } finally {
+        if (prevFlag === undefined) {
+          delete process.env.ENABLE_FIRESTORE_TENANT_ROUTING
+        } else {
+          process.env.ENABLE_FIRESTORE_TENANT_ROUTING = prevFlag
+        }
+      }
+    })
   })
 
   it('widget GET rateLimit keyGenerator includes request path', async () => {

@@ -25,7 +25,7 @@ describe('getApiCorsOriginRegexList', () => {
   })
 
   it('allows dev-chrisvogt hosts (emulator / staging)', () => {
-    expect(originAllowed('https://metrics.dev-chrisvogt.me:8084', true)).toBe(true)
+    expect(originAllowed('https://console.dev-chronogrove.com:8084', true)).toBe(true)
   })
 
   it('allows localhost when not production', () => {
