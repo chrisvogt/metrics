@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **CORS (`/api`)** — **`*.chrisvogt.me`** origins are still allowed for personal-site and tenant API hosts, but the **`metrics`** label on **`chrisvogt.me`** is excluded (sunset operator hostname). Allowlist logic lives in **`app/api-cors-allowlist.ts`** with unit tests; integration tests use **`https://console.chronogrove.com`** as a sample allowed Origin.
+
 ## [0.30.4] - 2026-05-03
 
 ### Security
@@ -511,7 +515,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Hosting (sign-in page)** – Clarified that the app is a personal admin, not a general login service:
-  - Added line under “Sign in”: “Personal admin for metrics.chrisvogt.me / chrisvogt.me only.”
+  - Added line under “Sign in”: “Personal admin for the operator console / chrisvogt.me only.”
   - Added “← Part of chrisvogt.me” link to chrisvogt.me above the sign-in card.
   - Added meta description and Open Graph tags in `index.html`: “Personal Metrics API admin for chrisvogt.me. Not a general login service.”
 

@@ -19,6 +19,7 @@ import deleteUserJob from '../jobs/delete-user.js'
 import { runSyncForProvider } from '../services/sync-manual.js'
 import type { ManualSyncResult } from '../services/sync-manual.js'
 import { getWidgetContent } from '../widgets/get-widget-content.js'
+import { getApiCorsOriginRegexList } from './api-cors-allowlist.js'
 import { createCookieBackedCsrfImpl } from './cookie-backed-csrf.js'
 import { TENANT_USERNAMES_COLLECTION } from '../config/future-tenant-collections.js'
 import {
@@ -453,17 +454,7 @@ export function createExpressApp({
   )
   expressApp.use(cookieParser())
 
-  const corsAllowList: RegExp[] = [
-    /https?:\/\/([a-z0-9]+[.])*chrisvogt[.]me$/,
-    /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
-    /^https?:\/\/([a-z0-9-]+--)?chrisvogt\.netlify\.app$/,
-    /https?:\/\/([a-z0-9]+[.])*chronogrove[.]com$/,
-    /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
-  ]
-
-  if (!isProductionEnvironment()) {
-    corsAllowList.push(/localhost:?(\d+)?$/)
-  }
+  const corsAllowList = getApiCorsOriginRegexList(isProductionEnvironment())
 
   const corsOptions = {
     origin: corsAllowList,
