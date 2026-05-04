@@ -53,9 +53,29 @@ The App Hosting build runs **`@apphosting/adapter-nextjs`**, which validates the
 - **App Hosting only (production backend):** `pnpm run deploy:hosting`
 - **Firestore + Functions + App Hosting:** `pnpm run deploy:all`
 
-## Local emulation
+## Local development (default)
 
-Optional: App Hosting emulator with Functions + Auth + Firestore — see [README.md § Local development](../README.md#local-development) and [apps/console/README.md](../apps/console/README.md).
+From the repository root, **`pnpm run dev:full`** starts **Auth, Firestore, and Functions** emulators plus the Next.js app on **http://localhost:5173** (see root **`package.json`** scripts: **`emulators`**, **`dev`**, **`dev:full`**). That path does **not** start the App Hosting emulator.
+
+## Optional App Hosting emulator
+
+Use this only when you need to exercise the **App Hosting** stack locally (for example **`apphosting.yaml`** or host **`console.dev-chronogrove.com:8084`** from [`firebase.json`](../firebase.json) `emulators.apphosting`). It is **not** part of the default **`pnpm run dev:full`** workflow.
+
+1. Build the console so the emulator has artifacts to serve:
+
+   ```bash
+   pnpm run build
+   ```
+
+2. Start emulators including App Hosting (Firebase CLI; not wrapped as a root script today):
+
+   ```bash
+   firebase emulators:start --only apphosting,auth,functions,firestore
+   ```
+
+3. Open **http://console.dev-chronogrove.com:8084** — map **`console.dev-chronogrove.com`** to **`127.0.0.1`** in `/etc/hosts` (or your OS equivalent) if the hostname does not resolve.
+
+Day-to-day UI work should use **`pnpm run dev:full`** and **http://localhost:5173** instead.
 
 ## See also
 

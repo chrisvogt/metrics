@@ -18,8 +18,9 @@
   "scripts": {
     "build": "NEXT_PUBLIC_GIT_SHA=$(git rev-parse --short HEAD) turbo run build",
     "dev": "NEXT_PUBLIC_GIT_SHA=$(git rev-parse --short HEAD) turbo run dev",
-    "dev:full": "concurrently -n emulators,next -c blue,green \"firebase emulators:start --only auth,functions,firestore\" \"pnpm run dev\"",
+    "dev:full": "concurrently -n emulators,next -c blue,green \"pnpm run emulators\" \"pnpm run dev\"",
     "dev:full:fresh": "pnpm run build && pnpm run dev:full",
+    "emulators": "firebase emulators:start --only auth,functions,firestore",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",

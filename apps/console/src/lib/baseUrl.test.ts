@@ -9,7 +9,7 @@ describe('isDevApiHost', () => {
   it('returns true for local and dev hostnames', () => {
     expect(isDevApiHost('localhost')).toBe(true)
     expect(isDevApiHost('127.0.0.1')).toBe(true)
-    expect(isDevApiHost('metrics.dev-chrisvogt.me')).toBe(true)
+    expect(isDevApiHost('console.dev-chronogrove.com')).toBe(true)
   })
 
   it('returns false for production-like hostnames', () => {
@@ -64,7 +64,7 @@ describe('getSyncStreamBaseUrl', () => {
   })
 
   it('returns empty string for dev hostnames', async () => {
-    vi.stubGlobal('window', { location: { hostname: 'metrics.dev-chrisvogt.me' } })
+    vi.stubGlobal('window', { location: { hostname: 'console.dev-chronogrove.com' } })
     const { getSyncStreamBaseUrl } = await import('./baseUrl.js')
     expect(getSyncStreamBaseUrl()).toBe('')
   })
