@@ -54,6 +54,30 @@ describe('tenant-host-routing', () => {
     expect(documentStore.getDocument).toHaveBeenCalled()
   })
 
+  it('uses default cache TTL when TENANT_HOST_ROUTING_CACHE_MS is negative', async () => {
+    process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+    process.env.TENANT_HOST_ROUTING_CACHE_MS = '-1'
+    vi.mocked(documentStore.getDocument).mockResolvedValue(null)
+    await resolveWidgetUserIdForHostname(documentStore, 'h-negative-ttl.example')
+    expect(documentStore.getDocument).toHaveBeenCalled()
+  })
+
+  it('resolveWidgetUserIdForHostname returns default when hostname normalizes empty', async () => {
+    process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+    process.env.DEFAULT_WIDGET_USER_ID = 'default-only'
+    const uid = await resolveWidgetUserIdForHostname(documentStore, '   \t\n')
+    expect(uid).toBe('default-only')
+    expect(documentStore.getDocument).not.toHaveBeenCalled()
+  })
+
+  it('resolveWidgetUserIdForHostname returns default when hostname is undefined', async () => {
+    process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+    process.env.DEFAULT_WIDGET_USER_ID = 'def-undef'
+    const uid = await resolveWidgetUserIdForHostname(documentStore, undefined)
+    expect(uid).toBe('def-undef')
+    expect(documentStore.getDocument).not.toHaveBeenCalled()
+  })
+
   it('resolveWidgetUserIdForHostname uses env map before Firestore', async () => {
     process.env.WIDGET_USER_ID_BY_HOSTNAME = JSON.stringify({
       'api.env-only.example': 'env-user',
@@ -113,6 +137,28 @@ describe('tenant-host-routing', () => {
 
     const r = await resolveTenantHostForInternalApi(documentStore, 'api.noslug.example')
     expect(r).toEqual({ uid: 'u2', username: null })
+  })
+
+  it('resolveTenantHostForInternalApi returns nulls when tenant host doc is missing', async () => {
+    process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+    vi.mocked(documentStore.getDocument).mockResolvedValue(null)
+    const r = await resolveTenantHostForInternalApi(documentStore, 'api.no-tenant-doc.example')
+    expect(r).toEqual({ uid: null, username: null })
+  })
+
+  it('resolveTenantHostForInternalApi returns nulls when tenant uid is not a string', async () => {
+    process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+    vi.mocked(documentStore.getDocument).mockResolvedValueOnce({ uid: 123 })
+    const r = await resolveTenantHostForInternalApi(documentStore, 'api.bad-uid-type.example')
+    expect(r).toEqual({ uid: null, username: null })
+    expect(documentStore.getDocument).toHaveBeenCalledTimes(1)
+  })
+
+  it('resolveTenantHostForInternalApi returns nulls when tenant uid is empty string', async () => {
+    process.env.ENABLE_FIRESTORE_TENANT_ROUTING = 'true'
+    vi.mocked(documentStore.getDocument).mockResolvedValueOnce({ uid: '' })
+    const r = await resolveTenantHostForInternalApi(documentStore, 'api.empty-uid.example')
+    expect(r).toEqual({ uid: null, username: null })
   })
 
   it('resolveWidgetUserIdForHostname uses default when Firestore read throws', async () => {

@@ -61,10 +61,6 @@ async function getCachedFirestoreClaim(
   documentStore: DocumentStore,
   normalizedHost: string
 ): Promise<TenantHostFirestoreClaim | null> {
-  if (!normalizedHost) {
-    return null
-  }
-
   const now = Date.now()
   const hit = cache.get(normalizedHost)
   if (hit && hit.expiresAt > now) {
