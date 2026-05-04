@@ -9,8 +9,8 @@ export function getApiCorsOriginRegexList(isProduction: boolean): RegExp[] {
     /^https?:\/\/(?!metrics\.)([a-z0-9-]+\.)*chrisvogt\.me$/,
     /https?:\/\/([a-z0-9]+[.])*dev-chrisvogt[.]me:?(.*)$/,
     /^https?:\/\/([a-z0-9-]+--)?chrisvogt\.netlify\.app$/,
-    /https?:\/\/([a-z0-9]+[.])*chronogrove[.]com$/,
-    /https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com$/,
+    /^https?:\/\/([a-z0-9]+[.])*chronogrove[.]com(:\d+)?$/,
+    /^https?:\/\/([a-z0-9]+[.])*dev-chronogrove[.]com(:\d+)?$/,
   ]
 
   if (!isProduction) {
